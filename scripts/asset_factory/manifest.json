@@ -1006,5 +1006,572 @@
     "w": 768,
     "h": 1024,
     "prompt": "standing portrait of a japanese star deity named 麦藁帽子の精: 夏の日差しを忘れられない呑気者, traditional japanese god design, indigo night background, amber rim light, watercolor and papercut style, elegant"
+  },
+  {
+    "id": "en_chochin_kui",
+    "file": "en_chochin.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 提灯喰い, japanese folklore monster, tier 1 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_kage_nezumi",
+    "file": "en_kagenezumi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 影鼠, japanese folklore monster, tier 1 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_onibi",
+    "file": "en_onibi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 鬼火, japanese folklore monster, tier 1 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_yosuzume",
+    "file": "en_yosuzume.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 夜雀, japanese folklore monster, tier 1 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_hone_dourou",
+    "file": "en_honedourou.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 骨灯籠, japanese folklore monster, tier 2 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_nureginu",
+    "file": "en_nureginu.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 濡れ衣, japanese folklore monster, tier 2 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_yogumo",
+    "file": "en_yogumo.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 夜蜘蛛, japanese folklore monster, tier 2 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_naki_ishi",
+    "file": "en_nakiishi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 泣き石, japanese folklore monster, tier 2 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_kubinashi_andon",
+    "file": "en_kubinashi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 首無し行灯, japanese folklore monster, tier 2 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_hoshikui_ko",
+    "file": "en_hoshikuiko.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 星喰いの仔, japanese folklore monster, tier 3 threat, star element accent color, amber rim light"
+  },
+  {
+    "id": "en_gesshoku_juu",
+    "file": "en_gesshoku.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 月蝕獣, japanese folklore monster, tier 3 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_tanwatari",
+    "file": "en_taniwatari.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 谷渡り, japanese folklore monster, tier 3 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_kagami_kurage",
+    "file": "en_kagamikurage.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 鏡水母, japanese folklore monster, tier 3 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_ochiboshi_mukuro",
+    "file": "en_ochiboshi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 堕星の骸, japanese folklore monster, tier 3 threat, star element accent color, amber rim light"
+  },
+  {
+    "id": "en_tokoyo_musha",
+    "file": "en_tokoyomusha.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 常夜武者, japanese folklore monster, tier 4 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_hitori",
+    "file": "en_hitori.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 灯盗り, japanese folklore monster, tier 4 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_yamabiko_bone",
+    "file": "en_yamabiko.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 山彦骨, japanese folklore monster, tier 4 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_hoshikuzu_orochi",
+    "file": "en_orochi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 星屑大蛇, japanese folklore monster, tier 4 threat, star element accent color, amber rim light"
+  },
+  {
+    "id": "en_koke_bouzu",
+    "file": "en_kokebouzu.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 苔坊主, japanese folklore monster, tier 1 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_azuki_arai",
+    "file": "en_azukiarai.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 小豆洗い, japanese folklore monster, tier 1 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_kazakiri_bane",
+    "file": "en_kazakiribane.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 風切り羽, japanese folklore monster, tier 1 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_donguri_mujina",
+    "file": "en_dongurimujina.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 団栗貉, japanese folklore monster, tier 1 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_yonaki_suzu",
+    "file": "en_yonakisuzu.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 夜泣き鈴, japanese folklore monster, tier 1 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_shizuku_onna",
+    "file": "en_shizukuonna.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 雫女, japanese folklore monster, tier 1 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_karakasa_rounin",
+    "file": "en_karakasarounin.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 唐傘浪人, japanese folklore monster, tier 2 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_doro_daruma",
+    "file": "en_dorodaruma.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 泥達磨, japanese folklore monster, tier 2 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_hibashira_gitsune",
+    "file": "en_hibashiragitsune.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 火柱狐, japanese folklore monster, tier 2 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_tsurara_onna",
+    "file": "en_tsuraraonna.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 氷柱女, japanese folklore monster, tier 2 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_ao_andon",
+    "file": "en_aoandon.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 青行灯, japanese folklore monster, tier 3 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_kaze_kurai",
+    "file": "en_kazekurai.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 風喰らい, japanese folklore monster, tier 3 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_yamauba_kage",
+    "file": "en_yamaubakage.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 山姥影, japanese folklore monster, tier 3 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_hitodama_gyouretsu",
+    "file": "en_hitodamagyouretsu.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 人魂行列, japanese folklore monster, tier 3 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_fuchi_kagami",
+    "file": "en_fuchikagami.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 淵鏡, japanese folklore monster, tier 3 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_kurayami_douji",
+    "file": "en_kurayamidouji.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 暗闇童子, japanese folklore monster, tier 4 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_jinari_gama",
+    "file": "en_jinarigama.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 地鳴り蝦蟇, japanese folklore monster, tier 4 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_shiranui_shou",
+    "file": "en_shiranuishou.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 不知火将, japanese folklore monster, tier 4 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_mizuchi_kage",
+    "file": "en_mizuchikage.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 蛟影, japanese folklore monster, tier 4 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_warabe_kage",
+    "file": "en_warabekage.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 童影, japanese folklore monster, tier 1 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_ochiba_zamurai",
+    "file": "en_ochibazamurai.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 落葉侍, japanese folklore monster, tier 1 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_hone_karasu",
+    "file": "en_honekarasu.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 骨烏, japanese folklore monster, tier 1 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_chi_no_ike",
+    "file": "en_chinoike.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 血の池虫, japanese folklore monster, tier 1 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_sunakake",
+    "file": "en_sunakake.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 砂かけ狸, japanese folklore monster, tier 1 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_kuchisake_kagami",
+    "file": "en_kuchisakekagami.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 裂け鏡, japanese folklore monster, tier 1 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_nurenezumi",
+    "file": "en_nurenezumi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 濡れ鼠火, japanese folklore monster, tier 1 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_tsuchibotaru",
+    "file": "en_tsuchibotaru.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 土蛍, japanese folklore monster, tier 1 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_kazamimi",
+    "file": "en_kazamimi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 風耳, japanese folklore monster, tier 1 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_komoriuta_ningyou",
+    "file": "en_komoriutaningyou.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 子守唄人形, japanese folklore monster, tier 1 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_ame_onna",
+    "file": "en_ameonna.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 雨女房, japanese folklore monster, tier 2 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_yamawaro",
+    "file": "en_yamawaro.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 山童, japanese folklore monster, tier 2 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_kubittake",
+    "file": "en_kubittake.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 首丈, japanese folklore monster, tier 2 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_hi_no_tama",
+    "file": "en_hinotamazamurai.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 火の玉侍, japanese folklore monster, tier 2 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_ubagabi",
+    "file": "en_ubagabi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 姥が火, japanese folklore monster, tier 2 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_nozuchi",
+    "file": "en_nozuchi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 野槌, japanese folklore monster, tier 2 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_zashiki_warashi_kage",
+    "file": "en_zashikiwarashikage.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 座敷童の影, japanese folklore monster, tier 2 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_kappa_nokori",
+    "file": "en_kapparokori.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 名残河童, japanese folklore monster, tier 2 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_inbi",
+    "file": "en_inbimusha.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 陰火武者, japanese folklore monster, tier 2 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_karasuten",
+    "file": "en_karasutenkuzure.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 烏天狗崩れ, japanese folklore monster, tier 2 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_nue",
+    "file": "en_nue.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 鵺, japanese folklore monster, tier 3 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_oosakabe",
+    "file": "en_oosakabe.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 長壁女, japanese folklore monster, tier 3 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_raiju_ko",
+    "file": "en_raijuko.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 雷獣の仔, japanese folklore monster, tier 3 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_funayurei",
+    "file": "en_funayurei.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 船幽霊, japanese folklore monster, tier 3 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_ittanmomen",
+    "file": "en_ittanmomen.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 一反木綿, japanese folklore monster, tier 3 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_nurikabe_oni",
+    "file": "en_nurikabeoni.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 塗壁鬼, japanese folklore monster, tier 3 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_kasha",
+    "file": "en_kasha.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 火車, japanese folklore monster, tier 3 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_yamachichi",
+    "file": "en_yamachichi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 山地乳, japanese folklore monster, tier 3 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_akaeimusha",
+    "file": "en_akaeimusha.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 赤鱏武者, japanese folklore monster, tier 3 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_yamawarai",
+    "file": "en_yamawarai.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 山嗤い, japanese folklore monster, tier 3 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_nurarihyon",
+    "file": "en_nurarihyon.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: ぬらりひょん崩れ, japanese folklore monster, tier 4 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_daidarabotchi_ashi",
+    "file": "en_daidarabotchi.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 大太法師の足跡, japanese folklore monster, tier 4 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_gashadokuro",
+    "file": "en_gashadokuro.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: がしゃどくろ, japanese folklore monster, tier 4 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_kyuubi_kage",
+    "file": "en_kyuubikage.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 九尾の影, japanese folklore monster, tier 4 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_umibouzu",
+    "file": "en_umibouzu.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 海坊主崩れ, japanese folklore monster, tier 4 threat, water element accent color, amber rim light"
+  },
+  {
+    "id": "en_raijin_taiko",
+    "file": "en_raijintaiko.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 雷神太鼓崩れ, japanese folklore monster, tier 4 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_nue_juku",
+    "file": "en_nuejuku.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 鵺の熟れたる姿, japanese folklore monster, tier 4 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_oomukade",
+    "file": "en_oomukade.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 大百足, japanese folklore monster, tier 4 threat, earth element accent color, amber rim light"
+  },
+  {
+    "id": "en_tengu_taishou",
+    "file": "en_tengutaishou.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 天狗大将, japanese folklore monster, tier 4 threat, wind element accent color, amber rim light"
+  },
+  {
+    "id": "en_kokuyousekihime",
+    "file": "en_kokuyousekihime.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 黒曜石姫, japanese folklore monster, tier 4 threat, star element accent color, amber rim light"
+  },
+  {
+    "id": "en_boss_hyakume",
+    "file": "boss_hyakume.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 百目行灯, japanese folklore monster, tier 5 threat, fire element accent color, amber rim light"
+  },
+  {
+    "id": "en_boss_hoshimukuro",
+    "file": "boss_hoshimukuro.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 骸星の大熊, japanese folklore monster, tier 5 threat, star element accent color, amber rim light"
+  },
+  {
+    "id": "en_boss_gentou",
+    "file": "boss_gentou.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 玄冬, japanese folklore monster, tier 5 threat, moon element accent color, amber rim light"
+  },
+  {
+    "id": "en_boss_shiori",
+    "file": "boss_shiori.png",
+    "w": 512,
+    "h": 512,
+    "prompt": "yokai enemy illustration, papercut style on dark indigo background: 汐里, japanese folklore monster, tier 5 threat, star element accent color, amber rim light"
   }
 ]

@@ -60,6 +60,54 @@ const BASE_ENEMIES: EnemyDef[] = [
   { id: 'shiranui_shou', name: '不知火将', element: 'fire', tier: 4, hp: 240, atk: 55, def: 30, agi: 20, skillIds: ['e_hisui'], hoto: 100, ketsu: 6, sprite: 'en_shiranuishou.png', desc: '海に出るはずの不知火が山へ迷い込み、鎧を得た姿。軍配の代わりに灯を振る。' },
   { id: 'mizuchi_kage', name: '蛟影', element: 'water', tier: 4, hp: 260, atk: 50, def: 32, agi: 18, skillIds: ['e_kurayami'], hoto: 98, ketsu: 6, sprite: 'en_mizuchikage.png', desc: '天に昇り損ねた蛟の影だけが谷川に残った。影のくせに、濡れている。' },
   { id: 'kamikakushi', name: '神隠し', element: 'wind', tier: 4, hp: 210, atk: 58, def: 24, agi: 30, skillIds: ['e_yamiuta'], hoto: 102, ketsu: 7, sprite: 'en_kamikakushi.png', desc: '「隠す」という現象そのものの怪。奴に触れられた者の名は、呼んでも山彦が返らない。' },
+
+  // ---- Tier1 増員2波(GDD_v3 M3b) ----
+  { id: 'warabe_kage', name: '童影', element: 'moon', tier: 1, hp: 33, atk: 11, def: 5, agi: 15, skillIds: [], hoto: 12, ketsu: 1, sprite: 'en_warabekage.png', desc: '遊び相手を探してさまよう子供の影。捕まると鬼ごっこが終わらなくなる。' },
+  { id: 'ochiba_zamurai', name: '落葉侍', element: 'wind', tier: 1, hp: 38, atk: 13, def: 7, agi: 12, skillIds: [], hoto: 13, ketsu: 1, sprite: 'en_ochibazamurai.png', desc: '積もった落葉が刀を持った侍の形に固まった怪。踏まれると怒って襲いかかる。' },
+  { id: 'hone_karasu', name: '骨烏', element: 'earth', tier: 1, hp: 31, atk: 12, def: 6, agi: 14, skillIds: [], hoto: 11, ketsu: 1, sprite: 'en_honekarasu.png', desc: '骨だけになった烏の群れ。啼き声は生前より不吉になった。' },
+  { id: 'chi_no_ike', name: '血の池虫', element: 'fire', tier: 1, hp: 35, atk: 14, def: 5, agi: 9, skillIds: [], hoto: 13, ketsu: 1, sprite: 'en_chinoike.png', desc: '赤く濁った水たまりに湧く小さな虫の群れ。触れると熱を持つ。' },
+  { id: 'sunakake', name: '砂かけ狸', element: 'earth', tier: 1, hp: 37, atk: 10, def: 8, agi: 11, skillIds: [], hoto: 11, ketsu: 1, sprite: 'en_sunakake.png', desc: '通りすがりに砂を浴びせる悪戯好きの狸。悪意はないが実害はある。' },
+  { id: 'kuchisake_kagami', name: '裂け鏡', element: 'moon', tier: 1, hp: 32, atk: 13, def: 4, agi: 13, skillIds: ['e_kurayami'], hoto: 14, ketsu: 1, sprite: 'en_kuchisakekagami.png', desc: 'ひびの入った手鏡の怪。覗き込んだ顔を歪めて映す。' },
+  { id: 'nurenezumi', name: '濡れ鼠火', element: 'fire', tier: 1, hp: 33, atk: 12, def: 5, agi: 16, skillIds: [], hoto: 12, ketsu: 1, sprite: 'en_nurenezumi.png', desc: '水に落ちて燃え続ける奇妙な鼠火。消えそうで消えない。' },
+  { id: 'tsuchibotaru', name: '土蛍', element: 'earth', tier: 1, hp: 29, atk: 11, def: 4, agi: 17, skillIds: [], hoto: 12, ketsu: 1, sprite: 'en_tsuchibotaru.png', desc: '土中から湧く蛍もどき。光は綺麗だが触れると土気を吸われる。' },
+  { id: 'kazamimi', name: '風耳', element: 'wind', tier: 1, hp: 30, atk: 13, def: 4, agi: 20, skillIds: [], hoto: 13, ketsu: 1, sprite: 'en_kazamimi.png', desc: '大きな耳だけの怪。噂話を集めるためだけに夜道をさまよう。' },
+  { id: 'komoriuta_ningyou', name: '子守唄人形', element: 'moon', tier: 1, hp: 36, atk: 12, def: 6, agi: 10, skillIds: ['e_yamiuta'], hoto: 14, ketsu: 1, sprite: 'en_komoriutaningyou.png', desc: '捨てられた人形が子守唄を口ずさみながら徘徊する。歌は少し調子外れ。' },
+
+  // ---- Tier2 増員2波 ----
+  { id: 'ame_onna', name: '雨女房', element: 'water', tier: 2, hp: 82, atk: 21, def: 12, agi: 13, skillIds: [], hoto: 30, ketsu: 2, sprite: 'en_ameonna.png', desc: '傘も差さず歩き続ける女の怪。すれ違うと体が芯から冷える。' },
+  { id: 'yamawaro', name: '山童', element: 'earth', tier: 2, hp: 95, atk: 20, def: 16, agi: 10, skillIds: [], hoto: 31, ketsu: 2, sprite: 'en_yamawaro.png', desc: '山仕事を手伝うふりをして道具を隠す悪戯な河童の遠縁。' },
+  { id: 'kubittake', name: '首丈', element: 'moon', tier: 2, hp: 78, atk: 23, def: 11, agi: 15, skillIds: ['e_kurayami'], hoto: 33, ketsu: 2, sprite: 'en_kubittake.png', desc: '首だけが異様に伸びる怪。伸びた首は元に戻すのに苦労する。' },
+  { id: 'hi_no_tama', name: '火の玉侍', element: 'fire', tier: 2, hp: 80, atk: 24, def: 10, agi: 16, skillIds: [], hoto: 32, ketsu: 2, sprite: 'en_hinotamazamurai.png', desc: '討ち死にした侍の執念が火の玉となって彷徨う。刀の記憶だけが残る。' },
+  { id: 'ubagabi', name: '姥が火', element: 'fire', tier: 2, hp: 76, atk: 22, def: 9, agi: 18, skillIds: [], hoto: 29, ketsu: 2, sprite: 'en_ubagabi.png', desc: '油を盗んだ老婆の魂が変じた火の玉。今も油の匂いを追いかける。' },
+  { id: 'nozuchi', name: '野槌', element: 'earth', tier: 2, hp: 130, atk: 16, def: 22, agi: 4, skillIds: [], hoto: 35, ketsu: 3, sprite: 'en_nozuchi.png', desc: '槌の形をした太い蛇のような怪。転がって突進する以外何もしない。' },
+  { id: 'zashiki_warashi_kage', name: '座敷童の影', element: 'moon', tier: 2, hp: 72, atk: 19, def: 13, agi: 19, skillIds: [], hoto: 34, ketsu: 2, sprite: 'en_zashikiwarashikage.png', desc: '本来は福を呼ぶはずの座敷童が、夜藪で影だけの姿に堕ちたもの。' },
+  { id: 'kappa_nokori', name: '名残河童', element: 'water', tier: 2, hp: 88, atk: 20, def: 14, agi: 12, skillIds: [], hoto: 31, ketsu: 2, sprite: 'en_kapparokori.png', desc: '涸れた川に取り残された河童。皿の水が乾きかけ気が立っている。' },
+  { id: 'inbi', name: '陰火武者', element: 'moon', tier: 2, hp: 84, atk: 25, def: 12, agi: 14, skillIds: ['e_hisui'], hoto: 36, ketsu: 3, sprite: 'en_inbimusha.png', desc: '陰の気だけで動く鎧武者。中身はとうに失われている。' },
+  { id: 'karasuten', name: '烏天狗崩れ', element: 'wind', tier: 2, hp: 79, atk: 23, def: 11, agi: 22, skillIds: [], hoto: 33, ketsu: 2, sprite: 'en_karasutenkuzure.png', desc: '修行に破れて堕ちた天狗もどき。翼はもう満足に使えない。' },
+
+  // ---- Tier3 増員2波 ----
+  { id: 'nue', name: '鵺', element: 'moon', tier: 3, hp: 145, atk: 34, def: 19, agi: 22, skillIds: ['e_kurayami'], hoto: 55, ketsu: 4, sprite: 'en_nue.png', desc: '猿・虎・蛇が混ざった鳴き声を持つ怪。姿を見た者は少ない。' },
+  { id: 'oosakabe', name: '長壁女', element: 'earth', tier: 3, hp: 155, atk: 32, def: 21, agi: 12, skillIds: [], hoto: 54, ketsu: 4, sprite: 'en_oosakabe.png', desc: '古い天守に棲むと伝わる女怪。夜藪に迷い込んだ一柱がここに堕ちた。' },
+  { id: 'raiju_ko', name: '雷獣の仔', element: 'fire', tier: 3, hp: 128, atk: 38, def: 16, agi: 24, skillIds: [], hoto: 57, ketsu: 4, sprite: 'en_raijuko.png', desc: '雷獣王の眷属からはぐれた仔。まだ制御できない電光を撒き散らす。' },
+  { id: 'funayurei', name: '船幽霊', element: 'water', tier: 3, hp: 138, atk: 33, def: 20, agi: 15, skillIds: ['e_yamiuta'], hoto: 56, ketsu: 4, sprite: 'en_funayurei.png', desc: '沈んだ舟の亡霊。柄杓を貸すと水を注がれ沈められる、との言い伝え通りの怪。' },
+  { id: 'ittanmomen', name: '一反木綿', element: 'wind', tier: 3, hp: 118, atk: 30, def: 14, agi: 28, skillIds: [], hoto: 53, ketsu: 3, sprite: 'en_ittanmomen.png', desc: '一反の布が意志を持ち夜空を飛ぶ。巻きつかれると息が詰まる。' },
+  { id: 'nurikabe_oni', name: '塗壁鬼', element: 'earth', tier: 3, hp: 165, atk: 29, def: 26, agi: 6, skillIds: [], hoto: 58, ketsu: 4, sprite: 'en_nurikabeoni.png', desc: '見えない壁が鬼の顔を持つに至った上位種。押しても引いても動かない。' },
+  { id: 'kasha', name: '火車', element: 'fire', tier: 3, hp: 148, atk: 36, def: 18, agi: 20, skillIds: ['e_hisui'], hoto: 60, ketsu: 5, sprite: 'en_kasha.png', desc: '死者を奪いに来るという妖怪の車。車輪は常に燃えている。' },
+  { id: 'yamachichi', name: '山地乳', element: 'earth', tier: 3, hp: 132, atk: 35, def: 17, agi: 19, skillIds: [], hoto: 55, ketsu: 4, sprite: 'en_yamachichi.png', desc: '眠る者の息を吸うという猿に似た怪。息を吸われても死にはしないが酷く消耗する。' },
+  { id: 'akaeimusha', name: '赤鱏武者', element: 'water', tier: 3, hp: 142, atk: 32, def: 22, agi: 13, skillIds: [], hoto: 57, ketsu: 4, sprite: 'en_akaeimusha.png', desc: '海だったはずの土地に現れる巨大な鱏の亡霊。武具を纏っている理由は誰も知らない。' },
+  { id: 'yamawarai', name: '山嗤い', element: 'earth', tier: 3, hp: 150, atk: 31, def: 24, agi: 10, skillIds: ['e_kurayami'], hoto: 56, ketsu: 4, sprite: 'en_yamawarai.png', desc: '理由もなく笑い続ける山の怪。笑い声を聞いた者は道に迷いやすくなる。' },
+
+  // ---- Tier4 増員2波 ----
+  { id: 'nurarihyon', name: 'ぬらりひょん崩れ', element: 'moon', tier: 4, hp: 235, atk: 53, def: 29, agi: 24, skillIds: ['e_kurayami'], hoto: 96, ketsu: 6, sprite: 'en_nurarihyon.png', desc: '妖怪の総大将を騙る堕ちた者。貫禄だけは本物に劣らない。' },
+  { id: 'daidarabotchi_ashi', name: '大太法師の足跡', element: 'earth', tier: 4, hp: 300, atk: 44, def: 40, agi: 6, skillIds: [], hoto: 105, ketsu: 8, sprite: 'en_daidarabotchi.png', desc: '巨人の足跡そのものが独立して歩き回る現象。踏まれれば助からない。' },
+  { id: 'gashadokuro', name: 'がしゃどくろ', element: 'earth', tier: 4, hp: 270, atk: 56, def: 30, agi: 18, skillIds: ['e_kurayami'], hoto: 100, ketsu: 7, sprite: 'en_gashadokuro.png', desc: '無数の骨が集まった巨大な骸骨。歩くたびがしゃがしゃと音を立てる。' },
+  { id: 'kyuubi_kage', name: '九尾の影', element: 'fire', tier: 4, hp: 245, atk: 60, def: 26, agi: 26, skillIds: ['e_hisui'], hoto: 110, ketsu: 7, sprite: 'en_kyuubikage.png', desc: '妖狐の伝説が影だけとなって夜藪に落ちた姿。尾は数えるたび本数が違う。' },
+  { id: 'umibouzu', name: '海坊主崩れ', element: 'water', tier: 4, hp: 280, atk: 50, def: 34, agi: 14, skillIds: [], hoto: 98, ketsu: 6, sprite: 'en_umibouzu.png', desc: '海のない山中に現れる坊主頭の巨怪。由来は誰にも分からない。' },
+  { id: 'raijin_taiko', name: '雷神太鼓崩れ', element: 'fire', tier: 4, hp: 225, atk: 62, def: 25, agi: 22, skillIds: [], hoto: 108, ketsu: 7, sprite: 'en_raijintaiko.png', desc: '鳴神太鼓の力を真似た偽物の太鼓が化けた姿。音は本物より濁っている。' },
+  { id: 'nue_juku', name: '鵺の熟れたる姿', element: 'moon', tier: 4, hp: 255, atk: 54, def: 32, agi: 20, skillIds: ['e_kurayami', 'e_yamiuta'], hoto: 104, ketsu: 7, sprite: 'en_nuejuku.png', desc: '鵺がさらに夜藪の毒気を吸って成長した姿。鳴き声で三匹分の恐怖を運ぶ。' },
+  { id: 'oomukade', name: '大百足', element: 'earth', tier: 4, hp: 265, atk: 52, def: 33, agi: 16, skillIds: [], hoto: 99, ketsu: 6, sprite: 'en_oomukade.png', desc: '山ひとつを取り巻くという伝説の大百足。夜藪では一部だけが顔を出す。' },
+  { id: 'tengu_taishou', name: '天狗大将', element: 'wind', tier: 4, hp: 215, atk: 59, def: 27, agi: 32, skillIds: ['e_hoshikui'], hoto: 106, ketsu: 7, sprite: 'en_tengutaishou.png', desc: '天狗の中でも武勇に優れた将。羽団扇の一振りで隊列を吹き飛ばす。' },
+  { id: 'kokuyousekihime', name: '黒曜石姫', element: 'star', tier: 4, hp: 240, atk: 57, def: 31, agi: 21, skillIds: ['e_hoshikui'], hoto: 112, ketsu: 8, sprite: 'en_kokuyousekihime.png', desc: '墜ちた星が黒曜石の刃と化して人の形を取った姫。斬れ味は玄冬の眷属随一。' },
 ]
 
 // ---- ボス(変異なし・固有) ----
