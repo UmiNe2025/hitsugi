@@ -38,6 +38,7 @@ interface GameStore {
 
   // メタ
   newGame: (narrativeMode: boolean) => void
+  newLegacyGame: () => void // 継承新周回 — 形見一つと血の濃さを持ち越す
   continueGame: () => boolean
   setScreen: (s: Screen) => void
   processNextScene: () => void
@@ -209,6 +210,37 @@ export const useGame = create<GameStore>((set, get) => {
       d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季。`)
       set({ data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [] })
       saveGame(d)
+    },
+
+    newLegacyGame: () => {
+      const prev = get().data
+      const prevCycle = prev?.flags.ngCycle
+      const cycle = (typeof prevCycle === 'number' ? prevCycle : 0) + 1
+      // 最も代を重ねた品を一つだけ、次の千年紀へ
+      const allItems = [
+        ...(prev?.inventory ?? []),
+        ...(prev?.family.flatMap((c) => Object.values(c.equipment).filter((x): x is Item => !!x)) ?? []),
+      ]
+      const heirloom = [...allItems].sort((a, b) => b.generation - a.generation)[0]
+      get().newGame(prev?.narrativeMode ?? false)
+      mutate((d) => {
+        let nd: GameData = {
+          ...d,
+          inventory: heirloom ? [...d.inventory, { ...heirloom }] : d.inventory,
+          // 千年紀を重ねた血は最初から濃い
+          family: d.family.map((c) => {
+            const boosted = { ...c.potential }
+            for (const k of Object.keys(boosted) as (keyof typeof boosted)[]) {
+              boosted[k] = Math.min(120, boosted[k] + cycle * 4)
+            }
+            return recalcStats({ ...c, potential: boosted }, d.seasonIndex)
+          }),
+          flags: { ...d.flags, ngCycle: cycle },
+        }
+        nd = chronicle(nd, 'era', `第${cycle + 1}の千年紀、始まる。${heirloom ? `先の一族の「${heirloom.name}」が蔵に眠っている。` : ''}`)
+        return nd
+      })
+      saveGame(get().data!)
     },
 
     continueGame: () => {

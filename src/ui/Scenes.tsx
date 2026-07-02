@@ -111,6 +111,7 @@ const ENDING_EXTINCT = [
 export function EndingScene() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
+  const newLegacyGame = useGame((s) => s.newLegacyGame)
   const [beat, setBeat] = useState(0)
   const cleared = !!data.flags.cleared
   const beats = cleared ? ENDING_CLEARED : ENDING_EXTINCT
@@ -135,8 +136,13 @@ export function EndingScene() {
           <div className="ending-stats">
             紡がれた世代<b>{gens}</b>代 / 逝った者<b>{fallenCount}</b>人 / 費やした歳月<b>{years}</b>年
           </div>
+          {cleared && (
+            <button className="btn btn-main" onClick={() => newLegacyGame()}>
+              新たな千年紀へ — 継承新周回(形見と血の濃さを持ち越す)
+            </button>
+          )}
           <button
-            className="btn btn-main"
+            className="btn btn-ghost"
             onClick={() => {
               if (!cleared) clearSave()
               setScreen({ id: 'title' })

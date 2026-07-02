@@ -246,7 +246,7 @@ export interface GameData {
   chronicle: ChronicleEntry[]
   expedition?: Expedition
   pendingBirths: { godId: string; parentId: string; dueSeason: number }[]
-  flags: Record<string, boolean>
+  flags: Record<string, boolean | number>
   narrativeMode: boolean // 語り部モード
   seed: number
 }
