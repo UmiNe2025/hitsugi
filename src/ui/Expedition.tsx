@@ -5,8 +5,9 @@ import { REGIONS, regionById } from '../core/data/regions'
 import { eventById } from '../core/expedition'
 import { dungeonByRegion } from '../dungeon/maps'
 import { isAdult } from '../core/inheritance'
-import { Bar, CharCard, Panel, TsuzuriLine } from './components'
-import { gameImg } from './img'
+import { PARTY_SIZE } from '../core/constants'
+import { Bar, CharCard, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { gameImg, HOME_BG } from './img'
 
 export function DepartScreen() {
   const data = useGame((s) => s.data)!
@@ -18,10 +19,11 @@ export function DepartScreen() {
 
   const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const toggle = (id: string) =>
-    setParty((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p))
+    setParty((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < PARTY_SIZE ? [...p, id] : p))
 
   return (
     <div className="screen">
+      <NightBackdrop bg={gameImg(HOME_BG)} />
       <h1 className="season-label" style={{ marginBottom: 14 }}>出立 — 夜藪行</h1>
       <TsuzuriLine text="行き先と、連れて行く者を選べ。四人まで。深く潜るほど実りは多いが、灯が尽きれば常夜はお前らを喰いに来る。" />
 
@@ -47,7 +49,7 @@ export function DepartScreen() {
         })}
       </Panel>
 
-      <Panel title={`隊を組む(${party.length}/4)`}>
+      <Panel title={`隊を組む(${party.length}/${PARTY_SIZE})`}>
         <div className="exp-party">
           {adults.map((c) => (
             <CharCard

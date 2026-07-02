@@ -302,6 +302,13 @@ button {
 }
 
 /* ---- 星契り ---- */
+.god-filter { margin-bottom: 12px; }
+.god-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+.filter-tab { padding: 5px 14px; font-size: 13px; }
+.filter-tab.active { border-color: var(--amber); color: var(--amber); background: rgba(232, 163, 61, 0.12); }
+.elem-chip { cursor: pointer; opacity: 0.5; transition: all 0.15s; border: 1px solid transparent; }
+.elem-chip:hover { opacity: 0.85; }
+.elem-chip.active { opacity: 1; border-color: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.35); }
 .god-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
 .god-card {
   border: 1px solid var(--panel-border); border-radius: 6px;
@@ -541,10 +548,107 @@ button {
 }
 .mute-btn:hover { opacity: 1; }
 
+/* ---- 立ち絵(ポートレート) ---- */
+.char-card-row { display: flex; gap: 12px; align-items: flex-start; }
+.char-card-body { flex: 1; min-width: 0; }
+.portrait {
+  --pel: var(--gold);
+  position: relative;
+  flex-shrink: 0;
+  width: 60px; height: 84px;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 118%, rgba(232, 163, 61, 0.28), transparent 62%),
+    linear-gradient(180deg, rgba(8, 11, 22, 0.2), rgba(8, 11, 22, 0.72));
+  border: 1px solid var(--panel-border);
+  box-shadow: inset 0 -22px 26px -14px var(--pel);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.portrait[data-el='fire'] { --pel: var(--el-fire); }
+.portrait[data-el='water'] { --pel: var(--el-water); }
+.portrait[data-el='wind'] { --pel: var(--el-wind); }
+.portrait[data-el='earth'] { --pel: var(--el-earth); }
+.portrait[data-el='moon'] { --pel: var(--el-moon); }
+.portrait[data-el='star'] { --pel: var(--el-star); }
+.portrait img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
+}
+.portrait-sm { width: 46px; height: 62px; }
+.portrait-flame {
+  font-size: 26px;
+  filter: drop-shadow(0 0 8px rgba(255, 157, 69, 0.75));
+  padding-bottom: 12px;
+  animation: flicker 2.6s infinite;
+}
+.portrait.is-child { background: radial-gradient(ellipse at 50% 60%, rgba(155, 127, 194, 0.22), rgba(8, 11, 22, 0.7)); box-shadow: none; }
+.portrait.is-child .portrait-flame { font-size: 20px; opacity: 0.85; padding-bottom: 20px; }
+
+/* ---- 画面奥の一枚絵(背景) ---- */
+.backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.backdrop-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.72; }
+.backdrop-photo {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: 0;
+  animation: artIn 1.6s ease 0.15s forwards;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85));
+}
+.backdrop-veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(11,15,30,0.5) 0%, rgba(11,15,30,0.16) 42%, rgba(11,15,30,0.55) 100%);
+}
+
+/* ---- 行いカード(郷の行動) ---- */
+.action-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.action-card {
+  display: flex; align-items: center; gap: 12px; text-align: left;
+  border: 1px solid var(--panel-border); border-radius: 8px;
+  background: rgba(10, 14, 30, 0.66);
+  padding: 12px 14px; transition: all 0.18s;
+}
+.action-card:hover:not(:disabled) {
+  border-color: var(--amber);
+  background: rgba(232, 163, 61, 0.12);
+  box-shadow: 0 0 16px rgba(232, 163, 61, 0.22);
+  transform: translateY(-2px);
+}
+.action-card:disabled { opacity: 0.4; cursor: not-allowed; }
+.action-card.primary { border-color: var(--amber); background: rgba(232, 163, 61, 0.12); }
+.action-card-icon {
+  flex-shrink: 0; width: 42px; height: 42px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  background: rgba(0, 0, 0, 0.32); border: 1px solid var(--panel-border);
+}
+.action-card-text { display: flex; flex-direction: column; min-width: 0; }
+.action-card-title { font-size: 15px; font-weight: 700; letter-spacing: 0.08em; color: var(--text); }
+.action-card-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; line-height: 1.5; }
+.action-card.primary .action-card-title { color: var(--amber); }
+
+.home-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; justify-content: center; }
+.home-links .btn { flex: 1; min-width: 130px; }
+
+/* ---- 資源ヘッダ ---- */
+.resource-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.resource {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(0, 0, 0, 0.28); border: 1px solid var(--panel-border);
+  border-radius: 20px; padding: 3px 12px;
+}
+.resource .res-ico { font-size: 13px; filter: saturate(1.1); }
+.resource .res-label { font-size: 12px; color: var(--text-dim); }
+.resource b { color: var(--text); font-size: 16px; margin-left: 2px; }
+
 /* ---- スマホ ---- */
 @media (max-width: 560px) {
   .screen { padding: 12px 10px 40px; }
   .stat-grid { grid-template-columns: repeat(3, 1fr); }
   .chron-season { width: 84px; }
   .node-btn { min-width: 104px; padding: 12px 14px; }
+  .portrait { width: 52px; height: 72px; }
+  .action-cards { grid-template-columns: 1fr 1fr; }
+  .action-card { flex-direction: column; text-align: center; gap: 6px; padding: 12px 8px; }
+  .action-card-desc { display: none; }
 }

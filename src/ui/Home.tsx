@@ -6,7 +6,8 @@ import { isAdult, seasonsLeft } from '../core/inheritance'
 import { ITEM_BASES } from '../core/data/items'
 import { GODS } from '../core/data/gods'
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
-import { CharCard, Panel, TsuzuriLine } from './components'
+import { CharCard, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { gameImg, HOME_BG } from './img'
 
 export function HomeScreen() {
   const data = useGame((s) => s.data)!
@@ -24,12 +25,16 @@ export function HomeScreen() {
   const hint = useMemo(() => tsuzuriHint(data, adults.length), [data, adults.length])
 
   return (
-    <div className="screen">
+    <div className="screen home-screen">
+      <NightBackdrop bg={gameImg(HOME_BG)} />
+
       <header className="home-header">
         <span className="season-label">{seasonLabel(data.seasonIndex)}</span>
-        <span className="resource">奉燈<b>{data.hoto}</b></span>
-        <span className="resource">血珠<b>{data.ketsu}</b></span>
-        <span className="resource">武功<b>{data.fame}</b></span>
+        <div className="resource-strip">
+          <span className="resource"><span className="res-ico">🏮</span><span className="res-label">奉燈</span><b>{data.hoto}</b></span>
+          <span className="resource"><span className="res-ico">💠</span><span className="res-label">血珠</span><b>{data.ketsu}</b></span>
+          <span className="resource"><span className="res-ico">🏅</span><span className="res-label">武功</span><b>{data.fame}</b></span>
+        </div>
       </header>
 
       <TsuzuriLine text={hint} />
@@ -43,48 +48,87 @@ export function HomeScreen() {
         </div>
       </Panel>
 
-      <Panel title="今月の行い(一つ選べば月が替わる)">
-        <div className="home-actions">
-          <button className="btn btn-main" disabled={adults.length === 0} onClick={() => setScreen({ id: 'depart' })}>
-            出立 — 夜藪へ
-          </button>
-          <button className="btn" disabled={!canPact} onClick={() => setScreen({ id: 'pact' })}>
-            星契り — 次代を授かる
-          </button>
-          <button
-            className="btn"
+      <Panel title="今月の行い — 一つ選べば月が替わる">
+        <div className="action-cards">
+          <ActionCard
+            primary icon="⚔️" title="出立 — 夜藪へ"
+            desc="夜藪へ潜り、奉燈と血珠を得る。深いほど実り多い。"
+            disabled={adults.length === 0}
+            note={adults.length === 0 ? '出立できる大人がいない' : undefined}
+            onClick={() => setScreen({ id: 'depart' })}
+          />
+          <ActionCard
+            icon="⭐" title="星契り — 次代を授かる"
+            desc="星神と契り、翌月に子を授かる。血を絶やすな。"
+            disabled={!canPact}
+            note={
+              adults.length === 0 ? '契れる大人がいない'
+                : data.hoto < cheapestPact ? `奉燈があと${cheapestPact - data.hoto}要る`
+                  : undefined
+            }
+            onClick={() => setScreen({ id: 'pact' })}
+          />
+          <ActionCard
+            icon="🎆" title="祭 — 郷を潤す"
+            desc={isFestivalMonth(data.seasonIndex)
+              ? '奉燈30を捧げ、一族の傷と心労を癒す。星との縁も深まる。'
+              : '祭は季の変わり目(弥生・水無月・長月・師走)だけ開ける。'}
             disabled={data.hoto < 30 || !isFestivalMonth(data.seasonIndex)}
+            note={
+              !isFestivalMonth(data.seasonIndex) ? '今は祭月でない'
+                : data.hoto < 30 ? '奉燈が足りない'
+                  : undefined
+            }
             onClick={doFestival}
-            title={isFestivalMonth(data.seasonIndex) ? '' : '祭は季の変わり目(弥生・水無月・長月・師走)のみ'}
-          >
-            祭 — 奉燈30{isFestivalMonth(data.seasonIndex) ? '(季の祭月!)' : '(季の変わり目のみ)'}
-          </button>
-          <button className="btn" onClick={doRest}>
-            静養 — 傷と心労を癒す
-          </button>
+          />
+          <ActionCard
+            icon="♨️" title="静養 — 傷を癒す"
+            desc="隊の傷と心労を癒す。何もない月も、月は替わる。"
+            onClick={doRest}
+          />
         </div>
         <p className="action-note">月が替わるたび、一族は歳を取る。八季(廿四月)で灯は尽きる — 時を無駄にするな。</p>
       </Panel>
 
-      <div className="home-actions">
-        <button className="btn btn-ghost" onClick={() => setShowForge(true)}>
-          鍛冶と蔵(装備)
-        </button>
-        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}>
-          家譜を繰る
-        </button>
-        <button className="btn btn-ghost" onClick={() => setShowVillage(true)}>
-          郷を歩く
-        </button>
-        <button className="btn btn-ghost" onClick={() => setShowHelp(true)}>
-          手引き
-        </button>
+      <div className="home-links">
+        <button className="btn btn-ghost" onClick={() => setShowForge(true)}>🔨 鍛冶と蔵</button>
+        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}>📜 家譜を繰る</button>
+        <button className="btn btn-ghost" onClick={() => setShowVillage(true)}>🏘️ 郷を歩く</button>
+        <button className="btn btn-ghost" onClick={() => setShowHelp(true)}>📖 手引き</button>
       </div>
 
       {showForge && <ForgeModal onClose={() => setShowForge(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showVillage && <VillageModal onClose={() => setShowVillage(false)} />}
     </div>
+  )
+}
+
+// 郷の行動カード — 図像・見出し・一言でわかりやすく。無効時は理由を添える。
+function ActionCard({
+  icon, title, desc, note, disabled, primary, onClick,
+}: {
+  icon: string
+  title: string
+  desc: string
+  note?: string
+  disabled?: boolean
+  primary?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      className={`action-card ${primary ? 'primary' : ''}`}
+      disabled={disabled}
+      onClick={onClick}
+      title={note ?? ''}
+    >
+      <span className="action-card-icon">{icon}</span>
+      <span className="action-card-text">
+        <span className="action-card-title">{title}</span>
+        <span className="action-card-desc">{disabled && note ? note : desc}</span>
+      </span>
+    </button>
   )
 }
 

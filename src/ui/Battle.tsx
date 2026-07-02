@@ -110,22 +110,7 @@ export function BattleScreen() {
               className={`enemy-card ${e.hp <= 0 ? 'dead' : ''} ${isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' ? 'targetable' : ''} ${battle.chainTarget === e.key && battle.chain > 0 ? 'acting' : ''}`}
               onClick={() => onEnemyClick(e)}
             >
-              {e.enemyId && enemyById(e.enemyId).tier === 5 ? (
-                <span className="enemy-sprite">
-                  <img
-                    className="enemy-img"
-                    src={gameImg(enemyById(e.enemyId).sprite)}
-                    alt=""
-                    onError={(ev) => {
-                      const img = ev.target as HTMLImageElement
-                      img.style.display = 'none'
-                      img.parentElement!.textContent = enemySprite(e)
-                    }}
-                  />
-                </span>
-              ) : (
-                <span className="enemy-sprite">{enemySprite(e)}</span>
-              )}
+              <EnemyVisual e={e} />
               <div className="enemy-name">{e.name}</div>
               <Bar value={e.hp} max={e.maxHp} kind="hp" />
               <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>{ELEMENT_LABELS[e.element]}の魔性</div>
@@ -246,4 +231,19 @@ function enemySprite(e: Combatant): string {
   const def = enemyById(e.enemyId)
   const map: Record<number, string> = { 1: '👺', 2: '👹', 3: '🌑', 4: '⚔️', 5: '💀' }
   return map[def.tier] ?? '👾'
+}
+
+// 敵の見た目 — 生成スプライトがあれば画像、無ければ絵文字へ静かにフォールバック。
+// 画像は後追い生成のため、揃い次第このまま自動で表示される。
+function EnemyVisual({ e }: { e: Combatant }) {
+  const [failed, setFailed] = useState(false)
+  const def = e.enemyId ? enemyById(e.enemyId) : null
+  if (def && !failed) {
+    return (
+      <span className="enemy-sprite">
+        <img className="enemy-img" src={gameImg(def.sprite)} alt="" onError={() => setFailed(true)} />
+      </span>
+    )
+  }
+  return <span className="enemy-sprite">{enemySprite(e)}</span>
 }
