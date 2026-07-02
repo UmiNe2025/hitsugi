@@ -2,6 +2,78 @@ import { useState } from 'react'
 import { useGame } from '../core/store'
 import { hasSave } from '../core/save'
 
+// タイトル背景 — 常夜の御山と大燈籠(SVG一枚絵)
+function TitleArt() {
+  const stars = Array.from({ length: 46 }, (_, i) => ({
+    x: (i * 191.3) % 1200,
+    y: (i * 73.7) % 420,
+    r: 0.6 + (i % 4) * 0.5,
+    o: 0.25 + (i % 5) * 0.14,
+  }))
+  return (
+    <svg className="title-art" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMax slice" aria-hidden>
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0a0e1d" />
+          <stop offset="62%" stopColor="#131c38" />
+          <stop offset="100%" stopColor="#1d1630" />
+        </linearGradient>
+        <radialGradient id="peakDark" cx="50%" cy="30%" r="60%">
+          <stop offset="0%" stopColor="#2a2140" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#2a2140" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="lampGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffd98a" stopOpacity="0.95" />
+          <stop offset="45%" stopColor="#e8a33d" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#e8a33d" stopOpacity="0" />
+        </radialGradient>
+        <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="6" />
+        </filter>
+      </defs>
+
+      <rect width="1200" height="800" fill="url(#sky)" />
+      {stars.map((s, i) => (
+        <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#e9debe" opacity={s.o} />
+      ))}
+
+      {/* 玄冬 — 山頂に座す暗い月輪 */}
+      <circle cx="600" cy="190" r="120" fill="url(#peakDark)" />
+      <circle cx="600" cy="190" r="64" fill="#0d0a18" stroke="#4a3d6b" strokeWidth="1.5" opacity="0.9" />
+      <circle cx="600" cy="190" r="72" fill="none" stroke="#6b5a96" strokeWidth="0.8" opacity="0.5" />
+
+      {/* 灯ノ御山 */}
+      <path d="M0 800 L280 420 L420 560 L600 240 L780 540 L930 400 L1200 800 Z" fill="#0e1224" />
+      <path d="M0 800 L280 420 L420 560 L600 240 L780 540 L930 400 L1200 800 Z" fill="#141a33" opacity="0.5" transform="translate(0 60)" />
+
+      {/* 夜藪の霞 */}
+      <ellipse cx="300" cy="640" rx="380" ry="60" fill="#1d2547" opacity="0.5" filter="url(#soft)" />
+      <ellipse cx="900" cy="670" rx="420" ry="70" fill="#191231" opacity="0.55" filter="url(#soft)" />
+
+      {/* 郷のシルエット */}
+      <g fill="#080b16">
+        <path d="M80 800 v-56 l34 -22 l34 22 v56 Z" />
+        <path d="M200 800 v-44 l28 -18 l28 18 v44 Z" />
+        <path d="M950 800 v-50 l30 -20 l30 20 v50 Z" />
+        <path d="M1060 800 v-40 l26 -16 l26 16 v40 Z" />
+      </g>
+
+      {/* 大燈籠 */}
+      <ellipse cx="600" cy="662" rx="150" ry="120" fill="url(#lampGlow)" />
+      <g>
+        <rect x="588" y="560" width="24" height="10" fill="#5c4a2a" />
+        <path d="M574 570 h52 l8 18 h-68 Z" fill="#3c2f1a" />
+        <rect x="576" y="588" width="48" height="74" rx="8" fill="#c98a2d" opacity="0.92" />
+        <rect x="576" y="588" width="48" height="74" rx="8" fill="none" stroke="#5c4a2a" strokeWidth="2" />
+        <line x1="600" y1="588" x2="600" y2="662" stroke="#5c4a2a" strokeWidth="1.6" opacity="0.8" />
+        <line x1="576" y1="625" x2="624" y2="625" stroke="#5c4a2a" strokeWidth="1.6" opacity="0.8" />
+        <path d="M568 662 h64 l-6 14 h-52 Z" fill="#3c2f1a" />
+        <ellipse cx="600" cy="622" rx="10" ry="16" fill="#fff3d6" filter="url(#soft)" />
+      </g>
+    </svg>
+  )
+}
+
 export function TitleScreen() {
   const newGame = useGame((s) => s.newGame)
   const continueGame = useGame((s) => s.continueGame)
@@ -10,6 +82,7 @@ export function TitleScreen() {
 
   return (
     <div className="screen title-screen">
+      <TitleArt />
       <div className="embers" aria-hidden>
         {Array.from({ length: 14 }, (_, i) => (
           <span key={i} className="ember" style={{ left: `${(i * 7.3) % 100}%`, animationDelay: `${i * 0.9}s` }} />

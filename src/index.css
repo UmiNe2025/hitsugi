@@ -113,7 +113,15 @@ button {
   justify-content: center;
   text-align: center;
   overflow: hidden;
+  max-width: none;
 }
+.title-art {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  opacity: 0.85;
+}
+.title-main, .title-menu { position: relative; z-index: 2; }
 .game-title {
   font-size: clamp(64px, 16vw, 130px);
   font-weight: 800;
