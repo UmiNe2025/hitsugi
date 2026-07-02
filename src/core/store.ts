@@ -932,6 +932,54 @@ export const useGame = create<GameStore>((set, get) => {
           return { ...c, hp: Math.max(battle.phase === 'won' || battle.phase === 'fled' ? 1 : 0, cb.hp), mp: cb.mp }
         })
         if (battle.phase === 'won') {
+          // 玄冬撃破 → 面が割れ、家祖・汐里との最終戦(二段目)へ
+          if (battle.enemies.some((e) => e.enemyId === 'boss_gentou') && !d.flags.shioriPhase) {
+            const healed = battle.allies.map((a) => ({
+              ...a,
+              hp: Math.max(a.hp, Math.round(a.maxHp * 0.45)),
+              mp: Math.min(a.maxMp, a.mp + 25),
+              guard: false,
+              buffs: {},
+            }))
+            const shioriDef = enemyById('boss_shiori')
+            const easeS = d.narrativeMode ? 0.78 : 1
+            const battle2 = startBattle(healed, [combatantFromEnemy(
+              { ...shioriDef, atk: Math.round(shioriDef.atk * easeS), hp: Math.round(shioriDef.hp * easeS) },
+              0,
+            )])
+            battle2.log = [
+              { text: '玄冬の面が、割れて落ちる——', kind: 'info' },
+              { text: '現れたのは、楽士の面影。千年、独りで星喰いを封じ続けた家祖・汐里。', kind: 'info' },
+              { text: '「……ああ、来てくれたのね。私の、遠い遠い子どもたち」', kind: 'info' },
+              { text: '汐里は楽を構えた。千年の最後の演目——看取ってやれ!', kind: 'info' },
+            ]
+            set({
+              data: { ...d, family, flags: { ...d.flags, shioriPhase: true } },
+              battle: battle2,
+              battleLogQueue: [...battle2.log],
+            })
+            return
+          }
+          // 汐里を看取った — 千年の夜が明ける
+          if (battle.enemies.some((e) => e.enemyId === 'boss_shiori')) {
+            let nd: GameData = {
+              ...d,
+              family,
+              regionsCleared: [...new Set([...d.regionsCleared, run.regionId])],
+              flags: { ...d.flags, cleared: true },
+            }
+            nd = chronicle(nd, 'era', '灯ノ御山の頂にて、家祖・汐里を看取る。千年の常夜、ここに明ける。')
+            set({
+              data: nd,
+              battle: null,
+              battleSource: 'node',
+              dungeonRun: null,
+              pendingScenes: [],
+              screen: { id: 'ending' },
+            })
+            saveGame(get().data!)
+            return
+          }
           const defs = battle.enemies
             .map((e) => (e.enemyId ? enemyById(e.enemyId) : null))
             .filter((x): x is NonNullable<typeof x> => !!x)

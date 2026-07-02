@@ -3,7 +3,7 @@ import { useGame } from '../core/store'
 import { audio } from '../core/audio'
 import { STAT_LABELS } from '../core/types'
 import type { StatKey } from '../core/types'
-import { godById } from '../core/data/gods'
+import { godById, MOURNING } from '../core/data/gods'
 import { personalityById } from '../core/data/personalities'
 import { TOMOSHIGATA, tozaOf } from '../core/data/toza'
 import type { Tomoshigata } from '../core/types'
@@ -79,6 +79,14 @@ export function DeathScene({ charId }: { charId: string }) {
           </p>
         )}
         <div className="scene-epitaph">「{char.epitaph}」</div>
+        {MOURNING[char.godParentId] && (
+          <div style={{ margin: '4px 0 16px', padding: '10px 14px', borderLeft: '3px solid var(--el-star)', textAlign: 'left' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 4 }}>
+              星より、文が届いている — {godById(char.godParentId).name}
+            </p>
+            <p style={{ fontSize: 14, color: 'var(--el-star)' }}>{MOURNING[char.godParentId]}</p>
+          </div>
+        )}
         <p style={{ fontSize: 14, color: 'var(--text-dim)' }}>
           綴「……よう生きた。あんたの八季、確かに書き留めたぞ」
         </p>
