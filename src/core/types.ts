@@ -231,6 +231,7 @@ export type Screen =
   | { id: 'battle' }
   | { id: 'chronicle' }
   | { id: 'death'; charId: string }
+  | { id: 'dream' } // 夢渡り — 汐里との邂逅
   | { id: 'ending' }
 
 // ---- ゲーム全体状態 ----

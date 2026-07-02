@@ -86,6 +86,44 @@ export function DeathScene({ charId }: { charId: string }) {
   )
 }
 
+const DREAM_BEATS = [
+  '……唄が、聴こえる。',
+  '夢の中。見知らぬ山の頂に、楽士がひとり座っている。黒い月を背に、琵琶を抱いて。',
+  '「あら。夢を渡って来たのね。……血は争えないわ」',
+  '彼女の顔は、家譜の最初の頁に描かれた似姿と同じだった。千年前の家祖——汐里。',
+  '「名乗らなくていいの。あなたたちの名は、全部、風に聞いてる。産声も、辞世も、ぜんぶ」',
+  '「山頂で待ってるわ。……ああ、でも、急がないで」',
+  '「あなたたちの季節は短いのだから。道草も、お食べなさい。祭も、恋も、昼寝もね」',
+  '「それでいつか、ここへ届いたら——そのときは」',
+  '唄が途切れた。彼女は少しだけ笑って、囁いた。「……看取って、ちょうだいね」',
+  '目が覚める。頬に涙の痕。綴は何も聞かず、黙って墨を磨っていた。',
+]
+
+export function DreamScene() {
+  const processNextScene = useGame((s) => s.processNextScene)
+  const [beat, setBeat] = useState(0)
+  const done = beat >= DREAM_BEATS.length - 1
+  return (
+    <div className="scene-screen screen" onClick={() => !done && setBeat(beat + 1)}>
+      <h1 className="scene-title">夢渡り</h1>
+      <div className="scene-body">
+        {DREAM_BEATS.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (
+          <p key={beat - arr.length + i} className={i === arr.length - 1 ? 'intro-current' : 'intro-past'}>
+            {t}
+          </p>
+        ))}
+      </div>
+      {done ? (
+        <button className="btn btn-main" onClick={processNextScene}>
+          目を覚ます
+        </button>
+      ) : (
+        <div className="intro-hint">クリックで進む</div>
+      )}
+    </div>
+  )
+}
+
 const ENDING_CLEARED = [
   '御山の頂。玄冬の面が、割れて落ちる。',
   '現れたのは — 楽士の面影。千年、独りで星喰いを封じ続けた家祖、汐里。',

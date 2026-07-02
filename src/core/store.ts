@@ -24,7 +24,10 @@ import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
-type PendingScene = { kind: 'birth'; charId: string } | { kind: 'death'; charId: string }
+type PendingScene =
+  | { kind: 'birth'; charId: string }
+  | { kind: 'death'; charId: string }
+  | { kind: 'dream' }
 
 interface GameStore {
   screen: Screen
@@ -162,6 +165,13 @@ export const useGame = create<GameStore>((set, get) => {
     // 郷の営み — 郷人たちが大燈籠に捧げる奉燈(討伐が進むほど郷が潤う)
     d = { ...d, hoto: d.hoto + 8 + d.regionsCleared.length * 6 }
 
+    // 夢渡り — 星骸の谷を制した夜、当主の夢に家祖が現れる
+    if (d.regionsCleared.includes('hoshimukuro_tani') && !d.flags.dreamSeen) {
+      d = { ...d, flags: { ...d.flags, dreamSeen: true } }
+      d = chronicle(d, 'event', '当主、不思議な夢を見る。目覚めた頬に、涙の痕。')
+      scenes.push({ kind: 'dream' })
+    }
+
     // 血脈断絶チェック
     const extinct = !d.family.some((c) => c.alive) && d.pendingBirths.length === 0
     d = { ...d, seed: rng.state() }
@@ -266,7 +276,12 @@ export const useGame = create<GameStore>((set, get) => {
       const [next, ...rest] = scenes
       set({
         pendingScenes: rest,
-        screen: next.kind === 'birth' ? { id: 'birth', charId: next.charId } : { id: 'death', charId: next.charId },
+        screen:
+          next.kind === 'birth'
+            ? { id: 'birth', charId: next.charId }
+            : next.kind === 'death'
+              ? { id: 'death', charId: next.charId }
+              : { id: 'dream' },
       })
     },
 
