@@ -33,6 +33,20 @@ export const SKILLS: Skill[] = [
   { id: 'g_kamifubuki', name: '紙吹雪の帳', type: 'debuff', target: 'enemies', power: 35, mpCost: 11, inheritable: true, desc: '紙魚姫の奥義。千の紙片が敵の目を眩ます。' },
   { id: 'g_hokushin', name: '北辰一閃', type: 'attack', target: 'enemy', element: 'star', power: 320, mpCost: 20, inheritable: true, desc: '北辰老の奥義。北極星より真っ直ぐな究極の一太刀。' },
 
+  // ---- 星神奥義(第二陣・13〜24柱) ----
+  { id: 'g_minomushi', name: '蓑籠り', type: 'buff', target: 'allies', power: 40, mpCost: 11, inheritable: true, desc: '蓑虫親父の奥義。蓑の中は嵐も届かぬ安全地帯。' },
+  { id: 'g_kaiyose', name: '貝寄せの唄', type: 'heal', target: 'allies', power: 95, mpCost: 13, inheritable: true, desc: '貝寄せ乙女の奥義。浜の貝が集まるように、散った気力が戻る。' },
+  { id: 'g_kagebousi', name: '影法師写し', type: 'attack', target: 'enemy', element: 'moon', power: 200, mpCost: 12, inheritable: true, desc: '影法師の奥義。敵の影を斬れば本体も斬れている。' },
+  { id: 'g_kazaguruma', name: '八ツ羽根回し', type: 'attack', target: 'enemies', element: 'wind', power: 130, mpCost: 13, inheritable: true, desc: '風車翁の奥義。八枚羽根の大風車が敵陣を巻き上げる。' },
+  { id: 'g_yuya', name: '湯玉千枚', type: 'attack', target: 'enemies', element: 'water', power: 135, mpCost: 14, inheritable: true, desc: '湯屋女将の奥義。煮えた湯玉の千本散らし。湯加減は地獄。' },
+  { id: 'g_suzuriumi', name: '墨海の帳', type: 'debuff', target: 'enemies', power: 38, mpCost: 12, inheritable: true, desc: '硯海姫の奥義。墨の海が敵の目と力を奪う。' },
+  { id: 'g_kodama', name: '木霊千唱', type: 'heal', target: 'ally', power: 280, mpCost: 14, inheritable: true, desc: '木霊童子の奥義。千の木霊が快癒の言葉を繰り返す。' },
+  { id: 'g_hanabi', name: '大輪牡丹', type: 'attack', target: 'enemies', element: 'fire', power: 155, mpCost: 16, inheritable: true, desc: '花火師寅次の奥義。夜空に咲く大輪は、敵陣の真上で開く。' },
+  { id: 'g_shigure', name: '時雨百針', type: 'attack', target: 'enemy', element: 'water', power: 235, mpCost: 14, inheritable: true, desc: '時雨紫の奥義。百粒の時雨が全て針となって一点に降る。' },
+  { id: 'g_noroshi', name: '狼煙立て', type: 'buff', target: 'allies', power: 38, mpCost: 12, inheritable: true, desc: '狼煙彦の奥義。天を衝く狼煙が一族の血を沸かせる。攻撃上昇。' },
+  { id: 'g_hoshikaji', name: '星鉄鍛ち', type: 'attack', target: 'enemy', element: 'star', power: 260, mpCost: 17, inheritable: true, desc: '星鍛冶翁の奥義。鍛ちたての星鉄は、どんな鎧より硬いものを断つ。' },
+  { id: 'g_byakuya', name: '白夜の御来光', type: 'attack', target: 'enemies', element: 'star', power: 145, mpCost: 15, inheritable: true, desc: '白夜巫女の奥義。常夜に一瞬だけ届く、遠い国の朝の光。' },
+
   // ---- 敵専用 ----
   { id: 'e_kurayami', name: '闇纏い', type: 'attack', target: 'enemy', element: 'moon', power: 120, mpCost: 0, inheritable: false, desc: '' },
   { id: 'e_hisui', name: '灯吸い', type: 'attack', target: 'enemy', element: 'moon', power: 150, mpCost: 0, inheritable: false, desc: '' },

@@ -371,6 +371,7 @@ export const useGame = create<GameStore>((set, get) => {
 
     doPact: (parentId, godId) => {
       const god = godById(godId)
+      if ((get().data?.hoto ?? 0) < god.cost) return // 奉燈不足なら月も進めない
       mutate((d) => {
         if (d.hoto < god.cost) return d
         let nd: GameData = {

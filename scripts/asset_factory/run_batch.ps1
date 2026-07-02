@@ -58,9 +58,11 @@ for ($s = 0; $s -lt $MaxSessions; $s++) {
   ) + $lines -join "`n"
 
   $log = Join-Path $env:TEMP "factory_s$s.log"
+  $promptFile = Join-Path $env:TEMP "factory_prompt_$s.txt"
+  Set-Content -Path $promptFile -Value $prompt -Encoding utf8
   Write-Output "FACTORY: session $s starting ($($todo.Count) images)"
-  # stdinを閉じるのが肝(閉じないとcodexは永久待機する)
-  cmd /c "codex exec --skip-git-repo-check --full-auto -C `"$root`" `"$($prompt -replace '"','\"')`" < NUL > `"$log`" 2>&1"
+  # プロンプトはstdinパイプで渡す(複数行対応+パイプEOFでstdinが閉じ、codexの永久待機を防ぐ)
+  Get-Content $promptFile -Raw | codex exec --skip-git-repo-check --sandbox workspace-write -C "$root" - *> $log
 
   # DONE行と生成フォルダの照合コピー(codexが直接保存していない場合の保険)
   $doneNames = Select-String -Path $log -Pattern 'DONE: ([a-z0-9_]+\.png)' -AllMatches |
