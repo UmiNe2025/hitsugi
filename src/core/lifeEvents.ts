@@ -106,6 +106,66 @@ export function kizunaScene(a: Character, b: Character, rng: Rng): LifeScenePayl
       { speaker: a.name, text: 'お前は優しすぎる。夜藪では、その一瞬の迷いが命取りだ。' },
       { speaker: b.name, text: 'あなたは強すぎる。だからその傷、私が手当てするまで動かないの。' },
     ],
+    'brave+wild': [
+      { speaker: a.name, text: '先陣は私。これは決定事項。' },
+      { speaker: b.name, text: 'じゃあ俺は敵の真ん中に飛び込む係な! 先陣より前だけどな!' },
+      { speaker: '綴', text: '「……この二人の代の家譜は、墨の減りが早くて敵わん」' },
+    ],
+    'brave+cool': [
+      { speaker: b.name, text: '突撃の前に三つ数えて。それだけで生存率が上がる。' },
+      { speaker: a.name, text: '三つも待てるか。……一つでどうだ。' },
+      { speaker: b.name, text: '交渉成立。一つ数えて、私が二つ目を数え終わる前に敵は終わってるでしょ。' },
+    ],
+    'easy+wild': [
+      { speaker: b.name, text: 'なあ! 明日、夜藪の一番深いとこまで競争しようぜ!' },
+      { speaker: a.name, text: 'ええで。ほな、わいは昼寝で先に夢ん中で行っとくわ。' },
+      { speaker: b.name, text: 'ずるいなそれ! ……で、夢の夜藪はどうだった?' },
+    ],
+    'easy+lonely': [
+      { speaker: b.name, text: '……隣、いい?' },
+      { speaker: a.name, text: 'ん。ここの縁側は二人分あったかいから、得やで。' },
+      { speaker: '', text: 'それきり会話はなかったが、どちらも長いことそこにいた。' },
+    ],
+    'cool+wild': [
+      { speaker: a.name, text: 'あなたの無茶を計算に入れると、作戦の成功率が下がるの。' },
+      { speaker: b.name, text: 'でも俺込みの方が楽しいだろ?' },
+      { speaker: a.name, text: '…………楽しさは作戦の要素ではない。(否定はしなかった)' },
+    ],
+    'cool+rival': [
+      { speaker: b.name, text: 'あなたの討伐記録、今月中に抜くから。' },
+      { speaker: a.name, text: '無理ね。数字は嘘をつかない。' },
+      { speaker: b.name, text: '数字は抜かれるためにあるの! 見てなさい!' },
+    ],
+    'kind+lonely': [
+      { speaker: a.name, text: '寒くない? 綿入れ、もう一枚持ってくる?' },
+      { speaker: b.name, text: 'ううん。……その「寒くない?」だけで、もうあったかい。' },
+    ],
+    'kind+rival': [
+      { speaker: b.name, text: '今日も討伐数で負けた……なんであなたはそんなに強いの。' },
+      { speaker: a.name, text: '守りたい背中の数だけ、強くなれるのよ。あなたの背中も入ってる。' },
+    ],
+    'kind+timid': [
+      { speaker: b.name, text: '(小声)夜藪、また行くんだよね。……こわいなあ。' },
+      { speaker: a.name, text: '怖いね。でも大丈夫、私の袖を掴んでいていいから。両手が塞がってても、祈りはできるの。' },
+    ],
+    'rival+wild': [
+      { speaker: a.name, text: '勝負よ。どっちが多く魔性を狩れるか。' },
+      { speaker: b.name, text: 'のった! 負けた方が今夜の飯当番な!' },
+      { speaker: '', text: 'その夜、二人分の飯を作ったのは、結局呆れた当主だった。' },
+    ],
+    'lonely+timid': [
+      { speaker: a.name, text: '……あなたがいてくれて、よかった。私一人だったら、とっくに。' },
+      { speaker: b.name, text: 'わ、私も。……ふたりなら、こわさも半分こ、だね。' },
+    ],
+    'lonely+rival': [
+      { speaker: b.name, text: '私が記録を作るのはね、家譜に残るためよ。残れば……独りじゃないもの。' },
+      { speaker: a.name, text: '……知ってた。だから私、あなたの記録を毎晩読んでるの。' },
+    ],
+    'brave+easy': [
+      { speaker: a.name, text: '起きろ! 鍛錬の刻だ!' },
+      { speaker: b.name, text: 'ん〜……夢ん中で千本素振りしといたから、貸し借りなしや……。' },
+      { speaker: '', text: '翌朝、寝ぼけたまま振った一太刀が妙に冴えていて、皆が静かになった。' },
+    ],
   }
 
   const generic: LifeLine[] = [

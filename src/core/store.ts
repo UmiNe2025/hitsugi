@@ -759,24 +759,30 @@ export const useGame = create<GameStore>((set, get) => {
       const ease = d.narrativeMode ? 0.78 : 1
       const dark = run.light <= 0
       const enemyIds = boss
-        ? ['kubinashi_andon'] // R1: 宵の森の主(仮)。R4で各ダンジョン固有ボスへ
+        ? [region.bossId ?? 'kubinashi_andon'] // 地域の主(未設定地域は首無し行灯が主代わり)
         : pickEnemies(region, 'battle', run.floor + 2, rng)
       const party = d.family
         .filter((c) => run.partyIds.includes(c.id) && c.alive && c.hp > 0)
         .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
+      // 主が未設定の地域はエリート級を主に見立てて強化する。真の主(tier5)は素の強さで十分
+      const standInBoss = boss && !region.bossId
       const enemies = enemyIds.map((id, i) => {
         const def = enemyById(id)
         return combatantFromEnemy(
           {
             ...def,
-            atk: Math.round(def.atk * ease * (dark ? 1.4 : 1) * (boss ? 1.5 : 1)),
-            hp: Math.round(def.hp * ease * (dark ? 1.2 : 1) * (boss ? 2.2 : 1)),
+            atk: Math.round(def.atk * ease * (dark ? 1.4 : 1) * (standInBoss ? 1.5 : 1)),
+            hp: Math.round(def.hp * ease * (dark ? 1.2 : 1) * (standInBoss ? 2.2 : 1)),
           },
           i,
         )
       })
       const battle = startBattle(party, enemies)
-      if (boss) battle.log.unshift({ text: 'この森の闇が、ひとつに凝った——宵の森の主だ!', kind: 'info' })
+      if (boss) {
+        const bossDef = enemyById(enemyIds[0])
+        battle.log.unshift({ text: `この地の闇が、ひとつに凝った——${region.name}の主だ!`, kind: 'info' })
+        battle.log.unshift({ text: bossDef.desc, kind: 'info' })
+      }
       if (dark) battle.log.push({ text: '灯は尽きた。常夜の重圧が魔性を狂わせている……!', kind: 'info' })
       set({
         battle,
