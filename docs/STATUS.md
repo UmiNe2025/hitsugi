@@ -14,13 +14,12 @@
 - UX: 手引き・操作音・モバイル対応・オートセーブ・家譜画像共有・OGP画像
 - マーケ: `docs/MARKETING.md`(ポジショニング、X/itch.io/ポータル施策、告知文面コピペ可、KPI)
 
-## 進行中/保留
+## アート(M3) — ✅ 完了
 
-- **codex画像生成(M3)**: ✅ 解決済み! 原因は stdin 待ち(`codex exec ... </dev/null` で即応答)。
-  - タイトルキービジュアル生成・組込済み(和風水彩+切り絵、期待以上の品質)
-  - 星神12柱・ボス・背景の全19枚バッチを実行中(`assets_src/codex_image_batch.md`)
-  - UI側の受け皿は実装済み(画像が無ければ従来表示に自動フォールバック)
-  - 生成後は `pwsh scripts/compress-images.ps1` でweb最適化(png→jpg、原本はgit外へ)
+- codex execハングの原因はstdin待ちと特定(`</dev/null`で解決、詳細はメモリ参照)
+- **全19枚生成・検証・組込完了**: タイトルキービジュアル / 星神12柱立ち絵(星契り画面) / ボス2体(戦闘) / 地域背景4種(探索)
+- 統一画風: 和風水彩+切り絵。web最適化済み(計~2.8MB、原本はassets_src/orig/でgit外)
+- 再生成したい場合: `assets_src/codex_image_batch.md` + `scripts/compress-images.ps1`
 
 ## ユーザーの認証が必要な残作業(帰還後にどうぞ)
 
