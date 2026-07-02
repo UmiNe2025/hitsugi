@@ -3,6 +3,7 @@ import { ELEMENT_ADVANTAGE } from './types'
 import { Rng, uid } from './rng'
 import { skillById } from './data/skills'
 import { personalityById } from './data/personalities'
+import { voiceFor } from './data/voices'
 import { tomoshigataById } from './data/toza'
 import { jobById } from './data/jobs'
 
@@ -35,6 +36,8 @@ export function combatantFromChar(c: Character, row: 'front' | 'back'): Combatan
     guard: false,
     buffs: {},
     chainCount: 0,
+    personalityId: c.personalityId,
+    weaponLegacy: c.equipment.weapon?.legacyOf,
   }
 }
 
@@ -124,6 +127,14 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
   const push = (text: string, kind: BattleLogEntry['kind'] = 'info', meta?: Partial<BattleLogEntry>) =>
     entries.push({ text, kind, ...meta })
 
+  // v3.1 M15-1: 文脈台詞(吹き出し) — 間が大事なので確率制御
+  const speak = (c: Combatant, ctx: Parameters<typeof voiceFor>[1], p: number) => {
+    if (!c.isAlly || !c.personalityId || !rng.chance(p)) return
+    const legacy = ctx === 'memento' ? c.weaponLegacy : undefined
+    const line = voiceFor(c.personalityId, ctx, rng, { legacy })
+    if (line) push(line, 'voice', { actorKey: c.key })
+  }
+
   const updateCombatant = (key: string, fn: (c: Combatant) => Combatant): void => {
     st = {
       ...st,
@@ -140,7 +151,7 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
       // 浮き足立った雑兵の逃走(M12-4) — その個体だけ戦場から消える
       updateCombatant(actorKey, (c) => ({ ...c, hp: 0 }))
       push(`${actor.name}は算を乱して逃げ散った!`, 'info', { actorKey: actor.key })
-      return endOfAction(st, entries)
+      return endOfAction(st, entries, rng)
     }
     const allyAgi = avg(st.allies.filter((c) => c.hp > 0).map((c) => c.agi))
     const enAgi = avg(st.enemies.filter((c) => c.hp > 0).map((c) => c.agi))
@@ -156,7 +167,7 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
     const skill = action.type === 'skill' && action.skillId ? skillById(action.skillId) : undefined
     if (skill && actor.mp < skill.mpCost) {
       push(`${actor.name}は灯力が足りない!`)
-      return endOfAction(st, entries)
+      return endOfAction(st, entries, rng)
     }
     if (skill) updateCombatant(actorKey, (c) => ({ ...c, mp: c.mp - skill.mpCost }))
 
@@ -164,6 +175,9 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
     const friends = actor.isAlly ? st.allies : st.enemies
 
     if (!skill || skill.type === 'attack') {
+      // 攻撃前のひと声(形見の得物なら故人へ) — M15-1
+      if (actor.weaponLegacy) speak(actor, 'memento', 0.3)
+      else speak(actor, 'attack', 0.22)
       // 対象決定
       const power = skill?.power ?? 100
       const el = skill?.element ?? actor.element
@@ -198,6 +212,7 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         const crit = rng.chance(Math.min(0.25, critP + 0.04))
         if (crit) dmg *= 1.6
         const final = Math.max(1, Math.round(dmg))
+        const beforeHp = t.hp
         updateCombatant(t.key, (c) => ({ ...c, hp: Math.max(0, c.hp - final) }))
         const em = elementMult(el, t.element)
         push(
@@ -206,6 +221,12 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
           { actorKey: actor.key, targetKey: t.key, amount: final, element: el, crit, weak: em > 1 },
         )
         const after = findCombatant(st, t.key)
+        // 被弾側のひと声: 危機(3割を初めて割る)は必ず、通常被弾は稀に — M15-1
+        if (after && after.isAlly && after.hp > 0) {
+          const crisisLine = beforeHp > t.maxHp * 0.3 && after.hp <= t.maxHp * 0.3
+          if (crisisLine) speak(after, 'crisis', 0.9)
+          else speak(after, 'hurt', 0.12)
+        }
         if (after && after.hp <= 0) {
           push(`${t.name}は闇に還った。`, 'ko', { targetKey: t.key })
           if (st.chainTarget === t.key) st = { ...st, chain: 0, chainTarget: undefined }
@@ -226,6 +247,7 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         if (actor.isAlly && actor.kinKeys && t2 && t2.hp > 0 && targets.length === 1 && rng.chance(0.18)) {
           const kin = st.allies.find((a) => a.hp > 0 && actor.kinKeys!.includes(a.key))
           if (kin) {
+            speak(kin, 'kin', 0.8)
             const kdmg = Math.max(1, Math.round(kin.atk * 0.55 * (0.9 + rng.next() * 0.2) - t2.def * 0.45))
             updateCombatant(t2.key, (c) => ({ ...c, hp: Math.max(0, c.hp - kdmg) }))
             push(`血の呼応! ${kin.name}が続けて斬り込む — ${t2.name}に${kdmg}のダメージ`, 'chain', {
@@ -273,14 +295,23 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
     }
   }
 
-  return endOfAction(st, entries)
+  return endOfAction(st, entries, rng)
 }
 
-function endOfAction(st0: BattleState, entries: BattleLogEntry[]): ActionResult {
+function endOfAction(st0: BattleState, entries: BattleLogEntry[], rng?: Rng): ActionResult {
   let st = st0
   // 勝敗判定
   if (st.enemies.every((c) => c.hp <= 0)) {
     st = { ...st, phase: 'won' }
+    // 勝鬨のひと声(M15-1)
+    if (rng) {
+      const alive = st.allies.filter((c) => c.hp > 0 && c.personalityId)
+      if (alive.length > 0) {
+        const v = rng.pick(alive)
+        const line = voiceFor(v.personalityId!, 'victory', rng)
+        if (line) entries.push({ text: line, kind: 'voice', actorKey: v.key })
+      }
+    }
     entries.push({ text: '夜藪に、僅かな静けさが戻った。', kind: 'win' })
     return { state: st, entries }
   }
@@ -319,7 +350,7 @@ function endOfAction(st0: BattleState, entries: BattleLogEntry[]): ActionResult 
       idx++
     }
     if (idx >= order.length) {
-      return endOfAction({ ...st, orderIndex: order.length - 1 }, entries)
+      return endOfAction({ ...st, orderIndex: order.length - 1 }, entries, rng)
     }
   }
   return { state: { ...st, orderIndex: idx, turn, order }, entries }

@@ -212,6 +212,8 @@ export interface Combatant {
   buffs: { atkUp?: number; defUp?: number } // 残ターン数
   chainCount: number // 継足カウント(味方全体で敵ごと管理は battle 側)
   kinKeys?: string[] // v3.1 M12-7: 連携奥義の血縁(兄妹/親子)にあたる味方key
+  personalityId?: string // v3.1 M15-1: 戦闘台詞の性根
+  weaponLegacy?: string // v3.1 M15-1: 形見の得物の故人名(台詞用)
 }
 
 export interface BattleState {
