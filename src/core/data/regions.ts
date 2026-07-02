@@ -9,8 +9,18 @@ export const REGIONS: Region[] = [
     bg: 'bg_forest.png',
   },
   {
+    id: 'nureen_no_tsuji', name: '濡れ縁の辻', tier: 1, depth: 6, unlockFame: 8, bossId: 'boss_nureonna',
+    desc: '雨も降らぬのに、いつも湿っている辻。踏み込むと、静かに水音がついてくる。',
+    bg: 'bg_forest.png',
+  },
+  {
     id: 'karasu_no_sato', name: '烏の里', tier: 1, depth: 6, unlockFame: 15, bossId: 'boss_karasumaru',
     desc: '烏天狗の眷属が巣食う里。里といっても、もう人は住んでいない。',
+    bg: 'bg_forest.png',
+  },
+  {
+    id: 'tourou_kuzure_michi', name: '灯篭崩れ道', tier: 1, depth: 6, unlockFame: 22, bossId: 'boss_touroumori',
+    desc: '崩れた灯篭が延々と続く道。誰も灯していないのに、火だけは絶えない。',
     bg: 'bg_forest.png',
   },
   {
@@ -19,8 +29,18 @@ export const REGIONS: Region[] = [
     bg: 'bg_forest.png',
   },
   {
+    id: 'karita_no_bourei', name: '苅田の亡霊', tier: 1, depth: 6, unlockFame: 38, bossId: 'boss_kakashimusha',
+    desc: '刈り取られたはずの田が、夜ごと稲穂を揺らす。誰も耕していないというのに。',
+    bg: 'bg_forest.png',
+  },
+  {
     id: 'yaregasa_douhyou', name: '破れ傘の道標', tier: 1, depth: 6, unlockFame: 45, bossId: 'boss_karakasababa',
     desc: '朽ちた傘が道しるべのように連なる山道。数えるたび本数が違うという。',
+    bg: 'bg_forest.png',
+  },
+  {
+    id: 'minomushi_no_kairou', name: '蓑虫の廻廊', tier: 1, depth: 6, unlockFame: 52, bossId: 'boss_minomushinushi',
+    desc: '無数の蓑虫が垂れ下がる回廊。風もないのに、絶えず小さく揺れている。',
     bg: 'bg_forest.png',
   },
   {
