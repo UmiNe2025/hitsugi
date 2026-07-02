@@ -1,4 +1,4 @@
-import { Application, Container, Graphics } from 'pixi.js'
+import { Application, Container, Graphics, Sprite, Texture, Assets } from 'pixi.js'
 import type { FloorDef, TileKind } from './types'
 import { TILE_CHARS, isWalkable } from './types'
 
@@ -37,7 +37,11 @@ export class DungeonEngine {
   private world = new Container()
   private grid: TileKind[][] = []
   private tileMarks = new Map<string, Graphics>()
-  private player!: Graphics
+  private player!: Container
+  private playerSprite: Sprite | null = null
+  private walkTex: Record<string, Texture[]> = {}
+  private facing = 'down'
+  private animT = 0
   private shades: Shade[] = []
   private px = 1
   private py = 1
@@ -141,10 +145,29 @@ export class DungeonEngine {
       }
     }
 
-    // プレイヤー(仮スプライト: 灯を掲げる印)
-    this.player = new Graphics()
-    this.player.circle(TILE / 2, TILE / 2, 10).fill(0xefe6d4)
-    this.player.circle(TILE / 2, TILE / 2 - 2, 4).fill(0xff9d45)
+    // プレイヤー — 切り絵シルエット歩行スプライト(読めなければ灯印で代替)
+    this.player = new Container()
+    try {
+      const base = import.meta.env.BASE_URL
+      for (const dir of ['down', 'up', 'left', 'right']) {
+        this.walkTex[dir] = await Promise.all(
+          [0, 1, 2].map((i) => Assets.load<Texture>(`${base}img/sprites/walk_${dir}_${i}.png`)),
+        )
+      }
+      const sp = new Sprite(this.walkTex.down[1])
+      sp.anchor.set(0.5, 0.78)
+      sp.height = TILE * 1.6
+      sp.scale.x = sp.scale.y
+      sp.x = TILE / 2
+      sp.y = TILE * 0.9
+      this.playerSprite = sp
+      this.player.addChild(sp)
+    } catch {
+      const g = new Graphics()
+      g.circle(TILE / 2, TILE / 2, 10).fill(0xefe6d4)
+      g.circle(TILE / 2, TILE / 2 - 2, 4).fill(0xff9d45)
+      this.player.addChild(g)
+    }
     this.world.addChild(this.player)
     this.player.x = this.px * TILE
     this.player.y = this.py * TILE
@@ -200,11 +223,19 @@ export class DungeonEngine {
       this.player.x = (this.moveFrom.x + (this.px - this.moveFrom.x) * t) * TILE
       this.player.y = (this.moveFrom.y + (this.py - this.moveFrom.y) * t) * TILE
       this.centerCamera()
+      // 歩行コマ送り(0-1-2-1のサイクル)
+      if (this.playerSprite && this.walkTex[this.facing]) {
+        this.animT += dms
+        const frame = [0, 1, 2, 1][Math.floor(this.animT / 130) % 4]
+        this.playerSprite.texture = this.walkTex[this.facing][frame]
+      }
       if (t >= 1) {
         this.moving = false
         this.moveFrom = null
         this.arrive(this.px, this.py)
       }
+    } else if (this.playerSprite && this.walkTex[this.facing]) {
+      this.playerSprite.texture = this.walkTex[this.facing][1]
     }
     // プレイヤー移動開始
     if (!this.moving && this.held.size > 0) {
@@ -255,6 +286,7 @@ export class DungeonEngine {
     const nx = this.px + dx
     const ny = this.py + dy
     if (!isWalkable(this.tileAt(nx, ny))) return
+    this.facing = dx > 0 ? 'right' : dx < 0 ? 'left' : dy < 0 ? 'up' : 'down'
     this.moveFrom = { x: this.px, y: this.py }
     this.moveT = 0
     this.moving = true
