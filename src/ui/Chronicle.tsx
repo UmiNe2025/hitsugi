@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useGame } from '../core/store'
 import { seasonLabel } from '../core/types'
 import { godById } from '../core/data/gods'
+import { downloadChronicleCard, copyShareText } from './shareCard'
 import { Panel } from './components'
 
 export function ChronicleScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
+  const [copied, setCopied] = useState(false)
   const fallen = data.family.filter((c) => !c.alive)
 
   return (
@@ -45,9 +48,24 @@ export function ChronicleScreen() {
         </div>
       </Panel>
 
-      <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
-        郷へ戻る
-      </button>
+      <div className="home-actions">
+        <button className="btn" onClick={() => downloadChronicleCard(data)}>
+          家譜を一枚絵に残す(画像保存)
+        </button>
+        <button
+          className="btn"
+          onClick={async () => {
+            const ok = await copyShareText(data)
+            setCopied(ok)
+            setTimeout(() => setCopied(false), 2000)
+          }}
+        >
+          {copied ? '写した!' : '語り草を写す(共有文コピー)'}
+        </button>
+        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
+          郷へ戻る
+        </button>
+      </div>
     </div>
   )
 }
