@@ -121,6 +121,18 @@ button {
   z-index: 0;
   opacity: 0.85;
 }
+.title-art-img {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  opacity: 0;
+  animation: artIn 1.6s ease 0.2s forwards;
+}
+@keyframes artIn {
+  to { opacity: 0.94; }
+}
+.embers { z-index: 2; }
 .title-main, .title-menu { position: relative; z-index: 2; }
 .game-title {
   font-size: clamp(64px, 16vw, 130px);

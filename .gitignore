@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 生成画像の原本(重いのでgit外)
+assets_src/orig/

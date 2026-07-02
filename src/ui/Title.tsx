@@ -82,6 +82,12 @@ export function TitleScreen() {
 
   return (
     <div className="screen title-screen">
+      <img
+        className="title-art-img"
+        src={`${import.meta.env.BASE_URL}img/title_key.jpg`}
+        alt=""
+        aria-hidden
+      />
       <TitleArt />
       <div className="embers" aria-hidden>
         {Array.from({ length: 14 }, (_, i) => (
