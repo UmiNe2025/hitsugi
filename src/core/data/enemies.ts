@@ -180,6 +180,10 @@ const BOSSES: EnemyDef[] = [
   { id: 'boss_suzuridama', name: '硯魂', element: 'moon', tier: 5, hp: 650, atk: 39, def: 26, agi: 12, skillIds: ['e_hisui'], hoto: 175, ketsu: 9, sprite: 'boss_suzuridama.png', desc: '硯石の坂に棲みつく硯の付喪神。刷った墨は全て、届かなかった文の言葉だという。' },
   { id: 'boss_rousokuoni', name: '蝋燭鬼', element: 'fire', tier: 5, hp: 700, atk: 44, def: 24, agi: 18, skillIds: ['e_hisui', 'e_kurayami'], hoto: 195, ketsu: 10, sprite: 'boss_rousokuoni.png', desc: '蝋燭河岸に居座る鬼。売れ残った蝋燭の魂が集まり、一つの意思を持つに至った。' },
   { id: 'boss_kagamibuchinushi', name: '鏡淵の主', element: 'moon', tier: 5, hp: 760, atk: 42, def: 30, agi: 14, skillIds: ['e_kurayami', 'e_yamiuta'], hoto: 215, ketsu: 11, sprite: 'boss_kagamibuchinushi.png', desc: '鏡のように澄んだ淵の主。水面に映る者の姿を写し取り、いつまでも淵の底に留め置く。' },
+  { id: 'boss_kageboushiosa', name: '影法師長', element: 'moon', tier: 5, hp: 790, atk: 48, def: 28, agi: 22, skillIds: ['e_kurayami'], hoto: 230, ketsu: 12, sprite: 'boss_kageboushiosa.png', desc: '影法師の丘に群れる影たちの長。日輪の落ちぬ夜でも、その輪郭だけは濃い黒を保っている。' },
+  { id: 'boss_kottounonushi', name: '骨董の主', element: 'earth', tier: 5, hp: 830, atk: 45, def: 36, agi: 10, skillIds: ['e_hisui'], hoto: 245, ketsu: 12, sprite: 'boss_kottounonushi.png', desc: '骨董坂に積み上がった品々の付喪神が寄り合って生まれた主。値のつかない品ほど、その力は濃い。' },
+  { id: 'boss_hyakkiyakousendatsu', name: '百鬼夜行の先達', element: 'wind', tier: 5, hp: 870, atk: 50, def: 32, agi: 24, skillIds: ['e_hoshikui', 'e_kurayami'], hoto: 260, ketsu: 13, sprite: 'boss_hyakkiyakousendatsu.png', desc: '百鬼夜行の辻で行列を先導する者。その後ろに続く鬼たちの数は、見る者の数だけ違うという。' },
+  { id: 'boss_tokoyaminobannin', name: '常闇の番人', element: 'moon', tier: 5, hp: 910, atk: 52, def: 38, agi: 16, skillIds: ['e_kurayami', 'e_yamiuta'], hoto: 280, ketsu: 14, sprite: 'boss_tokoyaminobannin.png', desc: '常闇の回廊の最奥に立つ番人。灯ノ御山へ至る道が近いことを、その重い佇まいだけで知らせてくる。' },
 ]
 
 // ---- 変異展開(GDD_v3) ----

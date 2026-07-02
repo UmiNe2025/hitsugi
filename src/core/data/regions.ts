@@ -89,13 +89,33 @@ export const REGIONS: Region[] = [
     bg: 'bg_tani.png',
   },
   {
+    id: 'kageboushi_no_oka', name: '影法師の丘', tier: 3, depth: 10, unlockFame: 240, bossId: 'boss_kageboushiosa',
+    desc: '無数の影だけが行き交う丘。持ち主のいない影が、風もないのに長く伸びる。',
+    bg: 'bg_tani.png',
+  },
+  {
     id: 'kaji_ato', name: '鍛地の跡', tier: 3, depth: 10, unlockFame: 260, bossId: 'boss_kajishinnou',
     desc: '常夜に沈んだ古い鍛冶場の廃墟。今も鎚の音が絶えないという。',
     bg: 'bg_tani.png',
   },
   {
+    id: 'kottou_zaka', name: '骨董坂', tier: 3, depth: 10, unlockFame: 290, bossId: 'boss_kottounonushi',
+    desc: '誰が並べたとも知れない古道具の坂。値札の文字はどれも、既に読めなくなっている。',
+    bg: 'bg_tani.png',
+  },
+  {
+    id: 'hyakki_yakou_no_tsuji', name: '百鬼夜行の辻', tier: 3, depth: 10, unlockFame: 320, bossId: 'boss_hyakkiyakousendatsu',
+    desc: '夜ごと行列が横切るという辻。数えようとすると、必ず数え間違える。',
+    bg: 'bg_tani.png',
+  },
+  {
     id: 'hakkotsu_bayashi', name: '白骨林', tier: 3, depth: 10, unlockFame: 350, bossId: 'boss_hakkotsu',
     desc: '古戦場の骨が根を張って林になったと伝わる森。風のない夜も、木々が鳴る。',
+    bg: 'bg_tani.png',
+  },
+  {
+    id: 'tokoyami_no_kairou', name: '常闇の回廊', tier: 3, depth: 10, unlockFame: 380, bossId: 'boss_tokoyaminobannin',
+    desc: '灯ノ御山への最後の回廊。ここまで来ると、灯りはもう頼りにならない。',
     bg: 'bg_tani.png',
   },
   {
