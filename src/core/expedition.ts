@@ -240,7 +240,8 @@ const CORE_EVENTS: EventDef[] = [
 import { EXTRA_EVENTS } from './data/events'
 import { EXTRA_EVENTS_2 } from './data/events2'
 import { EXTRA_EVENTS_3 } from './data/events3'
-export const EVENTS: EventDef[] = [...CORE_EVENTS, ...EXTRA_EVENTS, ...EXTRA_EVENTS_2, ...EXTRA_EVENTS_3]
+import { EXTRA_EVENTS_4 } from './data/events4'
+export const EVENTS: EventDef[] = [...CORE_EVENTS, ...EXTRA_EVENTS, ...EXTRA_EVENTS_2, ...EXTRA_EVENTS_3, ...EXTRA_EVENTS_4]
 
 export function eventById(id: string): EventDef {
   const e = EVENTS.find((x) => x.id === id)
