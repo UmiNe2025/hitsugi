@@ -16,9 +16,11 @@
 
 ## 進行中/保留
 
-- **codex画像生成(M3)**: `codex exec` がこの環境で応答まで極端に時間がかかる(PONGテストに30分超)。原因調査済み(MCP無効化・サンドボックス外実行でも同様)。
-  - **バッチ指示書は準備済み**: `assets_src/codex_image_batch.md` — codexが動く環境でコマンド1発で全19枚生成可能
-  - 代替として現在はSVG/canvas製アート(タイトル背景・OGP・favicon)を実装済み
+- **codex画像生成(M3)**: ✅ 解決済み! 原因は stdin 待ち(`codex exec ... </dev/null` で即応答)。
+  - タイトルキービジュアル生成・組込済み(和風水彩+切り絵、期待以上の品質)
+  - 星神12柱・ボス・背景の全19枚バッチを実行中(`assets_src/codex_image_batch.md`)
+  - UI側の受け皿は実装済み(画像が無ければ従来表示に自動フォールバック)
+  - 生成後は `pwsh scripts/compress-images.ps1` でweb最適化(png→jpg、原本はgit外へ)
 
 ## ユーザーの認証が必要な残作業(帰還後にどうぞ)
 
