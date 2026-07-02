@@ -9,6 +9,11 @@ export const REGIONS: Region[] = [
     bg: 'bg_forest.png',
   },
   {
+    id: 'karasu_no_sato', name: '烏の里', tier: 1, depth: 6, unlockFame: 15, bossId: 'boss_karasumaru',
+    desc: '烏天狗の眷属が巣食う里。里といっても、もう人は住んでいない。',
+    bg: 'bg_forest.png',
+  },
+  {
     id: 'mushishigure_michi', name: '蟲時雨の径', tier: 1, depth: 6, unlockFame: 30, bossId: 'boss_kokenushi',
     desc: '羽虫の羽音が雨のように降り注ぐ小径。踏み入るたび、羽音が濃くなる。',
     bg: 'bg_forest.png',
@@ -36,6 +41,11 @@ export const REGIONS: Region[] = [
   {
     id: 'hoshimukuro_tani', name: '星骸の谷', tier: 3, depth: 10, unlockFame: 220, bossId: 'boss_hoshimukuro',
     desc: '玄冬に喰われた星々が墜ちて積もる谷。星の骸は今も微かに瞬く。',
+    bg: 'bg_tani.png',
+  },
+  {
+    id: 'kaji_ato', name: '鍛地の跡', tier: 3, depth: 10, unlockFame: 260, bossId: 'boss_kajishinnou',
+    desc: '常夜に沈んだ古い鍛冶場の廃墟。今も鎚の音が絶えないという。',
     bg: 'bg_tani.png',
   },
   {

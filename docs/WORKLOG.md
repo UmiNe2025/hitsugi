@@ -175,6 +175,18 @@
   全bossId参照(enemyById)が有効であることを確認
 - **地域数 7→9(目標27まで18残)、フロア数 29→35(目標114まで79残)**
 - **次回**: M4継続 or M3c
+- **commit**: `829124b`
+
+## 2026-07-02 (M4 追加2地域・5フロア、計11地域)
+
+- **やったこと**: 烏の里(tier1・fame15・2F)/鍛地の跡(tier3・fame260・3F)を追加。
+  ボス2体新設(烏丸太夫boss_karasumaru HP510/鍛地神王boss_kajishinnou HP980)。
+  fame順に地域配列を並べ替え(烏の里を宵の森の直後へ)
+- **検証**: tsc 0エラー、validate_data OK。実行時REGIONS.length=11、id重複0、
+  全bossId参照有効、全地域にdungeonByRegion()が対応するDungeonDefを持つことを確認、
+  DUNGEONS全体のfloors合計=40
+- **地域数 9→11(目標27まで16残)、フロア数 35→40(目標114まで74残)**
+- **次回**: M4継続 or M3c。このセッションの区切りとして総括する
 - **commit**: (次のコミットにまとめる)
 - **設計決定(敵の変異システム)**: 360種への道は「基礎種を手書き→変異で系統展開」とする。基礎40種(手書き・M3a)×3変異(若=tier-1弱体/常=基準/古株=tier+1強化・名前接頭辞)=120種(M3a)。M3b/cで基礎を+40ずつ書き360へ。実装は enemies.ts に `variantsOf(base)` を追加し ENEMIES を生成結合(数値式は単一情報源 — GDD_v3 §3と同思想)。pickEnemies のtier抽選は既存のまま機能する見込み(要確認: expedition.ts)
 - **検証**: シェル/preview系ツールの障害継続のため未実施(tsc/lint/validate/preview全て保留)。**復旧後は M1/M2/M3a進行分を必ず検証してからコミット**
