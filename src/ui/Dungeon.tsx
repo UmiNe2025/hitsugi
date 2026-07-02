@@ -85,7 +85,7 @@ function DungeonFloor() {
           else if (kind === 'entrance') setConfirm({ kind: 'return' })
           else {
             dungeonSpecial(kind, x, y)
-            if (kind === 'chest' || kind === 'camp' || kind === 'shrine') {
+            if (kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'monument') {
               engineRef.current?.markUsed(x, y)
             }
           }

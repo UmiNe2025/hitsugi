@@ -137,6 +137,7 @@ export interface EventDef {
   id: string
   text: string
   choices: EventChoice[]
+  regions?: string[] // v3.1 M14: 地域固有事件のタグ(未指定=全地域共通)。抽選で優先される
 }
 
 const CORE_EVENTS: EventDef[] = [
@@ -249,6 +250,11 @@ export function eventById(id: string): EventDef {
   return e
 }
 
-export function pickEvent(rng: Rng): EventDef {
+// v3.1 M14: 地域を渡すと、その土地に紐づく事件が優先して起こる(6割)
+export function pickEvent(rng: Rng, regionId?: string): EventDef {
+  if (regionId) {
+    const local = EVENTS.filter((e) => e.regions?.includes(regionId))
+    if (local.length > 0 && rng.chance(0.6)) return rng.pick(local)
+  }
   return rng.pick(EVENTS)
 }

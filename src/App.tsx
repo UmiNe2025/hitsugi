@@ -9,6 +9,7 @@ import { DepartScreen, ExpeditionScreen } from './ui/Expedition'
 import { DungeonScreen } from './ui/Dungeon'
 import { BattleScreen } from './ui/Battle'
 import { ChronicleScreen } from './ui/Chronicle'
+import { CodexScreen } from './ui/Codex'
 import { BirthScene, CeremonyScene, DeathScene, DreamScene, EndingScene, JobRiteScene, LifeScene } from './ui/Scenes'
 
 function MuteButton() {
@@ -94,6 +95,8 @@ function App() {
         return <BattleScreen />
       case 'chronicle':
         return <ChronicleScreen />
+      case 'codex':
+        return <CodexScreen />
       case 'birth':
         return <BirthScene charId={screen.charId} />
       case 'ceremony':

@@ -96,6 +96,7 @@ export function HomeScreen() {
       <div className="home-links">
         <button className="btn btn-ghost" onClick={() => setShowForge(true)}>🔨 鍛冶と蔵</button>
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}>📜 家譜を繰る</button>
+        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}>📚 図鑑</button>
         <button className="btn btn-ghost" onClick={() => setShowTree(true)}>🌳 家系図</button>
         <button className="btn btn-ghost" onClick={() => setShowVillage(true)}>🏘️ 郷を歩く</button>
         <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>

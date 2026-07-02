@@ -365,6 +365,7 @@ button {
 .god-row-name { flex: 1; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .god-row-affinity { font-size: 11px; color: var(--el-star); }
 .god-row-hint { display: block; font-size: 10px; color: var(--text-dim); letter-spacing: 0; }
+.god-row-base { display: block; font-size: 10px; color: var(--text-dim); text-decoration: line-through; font-weight: 400; }
 .god-row-cost { width: 52px; text-align: right; color: var(--amber); font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .god-stage { min-height: 320px; }
@@ -690,6 +691,10 @@ button {
   border-radius: 4px; padding: 2px 6px 4px;
 }
 .combatant-plate .combatant-name { font-size: 11px; display: block; margin-bottom: 2px; }
+.leader-tag {
+  display: inline-block; margin-right: 4px; padding: 0 4px;
+  background: var(--ember); color: #fff; border-radius: 3px; font-size: 9px; font-weight: 700;
+}
 .combatant .chain-badge { position: absolute; top: -14px; right: -10px; z-index: 7; }
 
 /* ボス題字 */
@@ -786,6 +791,27 @@ button {
   .member-cards { grid-template-columns: repeat(2, 1fr); }
   .boss-banner-name { font-size: 26px; letter-spacing: 8px; }
 }
+
+/* ---- 図鑑・土地の記(v3.1 M14) ---- */
+.lore-entry { border-bottom: 1px dashed var(--panel-border); padding: 10px 4px; }
+.lore-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.lore-name { font-size: 16px; font-weight: 700; letter-spacing: 2px; }
+.lore-state { font-size: 11px; color: var(--gold); }
+.lore-body { margin-top: 6px; font-size: 13px; line-height: 1.8; color: var(--text); opacity: 0.9; }
+.lore-body p { margin-bottom: 2px; }
+.lore-stir { color: #c8b8d8; }
+.lore-core { color: var(--amber); }
+.lore-requiem { color: #9fd8b0; font-style: italic; }
+.lore-hint { color: var(--text-dim); font-size: 12px; }
+.codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.codex-card {
+  border: 1px solid var(--panel-border); border-radius: 6px; padding: 8px 10px;
+  background: rgba(10, 14, 30, 0.7);
+}
+.codex-card.unknown { opacity: 0.45; }
+.codex-name { font-size: 14px; font-weight: 700; }
+.codex-meta { font-size: 11px; color: var(--el-star); margin: 2px 0 4px; }
+.codex-desc { font-size: 11.5px; color: var(--text-dim); line-height: 1.6; }
 
 /* ---- 家譜 ---- */
 .chronicle-scroll {

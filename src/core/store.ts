@@ -9,6 +9,7 @@ import { GODS, godById } from './data/gods'
 import { regionById } from './data/regions'
 import { enemyById } from './data/enemies'
 import { makeItem, inheritItem, itemBaseById, reforgeItem, reforgeCost, REFORGE_MAX } from './data/items'
+import { loreFor } from './data/lore'
 import {
   conceiveChild, makeFounder, recalcStats, ageOf, pactCost,
 } from './inheritance'
@@ -453,6 +454,7 @@ export const useGame = create<GameStore>((set, get) => {
           hoto: d.hoto - cost,
           pendingBirths: [...d.pendingBirths, { godId, parentId, dueSeason: d.seasonIndex + 1 }],
           godAffinity: { ...d.godAffinity, [godId]: (d.godAffinity[godId] ?? 0) + affGain },
+          codex: { enemies: d.codex?.enemies ?? [], gods: [...new Set([...(d.codex?.gods ?? []), godId])] },
         }
         const parent = d.family.find((c) => c.id === parentId)
         nd = chronicle(nd, 'pact', `${parent?.name}、${god.name}と星契りを結ぶ。`)
@@ -892,6 +894,10 @@ export const useGame = create<GameStore>((set, get) => {
 
     // ---- 歩行ダンジョン(v2) ----
     departDungeon: (regionId, partyIds) => {
+      // v3.1 M14: 初到達なら縁起の導入が語られる
+      const firstVisit = !(get().data?.regionsVisited ?? []).includes(regionId)
+      const lore = loreFor(regionId)
+      const introLines = firstVisit && lore ? lore.intro : []
       const run: DungeonRun = {
         regionId,
         floor: 0,
@@ -900,7 +906,7 @@ export const useGame = create<GameStore>((set, get) => {
         light: 100,
         loot: { hoto: 0, ketsu: 0, items: [] },
         partyIds,
-        log: [`${regionById(regionId).name}に足を踏み入れた。灯を絶やすな。`],
+        log: [`${regionById(regionId).name}に足を踏み入れた。灯を絶やすな。`, ...introLines],
         used: [],
         bossDown: false,
       }
@@ -909,6 +915,7 @@ export const useGame = create<GameStore>((set, get) => {
         family: d.family.map((c) =>
           partyIds.includes(c.id) ? { ...c, expeditions: c.expeditions + 1 } : c,
         ),
+        regionsVisited: [...new Set([...(d.regionsVisited ?? []), regionId])],
       }))
       set({ dungeonRun: run, screen: { id: 'dungeon' } })
     },
@@ -969,10 +976,23 @@ export const useGame = create<GameStore>((set, get) => {
       const battle = startBattle(party, enemies)
       if (boss) {
         const bossDef = enemyById(enemyIds[0])
+        // v3.1 M14: 対峙の言(縁起) → 主の説明 → 開戦
+        const prelude = loreFor(run.regionId)?.bossPrelude ?? []
         battle.log.unshift({ text: `この地の闇が、ひとつに凝った——${region.name}の主だ!`, kind: 'info' })
         battle.log.unshift({ text: bossDef.desc, kind: 'info' })
+        for (let i = prelude.length - 1; i >= 0; i--) {
+          battle.log.unshift({ text: prelude[i], kind: 'info' })
+        }
       }
       if (dark) battle.log.push({ text: '灯は尽きた。常夜の重圧が魔性を狂わせている……!', kind: 'info' })
+      // 図鑑: 遭遇した魔性を記録(M14)
+      mutate((dd) => ({
+        ...dd,
+        codex: {
+          enemies: [...new Set([...(dd.codex?.enemies ?? []), ...enemyIds])],
+          gods: dd.codex?.gods ?? [],
+        },
+      }))
       set({
         battle,
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
@@ -991,6 +1011,34 @@ export const useGame = create<GameStore>((set, get) => {
       const key = `${run.floor}:${x}:${y}`
       const mark = (extra: Partial<DungeonRun>) =>
         set({ dungeonRun: { ...get().dungeonRun!, used: [...run.used, key], ...extra } })
+
+      if (kind === 'monument') {
+        // v3.1 M14: 石碑 — 縁起の欠片を拾う(地域ごと3片で核心が開く)
+        const lore = loreFor(run.regionId)
+        const have = d.loreFrags?.[run.regionId] ?? 0
+        if (!lore || have >= 3) {
+          mark({ log: [...run.log, '古い石碑だ。刻まれた文字は、もう読み尽くした。'] })
+          return
+        }
+        const frag = lore.fragments[have]
+        const now = have + 1
+        mutate((dd) => {
+          let nd: GameData = {
+            ...dd,
+            loreFrags: { ...(dd.loreFrags ?? {}), [run.regionId]: now },
+          }
+          if (now === 3) {
+            nd = { ...nd, hoto: nd.hoto + 25 }
+            nd = chronicle(nd, 'event', `${region.name}の縁起、その核心に触れる — 石碑の欠片が三つ、揃った。`)
+          }
+          return nd
+        })
+        const lines = [`石碑の欠片(${now}/3) — ${frag}`]
+        if (now === 3) lines.push(...lore.core, '(縁起の核心に触れた。奉燈25を授かる)')
+        else if (now === 1) lines.push(...lore.stir)
+        mark({ log: [...run.log, ...lines] })
+        return
+      }
 
       if (kind === 'chest') {
         const t = rollTreasure(region, rng)
@@ -1017,7 +1065,7 @@ export const useGame = create<GameStore>((set, get) => {
           log: [...run.log, '焚火を囲んだ。誰かが故郷の唄を口ずさむ。傷が癒え、灯が少し戻った。'],
         })
       } else if (kind === 'shrine') {
-        const ev = pickEvent(rng)
+        const ev = pickEvent(rng, run.regionId) // 地域固有事件を優先(M14)
         mark({})
         set({ pendingEvent: { eventId: ev.id, nodeId: `dg:${key}` } })
       } else if (kind === 'boss') {
@@ -1189,6 +1237,15 @@ export const useGame = create<GameStore>((set, get) => {
                 run.partyIds.includes(c.id) && c.alive ? { ...c, deeds: [...c.deeds, `${regionById(run.regionId).name}の主を討った`] } : c,
               ),
               regionsCleared: [...new Set([...nd.regionsCleared, run.regionId])],
+            }
+            // v3.1 M14: 鎮魂 — 縁起の結び。欠片3つ揃っていれば「土地の記」が完成する
+            const lore = loreFor(run.regionId)
+            if (lore) {
+              nd = chronicle(nd, 'event', `【鎮魂】${lore.requiem[0]}`)
+              if ((nd.loreFrags?.[run.regionId] ?? 0) >= 3) {
+                nd = { ...nd, hoto: nd.hoto + 40 }
+                nd = chronicle(nd, 'era', `${regionById(run.regionId).name}の「土地の記」、家譜に綴られる。(奉燈40)`)
+              }
             }
           }
           set({

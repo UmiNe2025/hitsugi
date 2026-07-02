@@ -544,7 +544,6 @@ export class DungeonEngine {
     const kind = this.tileAt(x, y)
     if (kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'stairs' || kind === 'entrance' || kind === 'boss' || kind === 'monument') {
       if ((kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'monument') && this.used.has(`${this.floorIndex}:${x}:${y}`)) return
-      if (kind === 'monument') return // M14で「調べる」対象化(現状は景観のみ)
       if (kind === 'boss') {
         // ボスは緋の閃光で威圧してから対峙
         this.startEncounterFx('boss', () => this.events.onSpecialTile(kind, x, y))

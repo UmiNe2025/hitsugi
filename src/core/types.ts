@@ -274,6 +274,7 @@ export type Screen =
   | { id: 'dungeon' } // 歩行ダンジョン(v2)
   | { id: 'battle' }
   | { id: 'chronicle' }
+  | { id: 'codex' } // 図鑑(v3.1 M14: 魔性/星神/土地の記)
   | { id: 'death'; charId: string }
   | { id: 'dream' } // 夢渡り — 汐里との邂逅
   | { id: 'ending' }
@@ -295,6 +296,10 @@ export interface GameData {
   narrativeMode: boolean // 語り部モード
   seed: number
   motto?: MottoId // v3.1 M12-8: 家訓(当主ごとに定める家風)
+  // v3.1 M14: 図鑑と地域縁起(全てoptional=旧セーブ互換)
+  codex?: { enemies: string[]; gods: string[] } // 遭遇した魔性/契った星神
+  loreFrags?: Record<string, number> // 地域ごとの縁起の欠片(0〜3)
+  regionsVisited?: string[] // 足を踏み入れた地域
 }
 
 // 家訓 — 当主が定める家風。一族全体への小さな加護
