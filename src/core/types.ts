@@ -304,6 +304,17 @@ export interface GameData {
   codex?: { enemies: string[]; gods: string[] } // 遭遇した魔性/契った星神
   loreFrags?: Record<string, number> // 地域ごとの縁起の欠片(0〜3)
   regionsVisited?: string[] // 足を踏み入れた地域
+  nemeses?: NemesisRecord[] // v3.1 M16-1: 一族を殺し、名を得た魔性
+}
+
+// 宿敵(名持ち) — 一族の誰かを殺した魔性が名を得て成長・再来する
+export interface NemesisRecord {
+  id: string
+  enemyId: string // 基礎種
+  name: string // 二つ名+種名
+  victim: string // 最初に殺した一族の名
+  level: number // 逃すたび強くなる(1〜5)
+  regionId: string // 名を得た地
 }
 
 // 家訓 — 当主が定める家風。一族全体への小さな加護

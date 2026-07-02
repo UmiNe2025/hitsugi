@@ -8,7 +8,7 @@ import { Rng } from './rng'
 import { GODS, godById } from './data/gods'
 import { regionById } from './data/regions'
 import { enemyById } from './data/enemies'
-import { makeItem, inheritItem, itemBaseById, reforgeItem, reforgeCost, REFORGE_MAX } from './data/items'
+import { makeItem, inheritItem, itemBaseById, reforgeItem, reforgeCost, REFORGE_MAX, ITEM_BASES as ITEM_BASES_ALL } from './data/items'
 import { loreFor } from './data/lore'
 import { CHAPTERS, ENDINGS } from './data/story'
 import { FAME_SEAL_THRESHOLD } from './constants'
@@ -95,6 +95,7 @@ interface GameStore {
   dungeonStep: () => void
   dungeonEncounter: (boss?: boolean, golden?: boolean) => void
   goldenBattle: boolean // v3.1 M15-5: 金の敵影との戦闘中(勝てば実り2.5倍)
+  nemesisBattleId: string | null // v3.1 M16-1: 対峙中の宿敵(勝てば仇討ち)
   dungeonSpecial: (kind: string, x: number, y: number) => void
   dungeonAdvanceFloor: () => void
   dungeonReturn: () => void
@@ -107,6 +108,12 @@ interface GameStore {
 
 function newRng(): Rng {
   return new Rng((Date.now() ^ (Math.random() * 0xffffffff)) >>> 0)
+}
+
+let nemSeq = 0
+function uidNem(): string {
+  nemSeq += 1
+  return `nem_${Date.now().toString(36)}_${nemSeq}`
 }
 
 // dev時のみ: 自動プレイテスト用にストアを公開
@@ -375,6 +382,7 @@ export const useGame = create<GameStore>((set, get) => {
     dungeonRun: null,
     battleSource: 'node',
     goldenBattle: false,
+    nemesisBattleId: null,
     rng: newRng(),
 
     newGame: (narrativeMode) => {
@@ -1014,6 +1022,46 @@ export const useGame = create<GameStore>((set, get) => {
       const region = regionById(run.regionId)
       const ease = d.narrativeMode ? 0.78 : 1
       const dark = run.light <= 0
+
+      // 宿敵の再来(v3.1 M16-1): 名を得た魔性は夜藪を渡り歩き、一族の前に現れる
+      if (!boss && !golden && (d.nemeses?.length ?? 0) > 0 && rng.chance(0.15)) {
+        const nem = rng.pick(d.nemeses!)
+        const base = enemyById(nem.enemyId)
+        const k = 1.25 + nem.level * 0.18
+        const party = enrichAllies(
+          d.family
+            .filter((c) => run.partyIds.includes(c.id) && c.alive && c.hp > 0)
+            .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back')),
+          d.family,
+          d.motto,
+        )
+        const nemDef = {
+          ...base,
+          name: nem.name,
+          hp: Math.round(base.hp * k * 1.6 * ease),
+          atk: Math.round(base.atk * k * ease),
+          def: Math.round(base.def * k),
+          hoto: base.hoto * 3,
+          ketsu: base.ketsu * 2,
+        }
+        const battle = startBattle(party, [combatantFromEnemy(nemDef, 0)])
+        battle.log.unshift({ text: `${nem.victim}の命を奪った、あの影だ。決して逃すな。`, kind: 'chain' })
+        battle.log.unshift({ text: `——夜気が凍る。名持ちの魔性「${nem.name}」が現れた!`, kind: 'info' })
+        mutate((dd) => ({
+          ...dd,
+          codex: { enemies: [...new Set([...(dd.codex?.enemies ?? []), nem.enemyId])], gods: dd.codex?.gods ?? [] },
+        }))
+        set({
+          battle,
+          battleSource: 'dungeon',
+          battleNodeId: null,
+          goldenBattle: false,
+          nemesisBattleId: nem.id,
+          screen: { id: 'battle' },
+          battleLogQueue: [...battle.log],
+        })
+        return
+      }
       const enemyIds = boss
         ? [region.bossId ?? 'kubinashi_andon'] // 地域の主(未設定地域は首無し行灯が主代わり)
         : pickEnemies(region, 'battle', run.floor + 2, rng)
@@ -1288,6 +1336,7 @@ export const useGame = create<GameStore>((set, get) => {
               battle: null,
               battleSource: 'node',
               goldenBattle: false,
+            nemesisBattleId: null,
               dungeonRun: null,
               pendingScenes: [],
               screen: { id: 'finale' }, // v3.1 M15-4: 結末の選択へ
@@ -1310,6 +1359,22 @@ export const useGame = create<GameStore>((set, get) => {
           )
           const isBoss = battleSource === 'dungeonBoss'
           let nd: GameData = { ...d, family }
+          // 仇討ち成就(v3.1 M16-1): 宿敵を討てば、犠牲者の銘を刻んだ得物が残る
+          const nemId = get().nemesisBattleId
+          if (nemId) {
+            const nem = (nd.nemeses ?? []).find((n) => n.id === nemId)
+            if (nem) {
+              const weaponBases = ITEM_BASES_ALL.filter((b) => b.slot === 'weapon' && b.shopTier <= 6)
+              const memorial = inheritItem(makeItem(rng.pick(weaponBases).baseId), nem.victim, nem.level * 60)
+              nd = {
+                ...nd,
+                nemeses: (nd.nemeses ?? []).filter((n) => n.id !== nemId),
+                inventory: [...nd.inventory, memorial],
+                fame: nd.fame + 25 + nem.level * 10,
+              }
+              nd = chronicle(nd, 'era', `仇討ち成就 — ${nem.victim}の仇「${nem.name}」を討つ。形見「${memorial.name}」が一族に残った。`)
+            }
+          }
           if (isBoss) {
             nd = chronicle(nd, 'triumph', `${regionById(run.regionId).name}の主を討伐! 一族の武功、天に届く。`)
             nd = {
@@ -1334,6 +1399,7 @@ export const useGame = create<GameStore>((set, get) => {
             battle: null,
             battleSource: 'node',
             goldenBattle: false,
+            nemesisBattleId: null,
             dungeonRun: {
               ...run,
               bossDown: run.bossDown || isBoss,
@@ -1346,12 +1412,28 @@ export const useGame = create<GameStore>((set, get) => {
           return
         }
         if (battle.phase === 'fled') {
+          // 宿敵から逃げると、奴はさらに強くなる(M16-1)
+          const fledNem = get().nemesisBattleId
+          const familyData = fledNem
+            ? {
+                ...d,
+                family,
+                nemeses: (d.nemeses ?? []).map((n) =>
+                  n.id === fledNem ? { ...n, level: Math.min(5, n.level + 1) } : n,
+                ),
+              }
+            : { ...d, family }
           set({
-            data: { ...d, family },
+            data: familyData,
             battle: null,
             battleSource: 'node',
             goldenBattle: false,
-            dungeonRun: { ...run, light: Math.max(0, run.light - 3), log: [...run.log, '命からがら逃げ延びた。'] },
+            nemesisBattleId: null,
+            dungeonRun: {
+              ...run,
+              light: Math.max(0, run.light - 3),
+              log: [...run.log, fledNem ? '命からがら逃げ延びた。……奴は、また強くなる。' : '命からがら逃げ延びた。'],
+            },
             screen: { id: 'dungeon' },
           })
           return
@@ -1385,8 +1467,28 @@ export const useGame = create<GameStore>((set, get) => {
             ? `${regionById(run.regionId).name}にて隊は壊滅。${lostNames.join('、')}、行方知れず。${survivor ? `${survivor.name}だけが、綴の灯に導かれて生還した。` : ''}`
             : `${regionById(run.regionId).name}より${survivor?.name ?? '当主'}、満身創痍で生還。`,
         )
+        // 宿敵の誕生(v3.1 M16-1): 一族を殺した魔性が「名」を得る(同時に3体まで)
+        if (lostNames.length > 0 && (nd.nemeses?.length ?? 0) < 3) {
+          const killerKey = battle.leaderKey ?? battle.enemies[0]?.key
+          const killer = battle.enemies.find((e) => e.key === killerKey && e.enemyId && !e.enemyId.startsWith('boss_'))
+            ?? battle.enemies.find((e) => e.enemyId && !e.enemyId.startsWith('boss_'))
+          if (killer?.enemyId) {
+            const epithets = ['血啜り', '宵狩り', '骨咬み', '灯喰らい', '影纏い', '爪長', '牙研ぎ', '夜哭き']
+            const baseName = enemyById(killer.enemyId).name
+            const nemName = `${rng.pick(epithets)}の${baseName}`
+            nd = {
+              ...nd,
+              nemeses: [
+                ...(nd.nemeses ?? []),
+                { id: uidNem(), enemyId: killer.enemyId, name: nemName, victim: lostNames[0], level: 1, regionId: run.regionId },
+              ],
+            }
+            nd = chronicle(nd, 'era', `${lostNames[0]}を殺めた魔性が、名を得た —「${nemName}」。夜藪のどこかで、また会う。`)
+          }
+        }
         set({ data: nd, battle: null, battleSource: 'node',
-            goldenBattle: false, dungeonRun: null })
+            goldenBattle: false,
+            nemesisBattleId: null, dungeonRun: null })
         advanceSeason()
         return
       }
