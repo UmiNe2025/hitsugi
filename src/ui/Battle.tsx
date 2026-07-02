@@ -216,8 +216,17 @@ export function BattleScreen() {
   )
 }
 
+const ENEMY_EMOJI: Record<string, string> = {
+  chochin_kui: '🏮', kage_nezumi: '🐀', onibi: '🔥', yosuzume: '🐦',
+  hone_dourou: '🕯️', nureginu: '👘', yogumo: '🕷️', naki_ishi: '🪨', kubinashi_andon: '👻',
+  hoshikui_ko: '🌠', gesshoku_juu: '🌑', tanwatari: '🦅', kagami_kurage: '🪼', ochiboshi_mukuro: '✨',
+  tokoyo_musha: '⚔️', hitori: '🫱', yamabiko_bone: '🦴', hoshikuzu_orochi: '🐍',
+  boss_hyakume: '🏮', boss_hoshimukuro: '🐻', boss_gentou: '🌑', boss_shiori: '🎼',
+}
+
 function enemySprite(e: Combatant): string {
   if (!e.enemyId) return '👾'
+  if (ENEMY_EMOJI[e.enemyId]) return ENEMY_EMOJI[e.enemyId]
   const def = enemyById(e.enemyId)
   const map: Record<number, string> = { 1: '👺', 2: '👹', 3: '🌑', 4: '⚔️', 5: '💀' }
   return map[def.tier] ?? '👾'

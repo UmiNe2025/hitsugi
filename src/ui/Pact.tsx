@@ -6,6 +6,12 @@ import { GODS } from '../core/data/gods'
 import { isAdult, predictChild } from '../core/inheritance'
 import { CharCard, Panel, TsuzuriLine } from './components'
 
+const GOD_EMOJI: Record<string, string> = {
+  ishiusu: '🗿', tsubame: '🐦', shimihime: '📖', chidori: '🌊', kagaribi: '🔥',
+  yoigumo: '🕸️', yukiango: '☃️', tsukiura: '🐇', orihime: '🧵', ookuma: '🐻',
+  narukami: '🥁', hokushin: '🌟',
+}
+
 export function PactScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
@@ -56,7 +62,10 @@ export function PactScreen() {
                 onClick={() => affordable && setGodId(g.id)}
               >
                 <div className="god-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
-                <div className="god-name">{sealed ? '???' : g.name}</div>
+                <div className="god-name">
+                  <span style={{ marginRight: 6 }}>{sealed ? '🌫️' : GOD_EMOJI[g.id] ?? '⭐'}</span>
+                  {sealed ? '???' : g.name}
+                </div>
                 <div className="god-kana">{sealed ? '北天に、まだ遠い星がある' : g.kana}</div>
                 <div className="god-cost">{sealed ? `武功520で道が開く` : `奉燈 ${g.cost}${affinity > 0 ? ` ・縁 ${affinity}` : ''}`}</div>
                 <div className="god-person">{sealed ? '' : g.personality}</div>
