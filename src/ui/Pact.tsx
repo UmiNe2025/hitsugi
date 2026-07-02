@@ -5,6 +5,7 @@ import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS } from '../core/types'
 import { GODS } from '../core/data/gods'
 import { isAdult, predictChild } from '../core/inheritance'
 import { CharCard, Panel, TsuzuriLine } from './components'
+import { gameImg } from './img'
 
 const GOD_EMOJI: Record<string, string> = {
   ishiusu: '🗿', tsubame: '🐦', shimihime: '📖', chidori: '🌊', kagaribi: '🔥',
@@ -61,6 +62,15 @@ export function PactScreen() {
                 className={`god-card ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''}`}
                 onClick={() => affordable && setGodId(g.id)}
               >
+                {!sealed && (
+                  <img
+                    className="god-portrait"
+                    src={gameImg(g.portrait)}
+                    alt=""
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                )}
                 <div className="god-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
                 <div className="god-name">
                   <span style={{ marginRight: 6 }}>{sealed ? '🌫️' : GOD_EMOJI[g.id] ?? '⭐'}</span>

@@ -5,6 +5,7 @@ import { REGIONS, regionById } from '../core/data/regions'
 import { eventById } from '../core/expedition'
 import { isAdult } from '../core/inheritance'
 import { Bar, CharCard, Panel, TsuzuriLine } from './components'
+import { gameImg } from './img'
 
 export function DepartScreen() {
   const data = useGame((s) => s.data)!
@@ -123,7 +124,12 @@ export function ExpeditionScreen() {
   const party = data.family.filter((c) => exp.partyIds.includes(c.id) && c.alive)
 
   return (
-    <div className="screen">
+    <div className="screen exp-screen">
+      <div
+        className="exp-bg"
+        style={{ backgroundImage: `url(${gameImg(region.bg)})` }}
+        aria-hidden
+      />
       <div className="exp-header">
         <span className="exp-region">{region.name}</span>
         <div className="light-wrap">

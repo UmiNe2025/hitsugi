@@ -7,6 +7,7 @@ import { audio } from '../core/audio'
 import { skillById } from '../core/data/skills'
 import { enemyById } from '../core/data/enemies'
 import { Bar } from './components'
+import { gameImg } from './img'
 
 const REVEAL_MS = 420
 
@@ -109,7 +110,22 @@ export function BattleScreen() {
               className={`enemy-card ${e.hp <= 0 ? 'dead' : ''} ${isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' ? 'targetable' : ''} ${battle.chainTarget === e.key && battle.chain > 0 ? 'acting' : ''}`}
               onClick={() => onEnemyClick(e)}
             >
-              <span className="enemy-sprite">{enemySprite(e)}</span>
+              {e.enemyId && enemyById(e.enemyId).tier === 5 ? (
+                <span className="enemy-sprite">
+                  <img
+                    className="enemy-img"
+                    src={gameImg(enemyById(e.enemyId).sprite)}
+                    alt=""
+                    onError={(ev) => {
+                      const img = ev.target as HTMLImageElement
+                      img.style.display = 'none'
+                      img.parentElement!.textContent = enemySprite(e)
+                    }}
+                  />
+                </span>
+              ) : (
+                <span className="enemy-sprite">{enemySprite(e)}</span>
+              )}
               <div className="enemy-name">{e.name}</div>
               <Bar value={e.hp} max={e.maxHp} kind="hp" />
               <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>{ELEMENT_LABELS[e.element]}の魔性</div>
