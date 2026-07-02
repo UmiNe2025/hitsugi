@@ -482,6 +482,47 @@ button {
 .ending-stats { margin: 20px 0; color: var(--text-dim); font-size: 14px; }
 .ending-stats b { color: var(--amber); font-size: 20px; margin: 0 4px; }
 
+/* ---- 歩行ダンジョン ---- */
+.dungeon-screen {
+  position: fixed; inset: 0;
+  max-width: none; padding: 0;
+  overflow: hidden;
+}
+.dungeon-canvas { position: absolute; inset: 0; }
+.dungeon-hud-top {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, rgba(5,8,18,0.9), rgba(5,8,18,0));
+}
+.dungeon-hud-top .light-wrap { flex: 1; min-width: 140px; }
+.dungeon-hud-party {
+  position: absolute; left: 10px; bottom: 10px; z-index: 5;
+  display: flex; flex-direction: column; gap: 4px; width: 150px;
+}
+.dungeon-hud-party .ally-cell { padding: 4px 8px; }
+.dungeon-log {
+  position: absolute; left: 170px; right: 170px; bottom: 10px; z-index: 5;
+  font-size: 12px; color: var(--text-dim);
+  background: rgba(5, 8, 18, 0.6); border-radius: 4px; padding: 6px 10px;
+  pointer-events: none;
+}
+.dungeon-log p:last-child { color: var(--text); }
+.dpad {
+  position: absolute; right: 14px; bottom: 14px; z-index: 5;
+  display: grid; grid-template-columns: repeat(3, 46px); grid-auto-rows: 46px; gap: 2px;
+  opacity: 0.85;
+}
+.dpad-btn {
+  border: 1px solid var(--panel-border); border-radius: 8px;
+  background: rgba(16, 23, 46, 0.8); color: var(--gold);
+  font-size: 18px; touch-action: none; user-select: none;
+}
+.dpad-btn:active { background: rgba(232, 163, 61, 0.3); }
+@media (min-width: 900px) {
+  .dpad { opacity: 0.35; }
+}
+
 /* ---- ミュート ---- */
 .mute-btn {
   position: fixed; top: 12px; right: 12px; z-index: 90;

@@ -6,6 +6,7 @@ import { TitleScreen, IntroScreen } from './ui/Title'
 import { HomeScreen } from './ui/Home'
 import { PactScreen } from './ui/Pact'
 import { DepartScreen, ExpeditionScreen } from './ui/Expedition'
+import { DungeonScreen } from './ui/Dungeon'
 import { BattleScreen } from './ui/Battle'
 import { ChronicleScreen } from './ui/Chronicle'
 import { BirthScene, DeathScene, DreamScene, EndingScene } from './ui/Scenes'
@@ -52,6 +53,7 @@ function App() {
         case 'chronicle':
           return 'home'
         case 'expedition':
+        case 'dungeon':
           return 'expedition'
         case 'battle': {
           const node = battleNodeId ? data?.expedition?.nodes[battleNodeId] : undefined
@@ -83,6 +85,8 @@ function App() {
         return <DepartScreen />
       case 'expedition':
         return <ExpeditionScreen />
+      case 'dungeon':
+        return <DungeonScreen />
       case 'battle':
         return <BattleScreen />
       case 'chronicle':

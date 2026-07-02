@@ -1,0 +1,41 @@
+import type { Item } from '../core/types'
+
+// タイル記号: # 壁 / . 床 / , 下草 / > 階段(下) / < 入口(帰還口) / C 宝箱
+// F 焚火 / S 祠(事件) / B 主(ボス) / ~ 水(通行不可)
+export type TileKind =
+  | 'wall' | 'floor' | 'grass' | 'stairs' | 'entrance'
+  | 'chest' | 'camp' | 'shrine' | 'boss' | 'water'
+
+export const TILE_CHARS: Record<string, TileKind> = {
+  '#': 'wall', '.': 'floor', ',': 'grass', '>': 'stairs', '<': 'entrance',
+  'C': 'chest', 'F': 'camp', 'S': 'shrine', 'B': 'boss', '~': 'water',
+}
+
+export function isWalkable(kind: TileKind): boolean {
+  return kind !== 'wall' && kind !== 'water'
+}
+
+export interface FloorDef {
+  ascii: string[]
+  shades: number // 徘徊する敵影の数
+}
+
+export interface DungeonDef {
+  regionId: string
+  name: string
+  floors: FloorDef[]
+}
+
+// 進行中のダンジョン行(storeに保持)
+export interface DungeonRun {
+  regionId: string
+  floor: number
+  x: number
+  y: number
+  light: number
+  loot: { hoto: number; ketsu: number; items: Item[] }
+  partyIds: string[]
+  log: string[]
+  used: string[] // 開封済み宝箱・使用済み焚火等 "floor:x:y"
+  bossDown: boolean
+}

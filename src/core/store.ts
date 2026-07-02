@@ -22,6 +22,8 @@ import {
 import { ITEM_BASES } from './data/items'
 import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
+import type { DungeonRun } from '../dungeon/types'
+import { dungeonByRegion } from '../dungeon/maps'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene =
@@ -37,6 +39,8 @@ interface GameStore {
   battleLogQueue: BattleLogEntry[]
   pendingScenes: PendingScene[]
   pendingEvent: { eventId: string; nodeId: string } | null
+  dungeonRun: DungeonRun | null
+  battleSource: 'node' | 'dungeon' | 'dungeonBoss'
   rng: Rng
 
   // メタ
@@ -63,6 +67,15 @@ interface GameStore {
   depart: (regionId: string, partyIds: string[]) => void
   chooseNode: (nodeId: string) => void
   useReturnFire: () => void
+
+  // 歩行ダンジョン(v2)
+  departDungeon: (regionId: string, partyIds: string[]) => void
+  dungeonSetPos: (x: number, y: number) => void
+  dungeonStep: () => void
+  dungeonEncounter: (boss?: boolean) => void
+  dungeonSpecial: (kind: string, x: number, y: number) => void
+  dungeonAdvanceFloor: () => void
+  dungeonReturn: () => void
 
   // 戦闘
   battleCommand: (action: BattleAction) => void
@@ -193,6 +206,8 @@ export const useGame = create<GameStore>((set, get) => {
     battleLogQueue: [],
     pendingScenes: [],
     pendingEvent: null,
+    dungeonRun: null,
+    battleSource: 'node',
     rng: newRng(),
 
     newGame: (narrativeMode) => {
@@ -329,6 +344,49 @@ export const useGame = create<GameStore>((set, get) => {
     resolveEvent: (choiceIdx) => {
       const { rng, pendingEvent } = get()
       const d = get().data!
+
+      // ---- ダンジョン内の祠イベント ----
+      if (pendingEvent?.nodeId.startsWith('dg:')) {
+        const run = get().dungeonRun
+        if (!run) {
+          set({ pendingEvent: null })
+          return
+        }
+        const ev = eventById(pendingEvent.eventId)
+        const choice = ev.choices[choiceIdx]
+        if (!choice) return
+        if (choice.requireHoto !== undefined && d.hoto < choice.requireHoto) return
+        const success = choice.successRate === undefined || rng.chance(choice.successRate)
+        const effect = success ? choice.outcomes[0] : (choice.outcomes[1] ?? choice.outcomes[0])
+        const region = regionById(run.regionId)
+        let nd: GameData = { ...d }
+        let light = run.light
+        let log = [...run.log, effect.log]
+        if (effect.hoto) nd = { ...nd, hoto: Math.max(0, nd.hoto + effect.hoto) }
+        if (effect.ketsu) nd = { ...nd, ketsu: nd.ketsu + effect.ketsu }
+        if (effect.fame) nd = { ...nd, fame: nd.fame + effect.fame }
+        if (effect.light) light = Math.max(0, Math.min(100, light + effect.light))
+        if (effect.hpRatio) {
+          nd = {
+            ...nd,
+            family: nd.family.map((c) =>
+              run.partyIds.includes(c.id) && c.alive
+                ? { ...c, hp: Math.max(1, Math.min(c.maxHp, Math.round(c.hp + c.maxHp * effect.hpRatio!))) }
+                : c,
+            ),
+          }
+        }
+        if (effect.itemTier) {
+          const pool = ITEM_BASES.filter((b) => b.shopTier <= region.tier)
+          const item = makeItem(rng.pick(pool).baseId)
+          nd = { ...nd, inventory: [...nd.inventory, item] }
+          log = [...log, `「${item.name}」を手に入れた。`]
+        }
+        set({ data: nd, dungeonRun: { ...run, light, log }, pendingEvent: null })
+        if (effect.battle) get().dungeonEncounter(false)
+        return
+      }
+
       const exp = d.expedition
       if (!pendingEvent || !exp || !exp.nodes[pendingEvent.nodeId]) {
         set({ pendingEvent: null })
@@ -563,6 +621,156 @@ export const useGame = create<GameStore>((set, get) => {
       advanceSeason()
     },
 
+    // ---- 歩行ダンジョン(v2) ----
+    departDungeon: (regionId, partyIds) => {
+      const run: DungeonRun = {
+        regionId,
+        floor: 0,
+        x: -1,
+        y: -1,
+        light: 100,
+        loot: { hoto: 0, ketsu: 0, items: [] },
+        partyIds,
+        log: [`${regionById(regionId).name}に足を踏み入れた。灯を絶やすな。`],
+        used: [],
+        bossDown: false,
+      }
+      mutate((d) => ({
+        ...d,
+        family: d.family.map((c) =>
+          partyIds.includes(c.id) ? { ...c, expeditions: c.expeditions + 1 } : c,
+        ),
+      }))
+      set({ dungeonRun: run, screen: { id: 'dungeon' } })
+    },
+
+    dungeonSetPos: (x, y) => {
+      const run = get().dungeonRun
+      if (!run) return
+      set({ dungeonRun: { ...run, x, y } })
+    },
+
+    dungeonStep: () => {
+      const run = get().dungeonRun
+      if (!run) return
+      set({ dungeonRun: { ...run, light: Math.max(0, run.light - 0.45) } })
+    },
+
+    dungeonEncounter: (boss = false) => {
+      const { rng } = get()
+      const run = get().dungeonRun
+      const d = get().data
+      if (!run || !d) return
+      const region = regionById(run.regionId)
+      const ease = d.narrativeMode ? 0.78 : 1
+      const dark = run.light <= 0
+      const enemyIds = boss
+        ? ['kubinashi_andon'] // R1: 宵の森の主(仮)。R4で各ダンジョン固有ボスへ
+        : pickEnemies(region, 'battle', run.floor + 2, rng)
+      const party = d.family
+        .filter((c) => run.partyIds.includes(c.id) && c.alive && c.hp > 0)
+        .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
+      const enemies = enemyIds.map((id, i) => {
+        const def = enemyById(id)
+        return combatantFromEnemy(
+          {
+            ...def,
+            atk: Math.round(def.atk * ease * (dark ? 1.4 : 1) * (boss ? 1.5 : 1)),
+            hp: Math.round(def.hp * ease * (dark ? 1.2 : 1) * (boss ? 2.2 : 1)),
+          },
+          i,
+        )
+      })
+      const battle = startBattle(party, enemies)
+      if (boss) battle.log.unshift({ text: 'この森の闇が、ひとつに凝った——宵の森の主だ!', kind: 'info' })
+      if (dark) battle.log.push({ text: '灯は尽きた。常夜の重圧が魔性を狂わせている……!', kind: 'info' })
+      set({
+        battle,
+        battleSource: boss ? 'dungeonBoss' : 'dungeon',
+        battleNodeId: null,
+        screen: { id: 'battle' },
+        battleLogQueue: [...battle.log],
+      })
+    },
+
+    dungeonSpecial: (kind, x, y) => {
+      const { rng } = get()
+      const run = get().dungeonRun
+      const d = get().data
+      if (!run || !d) return
+      const region = regionById(run.regionId)
+      const key = `${run.floor}:${x}:${y}`
+      const mark = (extra: Partial<DungeonRun>) =>
+        set({ dungeonRun: { ...get().dungeonRun!, used: [...run.used, key], ...extra } })
+
+      if (kind === 'chest') {
+        const t = rollTreasure(region, rng)
+        mark({
+          loot: {
+            hoto: run.loot.hoto + t.hoto,
+            ketsu: run.loot.ketsu + t.ketsu,
+            items: t.item ? [...run.loot.items, t.item] : run.loot.items,
+          },
+          log: [...run.log, t.text],
+        })
+      } else if (kind === 'camp') {
+        const { hpRatio, lightGain } = campHeal()
+        mutate((dd) => ({
+          ...dd,
+          family: dd.family.map((c) =>
+            run.partyIds.includes(c.id) && c.alive
+              ? { ...c, hp: Math.min(c.maxHp, Math.round(c.hp + c.maxHp * hpRatio)), mp: Math.min(c.maxMp, c.mp + 10) }
+              : c,
+          ),
+        }))
+        mark({
+          light: Math.min(100, run.light + lightGain),
+          log: [...run.log, '焚火を囲んだ。誰かが故郷の唄を口ずさむ。傷が癒え、灯が少し戻った。'],
+        })
+      } else if (kind === 'shrine') {
+        const ev = pickEvent(rng)
+        mark({})
+        set({ pendingEvent: { eventId: ev.id, nodeId: `dg:${key}` } })
+      } else if (kind === 'boss') {
+        if (run.bossDown) return
+        get().dungeonEncounter(true)
+      }
+      // stairs/entrance はUI側で確認ダイアログを出してから dungeonAdvanceFloor/dungeonReturn を呼ぶ
+    },
+
+    dungeonAdvanceFloor: () => {
+      const run = get().dungeonRun
+      if (!run) return
+      const dungeon = dungeonByRegion(run.regionId)
+      if (!dungeon || run.floor + 1 >= dungeon.floors.length) return
+      set({
+        dungeonRun: {
+          ...run,
+          floor: run.floor + 1,
+          x: -1,
+          y: -1,
+          log: [...run.log, `さらに深く——地下${run.floor + 2}層へ。`],
+        },
+      })
+    },
+
+    dungeonReturn: () => {
+      const run = get().dungeonRun
+      const d = get().data
+      if (!run || !d) return
+      const gainedFame = Math.round(run.loot.hoto / 10) + run.loot.ketsu * 2 + (run.bossDown ? 40 : 0)
+      let nd: GameData = {
+        ...d,
+        hoto: d.hoto + run.loot.hoto,
+        ketsu: d.ketsu + run.loot.ketsu,
+        inventory: [...d.inventory, ...run.loot.items],
+        fame: d.fame + gainedFame,
+      }
+      nd = chronicle(nd, 'triumph', `${regionById(run.regionId).name}より帰還。奉燈${run.loot.hoto}、血珠${run.loot.ketsu}、武功${gainedFame}を得た。`)
+      set({ data: nd, dungeonRun: null })
+      advanceSeason()
+    },
+
     battleCommand: (action) => {
       const { battle, rng } = get()
       if (!battle || battle.phase !== 'input') return
@@ -598,8 +806,98 @@ export const useGame = create<GameStore>((set, get) => {
     },
 
     finishBattle: () => {
-      const { battle, battleNodeId, rng } = get()
+      const { battle, battleNodeId, rng, battleSource } = get()
       const d = get().data!
+
+      // ---- 歩行ダンジョンでの戦闘結果 ----
+      if (battleSource === 'dungeon' || battleSource === 'dungeonBoss') {
+        const run = get().dungeonRun
+        if (!battle || !run) return
+        let family = d.family.map((c) => {
+          const cb = battle.allies.find((a) => a.charId === c.id)
+          if (!cb) return c
+          return { ...c, hp: Math.max(battle.phase === 'won' || battle.phase === 'fled' ? 1 : 0, cb.hp), mp: cb.mp }
+        })
+        if (battle.phase === 'won') {
+          const defs = battle.enemies
+            .map((e) => (e.enemyId ? enemyById(e.enemyId) : null))
+            .filter((x): x is NonNullable<typeof x> => !!x)
+          const hoto = defs.reduce((s, e) => s + e.hoto, 0)
+          const ketsu = defs.reduce((s, e) => s + e.ketsu, 0)
+          family = family.map((c) =>
+            run.partyIds.includes(c.id) && c.alive ? { ...c, kills: c.kills + defs.length } : c,
+          )
+          const isBoss = battleSource === 'dungeonBoss'
+          let nd: GameData = { ...d, family }
+          if (isBoss) {
+            nd = chronicle(nd, 'triumph', `${regionById(run.regionId).name}の主を討伐! 一族の武功、天に届く。`)
+            nd = {
+              ...nd,
+              family: nd.family.map((c) =>
+                run.partyIds.includes(c.id) && c.alive ? { ...c, deeds: [...c.deeds, `${regionById(run.regionId).name}の主を討った`] } : c,
+              ),
+              regionsCleared: [...new Set([...nd.regionsCleared, run.regionId])],
+            }
+          }
+          set({
+            data: nd,
+            battle: null,
+            battleSource: 'node',
+            dungeonRun: {
+              ...run,
+              bossDown: run.bossDown || isBoss,
+              light: Math.max(0, run.light - 6),
+              loot: { ...run.loot, hoto: run.loot.hoto + hoto, ketsu: run.loot.ketsu + ketsu },
+              log: [...run.log, isBoss ? '主を討った! 森に静寂が戻る。' : `魔性を討った。奉燈${hoto}を得た。`],
+            },
+            screen: { id: 'dungeon' },
+          })
+          return
+        }
+        if (battle.phase === 'fled') {
+          set({
+            data: { ...d, family },
+            battle: null,
+            battleSource: 'node',
+            dungeonRun: { ...run, light: Math.max(0, run.light - 3), log: [...run.log, '命からがら逃げ延びた。'] },
+            screen: { id: 'dungeon' },
+          })
+          return
+        }
+        // 全滅 — 一人生還
+        let nd: GameData = { ...d, family }
+        const partyAlive = nd.family.filter((c) => run.partyIds.includes(c.id) && c.alive)
+        const survivor = [...partyAlive].sort((a, b) => b.potential.luk - a.potential.luk)[0]
+        const lostNames: string[] = []
+        nd = {
+          ...nd,
+          family: nd.family.map((c) => {
+            if (!run.partyIds.includes(c.id) || !c.alive) return c
+            if (survivor && c.id === survivor.id) {
+              return { ...c, hp: 1, mp: 0, fatigue: Math.min(100, c.fatigue + 40), deeds: [...c.deeds, '全滅の夜藪から独り生還した'] }
+            }
+            lostNames.push(c.name)
+            return {
+              ...c, alive: false, hp: 0,
+              deathSeason: nd.seasonIndex,
+              deathCause: deathCauseLabel('lost'),
+              epitaph: generateEpitaph(c, 'lost', rng),
+              isHead: false,
+            }
+          }),
+          hoto: nd.hoto + Math.round(run.loot.hoto / 2),
+          ketsu: nd.ketsu + Math.round(run.loot.ketsu / 2),
+        }
+        nd = chronicle(nd, 'death',
+          lostNames.length > 0
+            ? `${regionById(run.regionId).name}にて隊は壊滅。${lostNames.join('、')}、行方知れず。${survivor ? `${survivor.name}だけが、綴の灯に導かれて生還した。` : ''}`
+            : `${regionById(run.regionId).name}より${survivor?.name ?? '当主'}、満身創痍で生還。`,
+        )
+        set({ data: nd, battle: null, battleSource: 'node', dungeonRun: null })
+        advanceSeason()
+        return
+      }
+
       const exp = d.expedition
       if (!battle || !exp || !battleNodeId) return
       const node = exp.nodes[battleNodeId]

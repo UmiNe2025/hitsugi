@@ -228,6 +228,7 @@ export type Screen =
   | { id: 'birth'; charId: string }
   | { id: 'depart' } // 出立準備
   | { id: 'expedition' }
+  | { id: 'dungeon' } // 歩行ダンジョン(v2)
   | { id: 'battle' }
   | { id: 'chronicle' }
   | { id: 'death'; charId: string }

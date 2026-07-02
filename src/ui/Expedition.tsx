@@ -3,6 +3,7 @@ import { useGame } from '../core/store'
 import type { NodeType } from '../core/types'
 import { REGIONS, regionById } from '../core/data/regions'
 import { eventById } from '../core/expedition'
+import { dungeonByRegion } from '../dungeon/maps'
 import { isAdult } from '../core/inheritance'
 import { Bar, CharCard, Panel, TsuzuriLine } from './components'
 import { gameImg } from './img'
@@ -11,6 +12,7 @@ export function DepartScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const depart = useGame((s) => s.depart)
+  const departDungeon = useGame((s) => s.departDungeon)
   const [regionId, setRegionId] = useState<string | null>(null)
   const [party, setParty] = useState<string[]>([])
 
@@ -62,7 +64,12 @@ export function DepartScreen() {
       <button
         className="btn btn-main"
         disabled={!regionId || party.length === 0}
-        onClick={() => regionId && depart(regionId, party)}
+        onClick={() => {
+          if (!regionId) return
+          // 歩行ダンジョン化済みの地域は新エンジンへ(段階移行)
+          if (dungeonByRegion(regionId)) departDungeon(regionId, party)
+          else depart(regionId, party)
+        }}
       >
         出立する(今季を使う)
       </button>
@@ -83,7 +90,7 @@ const NODE_META: Record<NodeType, { icon: string; label: string }> = {
   start: { icon: '⛩️', label: '入口' },
 }
 
-function EventModal() {
+export function EventModal() {
   const data = useGame((s) => s.data)!
   const pendingEvent = useGame((s) => s.pendingEvent)
   const resolveEvent = useGame((s) => s.resolveEvent)
