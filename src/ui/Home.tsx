@@ -5,6 +5,7 @@ import type { StatKey } from '../core/types'
 import { isAdult, seasonsLeft } from '../core/inheritance'
 import { ITEM_BASES } from '../core/data/items'
 import { GODS } from '../core/data/gods'
+import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { CharCard, Panel, TsuzuriLine } from './components'
 
 export function HomeScreen() {
@@ -14,6 +15,7 @@ export function HomeScreen() {
   const doRest = useGame((s) => s.doRest)
   const [showForge, setShowForge] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showVillage, setShowVillage] = useState(false)
 
   const alive = data.family.filter((c) => c.alive)
   const adults = alive.filter((c) => isAdult(c, data.seasonIndex))
@@ -71,6 +73,9 @@ export function HomeScreen() {
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}>
           家譜を繰る
         </button>
+        <button className="btn btn-ghost" onClick={() => setShowVillage(true)}>
+          郷を歩く
+        </button>
         <button className="btn btn-ghost" onClick={() => setShowHelp(true)}>
           手引き
         </button>
@@ -78,6 +83,41 @@ export function HomeScreen() {
 
       {showForge && <ForgeModal onClose={() => setShowForge(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+      {showVillage && <VillageModal onClose={() => setShowVillage(false)} />}
+    </div>
+  )
+}
+
+// 郷を歩く — 普通の寿命を生きる郷人たちと言葉を交わす
+function VillageModal({ onClose }: { onClose: () => void }) {
+  const data = useGame((s) => s.data)!
+  const [talk, setTalk] = useState<{ name: string; text: string } | null>(null)
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="panel-title">燈ノ郷 — 大燈籠のふもと</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
+          郷人たちは、ふつうの寿命を生きる。あなたの一族だけが、はやい。
+        </p>
+        <div className="home-actions">
+          {VILLAGERS.map((v) => (
+            <button key={v.id} className="btn" onClick={() => setTalk(villagerLine(v.id, data))}>
+              {v.emoji} {v.name}({v.role})
+            </button>
+          ))}
+        </div>
+        {talk && (
+          <div className="tsuzuri" style={{ marginTop: 14 }}>
+            <span className="tsuzuri-name" style={{ fontSize: 10 }}>{talk.name.slice(0, 2)}</span>
+            <span className="tsuzuri-text">
+              <b style={{ color: 'var(--amber)' }}>{talk.name}</b> —「{talk.text}」
+            </span>
+          </div>
+        )}
+        <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 10 }}>
+          家に戻る
+        </button>
+      </div>
     </div>
   )
 }
