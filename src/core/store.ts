@@ -28,7 +28,7 @@ import { dungeonByRegion } from '../dungeon/maps'
 import type { Tomoshigata, JobClassId } from './types'
 import { tozaOf } from './data/toza'
 import { jobById, JOB_SKILL_UNLOCK_AGES } from './data/jobs'
-import { hatsujinScene, kizunaScene, hosoriScene } from './lifeEvents'
+import { hatsujinScene, kizunaScene, hosoriScene, dailyScene } from './lifeEvents'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene =
@@ -261,12 +261,18 @@ export const useGame = create<GameStore>((set, get) => {
       }
     }
 
-    // 絆 — 静かな月には、家族の掛け合いがある
-    if (scenes.length === 0 && rng.chance(0.25)) {
-      const adults = d.family.filter((c) => c.alive && ageOf(c, d.seasonIndex) >= 6)
-      if (adults.length >= 2) {
-        const pair = rng.shuffle(adults).slice(0, 2)
-        scenes.push({ kind: 'life', ...kizunaScene(pair[0], pair[1], rng) })
+    // 絆と日常 — 静かな月には、家族の暮らしの一場面がある(v3.1 M15-3で日常を追加)
+    if (scenes.length === 0 && rng.chance(0.3)) {
+      if (rng.chance(0.5)) {
+        const daily = dailyScene(d.family, d.seasonIndex, rng)
+        if (daily) scenes.push({ kind: 'life', ...daily })
+      }
+      if (scenes.length === 0) {
+        const adults = d.family.filter((c) => c.alive && ageOf(c, d.seasonIndex) >= 6)
+        if (adults.length >= 2) {
+          const pair = rng.shuffle(adults).slice(0, 2)
+          scenes.push({ kind: 'life', ...kizunaScene(pair[0], pair[1], rng) })
+        }
       }
     }
 

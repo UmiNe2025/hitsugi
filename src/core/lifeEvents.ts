@@ -296,3 +296,147 @@ export function hosoriScene(c: Character, witness: Character | null): LifeSceneP
   }
   return { title: '灯細りの夜', lines: [opener, ...(byVoice[v(c)] ?? byVoice.brave)], bg: 'cg_hosori.png' }
 }
+
+// ---- 日常の一場面(v3.1 M15-3) — 何気ない暮らしが、愛着を育てる ----
+// need: pair=大人2人 / withChild=大人+幼子 / solo=大人1人。season: 0冬 1春 2夏 3秋(省略=通年)
+interface DailyDef {
+  need: 'pair' | 'withChild' | 'solo'
+  season?: number
+  title: string
+  lines: { s: 'a' | 'b' | 'n'; t: string }[] // s: a/b=話者, n=地の文
+}
+
+const DAILY: DailyDef[] = [
+  { need: 'pair', title: '夜語り', lines: [
+    { s: 'n', t: '囲炉裏の火が、ぱちりと爆ぜた。' },
+    { s: 'a', t: '{b}は、常夜が明けたら何をしたい?' },
+    { s: 'b', t: '……考えたこともなかった。そうだな、朝日で米を炊いてみたい。' },
+    { s: 'a', t: 'なんだそれ。……いいな、それ。' },
+  ]},
+  { need: 'pair', title: '薪割り勝負', lines: [
+    { s: 'a', t: '{b}! どっちが多く割れるか、勝負だ!' },
+    { s: 'b', t: '受けて立つ。負けた方が今夜の飯当番だからな。' },
+    { s: 'n', t: '結果は引き分け。飯は二人で炊いた。少し焦げた。' },
+  ]},
+  { need: 'pair', title: '井戸端', lines: [
+    { s: 'a', t: '{b}の寝癖、ひどいことになってるぞ。' },
+    { s: 'b', t: 'お前こそ、顔に畳の跡がついてる。' },
+    { s: 'n', t: '井戸の水面に映る二つの笑い顔が、しばらく揺れていた。' },
+  ]},
+  { need: 'pair', title: '小さな喧嘩', lines: [
+    { s: 'a', t: '私の干し柿、食べたでしょう。' },
+    { s: 'b', t: '……証拠は、あるのか。' },
+    { s: 'a', t: '口の端に付いてる。' },
+    { s: 'n', t: '夕餉の後、仲直りの印に半分こした柿は、いつもより甘かった。' },
+  ]},
+  { need: 'pair', title: '夜稽古', lines: [
+    { s: 'a', t: 'もう一本! まだいける!' },
+    { s: 'b', t: 'その踏み込み、母様の型に似てきたな。' },
+    { s: 'a', t: '……そうか。そうかあ。じゃあ、もう十本!' },
+  ]},
+  { need: 'pair', title: '星見', lines: [
+    { s: 'n', t: '屋根の上。二人分の湯呑みから、湯気が立つ。' },
+    { s: 'a', t: 'あの星、うちの誰かだったりしてな。' },
+    { s: 'b', t: 'なら、いちばん瞬いてるやつがいい。うちの家系は、じっとしてないから。' },
+  ]},
+  { need: 'pair', title: '夜食の取り合い', lines: [
+    { s: 'a', t: '最後の握り飯、貰うぞ。' },
+    { s: 'b', t: '待て。それは俺が握った。つまり俺のものだ。' },
+    { s: 'a', t: '握った時点で家のものだ。よって早い者勝ち。' },
+    { s: 'n', t: '半分こになった。いつものことである。' },
+  ]},
+  { need: 'pair', title: '髪を結う', lines: [
+    { s: 'a', t: 'じっとしてて。すぐ結い終わるから。' },
+    { s: 'b', t: '痛た。……なあ、明日も頼んでいいか。自分でやると不格好で。' },
+    { s: 'a', t: '毎朝でもいいよ。その代わり、肩叩き一回ね。' },
+  ]},
+  { need: 'withChild', title: '肩車', lines: [
+    { s: 'b', t: 'たかーい! {a}、もっと歩いて!' },
+    { s: 'a', t: 'よし、大燈籠のところまで一周だ。落ちるなよ。' },
+    { s: 'n', t: '小さな手が、頭の上でぎゅっと髪を掴んだ。少し痛くて、とても温かい。' },
+  ]},
+  { need: 'withChild', season: 0, title: '初雪', lines: [
+    { s: 'b', t: 'そら! そらが落ちてくる!' },
+    { s: 'a', t: '雪っていうんだ。ほら、手を出してごらん。' },
+    { s: 'b', t: '……きえた。てのなかで、きえた!' },
+    { s: 'n', t: '初めての雪に目を丸くする子を、大人たちがそっと見守っていた。' },
+  ]},
+  { need: 'withChild', title: 'かくれんぼ', lines: [
+    { s: 'a', t: 'もういいかい。' },
+    { s: 'b', t: '(……もういいよ、の声がしない)' },
+    { s: 'n', t: '半刻後、蔵の米俵の陰ですやすや眠る小さな背中が見つかった。' },
+  ]},
+  { need: 'withChild', title: '寝かしつけ', lines: [
+    { s: 'b', t: 'ねえ、もういっかい。もういっかいだけ、おはなしして。' },
+    { s: 'a', t: 'これで三回目の「もう一回」だぞ。……昔々、あるところに——' },
+    { s: 'n', t: '話し終える前に、寝息が聞こえた。' },
+  ]},
+  { need: 'withChild', season: 2, title: '蛍狩り', lines: [
+    { s: 'b', t: 'ひかってる! ほし? ほしのこども?' },
+    { s: 'a', t: '蛍だよ。夏のあいだだけ、灯を持って飛ぶんだ。' },
+    { s: 'b', t: 'わたしたちと、おんなじだね。' },
+    { s: 'n', t: 'その一言に、大人のほうが黙ってしまった。' },
+  ]},
+  { need: 'withChild', title: 'はじめての習字', lines: [
+    { s: 'a', t: 'そう、筆はまっすぐ。自分の名前から書いてみよう。' },
+    { s: 'b', t: 'かけた! ……はみだしたけど、かけた!' },
+    { s: 'n', t: '墨だらけの小さな名前は、そのまま柱に貼られることになった。' },
+  ]},
+  { need: 'solo', title: '縁側にて', lines: [
+    { s: 'n', t: '{a}は縁側で、湯呑みを両手に包んでいた。' },
+    { s: 'a', t: '……いい夜だ。常夜ってのも、たまには悪くない。' },
+    { s: 'n', t: '大燈籠の火が、返事のように一度だけ揺れた。' },
+  ]},
+  { need: 'solo', title: '手入れの夜', lines: [
+    { s: 'n', t: '{a}は灯りの下で、得物を丁寧に拭っていた。' },
+    { s: 'a', t: 'お前もうちの家族だからな。明日も頼むぞ。' },
+    { s: 'n', t: '刃が、応えるように鈍く光った。' },
+  ]},
+  { need: 'solo', season: 3, title: '紅葉焚き', lines: [
+    { s: 'n', t: '掃き集めた紅葉で、{a}は小さな焚き火を作った。' },
+    { s: 'a', t: '……芋、埋めておけばよかった。' },
+    { s: 'n', t: '香ばしい匂いだけが、夜の郷に流れていった。' },
+  ]},
+  { need: 'solo', title: '家譜を繰る夜', lines: [
+    { s: 'n', t: '{a}は独り、家譜を開いていた。知らない名前が、ずっと並んでいる。' },
+    { s: 'a', t: '全員には会えなかったけど……全員が、いてくれたから今がある。' },
+    { s: 'n', t: '頁を閉じる音が、静かな夜に馴染んだ。' },
+  ]},
+  { need: 'pair', season: 1, title: '花冷えの朝', lines: [
+    { s: 'a', t: 'くしゅん! ……春なのに冷えるな。' },
+    { s: 'b', t: 'ほら、羽織。風邪をひくと薬草代が高くつく。' },
+    { s: 'a', t: '……ありがとう。半分こしよう、これ。' },
+    { s: 'n', t: '一枚の羽織に二人で包まって、朝餉の匂いを待った。' },
+  ]},
+  { need: 'pair', season: 3, title: '月見酒', lines: [
+    { s: 'a', t: '今夜の月は、やけに大きいな。' },
+    { s: 'b', t: '常夜の月は毎晩出てるのに、見上げるのは久しぶりだ。' },
+    { s: 'a', t: '忙しかったからな、うちの家。……たまには、いいだろ。' },
+  ]},
+]
+
+// 月と家族構成から日常の一場面を選ぶ。該当がなければnull(その月は何も起きない)
+export function dailyScene(family: Character[], seasonIndex: number, rng: Rng): LifeScenePayload | null {
+  const m = ((seasonIndex % 12) + 12) % 12
+  const season = m >= 11 || m <= 1 ? 0 : m <= 4 ? 1 : m <= 7 ? 2 : 3
+  const adults = family.filter((c) => c.alive && seasonIndex - c.bornSeason >= 6)
+  const children = family.filter((c) => c.alive && seasonIndex - c.bornSeason < 6)
+  const pool = DAILY.filter((d) => {
+    if (d.season !== undefined && d.season !== season) return false
+    if (d.need === 'pair') return adults.length >= 2
+    if (d.need === 'withChild') return adults.length >= 1 && children.length >= 1
+    return adults.length >= 1
+  })
+  if (pool.length === 0) return null
+  const def = rng.pick(pool)
+  const a = rng.pick(adults)
+  const b = def.need === 'withChild' ? rng.pick(children) : rng.pick(adults.filter((x) => x.id !== a.id))
+  const fill = (t: string) => t.replaceAll('{a}', a.name).replaceAll('{b}', b?.name ?? '')
+  return {
+    title: def.title,
+    lines: def.lines.map((l) => ({
+      speaker: l.s === 'a' ? a.name : l.s === 'b' ? (b?.name ?? '') : '',
+      text: fill(l.t),
+    })),
+  }
+}
