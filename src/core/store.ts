@@ -90,7 +90,8 @@ interface GameStore {
   departDungeon: (regionId: string, partyIds: string[]) => void
   dungeonSetPos: (x: number, y: number) => void
   dungeonStep: () => void
-  dungeonEncounter: (boss?: boolean) => void
+  dungeonEncounter: (boss?: boolean, golden?: boolean) => void
+  goldenBattle: boolean // v3.1 M15-5: 金の敵影との戦闘中(勝てば実り2.5倍)
   dungeonSpecial: (kind: string, x: number, y: number) => void
   dungeonAdvanceFloor: () => void
   dungeonReturn: () => void
@@ -182,6 +183,9 @@ export const useGame = create<GameStore>((set, get) => {
         d = chronicle(d, 'birth', birthLine(child.name, god.name, rng), child.id)
         if (child.deeds.some((x) => x.includes('隔世遺伝'))) {
           d = chronicle(d, 'event', `${child.name}に、祖の血が強く顕れている。`, child.id)
+        }
+        if (child.deeds.some((x) => x.includes('神童'))) {
+          d = chronicle(d, 'era', `${child.name}、神童の相を持って生まれる — 郷がどよめいた。`, child.id)
         }
         scenes.push({ kind: 'birth', charId: child.id })
       }
@@ -341,6 +345,7 @@ export const useGame = create<GameStore>((set, get) => {
     pendingEvent: null,
     dungeonRun: null,
     battleSource: 'node',
+    goldenBattle: false,
     rng: newRng(),
 
     newGame: (narrativeMode) => {
@@ -959,7 +964,7 @@ export const useGame = create<GameStore>((set, get) => {
       set({ dungeonRun: { ...run, light: Math.max(0, run.light - 0.45), frantic, log } })
     },
 
-    dungeonEncounter: (boss = false) => {
+    dungeonEncounter: (boss = false, golden = false) => {
       const { rng } = get()
       const run = get().dungeonRun
       const d = get().data
@@ -1010,10 +1015,14 @@ export const useGame = create<GameStore>((set, get) => {
           gods: dd.codex?.gods ?? [],
         },
       }))
+      if (golden) {
+        battle.log.push({ text: '金色の敵影だ! 逃がすな — 実りは並の比ではない!', kind: 'chain' })
+      }
       set({
         battle,
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
         battleNodeId: null,
+        goldenBattle: golden,
         screen: { id: 'battle' },
         battleLogQueue: [...battle.log],
       })
@@ -1227,6 +1236,7 @@ export const useGame = create<GameStore>((set, get) => {
               data: nd,
               battle: null,
               battleSource: 'node',
+            goldenBattle: false,
               dungeonRun: null,
               pendingScenes: [],
               screen: { id: 'ending' },
@@ -1237,8 +1247,11 @@ export const useGame = create<GameStore>((set, get) => {
           const defs = battle.enemies
             .map((e) => (e.enemyId ? enemyById(e.enemyId) : null))
             .filter((x): x is NonNullable<typeof x> => !!x)
-          // 赤い火(M12-6)+商売の家訓(M12-8)で実りが増す
-          const lootK = ((run.frantic ?? 0) > 0 ? 1.5 : 1) * (d.motto === 'shobai' ? 1.08 : 1)
+          // 赤い火(M12-6)+商売の家訓(M12-8)+金の敵影(M15-5)で実りが増す
+          const lootK =
+            ((run.frantic ?? 0) > 0 ? 1.5 : 1) *
+            (d.motto === 'shobai' ? 1.08 : 1) *
+            (get().goldenBattle ? 2.5 : 1)
           const hoto = Math.round(defs.reduce((s, e) => s + e.hoto, 0) * lootK)
           const ketsu = Math.round(defs.reduce((s, e) => s + e.ketsu, 0) * lootK)
           family = family.map((c) =>
@@ -1269,6 +1282,7 @@ export const useGame = create<GameStore>((set, get) => {
             data: nd,
             battle: null,
             battleSource: 'node',
+            goldenBattle: false,
             dungeonRun: {
               ...run,
               bossDown: run.bossDown || isBoss,
@@ -1285,6 +1299,7 @@ export const useGame = create<GameStore>((set, get) => {
             data: { ...d, family },
             battle: null,
             battleSource: 'node',
+            goldenBattle: false,
             dungeonRun: { ...run, light: Math.max(0, run.light - 3), log: [...run.log, '命からがら逃げ延びた。'] },
             screen: { id: 'dungeon' },
           })
@@ -1319,7 +1334,8 @@ export const useGame = create<GameStore>((set, get) => {
             ? `${regionById(run.regionId).name}にて隊は壊滅。${lostNames.join('、')}、行方知れず。${survivor ? `${survivor.name}だけが、綴の灯に導かれて生還した。` : ''}`
             : `${regionById(run.regionId).name}より${survivor?.name ?? '当主'}、満身創痍で生還。`,
         )
-        set({ data: nd, battle: null, battleSource: 'node', dungeonRun: null })
+        set({ data: nd, battle: null, battleSource: 'node',
+            goldenBattle: false, dungeonRun: null })
         advanceSeason()
         return
       }

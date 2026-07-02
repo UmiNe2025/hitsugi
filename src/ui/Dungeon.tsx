@@ -79,7 +79,7 @@ function DungeonFloor() {
           dungeonSetPos(x, y)
           dungeonStep()
         },
-        onEncounter: () => dungeonEncounter(false),
+        onEncounter: (golden) => dungeonEncounter(false, golden),
         onSpecialTile: (kind, x, y) => {
           if (kind === 'stairs') setConfirm({ kind: 'stairs' })
           else if (kind === 'entrance') setConfirm({ kind: 'return' })

@@ -20,7 +20,7 @@ const SHADE_BASE_MS = 620
 
 export interface EngineEvents {
   onStep: (x: number, y: number) => void
-  onEncounter: () => void
+  onEncounter: (golden?: boolean) => void // golden=金の敵影(v3.1 M15-5: 実り豊かな獲物)
   onSpecialTile: (kind: TileKind, x: number, y: number) => void
 }
 
@@ -474,8 +474,9 @@ export class DungeonEngine {
         s.moveT = 0
       }
       if (s.x === this.px && s.y === this.py) {
+        const golden = s.visual.golden
         this.removeShade(s)
-        this.startEncounterFx('normal', () => this.events.onEncounter())
+        this.startEncounterFx('normal', () => this.events.onEncounter(golden))
         return
       }
     }
@@ -537,8 +538,9 @@ export class DungeonEngine {
     // 敵影との接触
     const hit = this.shades.find((s) => s.x === x && s.y === y)
     if (hit) {
+      const golden = hit.visual.golden
       this.removeShade(hit)
-      this.startEncounterFx('normal', () => this.events.onEncounter())
+      this.startEncounterFx('normal', () => this.events.onEncounter(golden))
       return
     }
     const kind = this.tileAt(x, y)

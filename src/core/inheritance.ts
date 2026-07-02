@@ -105,6 +105,14 @@ export function conceiveChild(
     }
   }
 
+  // 神童(M15-5): ごく稀に、星の寵を一身に受けた子が生まれる
+  const prodigy = rng.chance(0.04)
+  if (prodigy) {
+    for (const k of STAT_KEYS) {
+      potential[k] = Math.min(120, Math.round(potential[k] * 1.15))
+    }
+  }
+
   // 属性: 基本は星神から、3割で親から
   const element = rng.chance(0.3) ? parent.element : god.element
 
@@ -139,7 +147,10 @@ export function conceiveChild(
     alive: true,
     kills: 0,
     expeditions: 0,
-    deeds: atavism && grand ? [`${grand.name}の血が強く顕れた(隔世遺伝)`] : [],
+    deeds: [
+      ...(atavism && grand ? [`${grand.name}の血が強く顕れた(隔世遺伝)`] : []),
+      ...(prodigy ? ['生まれながらに星の寵を受けた(神童の相)'] : []),
+    ],
     fatigue: 0,
   }
   const withStats = recalcStats(child, bornSeason)
