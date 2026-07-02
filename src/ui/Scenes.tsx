@@ -100,24 +100,62 @@ export function BirthScene({ charId }: { charId: string }) {
 export function DeathScene({ charId }: { charId: string }) {
   const data = useGame((s) => s.data)!
   const processNextScene = useGame((s) => s.processNextScene)
+  const setLastWords = useGame((s) => s.setLastWords)
   const char = data.family.find((c) => c.id === charId)
+  const [beat, setBeat] = useState(0) // 生涯の巻物を一行ずつ手繰る(M15-2)
+  const [words, setWords] = useState('')
   useEffect(() => {
     audio.se('death')
   }, [])
+  // 生涯ダイジェスト(M15-2): この人の八季を、巻物のように振り返る
+  const digest = (() => {
+    if (!char) return []
+    const lines: string[] = []
+    const born = data.chronicle.find((e) => e.kind === 'birth' && e.charId === char.id)
+    if (born) lines.push(born.text)
+    if (char.expeditions > 0) lines.push(`夜藪への遠征、${char.expeditions}たび。`)
+    if (char.kills > 0) lines.push(`討った魔性、${char.kills}。`)
+    const children = data.family.filter((c) => c.humanParentId === char.id)
+    if (children.length > 0) lines.push(`残した子、${children.length}人 — ${children.map((c) => c.name).join('、')}。`)
+    for (const d of char.deeds.slice(0, 3)) lines.push(`${d}。`)
+    return lines
+  })()
+  const digestDone = beat >= digest.length
   if (!char) return null
 
+  const confirm = () => {
+    if (words.trim()) setLastWords(char.id, words)
+    processNextScene()
+  }
+
   return (
-    <div className="scene-screen screen">
+    <div className="scene-screen screen" onClick={() => !digestDone && setBeat(beat + 1)}>
       <div className="death-flame">🔥</div>
       <h1 className="scene-title">看取り</h1>
       <div className="scene-body">
         <p>
           {char.name}、第{char.gen}代。八つの季節を生き、灯が尽きた。
         </p>
-        {char.deeds.length > 0 && (
-          <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
-            {char.deeds.join('。')}。討った魔性{char.kills}。
-          </p>
+        {digest.length > 0 && (
+          <div className="life-scroll">
+            {digest.slice(0, Math.max(1, beat)).map((l, i) => (
+              <p key={i} className="life-scroll-line">{l}</p>
+            ))}
+            {!digestDone && <p className="lore-hint">(触れて、巻物を手繰る)</p>}
+          </div>
+        )}
+        {digestDone && (
+          <div className="naming-box" onClick={(e) => e.stopPropagation()}>
+            <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 4 }}>最期に、遺す言葉があれば(任意)</p>
+            <input
+              className="naming-input"
+              style={{ fontSize: 16, letterSpacing: '0.1em' }}
+              value={words}
+              maxLength={40}
+              placeholder="……"
+              onChange={(e) => setWords(e.target.value)}
+            />
+          </div>
         )}
         <div className="scene-epitaph">「{char.epitaph}」</div>
         {MOURNING[char.godParentId] && (
@@ -132,7 +170,7 @@ export function DeathScene({ charId }: { charId: string }) {
           綴「……よう生きた。あんたの八季、確かに書き留めたぞ」
         </p>
       </div>
-      <button className="btn btn-main" onClick={processNextScene}>
+      <button className="btn btn-main" onClick={(e) => { e.stopPropagation(); confirm() }} disabled={!digestDone}>
         灯を、継ぐ
       </button>
     </div>

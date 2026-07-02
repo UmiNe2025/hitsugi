@@ -792,6 +792,14 @@ button {
   .boss-banner-name { font-size: 26px; letter-spacing: 8px; }
 }
 
+/* 看取りの生涯巻物(v3.1 M15-2) */
+.life-scroll {
+  margin: 12px auto; max-width: 420px; text-align: left;
+  background: linear-gradient(180deg, rgba(38, 30, 18, 0.5), rgba(24, 18, 10, 0.6));
+  border: 1px solid var(--gold); border-radius: 4px; padding: 12px 18px;
+}
+.life-scroll-line { font-size: 13.5px; line-height: 1.9; animation: screenIn 0.4s ease both; }
+
 /* ---- 図鑑・土地の記(v3.1 M14) ---- */
 .lore-entry { border-bottom: 1px dashed var(--panel-border); padding: 10px 4px; }
 .lore-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }

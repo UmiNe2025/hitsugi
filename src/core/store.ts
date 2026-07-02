@@ -71,6 +71,7 @@ interface GameStore {
   renameCharacter: (charId: string, name: string) => void
   setMotto: (motto: MottoId) => void
   forgeUpgrade: (itemId: string) => void
+  setLastWords: (charId: string, words: string) => void
 
   // 店・装備・修練(季を消費しない)
   buyItem: (baseId: string) => void
@@ -581,6 +582,22 @@ export const useGame = create<GameStore>((set, get) => {
           }
         }
         nd = chronicle(nd, 'event', `鍛冶場に槌音が響く — 「${item.name}」を「${forged.name}」に打ち直した。`)
+        return nd
+      })
+    },
+
+    // v3.1 M15-2: 看取りの遺言 — 故人の言葉が家譜に残る
+    setLastWords: (charId, words) => {
+      const trimmed = words.trim().slice(0, 40)
+      if (!trimmed) return
+      mutate((d) => {
+        const c = d.family.find((x) => x.id === charId)
+        if (!c || c.alive || c.lastWords) return d
+        let nd: GameData = {
+          ...d,
+          family: d.family.map((x) => (x.id === charId ? { ...x, lastWords: trimmed } : x)),
+        }
+        nd = chronicle(nd, 'event', `${c.name}の遺言 — 「${trimmed}」`, c.id)
         return nd
       })
     },

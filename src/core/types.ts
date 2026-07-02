@@ -123,6 +123,7 @@ export interface Character {
   alive: boolean
   kills: number
   expeditions: number
+  lastWords?: string // v3.1 M15-2: 看取りの際に遺した言葉
   deeds: string[] // 生涯の事績(家譜用)
   deathSeason?: number
   deathCause?: string
