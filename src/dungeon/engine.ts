@@ -17,6 +17,7 @@ const TILE_COLORS: Record<TileKind, number> = {
   shrine: 0x9b7fc2,
   boss: 0x8a1f2d,
   water: 0x17263f,
+  monument: 0x8d93a8,
 }
 
 export interface EngineEvents {
@@ -98,6 +99,14 @@ export class DungeonEngine {
         this.py = e.y
       }
     }
+    // マップ再生成前の旧セーブ対策: 復帰座標が歩行不能なら入口へ退避
+    if (!isWalkable(this.tileAt(this.px, this.py))) {
+      const e = this.findTile('entrance')
+      if (e) {
+        this.px = e.x
+        this.py = e.y
+      }
+    }
   }
 
   private parse(): void {
@@ -142,6 +151,7 @@ export class DungeonEngine {
         if (kind === 'chest' && !usedHere) g.rect(8, 12, TILE - 18, TILE - 22).fill(0x5c4a2a)
         if (kind === 'shrine' && !usedHere) g.circle(TILE / 2, TILE / 2, 5).fill(0xefe6d4)
         if (kind === 'boss') g.circle(TILE / 2, TILE / 2, 7).fill(0x1a0a0e)
+        if (kind === 'monument') g.rect(TILE / 2 - 5, 6, 10, TILE - 14).fill(0xb9c0d4)
         g.x = x * TILE
         g.y = y * TILE
         this.world.addChild(g)
