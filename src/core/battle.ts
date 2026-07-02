@@ -4,17 +4,19 @@ import { Rng, uid } from './rng'
 import { skillById } from './data/skills'
 import { personalityById } from './data/personalities'
 import { tomoshigataById } from './data/toza'
+import { jobById } from './data/jobs'
 
 // ---- コンバータント生成 ----
 export function combatantFromChar(c: Character, row: 'front' | 'back'): Combatant {
   const p = personalityById(c.personalityId)
   const bias = p.battleBias
   const gataBias = c.tomoshigata ? tomoshigataById(c.tomoshigata).statBias : {}
+  const jobBias = c.jobClass ? jobById(c.jobClass).statBias : {}
   const wAtk = c.equipment.weapon?.atk ?? 0
   const aDef = c.equipment.armor?.def ?? 0
   const charm = c.equipment.charm?.statBonus ?? {}
   const stat = (k: keyof Character['stats']) =>
-    c.stats[k] + (bias[k] ?? 0) + (gataBias[k] ?? 0) + ((charm as Record<string, number>)[k] ?? 0)
+    c.stats[k] + (bias[k] ?? 0) + (gataBias[k] ?? 0) + (jobBias[k] ?? 0) + ((charm as Record<string, number>)[k] ?? 0)
   return {
     key: `ally_${c.id}`,
     isAlly: true,

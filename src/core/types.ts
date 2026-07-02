@@ -65,6 +65,9 @@ export interface God {
   desc: string // 逸話
   pactLines: string[] // 契り時の台詞(親密度順)
   portrait: string // 画像ファイル名
+  // 封印条件(北辰老方式の一般化)。無指定=最初から契れる。
+  // 複数指定時は全て満たすこと(AND)。regionId=その地域の主を討伐済み。GDD_v3 §3
+  unlock?: { fame?: number; regionId?: string; gen?: number }
 }
 
 // ---- 装備・形見 ----
@@ -85,6 +88,16 @@ export interface Item {
 // ---- 灯型(灯座システムの育成軸。定義本体は data/toza.ts) ----
 export type Tomoshigata = 'homura' | 'iwao' | 'nagi' | 'sumi'
 
+// ---- 家業(かぎょう) — 郷の生業を戦型に昇華した24職(定義本体は data/jobs.ts) ----
+// 役割6系統(攻/盾/疾/癒/呪/支)×流派4統(火巡/土巡/水巡/風巡)。GDD_v3 §2
+export type JobClassId =
+  | 'kanuchi' | 'ishiku' | 'houjin' | 'kikori' // 攻: 鍛人/石工/庖人/木樵
+  | 'touban' | 'kabenuri' | 'sekimori' | 'kakiyui' // 盾: 灯番/壁塗/堰守/垣結
+  | 'hikeshi' | 'yamagake' | 'ushou' | 'kamiyui' // 疾: 火消/山駆/鵜匠/紙結
+  | 'yumori' | 'kusurigari' | 'ubushi' | 'koutaki' // 癒: 湯守/薬狩/産師/香焚
+  | 'kageeshi' | 'menuchi' | 'sumishi' | 'kazakiki' // 呪: 影絵師/面打/墨師/風聞
+  | 'utabiku' | 'touji' | 'sendou' | 'takoshi' // 支: 唄比丘/杜氏/船頭/凧師
+
 // ---- キャラクター(一族) ----
 export interface Character {
   id: string
@@ -99,7 +112,8 @@ export interface Character {
   mp: number
   maxMp: number
   element: Element // 星脈(せいみゃく) — 星神の親から継ぐ
-  tomoshigata?: Tomoshigata // 灯型 — 成人の儀で授かる(幼子は未定)
+  tomoshigata?: Tomoshigata // 灯型 — 成人の儀(月齢6)で授かる(幼子は未定)
+  jobClass?: JobClassId // 家業 — 生業の儀(月齢12)で選ぶ(それまで・旧セーブは無職)
   personalityId: string
   skills: string[]
   equipment: Partial<Record<ItemSlot, Item>>
@@ -242,7 +256,8 @@ export type Screen =
   | { id: 'home' }
   | { id: 'pact' }
   | { id: 'birth'; charId: string }
-  | { id: 'ceremony'; charId: string } // 成人の儀 — 灯型を授ける
+  | { id: 'ceremony'; charId: string } // 成人の儀 — 灯型を授ける(月齢6)
+  | { id: 'jobrite'; charId: string } // 生業の儀 — 家業を選ぶ(月齢12)
   | { id: 'life'; title: string; lines: { speaker: string; text: string }[]; bg?: string } // ライフイベント
   | { id: 'depart' } // 出立準備
   | { id: 'expedition' }

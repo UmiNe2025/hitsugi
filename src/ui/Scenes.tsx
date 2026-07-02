@@ -6,10 +6,13 @@ import type { StatKey } from '../core/types'
 import { godById, MOURNING } from '../core/data/gods'
 import { personalityById } from '../core/data/personalities'
 import { TOMOSHIGATA, tozaOf } from '../core/data/toza'
-import type { Tomoshigata } from '../core/types'
+import type { Tomoshigata, JobClassId } from '../core/types'
+import { JOB_CLASSES, JOB_ROLE_LABELS, JOB_SCHOOL_LABELS, recommendJob, jobById } from '../core/data/jobs'
+import type { JobRole } from '../core/data/jobs'
+import { skillById } from '../core/data/skills'
 import { clearSave } from '../core/save'
 import { downloadChronicleCard } from './shareCard'
-import { gameImg } from './img'
+import { SceneBg } from './components'
 
 export function BirthScene({ charId }: { charId: string }) {
   const data = useGame((s) => s.data)!
@@ -105,7 +108,7 @@ export function LifeScene({ title, lines, bg }: { title: string; lines: { speake
   const done = beat >= lines.length - 1
   return (
     <div className="scene-screen screen" onClick={() => !done && setBeat(beat + 1)}>
-      {bg && <img className="scene-bg" src={gameImg(bg)} alt="" aria-hidden />}
+      {bg && <SceneBg file={bg} />}
       <h1 className="scene-title">{title}</h1>
       <div className="scene-body" style={{ textAlign: 'left' }}>
         {lines.slice(0, beat + 1).map((l, i) => (
@@ -157,7 +160,7 @@ export function CeremonyScene({ charId }: { charId: string }) {
     const toza = tozaOf(chosen, char.element)
     return (
       <div className="scene-screen screen">
-        <img className="scene-bg" src={gameImg('cg_ceremony.png')} alt="" aria-hidden />
+        <SceneBg file="cg_ceremony.png" />
         <div className="birth-flame">🔥</div>
         <h1 className="scene-title">成人の儀</h1>
         <div className="scene-body">
@@ -204,6 +207,79 @@ export function CeremonyScene({ charId }: { charId: string }) {
             </div>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// 生業の儀 — 生後十二月、郷の生業から家業を選ぶ(GDD_v3 §2)
+// 灯座=星から継いだ「術」、家業=郷で修める「技」。二段目の成人。
+export function JobRiteScene({ charId }: { charId: string }) {
+  const data = useGame((s) => s.data)!
+  const assignJobClass = useGame((s) => s.assignJobClass)
+  const [chosen, setChosen] = useState<JobClassId | null>(null)
+  const char = data.family.find((c) => c.id === charId)
+  if (!char) return null
+
+  const rec = recommendJob(char.potential)
+  const roles: JobRole[] = ['atk', 'tank', 'swift', 'heal', 'hex', 'sup']
+
+  if (chosen) {
+    const job = jobById(chosen)
+    return (
+      <div className="scene-screen screen">
+        <SceneBg file="cg_ceremony.png" />
+        <div className="birth-flame">🔥</div>
+        <h1 className="scene-title">生業の儀</h1>
+        <div className="scene-body">
+          <p style={{ fontSize: 18, color: 'var(--amber)' }}>{job.ritual}</p>
+          <p style={{ margin: '18px 0' }}>
+            {char.name}は道具を受け取り、深く頭を下げた。今日から{job.name}の見習いである。
+          </p>
+          <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.2em' }}>
+            家業「{job.name}」— {JOB_SCHOOL_LABELS[job.school]}の{JOB_ROLE_LABELS[job.role]}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 10 }}>
+            初伝「{skillById(job.skillIds[0]).name}」を習得。技は年季とともに深まり、八段の奥伝に至る。
+          </p>
+        </div>
+        <button className="btn btn-main" onClick={() => assignJobClass(char.id, chosen)}>
+          家譜に記す
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="scene-screen screen">
+      <h1 className="scene-title">生業の儀</h1>
+      <div className="scene-body">
+        <p>
+          {char.name}(第{char.gen}代)、生後十二月。郷の親方衆が居並ぶ前で、家業を選ぶ時が来た。
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
+          灯座は星から継いだ術、家業は郷で修める技。夜藪の外にも、この子の生きる場所ができる。
+        </p>
+      </div>
+      <div style={{ maxWidth: 860, width: '100%', textAlign: 'left', maxHeight: '52vh', overflowY: 'auto', padding: '0 4px' }}>
+        {roles.map((role) => (
+          <div key={role} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 13, color: 'var(--gold)', letterSpacing: '0.3em', margin: '8px 0 6px' }}>
+              {JOB_ROLE_LABELS[role]}の生業{role === rec ? ' ★血潮の勧め' : ''}
+            </div>
+            <div className="god-grid">
+              {JOB_CLASSES.filter((j) => j.role === role).map((j) => (
+                <div key={j.id} className="god-card" onClick={() => setChosen(j.id)}>
+                  <div className="god-name">
+                    {j.name}({j.kana}){role === rec ? ' ★' : ''}
+                  </div>
+                  <div className="god-person">{JOB_SCHOOL_LABELS[j.school]} / {JOB_ROLE_LABELS[j.role]}</div>
+                  <div className="god-desc">{j.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

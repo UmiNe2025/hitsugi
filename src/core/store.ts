@@ -24,8 +24,9 @@ import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
 import type { DungeonRun } from '../dungeon/types'
 import { dungeonByRegion } from '../dungeon/maps'
-import type { Tomoshigata } from './types'
+import type { Tomoshigata, JobClassId } from './types'
 import { tozaOf } from './data/toza'
+import { jobById, JOB_SKILL_UNLOCK_AGES } from './data/jobs'
 import { hatsujinScene, kizunaScene, hosoriScene } from './lifeEvents'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
@@ -33,6 +34,7 @@ type PendingScene =
   | { kind: 'birth'; charId: string }
   | { kind: 'death'; charId: string }
   | { kind: 'ceremony'; charId: string }
+  | { kind: 'jobrite'; charId: string } // 生業の儀(月齢12)
   | { kind: 'dream' }
   | { kind: 'life'; title: string; lines: { speaker: string; text: string }[]; bg?: string }
 
@@ -62,6 +64,9 @@ interface GameStore {
 
   // 成人の儀 — 灯型を授ける
   assignTomoshigata: (charId: string, gata: Tomoshigata) => void
+
+  // 生業の儀 — 家業を選ぶ(月齢12)
+  assignJobClass: (charId: string, jobId: JobClassId) => void
 
   // 店・装備・修練(季を消費しない)
   buyItem: (baseId: string) => void
@@ -99,6 +104,7 @@ function newRng(): Rng {
 declare global {
   interface Window {
     __game?: unknown
+    __counts?: Record<string, number | string[]>
   }
 }
 
@@ -187,6 +193,13 @@ export const useGame = create<GameStore>((set, get) => {
       }
     }
 
+    // 生業の儀 — 生後12月、灯座を持つ者は家業を選ぶ(GDD_v3 §2)
+    for (const c of d.family) {
+      if (c.alive && c.tomoshigata && !c.jobClass && ageOf(c, d.seasonIndex) >= 12) {
+        scenes.push({ kind: 'jobrite', charId: c.id })
+      }
+    }
+
     // 灯細りの夜 — 死のひと月前、最後の対話
     for (const c of d.family) {
       if (c.alive && ageOf(c, d.seasonIndex) === 23 && !c.deeds.includes('灯細りの夜を過ごした')) {
@@ -231,6 +244,22 @@ export const useGame = create<GameStore>((set, get) => {
         if (awakened) {
           d = chronicle(d, 'event', `${c.name}、灯座「${toza.name}」の奥義に開眼す。`)
         }
+        return { ...c, skills: learned }
+      }),
+    }
+
+    // 家業の年季 — 月齢で家業技が開く(GDD_v3 §2)
+    d = {
+      ...d,
+      family: d.family.map((c) => {
+        if (!c.alive || !c.jobClass) return c
+        const job = jobById(c.jobClass)
+        const age = ageOf(c, d.seasonIndex)
+        const learned = [...c.skills]
+        job.skillIds.forEach((sid, i) => {
+          if (age >= JOB_SKILL_UNLOCK_AGES[i] && !learned.includes(sid)) learned.push(sid)
+        })
+        if (learned.length === c.skills.length) return c
         return { ...c, skills: learned }
       }),
     }
@@ -363,9 +392,11 @@ export const useGame = create<GameStore>((set, get) => {
               ? { id: 'death', charId: next.charId }
               : next.kind === 'ceremony'
                 ? { id: 'ceremony', charId: next.charId }
-                : next.kind === 'life'
-                  ? { id: 'life', title: next.title, lines: next.lines, bg: next.bg }
-                  : { id: 'dream' },
+                : next.kind === 'jobrite'
+                  ? { id: 'jobrite', charId: next.charId }
+                  : next.kind === 'life'
+                    ? { id: 'life', title: next.title, lines: next.lines, bg: next.bg }
+                    : { id: 'dream' },
       })
     },
 
@@ -430,6 +461,31 @@ export const useGame = create<GameStore>((set, get) => {
           ),
         }
         nd = chronicle(nd, 'event', `${c.name}、成人の儀。灯座「${toza.name}」を授かる。`)
+        return nd
+      })
+      get().processNextScene()
+    },
+
+    assignJobClass: (charId, jobId) => {
+      mutate((d) => {
+        const c = d.family.find((x) => x.id === charId)
+        if (!c || !c.alive || c.jobClass) return d
+        const job = jobById(jobId)
+        const first = job.skillIds[0]
+        let nd: GameData = {
+          ...d,
+          family: d.family.map((x) =>
+            x.id === charId
+              ? {
+                  ...x,
+                  jobClass: jobId,
+                  skills: x.skills.includes(first) ? x.skills : [...x.skills, first],
+                  deeds: [...x.deeds, `生業の儀にて家業「${job.name}」を選ぶ`],
+                }
+              : x,
+          ),
+        }
+        nd = chronicle(nd, 'event', `${c.name}、生業の儀。家業「${job.name}」の道を歩み始める。`)
         return nd
       })
       get().processNextScene()
@@ -1215,4 +1271,32 @@ export const useGame = create<GameStore>((set, get) => {
 
 if (import.meta.env.DEV) {
   window.__game = useGame
+  // ランタイム生成コンテンツ(敵の変異/装備の系譜/家業の技)はテキスト静的解析では
+  // 数え漏れる。実データで件数とid重複を検証するためのdev専用フック(GDD_v3 §6)。
+  import('./data/gods').then(({ GODS }) => {
+    import('./data/enemies').then(({ ENEMIES }) => {
+      import('./data/items').then(({ ITEM_BASES }) => {
+        import('./expedition').then(({ EVENTS }) => {
+          import('./data/jobs').then(({ JOB_CLASSES, allJobSkills }) => {
+            const dupes = (ids: string[]) => ids.filter((id, i) => ids.indexOf(id) !== i)
+            window.__counts = {
+              gods: GODS.length,
+              godDupes: dupes(GODS.map((g) => g.id)),
+              enemies: ENEMIES.length,
+              enemyDupes: dupes(ENEMIES.map((e) => e.id)),
+              items: ITEM_BASES.length,
+              itemDupes: dupes(ITEM_BASES.map((i) => i.baseId)),
+              events: EVENTS.length,
+              eventDupes: dupes(EVENTS.map((e) => e.id)),
+              jobs: JOB_CLASSES.length,
+              jobSkills: allJobSkills().length,
+              jobSkillDupes: dupes(allJobSkills().map((s) => s.id)),
+            }
+            // eslint-disable-next-line no-console
+            console.log('[__counts]', window.__counts)
+          })
+        })
+      })
+    })
+  })
 }
