@@ -34,6 +34,11 @@ export const REGIONS: Region[] = [
     bg: 'bg_zaka.png',
   },
   {
+    id: 'nurikabe_koji', name: '塗壁小路', tier: 2, depth: 8, unlockFame: 100, bossId: 'boss_nurikabeoyakata',
+    desc: '見えない壁が幾重にも立ち塞がる小路。押しても引いても、壁は壁のまま。',
+    bg: 'bg_zaka.png',
+  },
+  {
     id: 'kare_numa', name: '涸れ沼の畔', tier: 2, depth: 8, unlockFame: 140, bossId: 'boss_hiruhime',
     desc: '千年前に涸れたはずの沼。畔に立つと、今も地中で水の音がする。',
     bg: 'bg_zaka.png',
