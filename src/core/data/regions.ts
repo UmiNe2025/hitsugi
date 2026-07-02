@@ -1,4 +1,5 @@
 import type { Region } from '../types'
+import { FAME_SEAL_THRESHOLD } from '../constants'
 
 // 夜藪の地域 — 武功(fame)で順に解放
 export const REGIONS: Region[] = [
@@ -18,7 +19,7 @@ export const REGIONS: Region[] = [
     bg: 'bg_tani.png',
   },
   {
-    id: 'akashi_miyama', name: '灯ノ御山', tier: 4, depth: 12, unlockFame: 520, bossId: 'boss_gentou',
+    id: 'akashi_miyama', name: '灯ノ御山', tier: 4, depth: 12, unlockFame: FAME_SEAL_THRESHOLD, bossId: 'boss_gentou',
     desc: '常夜の中心。頂に玄冬が座す。千年、誰も頂に届いていない。',
     bg: 'bg_miyama.png',
   },
