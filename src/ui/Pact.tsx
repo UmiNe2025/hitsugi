@@ -67,7 +67,6 @@ export function PactScreen() {
                     className="god-portrait"
                     src={gameImg(g.portrait)}
                     alt=""
-                    loading="lazy"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 )}
