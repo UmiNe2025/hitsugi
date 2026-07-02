@@ -378,7 +378,14 @@ export const useGame = create<GameStore>((set, get) => {
         const party = nd.family
           .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
           .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
-        const enemies = enemyIds.map((id, i) => combatantFromEnemy(enemyById(id), i))
+        const ease = nd.narrativeMode ? 0.78 : 1
+        const enemies = enemyIds.map((id, i) => {
+          const def = enemyById(id)
+          return combatantFromEnemy(
+            { ...def, atk: Math.round(def.atk * ease), hp: Math.round(def.hp * ease) },
+            i,
+          )
+        })
         const battle = startBattle(party, enemies)
         set({ battle, battleNodeId: pendingEvent.nodeId, screen: { id: 'battle' }, battleLogQueue: [...battle.log] })
         return
@@ -462,10 +469,18 @@ export const useGame = create<GameStore>((set, get) => {
         const party = d.family
           .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
           .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
-        // 灯が尽きていると敵が強化される(常夜の重圧)
+        // 灯が尽きていると敵が強化される(常夜の重圧)/ 語り部モードは敵が穏やか
         const dark = light <= 0
+        const ease = d.narrativeMode ? 0.78 : 1
         const enemies = defs.map((e, i) =>
-          combatantFromEnemy(dark ? { ...e, atk: Math.round(e.atk * 1.4), hp: Math.round(e.hp * 1.2) } : e, i),
+          combatantFromEnemy(
+            {
+              ...e,
+              atk: Math.round(e.atk * (dark ? 1.4 : 1) * ease),
+              hp: Math.round(e.hp * (dark ? 1.2 : 1) * ease),
+            },
+            i,
+          ),
         )
         const battle = startBattle(party, enemies)
         if (node.type === 'boss' || node.type === 'elite') {
@@ -607,7 +622,12 @@ export const useGame = create<GameStore>((set, get) => {
             guard: false,
             buffs: {},
           }))
-          const shiori = [combatantFromEnemy(enemyById('boss_shiori'), 0)]
+          const shioriDef = enemyById('boss_shiori')
+          const easeS = d.narrativeMode ? 0.78 : 1
+          const shiori = [combatantFromEnemy(
+            { ...shioriDef, atk: Math.round(shioriDef.atk * easeS), hp: Math.round(shioriDef.hp * easeS) },
+            0,
+          )]
           const battle2 = startBattle(healed, shiori)
           battle2.log = [
             { text: '玄冬の面が、割れて落ちる——', kind: 'info' },
