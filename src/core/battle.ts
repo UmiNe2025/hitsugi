@@ -163,13 +163,14 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
     }
     push('退路を塞がれた!', 'info')
   } else {
-    // attack / skill
+    // attack / skill — 静心の加護(v3.1 M16-4)で灯力の消費が減る
     const skill = action.type === 'skill' && action.skillId ? skillById(action.skillId) : undefined
-    if (skill && actor.mp < skill.mpCost) {
+    const mpCost = skill ? Math.max(1, Math.ceil(skill.mpCost * (1 - (actor.mpDiscount ?? 0)))) : 0
+    if (skill && actor.mp < mpCost) {
       push(`${actor.name}は灯力が足りない!`)
       return endOfAction(st, entries, rng)
     }
-    if (skill) updateCombatant(actorKey, (c) => ({ ...c, mp: c.mp - skill.mpCost }))
+    if (skill) updateCombatant(actorKey, (c) => ({ ...c, mp: c.mp - mpCost }))
 
     const foes = actor.isAlly ? st.enemies : st.allies
     const friends = actor.isAlly ? st.allies : st.enemies
@@ -201,7 +202,9 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
           }
         }
         const isMagic = !!skill && skill.element !== undefined && actor.matk > actor.atk
-        const atkV = isMagic ? actor.matk : actor.atk
+        // 血汐の滾り(M16-4): 体力半分以下で火力+25%
+        const rageK = actor.boonRage && actor.hp <= actor.maxHp / 2 ? 1.25 : 1
+        const atkV = (isMagic ? actor.matk : actor.atk) * rageK
         const defV = (isMagic ? t.mdef : t.def) * (t.guard ? 1.8 : 1)
         const buffMult = (actor.buffs.atkUp ? 1.25 : 1) / (t.buffs.defUp ? 1.2 : 1)
         let dmg = Math.max(1, atkV * (power / 100) * (0.9 + rng.next() * 0.2) - defV * 0.9)

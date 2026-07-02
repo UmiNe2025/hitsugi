@@ -99,6 +99,7 @@ export class DungeonEngine {
   private fx: EncounterFx | null = null
   private flashG: Graphics | null = null
   private frantic = false // 熱狂の赤い火(M12で発火条件をstore側に実装)
+  private stealth = false // 闇夜の目(M16-4: 追跡半径-2)
 
   private keydown = (e: KeyboardEvent) => {
     const k = keyDir(e.key)
@@ -444,7 +445,7 @@ export class DungeonEngine {
       if (s.cd > 0) continue
       const near = dist(s.x, s.y, this.px, this.py)
       // 金の敵影は追わず逃げる(速い)。通常種は灯が細るほど遠くから追う。
-      const chaseRange = (this.lightPct < 40 ? 6 : 4) + (this.frantic ? 2 : 0)
+      const chaseRange = Math.max(2, (this.lightPct < 40 ? 6 : 4) + (this.frantic ? 2 : 0) - (this.stealth ? 2 : 0))
       const chase = !s.visual.golden && near <= chaseRange
       const flee = s.visual.golden && near <= 6
       s.cd = SHADE_BASE_MS * speedMult * (s.visual.golden ? 0.55 : chase ? 0.75 : 1) * (0.8 + Math.random() * 0.4)
@@ -498,6 +499,11 @@ export class DungeonEngine {
   setFrantic(on: boolean): void {
     this.frantic = on
     this.lighting?.setPlayerTint(on ? 0xff5a3a : this.theme.torchTint)
+  }
+
+  // 闇夜の目(M16-4): 敵影に気取られにくくなる
+  setStealth(on: boolean): void {
+    this.stealth = on
   }
 
   private applyFacing(frame: number): void {

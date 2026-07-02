@@ -995,6 +995,16 @@ button {
 @media (min-width: 900px) {
   .dpad { opacity: 0.35; }
 }
+/* 灯の加護の帯(v3.1 M16-4) */
+.boon-strip {
+  position: absolute; left: 10px; top: 96px; z-index: 5;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.boon-chip {
+  background: rgba(11, 15, 30, 0.72); border: 1px solid rgba(217, 194, 106, 0.5);
+  color: var(--el-star); border-radius: 4px; padding: 2px 8px; font-size: 11px; letter-spacing: 1px;
+}
+
 /* 縦長(スマホ)ではHUDを二段組に */
 @media (max-width: 560px) {
   .dungeon-title-plate {

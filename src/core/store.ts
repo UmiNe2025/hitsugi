@@ -11,6 +11,7 @@ import { enemyById } from './data/enemies'
 import { makeItem, inheritItem, itemBaseById, reforgeItem, reforgeCost, REFORGE_MAX, ITEM_BASES as ITEM_BASES_ALL } from './data/items'
 import { loreFor } from './data/lore'
 import { CHAPTERS, ENDINGS } from './data/story'
+import { boonById, draftBoons } from './data/boons'
 import { FAME_SEAL_THRESHOLD } from './constants'
 import {
   conceiveChild, makeFounder, recalcStats, ageOf, pactCost,
@@ -96,6 +97,8 @@ interface GameStore {
   dungeonEncounter: (boss?: boolean, golden?: boolean) => void
   goldenBattle: boolean // v3.1 M15-5: 金の敵影との戦闘中(勝てば実り2.5倍)
   nemesisBattleId: string | null // v3.1 M16-1: 対峙中の宿敵(勝てば仇討ち)
+  boonDraft: string[] | null // v3.1 M16-4: 提示中の加護三択(出撃時・焚火時)
+  chooseBoon: (id: string | null) => void // nullで見送り
   dungeonSpecial: (kind: string, x: number, y: number) => void
   dungeonAdvanceFloor: () => void
   dungeonReturn: () => void
@@ -139,9 +142,10 @@ export const useGame = create<GameStore>((set, get) => {
     chronicle: [...d.chronicle, { season: d.seasonIndex, kind, text, charId }],
   })
 
-  // v3.1 M12: 血縁(連携奥義の相手)と家訓の補正を戦闘員へ付与
-  const enrichAllies = (party: Combatant[], chars: Character[], motto?: MottoId): Combatant[] => {
+  // v3.1 M12/M16: 血縁(連携奥義)・家訓・灯の加護の補正を戦闘員へ付与
+  const enrichAllies = (party: Combatant[], chars: Character[], motto?: MottoId, boons?: string[]): Combatant[] => {
     const byId = new Map(chars.map((c) => [c.id, c]))
+    const has = (id: string) => !!boons?.includes(id)
     return party.map((cb) => {
       const me = cb.charId ? byId.get(cb.charId) : undefined
       const kinKeys = me
@@ -159,8 +163,13 @@ export const useGame = create<GameStore>((set, get) => {
       return {
         ...cb,
         kinKeys: kinKeys.length > 0 ? kinKeys : undefined,
-        atk: cb.atk + (motto === 'budan' ? 2 : 0),
+        atk: Math.round((cb.atk + (motto === 'budan' ? 2 : 0)) * (has('kasei') ? 1.12 : 1)),
+        def: Math.round(cb.def * (has('teppeki') ? 1.18 : 1)),
+        agi: cb.agi + (has('idaten') ? 8 : 0),
+        luk: cb.luk + (has('kyoun') ? 15 : 0),
         matk: cb.matk + (motto === 'gakumon' ? 2 : 0),
+        mpDiscount: has('seishin') ? 0.25 : undefined,
+        boonRage: has('chisio') || undefined,
       }
     })
   }
@@ -383,7 +392,30 @@ export const useGame = create<GameStore>((set, get) => {
     battleSource: 'node',
     goldenBattle: false,
     nemesisBattleId: null,
+    boonDraft: null,
     rng: newRng(),
+
+    // v3.1 M16-4: 加護の三択を選ぶ(nullで見送り)
+    chooseBoon: (id) => {
+      const run = get().dungeonRun
+      if (!run) {
+        set({ boonDraft: null })
+        return
+      }
+      if (id && (run.boons?.length ?? 0) < 3 && !(run.boons ?? []).includes(id)) {
+        const boon = boonById(id)
+        set({
+          boonDraft: null,
+          dungeonRun: {
+            ...run,
+            boons: [...(run.boons ?? []), id],
+            log: [...run.log, `灯の加護「${boon?.name ?? id}」を授かった。`],
+          },
+        })
+      } else {
+        set({ boonDraft: null })
+      }
+    },
 
     newGame: (narrativeMode) => {
       const rng = newRng()
@@ -989,7 +1021,9 @@ export const useGame = create<GameStore>((set, get) => {
         ),
         regionsVisited: [...new Set([...(d.regionsVisited ?? []), regionId])],
       }))
-      set({ dungeonRun: run, screen: { id: 'dungeon' } })
+      // v3.1 M16-4: 出立の加護 — 三択を提示
+      const draft = draftBoons([], () => get().rng.next()).map((b) => b.id)
+      set({ dungeonRun: run, screen: { id: 'dungeon' }, boonDraft: draft.length > 0 ? draft : null })
     },
 
     dungeonSetPos: (x, y) => {
@@ -1011,7 +1045,20 @@ export const useGame = create<GameStore>((set, get) => {
         frantic = 45
         log = [...log, '灯が緋に燃え上がった! 熱狂の赤い火 — 魔性は猛るが、実りは倍加する!']
       }
-      set({ dungeonRun: { ...run, light: Math.max(0, run.light - 0.45), frantic, log } })
+      // 加護(M16-4): 大灯=灯費約2/3、湯治=一歩ごと微回復
+      const boons = run.boons ?? []
+      const lightCost = 0.45 * (boons.includes('oohi') ? 0.65 : 1)
+      if (boons.includes('touji')) {
+        mutate((d) => ({
+          ...d,
+          family: d.family.map((c) =>
+            run.partyIds.includes(c.id) && c.alive && c.hp > 0 && c.hp < c.maxHp
+              ? { ...c, hp: Math.min(c.maxHp, c.hp + Math.max(1, Math.round(c.maxHp * 0.004))) }
+              : c,
+          ),
+        }))
+      }
+      set({ dungeonRun: { ...run, light: Math.max(0, run.light - lightCost), frantic, log } })
     },
 
     dungeonEncounter: (boss = false, golden = false) => {
@@ -1034,6 +1081,7 @@ export const useGame = create<GameStore>((set, get) => {
             .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back')),
           d.family,
           d.motto,
+          run.boons,
         )
         const nemDef = {
           ...base,
@@ -1071,6 +1119,7 @@ export const useGame = create<GameStore>((set, get) => {
           .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back')),
         d.family,
         d.motto,
+        run.boons,
       )
       // 主が未設定の地域はエリート級を主に見立てて強化する。真の主(tier5)は素の強さで十分
       const standInBoss = boss && !region.bossId
@@ -1158,10 +1207,12 @@ export const useGame = create<GameStore>((set, get) => {
 
       if (kind === 'chest') {
         const t = rollTreasure(region, rng)
+        // 目利きの心得(M16-4): 宝箱の実り+50%
+        const mekiki = (run.boons ?? []).includes('mekiki') ? 1.5 : 1
         mark({
           loot: {
-            hoto: run.loot.hoto + t.hoto,
-            ketsu: run.loot.ketsu + t.ketsu,
+            hoto: run.loot.hoto + Math.round(t.hoto * mekiki),
+            ketsu: run.loot.ketsu + Math.round(t.ketsu * mekiki),
             items: t.item ? [...run.loot.items, t.item] : run.loot.items,
           },
           log: [...run.log, t.text],
@@ -1180,6 +1231,11 @@ export const useGame = create<GameStore>((set, get) => {
           light: Math.min(100, run.light + lightGain),
           log: [...run.log, '焚火を囲んだ。誰かが故郷の唄を口ずさむ。傷が癒え、灯が少し戻った。'],
         })
+        // 焚火の加護(M16-4): まだ3つ未満なら新たな三択
+        if ((run.boons?.length ?? 0) < 3) {
+          const draft = draftBoons(run.boons ?? [], () => rng.next()).map((b) => b.id)
+          if (draft.length > 0) set({ boonDraft: draft })
+        }
       } else if (kind === 'shrine') {
         const ev = pickEvent(rng, run.regionId) // 地域固有事件を優先(M14)
         mark({})
@@ -1211,9 +1267,11 @@ export const useGame = create<GameStore>((set, get) => {
       const run = get().dungeonRun
       const d = get().data
       if (!run || !d) return
-      // 常夜百層(v3.1 M15-6): 降りた層の数だけ武名が刻まれる
+      // 常夜百層(v3.1 M15-6): 降りた層の数だけ武名が刻まれる/帰り火の加護(M16-4)
       const towerBonus = run.regionId === 'tokoyo_tou' ? (run.floor + 1) * 2 : 0
-      const gainedFame = Math.round(run.loot.hoto / 10) + run.loot.ketsu * 2 + (run.bossDown ? 40 : 0) + towerBonus
+      const kaeribiBonus = (run.boons ?? []).includes('kaeribi') ? 15 : 0
+      const gainedFame =
+        Math.round(run.loot.hoto / 10) + run.loot.ketsu * 2 + (run.bossDown ? 40 : 0) + towerBonus + kaeribiBonus
       let nd: GameData = {
         ...d,
         hoto: d.hoto + run.loot.hoto,
@@ -1347,11 +1405,12 @@ export const useGame = create<GameStore>((set, get) => {
           const defs = battle.enemies
             .map((e) => (e.enemyId ? enemyById(e.enemyId) : null))
             .filter((x): x is NonNullable<typeof x> => !!x)
-          // 赤い火(M12-6)+商売の家訓(M12-8)+金の敵影(M15-5)で実りが増す
+          // 赤い火(M12-6)+商売の家訓(M12-8)+金の敵影(M15-5)+福運の加護(M16-4)で実りが増す
           const lootK =
             ((run.frantic ?? 0) > 0 ? 1.5 : 1) *
             (d.motto === 'shobai' ? 1.08 : 1) *
-            (get().goldenBattle ? 2.5 : 1)
+            (get().goldenBattle ? 2.5 : 1) *
+            ((run.boons ?? []).includes('fukuun') ? 1.3 : 1)
           const hoto = Math.round(defs.reduce((s, e) => s + e.hoto, 0) * lootK)
           const ketsu = Math.round(defs.reduce((s, e) => s + e.ketsu, 0) * lootK)
           family = family.map((c) =>

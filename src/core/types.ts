@@ -215,6 +215,8 @@ export interface Combatant {
   kinKeys?: string[] // v3.1 M12-7: 連携奥義の血縁(兄妹/親子)にあたる味方key
   personalityId?: string // v3.1 M15-1: 戦闘台詞の性根
   weaponLegacy?: string // v3.1 M15-1: 形見の得物の故人名(台詞用)
+  mpDiscount?: number // v3.1 M16-4: 静心の加護(技の灯力割引 0〜1)
+  boonRage?: boolean // v3.1 M16-4: 血汐の滾り(体力半分以下で攻撃+25%)
 }
 
 export interface BattleState {

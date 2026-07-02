@@ -4,6 +4,7 @@ import { regionById } from '../core/data/regions'
 import { MONTH_NAMES } from '../core/types'
 import { dungeonByRegion } from '../dungeon/maps'
 import { DungeonEngine } from '../dungeon/engine'
+import { boonById } from '../core/data/boons'
 import { Bar } from './components'
 import { EventModal } from './Expedition'
 
@@ -50,6 +51,8 @@ function DungeonFloor() {
   const data = useGame((s) => s.data)!
   const run = useGame((s) => s.dungeonRun)!
   const pendingEvent = useGame((s) => s.pendingEvent)
+  const boonDraft = useGame((s) => s.boonDraft)
+  const chooseBoon = useGame((s) => s.chooseBoon)
   const dungeonSetPos = useGame((s) => s.dungeonSetPos)
   const dungeonStep = useGame((s) => s.dungeonStep)
   const dungeonEncounter = useGame((s) => s.dungeonEncounter)
@@ -124,9 +127,14 @@ function DungeonFloor() {
     engineRef.current?.setFrantic((run.frantic ?? 0) > 0)
   }, [run.frantic])
 
+  // 闇夜の目(v3.1 M16-4): 敵影に気取られにくく
   useEffect(() => {
-    engineRef.current?.setPaused(!!pendingEvent || confirm !== null)
-  }, [pendingEvent, confirm])
+    engineRef.current?.setStealth((run.boons ?? []).includes('yamiyo'))
+  }, [run.boons])
+
+  useEffect(() => {
+    engineRef.current?.setPaused(!!pendingEvent || confirm !== null || !!boonDraft)
+  }, [pendingEvent, confirm, boonDraft])
 
   const dpad = (dir: 'up' | 'down' | 'left' | 'right', label: string) => (
     <button
@@ -230,6 +238,44 @@ function DungeonFloor() {
               やめる
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 灯の加護ドラフト(v3.1 M16-4) — この遠征だけの三択 */}
+      {boonDraft && (
+        <div className="modal-back">
+          <div className="modal" style={{ maxWidth: 440 }}>
+            <h2 className="panel-title">灯の加護 — ひとつだけ、授かれる</h2>
+            {boonDraft.map((id) => {
+              const b = boonById(id)
+              if (!b) return null
+              return (
+                <button
+                  key={id}
+                  className="btn"
+                  style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 6 }}
+                  onClick={() => chooseBoon(id)}
+                >
+                  <b>{b.name}</b>
+                  <span style={{ display: 'block', fontSize: 12, color: 'var(--text-dim)' }}>{b.desc}</span>
+                </button>
+              )
+            })}
+            <button className="btn btn-ghost" onClick={() => chooseBoon(null)}>
+              見送る
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 授かった加護の帯 */}
+      {(run.boons?.length ?? 0) > 0 && (
+        <div className="boon-strip">
+          {run.boons!.map((id) => (
+            <span key={id} className="boon-chip" title={boonById(id)?.desc}>
+              {boonById(id)?.name?.replace('の加護', '').replace('の心得', '')}
+            </span>
+          ))}
         </div>
       )}
 
