@@ -55,6 +55,11 @@ function godStat(god: God, key: StatKey): number {
   return 42 + god.rank * 9 + (god.statBias[key] ?? 0)
 }
 
+// UI表示用(v3.1 M9: 遺伝子画面の神系バー)。計算はgodStatと同一の単一情報源。
+export function godStatValue(god: God, key: StatKey): number {
+  return godStat(god, key)
+}
+
 // 子の血潮予測レンジ(UI表示用) — 透明性のための機能
 export function predictChild(parent: Character, god: God): Record<StatKey, [number, number]> {
   const out = {} as Record<StatKey, [number, number]>

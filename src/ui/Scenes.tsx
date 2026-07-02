@@ -10,6 +10,7 @@ import type { Tomoshigata, JobClassId } from '../core/types'
 import { JOB_CLASSES, JOB_ROLE_LABELS, JOB_SCHOOL_LABELS, recommendJob, jobById } from '../core/data/jobs'
 import type { JobRole } from '../core/data/jobs'
 import { skillById } from '../core/data/skills'
+import { MALE_NAMES, FEMALE_NAMES } from '../core/data/names'
 import { clearSave } from '../core/save'
 import { downloadChronicleCard } from './shareCard'
 import { SceneBg } from './components'
@@ -17,14 +18,37 @@ import { SceneBg } from './components'
 export function BirthScene({ charId }: { charId: string }) {
   const data = useGame((s) => s.data)!
   const processNextScene = useGame((s) => s.processNextScene)
+  const renameCharacter = useGame((s) => s.renameCharacter)
   const char = data.family.find((c) => c.id === charId)
+  const [name, setName] = useState('')
+  const [candidates, setCandidates] = useState<string[]>([])
   useEffect(() => {
     audio.se('birth')
   }, [])
+  // 命名候補(生まれた子の性別プールから、家中で未使用の名を3つ)
+  useEffect(() => {
+    if (!char) return
+    setName(char.name)
+    const pool = char.sex === 'm' ? MALE_NAMES : FEMALE_NAMES
+    const used = new Set(data.family.map((c) => c.name))
+    const free = pool.filter((n) => !used.has(n))
+    const picks: string[] = []
+    for (let i = 0; i < free.length && picks.length < 3; i++) {
+      const n = free[(i * 7 + char.bornSeason) % free.length]
+      if (!picks.includes(n)) picks.push(n)
+    }
+    setCandidates(picks)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [charId])
   if (!char) return null
   const god = godById(char.godParentId)
   const parent = data.family.find((c) => c.id === char.humanParentId)
   const p = personalityById(char.personalityId)
+
+  const confirm = () => {
+    if (name.trim() && name.trim() !== char.name) renameCharacter(char.id, name)
+    processNextScene()
+  }
 
   return (
     <div className="scene-screen screen">
@@ -34,9 +58,23 @@ export function BirthScene({ charId }: { charId: string }) {
         <p>
           {parent?.name}と{god.name}の子、生まれる。
         </p>
-        <p style={{ fontSize: 30, fontWeight: 700, letterSpacing: '0.3em', margin: '18px 0' }}>
-          {char.name}
-        </p>
+        {/* 命名(v3.1 M16-2): 候補から選ぶか、自由に授ける */}
+        <div className="naming-box">
+          <input
+            className="naming-input"
+            value={name}
+            maxLength={8}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="子の名"
+          />
+          <div className="naming-candidates">
+            {[char.name, ...candidates].filter((n, i, a) => a.indexOf(n) === i).slice(0, 4).map((n) => (
+              <button key={n} className={`btn btn-ghost naming-pick ${name === n ? 'active' : ''}`} onClick={() => setName(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
         <p style={{ color: 'var(--text-dim)' }}>
           第{char.gen}代 — {p.label}な子。{p.desc}
         </p>
@@ -52,7 +90,7 @@ export function BirthScene({ charId }: { charId: string }) {
           与えられた命は八季(廿四月)。六月で成人し、隊に加われる。
         </p>
       </div>
-      <button className="btn btn-main" onClick={processNextScene}>
+      <button className="btn btn-main" onClick={confirm} disabled={!name.trim()}>
         名を家譜に記す
       </button>
     </div>

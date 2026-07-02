@@ -1,9 +1,12 @@
+// 交神の儀(品質刷新v3.1 M9) — 俺屍様式の二面構成
+// 左=神名リスト(属性印+名+奉納点、奉納点昇順、位階タブ×属性チップ)/右=大立ち絵+情報札。
+// 遺伝子画面: 親系(人)/神系の二列バー+子の見立てレンジ。確定時は炎輪カットイン。
 import { useMemo, useState } from 'react'
 import { useGame } from '../core/store'
 import type { StatKey, GodRank, Element } from '../core/types'
 import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS } from '../core/types'
 import { GODS, godUnlocked } from '../core/data/gods'
-import { isAdult, predictChild } from '../core/inheritance'
+import { isAdult, predictChild, godStatValue } from '../core/inheritance'
 import { CharCard, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, HOME_BG } from './img'
 
@@ -30,27 +33,37 @@ export function PactScreen() {
   const doPact = useGame((s) => s.doPact)
   const [parentId, setParentId] = useState<string | null>(null)
   const [godId, setGodId] = useState<string | null>(null)
-  // 星の数が増えても迷わないための絞り込み(位階タブ×系統チップ) — GDD_v3 §1
   const [rankTab, setRankTab] = useState<GodRank | 0>(0) // 0=全て
   const [elemChip, setElemChip] = useState<Element | null>(null)
+  const [ritual, setRitual] = useState(false) // 炎輪カットイン中
 
   const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const parent = adults.find((c) => c.id === parentId) ?? null
   const god = GODS.find((g) => g.id === godId) ?? null
 
+  // 奉納点(cost)昇順 — 俺屍の神名リスト様式
   const shownGods = GODS.filter(
     (g) => (rankTab === 0 || g.rank === rankTab) && (elemChip === null || g.element === elemChip),
-  )
+  ).sort((a, b) => a.cost - b.cost)
 
   const prediction = useMemo(
     () => (parent && god ? predictChild(parent, god) : null),
     [parent, god],
   )
 
+  const beginRitual = () => {
+    if (!parent || !god || ritual) return
+    setRitual(true)
+    setTimeout(() => {
+      doPact(parent.id, god.id)
+      setRitual(false)
+    }, 1100)
+  }
+
   return (
-    <div className="screen">
+    <div className="screen pact-screen">
       <NightBackdrop bg={gameImg(HOME_BG)} />
-      <h1 className="season-label" style={{ marginBottom: 14 }}>星契りの儀</h1>
+      <h1 className="season-label" style={{ marginBottom: 14 }}>交神の儀</h1>
       <TsuzuriLine text="星神と契れば、翌季に子が生まれる。血潮は親と神から流れ込む — 誰の血を、どの星に継がせる?" />
 
       <Panel title="契る者を選ぶ">
@@ -94,71 +107,91 @@ export function PactScreen() {
             ))}
           </div>
         </div>
-        {shownGods.length === 0 && (
-          <p style={{ fontSize: 13, color: 'var(--text-dim)', textAlign: 'center', padding: 12 }}>
-            その条件の星は、今夜は見えない。
-          </p>
-        )}
-        <div className="god-grid">
-          {shownGods.map((g) => {
-            // 封印された星は条件(unlock)を満たすまで姿を見せない
-            const sealed = !godUnlocked(g, data)
-            const affordable = data.hoto >= g.cost && !sealed
-            const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
-            return (
-              <div
-                key={g.id}
-                className={`god-card ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''}`}
-                onClick={() => affordable && setGodId(g.id)}
-              >
-                {!sealed && (
-                  <img
-                    className="god-portrait"
-                    src={gameImg(g.portrait)}
-                    alt=""
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  />
-                )}
-                <div className="god-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
-                <div className="god-name">
-                  <span style={{ marginRight: 6 }}>{sealed ? '🌫️' : GOD_EMOJI[g.id] ?? '⭐'}</span>
-                  {sealed ? '???' : g.name}
-                </div>
-                <div className="god-kana">{sealed ? '北天に、まだ遠い星がある' : g.kana}</div>
-                <div className="god-cost">{sealed ? sealHint(g) : `奉燈 ${g.cost}${affinity > 0 ? ` ・縁 ${affinity}` : ''}`}</div>
-                <div className="god-person">{sealed ? '' : g.personality}</div>
-                {godId === g.id && !sealed && <div className="god-desc">{g.desc}</div>}
+
+        <div className="pact-main">
+          {/* 左: 神名リスト(奉納点昇順) */}
+          <div className="god-list" role="listbox">
+            {shownGods.length === 0 && (
+              <p className="god-list-empty">その条件の星は、今夜は見えない。</p>
+            )}
+            {shownGods.map((g) => {
+              const sealed = !godUnlocked(g, data)
+              const affordable = data.hoto >= g.cost && !sealed
+              const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
+              return (
+                <button
+                  key={g.id}
+                  className={`god-row ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''}`}
+                  onClick={() => affordable && setGodId(g.id)}
+                >
+                  <span className={`element-badge el-${g.element} god-row-el`}>{ELEMENT_LABELS[g.element]}</span>
+                  <span className="god-row-name">
+                    {sealed ? '???' : g.name}
+                    {sealed && <span className="god-row-hint">{sealHint(g)}</span>}
+                  </span>
+                  {affinity > 0 && !sealed && <span className="god-row-affinity">縁{affinity}</span>}
+                  <span className="god-row-cost">{sealed ? '—' : g.cost}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* 右: 大立ち絵+情報札 */}
+          <div className="god-stage">
+            {god ? (
+              <GodPortraitPane godId={god.id} sealedHint={null} affinity={Math.floor(data.godAffinity[god.id] ?? 0)} />
+            ) : (
+              <div className="god-stage-empty">
+                <span className="god-stage-star">✦</span>
+                <p>左の星名を選ぶと、その姿が顕れる</p>
               </div>
-            )
-          })}
+            )}
+          </div>
         </div>
       </Panel>
 
       {parent && god && prediction && (
-        <Panel title={`${parent.name} × ${god.name} — 子の血潮(見立て)`}>
-          {(Object.keys(STAT_LABELS) as StatKey[]).map((k) => {
-            const [lo, hi] = prediction[k]
-            return (
-              <div key={k} className="predict-row">
-                <span className="predict-label">{STAT_LABELS[k]}</span>
-                <span className="predict-track">
-                  <span
-                    className="predict-range"
-                    style={{ left: `${(lo / 120) * 100}%`, width: `${((hi - lo) / 120) * 100}%` }}
-                  />
-                </span>
-                <span className="predict-num">{lo}〜 {hi}</span>
-              </div>
-            )
-          })}
-          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 8 }}>
-            子の星脈(灯座の血の軸): {ELEMENT_LABELS[god.element]}の脈(七割)/{ELEMENT_LABELS[parent.element]}の脈(三割) —
-            成人の儀で授ける灯型と掛け合わさり、この子の灯座が決まる。
-          </p>
+        <Panel title={`遺伝子の見立て — ${parent.name} × ${god.name}`}>
+          <div className="gene-grid">
+            <div className="gene-col">
+              <div className="gene-col-title">親の血潮(人系)</div>
+              {(Object.keys(STAT_LABELS) as StatKey[]).map((k) => (
+                <GeneBar key={k} label={STAT_LABELS[k]} value={parent.potential[k]} tone="human" />
+              ))}
+            </div>
+            <div className="gene-col">
+              <div className="gene-col-title">神の血潮(星系)</div>
+              {(Object.keys(STAT_LABELS) as StatKey[]).map((k) => (
+                <GeneBar key={k} label={STAT_LABELS[k]} value={godStatValue(god, k)} tone="god" />
+              ))}
+            </div>
+            <div className="gene-col gene-col-wide">
+              <div className="gene-col-title">子の見立て(範囲)</div>
+              {(Object.keys(STAT_LABELS) as StatKey[]).map((k) => {
+                const [lo, hi] = prediction[k]
+                return (
+                  <div key={k} className="predict-row">
+                    <span className="predict-label">{STAT_LABELS[k]}</span>
+                    <span className="predict-track">
+                      <span
+                        className="predict-range"
+                        style={{ left: `${(lo / 120) * 100}%`, width: `${((hi - lo) / 120) * 100}%` }}
+                      />
+                    </span>
+                    <span className="predict-num">{lo}〜{hi}</span>
+                  </div>
+                )
+              })}
+              <p className="gene-note">
+                期待値: 親の脈×0.48+星の脈×0.55(上限120)。星脈は{ELEMENT_LABELS[god.element]}(七割)/
+                {ELEMENT_LABELS[parent.element]}(三割)で子の灯座の軸となる。
+              </p>
+            </div>
+          </div>
           <div className="pact-quote">
             「{god.pactLines[Math.min(Math.floor(data.godAffinity[god.id] ?? 0), god.pactLines.length - 1)]}」
           </div>
-          <button className="btn btn-main" onClick={() => doPact(parent.id, god.id)}>
+          <button className="btn btn-main" onClick={beginRitual} disabled={ritual}>
             契りを結ぶ(奉燈{god.cost}・今月を使う)
           </button>
         </Panel>
@@ -167,6 +200,57 @@ export function PactScreen() {
       <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
         郷へ戻る
       </button>
+
+      {ritual && god && (
+        <div className="ritual-overlay">
+          <div className="ritual-ring" />
+          <div className="ritual-ring ritual-ring2" />
+          <p className="ritual-text">{god.name}との契り、結ばれる——</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 大立ち絵パネル — god_*.jpgがあれば表示、なければ属性オーラ+星のシルエット
+function GodPortraitPane({ godId, affinity }: { godId: string; sealedHint: string | null; affinity: number }) {
+  const [failed, setFailed] = useState(false)
+  const g = GODS.find((x) => x.id === godId)!
+  return (
+    <div className="god-pane">
+      <div className={`god-pane-art el-bg-${g.element}`}>
+        {!failed ? (
+          <img className="god-pane-img" src={gameImg(g.portrait)} alt="" onError={() => setFailed(true)} />
+        ) : (
+          <div className="god-pane-fallback" data-el={g.element}>
+            <span className="god-pane-glyph">{GOD_EMOJI[g.id] ?? '✦'}</span>
+            <span className="god-pane-aura" />
+          </div>
+        )}
+      </div>
+      <div className="god-pane-info">
+        <div className="god-pane-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
+        <div className="god-pane-name">{g.name}</div>
+        <div className="god-pane-kana">{g.kana}</div>
+        <div className="god-pane-cost">
+          奉納 <b>{g.cost}</b>
+          {affinity > 0 && <span className="god-pane-aff"> ・縁 {affinity}</span>}
+        </div>
+        <div className="god-pane-person">{g.personality}</div>
+        <p className="god-pane-desc">{g.desc}</p>
+      </div>
+    </div>
+  )
+}
+
+function GeneBar({ label, value, tone }: { label: string; value: number; tone: 'human' | 'god' }) {
+  return (
+    <div className="gene-bar-row">
+      <span className="gene-bar-label">{label}</span>
+      <span className="gene-bar-track">
+        <span className={`gene-bar-fill gene-${tone}`} style={{ width: `${Math.min(100, (value / 120) * 100)}%` }} />
+      </span>
+      <span className="gene-bar-num">{value}</span>
     </div>
   )
 }

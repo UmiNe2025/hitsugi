@@ -67,6 +67,7 @@ interface GameStore {
 
   // 生業の儀 — 家業を選ぶ(月齢12)
   assignJobClass: (charId: string, jobId: JobClassId) => void
+  renameCharacter: (charId: string, name: string) => void
 
   // 店・装備・修練(季を消費しない)
   buyItem: (baseId: string) => void
@@ -489,6 +490,25 @@ export const useGame = create<GameStore>((set, get) => {
         return nd
       })
       get().processNextScene()
+    },
+
+    // v3.1 M9(M16-2): 誕生時の命名。家譜の産声の行も新しい名で書き直す
+    renameCharacter: (charId, name) => {
+      const trimmed = name.trim().slice(0, 8)
+      if (!trimmed) return
+      mutate((d) => {
+        const c = d.family.find((x) => x.id === charId)
+        if (!c || !c.alive) return d
+        const oldName = c.name
+        if (oldName === trimmed) return d
+        return {
+          ...d,
+          family: d.family.map((x) => (x.id === charId ? { ...x, name: trimmed } : x)),
+          chronicle: d.chronicle.map((e) =>
+            e.charId === charId && e.kind === 'birth' ? { ...e, text: e.text.replaceAll(oldName, trimmed) } : e,
+          ),
+        }
+      })
     },
 
     resolveEvent: (choiceIdx) => {
