@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type {
-  BattleLogEntry, BattleState, GameData, Item, Screen,
+  BattleLogEntry, BattleState, Character, Combatant, GameData, Item, MottoId, Screen,
 } from './types'
 import type { BattleAction } from './battle'
 import { LIFESPAN_MONTHS, seasonLabel, isFestivalMonth } from './types'
@@ -8,9 +8,9 @@ import { Rng } from './rng'
 import { GODS, godById } from './data/gods'
 import { regionById } from './data/regions'
 import { enemyById } from './data/enemies'
-import { makeItem, inheritItem, itemBaseById } from './data/items'
+import { makeItem, inheritItem, itemBaseById, reforgeItem, reforgeCost, REFORGE_MAX } from './data/items'
 import {
-  conceiveChild, makeFounder, recalcStats, ageOf,
+  conceiveChild, makeFounder, recalcStats, ageOf, pactCost,
 } from './inheritance'
 import {
   combatantFromChar, combatantFromEnemy, startBattle, performAction, enemyAction, currentActor,
@@ -68,6 +68,8 @@ interface GameStore {
   // 生業の儀 — 家業を選ぶ(月齢12)
   assignJobClass: (charId: string, jobId: JobClassId) => void
   renameCharacter: (charId: string, name: string) => void
+  setMotto: (motto: MottoId) => void
+  forgeUpgrade: (itemId: string) => void
 
   // 店・装備・修練(季を消費しない)
   buyItem: (baseId: string) => void
@@ -124,6 +126,32 @@ export const useGame = create<GameStore>((set, get) => {
     chronicle: [...d.chronicle, { season: d.seasonIndex, kind, text, charId }],
   })
 
+  // v3.1 M12: 血縁(連携奥義の相手)と家訓の補正を戦闘員へ付与
+  const enrichAllies = (party: Combatant[], chars: Character[], motto?: MottoId): Combatant[] => {
+    const byId = new Map(chars.map((c) => [c.id, c]))
+    return party.map((cb) => {
+      const me = cb.charId ? byId.get(cb.charId) : undefined
+      const kinKeys = me
+        ? party
+            .filter((o) => {
+              if (o === cb || !o.charId) return false
+              const other = byId.get(o.charId)
+              if (!other) return false
+              const siblings = !!me.humanParentId && me.humanParentId === other.humanParentId
+              const parentChild = me.id === other.humanParentId || other.id === me.humanParentId
+              return siblings || parentChild
+            })
+            .map((o) => o.key)
+        : []
+      return {
+        ...cb,
+        kinKeys: kinKeys.length > 0 ? kinKeys : undefined,
+        atk: cb.atk + (motto === 'budan' ? 2 : 0),
+        matk: cb.matk + (motto === 'gakumon' ? 2 : 0),
+      }
+    })
+  }
+
   // 季節を進める — 誕生と死(寿命)をここで処理
   const advanceSeason = (): void => {
     const rng = get().rng
@@ -131,7 +159,7 @@ export const useGame = create<GameStore>((set, get) => {
     let d = get().data!
     d = { ...d, seasonIndex: d.seasonIndex + 1 }
 
-    // 誕生
+    // 誕生 — v3.1 M12: 縁の加護(下振れ緩和)/隔世遺伝/稀に双子
     const due = d.pendingBirths.filter((b) => b.dueSeason <= d.seasonIndex)
     d = { ...d, pendingBirths: d.pendingBirths.filter((b) => b.dueSeason > d.seasonIndex) }
     for (const b of due) {
@@ -139,13 +167,23 @@ export const useGame = create<GameStore>((set, get) => {
       const parent = d.family.find((c) => c.id === b.parentId)
       if (!parent) continue
       const gen = parent.gen + 1
-      const child = conceiveChild(
-        parent, god, gen, d.seasonIndex, rng,
-        d.family.map((c) => c.name),
-      )
-      d = { ...d, family: [...d.family, child] }
-      d = chronicle(d, 'birth', birthLine(child.name, god.name, rng), child.id)
-      scenes.push({ kind: 'birth', charId: child.id })
+      const affinity = d.godAffinity[b.godId] ?? 0
+      const twins = rng.chance(0.06)
+      const count = twins ? 2 : 1
+      for (let i = 0; i < count; i++) {
+        const child = conceiveChild(
+          parent, god, gen, d.seasonIndex, rng,
+          d.family.map((c) => c.name),
+          affinity, d.family,
+        )
+        d = { ...d, family: [...d.family, child] }
+        d = chronicle(d, 'birth', birthLine(child.name, god.name, rng), child.id)
+        if (child.deeds.some((x) => x.includes('隔世遺伝'))) {
+          d = chronicle(d, 'event', `${child.name}に、祖の血が強く顕れている。`, child.id)
+        }
+        scenes.push({ kind: 'birth', charId: child.id })
+      }
+      if (twins) d = chronicle(d, 'event', `${parent.name}に双子が生まれた — 郷は二重の産声に沸いた。`)
     }
 
     // 寿命 — 八季の命
@@ -157,7 +195,7 @@ export const useGame = create<GameStore>((set, get) => {
         const keepsakes: Item[] = []
         for (const slot of ['weapon', 'armor', 'charm'] as const) {
           const it = c.equipment[slot]
-          if (it) keepsakes.push(inheritItem(it, c.name))
+          if (it) keepsakes.push(inheritItem(it, c.name, c.kills))
         }
         d = {
           ...d,
@@ -403,14 +441,18 @@ export const useGame = create<GameStore>((set, get) => {
 
     doPact: (parentId, godId) => {
       const god = godById(godId)
-      if ((get().data?.hoto ?? 0) < god.cost) return // 奉燈不足なら月も進めない
+      // v3.1 M12-2: 縁による奉納点の割引/信心の家訓は縁の実りが深い
+      const d0 = get().data
+      const cost = pactCost(god, d0?.godAffinity[godId] ?? 0)
+      if ((d0?.hoto ?? 0) < cost) return // 奉燈不足なら月も進めない
       mutate((d) => {
-        if (d.hoto < god.cost) return d
+        if (d.hoto < cost) return d
+        const affGain = d.motto === 'shinjin' ? 1.5 : 1
         let nd: GameData = {
           ...d,
-          hoto: d.hoto - god.cost,
+          hoto: d.hoto - cost,
           pendingBirths: [...d.pendingBirths, { godId, parentId, dueSeason: d.seasonIndex + 1 }],
-          godAffinity: { ...d.godAffinity, [godId]: (d.godAffinity[godId] ?? 0) + 1 },
+          godAffinity: { ...d.godAffinity, [godId]: (d.godAffinity[godId] ?? 0) + affGain },
         }
         const parent = d.family.find((c) => c.id === parentId)
         nd = chronicle(nd, 'pact', `${parent?.name}、${god.name}と星契りを結ぶ。`)
@@ -490,6 +532,55 @@ export const useGame = create<GameStore>((set, get) => {
         return nd
       })
       get().processNextScene()
+    },
+
+    // v3.1 M12-8: 家訓 — 当主が家風を定める(一代につき一度)
+    setMotto: (motto) => {
+      mutate((d) => {
+        if (d.motto === motto) return d
+        let nd: GameData = { ...d, motto }
+        const head = d.family.find((c) => c.alive && c.isHead)
+        nd = chronicle(nd, 'era', `${head?.name ?? '当主'}、家訓「${motto === 'budan' ? '武断' : motto === 'gakumon' ? '学問' : motto === 'shinjin' ? '信心' : '商売'}」を掲げる。`)
+        return nd
+      })
+    },
+
+    // v3.1 M12-1: 打ち直し — 鍛冶で装備を鍛える(遺品は銘を保ったまま深まる)
+    forgeUpgrade: (itemId) => {
+      mutate((d) => {
+        // 所在を探す: 蔵(inventory)か、誰かの装備か
+        const inv = d.inventory.find((it) => it.id === itemId)
+        let owner: Character | undefined
+        let slot: 'weapon' | 'armor' | 'charm' | undefined
+        if (!inv) {
+          for (const c of d.family) {
+            for (const s of ['weapon', 'armor', 'charm'] as const) {
+              if (c.equipment[s]?.id === itemId) {
+                owner = c
+                slot = s
+              }
+            }
+          }
+        }
+        const item = inv ?? (owner && slot ? owner.equipment[slot] : undefined)
+        if (!item || item.generation >= REFORGE_MAX) return d
+        const cost = reforgeCost(item)
+        if (d.hoto < cost.hoto || d.ketsu < cost.ketsu) return d
+        const forged = reforgeItem(item)
+        let nd: GameData = { ...d, hoto: d.hoto - cost.hoto, ketsu: d.ketsu - cost.ketsu }
+        if (inv) {
+          nd = { ...nd, inventory: nd.inventory.map((it) => (it.id === itemId ? forged : it)) }
+        } else if (owner && slot) {
+          nd = {
+            ...nd,
+            family: nd.family.map((c) =>
+              c.id === owner!.id ? { ...c, equipment: { ...c.equipment, [slot!]: forged } } : c,
+            ),
+          }
+        }
+        nd = chronicle(nd, 'event', `鍛冶場に槌音が響く — 「${item.name}」を「${forged.name}」に打ち直した。`)
+        return nd
+      })
     },
 
     // v3.1 M9(M16-2): 誕生時の命名。家譜の産声の行も新しい名で書き直す
@@ -603,9 +694,13 @@ export const useGame = create<GameStore>((set, get) => {
         const enemyIds = pickEnemies(region, 'battle', node.depth, rng)
         const nodes2 = { ...nodes, [pendingEvent.nodeId]: { ...node, cleared: false, enemyIds } }
         set({ data: { ...nd, expedition: { ...nd.expedition!, nodes: nodes2 } } })
-        const party = nd.family
-          .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
-          .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
+        const party = enrichAllies(
+          nd.family
+            .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
+            .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back')),
+          nd.family,
+          nd.motto,
+        )
         const ease = nd.narrativeMode ? 0.78 : 1
         const enemies = enemyIds.map((id, i) => {
           const def = enemyById(id)
@@ -694,9 +789,13 @@ export const useGame = create<GameStore>((set, get) => {
 
       if (node.type === 'battle' || node.type === 'elite' || node.type === 'boss') {
         const defs = (node.enemyIds ?? []).map((id) => enemyById(id))
-        const party = d.family
-          .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
-          .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
+        const party = enrichAllies(
+          d.family
+            .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
+            .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back')),
+          d.family,
+          d.motto,
+        )
         // 灯が尽きていると敵が強化される(常夜の重圧)/ 語り部モードは敵が穏やか
         const dark = light <= 0
         const ease = d.narrativeMode ? 0.78 : 1
@@ -823,7 +922,17 @@ export const useGame = create<GameStore>((set, get) => {
     dungeonStep: () => {
       const run = get().dungeonRun
       if (!run) return
-      set({ dungeonRun: { ...run, light: Math.max(0, run.light - 0.45) } })
+      // v3.1 M12-6: 熱狂の赤い火 — 稀に灯が緋に燃え、魔性は凶暴に、実りは豊かになる
+      let frantic = run.frantic
+      let log = run.log
+      if (frantic && frantic > 0) {
+        frantic -= 1
+        if (frantic === 0) log = [...log, '緋の火が鎮まり、灯はいつもの色に戻った。']
+      } else if (run.light > 30 && get().rng.chance(0.012)) {
+        frantic = 45
+        log = [...log, '灯が緋に燃え上がった! 熱狂の赤い火 — 魔性は猛るが、実りは倍加する!']
+      }
+      set({ dungeonRun: { ...run, light: Math.max(0, run.light - 0.45), frantic, log } })
     },
 
     dungeonEncounter: (boss = false) => {
@@ -837,9 +946,13 @@ export const useGame = create<GameStore>((set, get) => {
       const enemyIds = boss
         ? [region.bossId ?? 'kubinashi_andon'] // 地域の主(未設定地域は首無し行灯が主代わり)
         : pickEnemies(region, 'battle', run.floor + 2, rng)
-      const party = d.family
-        .filter((c) => run.partyIds.includes(c.id) && c.alive && c.hp > 0)
-        .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
+      const party = enrichAllies(
+        d.family
+          .filter((c) => run.partyIds.includes(c.id) && c.alive && c.hp > 0)
+          .map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back')),
+        d.family,
+        d.motto,
+      )
       // 主が未設定の地域はエリート級を主に見立てて強化する。真の主(tier5)は素の強さで十分
       const standInBoss = boss && !region.bossId
       const enemies = enemyIds.map((id, i) => {
@@ -1059,8 +1172,10 @@ export const useGame = create<GameStore>((set, get) => {
           const defs = battle.enemies
             .map((e) => (e.enemyId ? enemyById(e.enemyId) : null))
             .filter((x): x is NonNullable<typeof x> => !!x)
-          const hoto = defs.reduce((s, e) => s + e.hoto, 0)
-          const ketsu = defs.reduce((s, e) => s + e.ketsu, 0)
+          // 赤い火(M12-6)+商売の家訓(M12-8)で実りが増す
+          const lootK = ((run.frantic ?? 0) > 0 ? 1.5 : 1) * (d.motto === 'shobai' ? 1.08 : 1)
+          const hoto = Math.round(defs.reduce((s, e) => s + e.hoto, 0) * lootK)
+          const ketsu = Math.round(defs.reduce((s, e) => s + e.ketsu, 0) * lootK)
           family = family.map((c) =>
             run.partyIds.includes(c.id) && c.alive ? { ...c, kills: c.kills + defs.length } : c,
           )

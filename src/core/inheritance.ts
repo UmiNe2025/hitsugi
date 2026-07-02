@@ -71,6 +71,7 @@ export function predictChild(parent: Character, god: God): Record<StatKey, [numb
 }
 
 // 星契り — 子を生成
+// v3.1 M12: affinity(縁)が深いほど下振れしにくい。familyを渡すと隔世遺伝(祖の血の強い発現)が起こりうる
 export function conceiveChild(
   parent: Character,
   god: God,
@@ -78,17 +79,30 @@ export function conceiveChild(
   bornSeason: number,
   rng: Rng,
   usedNames: string[],
+  affinity = 0,
+  family?: Character[],
 ): Character {
   const sex: 'm' | 'f' = rng.chance(0.5) ? 'm' : 'f'
   const pool = sex === 'm' ? MALE_NAMES : FEMALE_NAMES
   const available = pool.filter((n) => !usedNames.includes(n))
   const name = available.length > 0 ? rng.pick(available) : `${rng.pick(pool)}${gen}`
 
+  // 縁の加護: 乱数の下限が持ち上がる(最大+0.06)
+  const floor = 0.88 + Math.min(0.06, affinity * 0.012)
   const potential = {} as Stats
   for (const k of STAT_KEYS) {
     const mid = parent.potential[k] * 0.48 + godStat(god, k) * 0.55
-    const v = mid * (0.88 + rng.next() * 0.24)
+    const v = mid * (floor + rng.next() * (1.12 - floor))
     potential[k] = Math.round(Math.min(120, Math.max(8, v)))
+  }
+
+  // 隔世遺伝(M12-3): 一割の子に、祖父母の血が強く顕れる
+  const grand = family?.find((c) => c.id === parent.humanParentId)
+  const atavism = !!grand && rng.chance(0.1)
+  if (atavism && grand) {
+    for (const k of STAT_KEYS) {
+      potential[k] = Math.min(120, Math.max(potential[k], Math.round(grand.potential[k] * 0.82)))
+    }
   }
 
   // 属性: 基本は星神から、3割で親から
@@ -125,11 +139,16 @@ export function conceiveChild(
     alive: true,
     kills: 0,
     expeditions: 0,
-    deeds: [],
+    deeds: atavism && grand ? [`${grand.name}の血が強く顕れた(隔世遺伝)`] : [],
     fatigue: 0,
   }
   const withStats = recalcStats(child, bornSeason)
   return { ...withStats, hp: withStats.maxHp, mp: withStats.maxMp }
+}
+
+// 縁による奉納点の割引(v3.1 M12-2): 縁1につき4%引、上限20%
+export function pactCost(god: God, affinity: number): number {
+  return Math.ceil(god.cost * (1 - Math.min(0.2, Math.floor(affinity) * 0.04)))
 }
 
 // 初代当主の生成

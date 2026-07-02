@@ -211,6 +211,7 @@ export interface Combatant {
   guard: boolean
   buffs: { atkUp?: number; defUp?: number } // 残ターン数
   chainCount: number // 継足カウント(味方全体で敵ごと管理は battle 側)
+  kinKeys?: string[] // v3.1 M12-7: 連携奥義の血縁(兄妹/親子)にあたる味方key
 }
 
 export interface BattleState {
@@ -223,6 +224,8 @@ export interface BattleState {
   phase: 'input' | 'anim' | 'won' | 'lost' | 'fled'
   chainTarget?: string // 直前に攻撃された敵key(継足)
   chain: number // 現在の継足数
+  leaderKey?: string // v3.1 M12-4: 敵の「長」。斃すと雑兵が浮き足立つ
+  morale?: boolean // 長が斃れた後true(敵弱体+逃走判定)
 }
 export interface BattleLogEntry {
   text: string
@@ -291,4 +294,14 @@ export interface GameData {
   flags: Record<string, boolean | number>
   narrativeMode: boolean // 語り部モード
   seed: number
+  motto?: MottoId // v3.1 M12-8: 家訓(当主ごとに定める家風)
+}
+
+// 家訓 — 当主が定める家風。一族全体への小さな加護
+export type MottoId = 'budan' | 'gakumon' | 'shinjin' | 'shobai'
+export const MOTTOS: Record<MottoId, { name: string; desc: string }> = {
+  budan: { name: '武断', desc: '刃を恃み、力で夜を拓く(全員の腕力+2)' },
+  gakumon: { name: '学問', desc: '知を磨き、理で夜を照らす(全員の知恵+2)' },
+  shinjin: { name: '信心', desc: '星々を敬い、縁を深める(縁の実り1.5倍)' },
+  shobai: { name: '商売', desc: '算盤を弾き、蓄えで家を守る(奉燈の実り+8%)' },
 }

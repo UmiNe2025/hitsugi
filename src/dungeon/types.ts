@@ -39,4 +39,5 @@ export interface DungeonRun {
   log: string[]
   used: string[] // 開封済み宝箱・使用済み焚火等 "floor:x:y"
   bossDown: boolean
+  frantic?: number // v3.1 M12-6: 熱狂の赤い火の残り歩数(>0で発動中)
 }

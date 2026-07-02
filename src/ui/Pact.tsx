@@ -6,7 +6,7 @@ import { useGame } from '../core/store'
 import type { StatKey, GodRank, Element } from '../core/types'
 import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS } from '../core/types'
 import { GODS, godUnlocked } from '../core/data/gods'
-import { isAdult, predictChild, godStatValue } from '../core/inheritance'
+import { isAdult, predictChild, godStatValue, pactCost } from '../core/inheritance'
 import { CharCard, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, HOME_BG } from './img'
 
@@ -116,8 +116,9 @@ export function PactScreen() {
             )}
             {shownGods.map((g) => {
               const sealed = !godUnlocked(g, data)
-              const affordable = data.hoto >= g.cost && !sealed
               const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
+              const eff = pactCost(g, data.godAffinity[g.id] ?? 0) // 縁の割引(M12-2)
+              const affordable = data.hoto >= eff && !sealed
               return (
                 <button
                   key={g.id}
@@ -130,7 +131,10 @@ export function PactScreen() {
                     {sealed && <span className="god-row-hint">{sealHint(g)}</span>}
                   </span>
                   {affinity > 0 && !sealed && <span className="god-row-affinity">縁{affinity}</span>}
-                  <span className="god-row-cost">{sealed ? '—' : g.cost}</span>
+                  <span className="god-row-cost">
+                    {sealed ? '—' : eff}
+                    {!sealed && eff < g.cost && <span className="god-row-base">{g.cost}</span>}
+                  </span>
                 </button>
               )
             })}
@@ -192,7 +196,7 @@ export function PactScreen() {
             「{god.pactLines[Math.min(Math.floor(data.godAffinity[god.id] ?? 0), god.pactLines.length - 1)]}」
           </div>
           <button className="btn btn-main" onClick={beginRitual} disabled={ritual}>
-            契りを結ぶ(奉燈{god.cost}・今月を使う)
+            契りを結ぶ(奉燈{pactCost(god, data.godAffinity[god.id] ?? 0)}・今月を使う)
           </button>
         </Panel>
       )}

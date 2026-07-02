@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useGame } from '../core/store'
-import { seasonLabel, isFestivalMonth, STAT_LABELS } from '../core/types'
-import type { StatKey } from '../core/types'
+import { seasonLabel, isFestivalMonth, STAT_LABELS, MOTTOS } from '../core/types'
+import type { StatKey, MottoId } from '../core/types'
 import { isAdult, seasonsLeft } from '../core/inheritance'
-import { ITEM_BASES } from '../core/data/items'
+import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
 import { GODS } from '../core/data/gods'
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { CharCard, NightBackdrop, Panel, TsuzuriLine } from './components'
@@ -17,6 +17,7 @@ export function HomeScreen() {
   const doRest = useGame((s) => s.doRest)
   const [showForge, setShowForge] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showMotto, setShowMotto] = useState(false)
   const [showVillage, setShowVillage] = useState(false)
   const [showTree, setShowTree] = useState(false)
 
@@ -97,9 +98,13 @@ export function HomeScreen() {
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}>📜 家譜を繰る</button>
         <button className="btn btn-ghost" onClick={() => setShowTree(true)}>🌳 家系図</button>
         <button className="btn btn-ghost" onClick={() => setShowVillage(true)}>🏘️ 郷を歩く</button>
+        <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
+          🏮 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
+        </button>
         <button className="btn btn-ghost" onClick={() => setShowHelp(true)}>📖 手引き</button>
       </div>
 
+      {showMotto && <MottoModal onClose={() => setShowMotto(false)} />}
       {showForge && <ForgeModal onClose={() => setShowForge(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showVillage && <VillageModal onClose={() => setShowVillage(false)} />}
@@ -211,17 +216,61 @@ function tsuzuriHint(data: ReturnType<typeof useGame.getState>['data'] & object,
   return lines[data.seasonIndex % lines.length]
 }
 
+// 家訓(v3.1 M12-8) — 当主が家風を定める。一族全体への小さな加護
+function MottoModal({ onClose }: { onClose: () => void }) {
+  const data = useGame((s) => s.data)!
+  const setMotto = useGame((s) => s.setMotto)
+  const head = data.family.find((c) => c.alive && c.isHead)
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+        <h2 className="panel-title">家訓 — {head?.name ?? '当主'}が掲げる家風</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
+          家訓は一族の生き方を定め、静かな加護をもたらす。掲げ直すのも当主の器量。
+        </p>
+        {(Object.keys(MOTTOS) as MottoId[]).map((id) => (
+          <button
+            key={id}
+            className={`btn ${data.motto === id ? 'btn-main' : ''}`}
+            style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 6 }}
+            onClick={() => {
+              setMotto(id)
+              onClose()
+            }}
+          >
+            <b>{MOTTOS[id].name}</b>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)', marginLeft: 8 }}>{MOTTOS[id].desc}</span>
+          </button>
+        ))}
+        <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
+      </div>
+    </div>
+  )
+}
+
 function ForgeModal({ onClose }: { onClose: () => void }) {
   const data = useGame((s) => s.data)!
   const buyItem = useGame((s) => s.buyItem)
   const equipItem = useGame((s) => s.equipItem)
   const trainStat = useGame((s) => s.trainStat)
+  const forgeUpgrade = useGame((s) => s.forgeUpgrade)
   const [charId, setCharId] = useState<string | null>(null)
 
   const alive = data.family.filter((c) => c.alive)
   const shopTier = data.regionsCleared.length
   const stock = ITEM_BASES.filter((b) => b.shopTier <= shopTier)
   const selChar = alive.find((c) => c.id === charId)
+
+  // 打ち直し対象(v3.1 M12-1): 蔵の品+全員の装備
+  const forgeables = [
+    ...data.inventory.map((it) => ({ it, where: '蔵' })),
+    ...alive.flatMap((c) =>
+      (['weapon', 'armor', 'charm'] as const)
+        .map((s) => c.equipment[s])
+        .filter((x): x is NonNullable<typeof x> => !!x)
+        .map((it) => ({ it, where: c.name })),
+    ),
+  ]
 
   return (
     <div className="modal-back" onClick={onClose}>
@@ -277,6 +326,32 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           )}
+        </Panel>
+
+        <Panel title="打ち直し — 槌を入れ、代を深める">
+          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 6 }}>
+            持てる血珠: {data.ketsu} — 打つほど強く(1代ごと基礎+12%)。遺品は銘を保ったまま深まる。上限{REFORGE_MAX}代。
+          </p>
+          {forgeables.length === 0 && <p style={{ fontSize: 13 }}>打てる品がない。</p>}
+          {forgeables.map(({ it, where }) => {
+            const cost = reforgeCost(it)
+            const maxed = it.generation >= REFORGE_MAX
+            return (
+              <button
+                key={it.id}
+                className="btn"
+                disabled={maxed || data.hoto < cost.hoto || data.ketsu < cost.ketsu}
+                onClick={() => forgeUpgrade(it.id)}
+                title={it.legacyOf ? `${it.legacyOf}の形見` : undefined}
+              >
+                {it.name}
+                {it.atk ? ` 攻${it.atk}` : ''}
+                {it.def ? ` 防${it.def}` : ''}
+                <span style={{ fontSize: 11, color: 'var(--text-dim)' }}> ({where})</span>
+                {maxed ? ' — 打ち止め' : ` — ${cost.hoto}燈+珠${cost.ketsu}`}
+              </button>
+            )
+          })}
         </Panel>
 
         {selChar && (

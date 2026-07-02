@@ -119,6 +119,11 @@ function DungeonFloor() {
     engineRef.current?.setLight(run.light)
   }, [run.light])
 
+  // 熱狂の赤い火(v3.1 M12-6): 松明が緋に燃え、敵影が凶暴化する
+  useEffect(() => {
+    engineRef.current?.setFrantic((run.frantic ?? 0) > 0)
+  }, [run.frantic])
+
   useEffect(() => {
     engineRef.current?.setPaused(!!pendingEvent || confirm !== null)
   }, [pendingEvent, confirm])

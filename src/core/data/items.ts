@@ -233,9 +233,8 @@ export function makeItem(baseId: string): Item {
   }
 }
 
-// 形見継承 — 世代を経るほど強くなる(1世代ごと基礎値+12%)
-export function inheritItem(item: Item, prevOwnerName: string): Item {
-  const gen = item.generation + 1
+// 世代倍率から能力値を引き直す共通処理(継承・打ち直しの単一情報源)
+function applyGeneration(item: Item, gen: number, name: string, legacyOf?: string): Item {
   const base = itemBaseById(item.baseId)
   const mult = 1 + gen * 0.12
   const bonus: Partial<Stats> | undefined = base.statBonus
@@ -247,10 +246,37 @@ export function inheritItem(item: Item, prevOwnerName: string): Item {
     ...item,
     id: uid('item'),
     generation: gen,
-    legacyOf: prevOwnerName,
-    name: `${base.name}・${'代'.repeat(Math.min(gen, 3))}${gen > 3 ? `(${gen})` : ''}`,
+    legacyOf: legacyOf ?? item.legacyOf,
+    name,
     atk: base.atk ? Math.round(base.atk * mult) : undefined,
     def: base.def ? Math.round(base.def * mult) : undefined,
     statBonus: bonus,
   }
 }
+
+// 形見継承 — 世代を経るほど強くなる(1世代ごと基礎値+12%)
+// v3.1 M12-1: 故人の討伐数が多いほど銘が深く刻まれる(60討伐ごと+1世代、最大+2)
+export function inheritItem(item: Item, prevOwnerName: string, ownerKills = 0): Item {
+  const bonus = Math.min(2, Math.floor(ownerKills / 60))
+  const gen = item.generation + 1 + bonus
+  const base = itemBaseById(item.baseId)
+  const name = `${base.name}・${'代'.repeat(Math.min(gen, 3))}${gen > 3 ? `(${gen})` : ''}`
+  return applyGeneration(item, gen, name, prevOwnerName)
+}
+
+// 打ち直し(v3.1 M12-1) — 鍛冶で能動的に鍛える。遺品は銘を保ったまま深まる
+export function reforgeItem(item: Item): Item {
+  const gen = item.generation + 1
+  const base = itemBaseById(item.baseId)
+  const name = item.legacyOf
+    ? `${base.name}・${'代'.repeat(Math.min(gen, 3))}${gen > 3 ? `(${gen})` : ''}`
+    : `${base.name}+${gen}`
+  return applyGeneration(item, gen, name)
+}
+
+// 打ち直しの費用(世代が深いほど高くつく)
+export function reforgeCost(item: Item): { hoto: number; ketsu: number } {
+  return { hoto: 45 + item.generation * 40, ketsu: 2 + item.generation * 2 }
+}
+
+export const REFORGE_MAX = 5 // 打ち直し・継承を合わせた世代上限

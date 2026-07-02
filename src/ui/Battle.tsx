@@ -213,6 +213,7 @@ export function BattleScreen() {
               fx={fx[e.key] ?? []}
               targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
               chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
+              leader={battle.leaderKey === e.key}
               onClick={() => onEnemyClick(e)}
             >
               <EnemyVisual2 e={e} />
@@ -327,7 +328,7 @@ export function BattleScreen() {
 
 // 配置スロット+演出クラスを与える共通ラッパ
 function CombatantNode({
-  c, index, fx, targetable, acting, chainBadge, onClick, children,
+  c, index, fx, targetable, acting, chainBadge, leader, onClick, children,
 }: {
   c: Combatant
   index: number
@@ -335,6 +336,7 @@ function CombatantNode({
   targetable: boolean
   acting?: boolean
   chainBadge: number
+  leader?: boolean
   onClick: () => void
   children: React.ReactNode
 }) {
@@ -372,7 +374,10 @@ function CombatantNode({
       )}
       {heal && <span className="dmg-pop heal-pop">+{heal.amount}</span>}
       <div className="combatant-plate">
-        <span className="combatant-name">{c.name}</span>
+        <span className="combatant-name">
+          {leader && <span className="leader-tag">長</span>}
+          {c.name}
+        </span>
         <Bar value={c.hp} max={c.maxHp} kind="hp" />
       </div>
       {chainBadge > 0 && <span className="chain-badge">継足{chainBadge}連</span>}

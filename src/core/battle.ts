@@ -61,15 +61,21 @@ export function combatantFromEnemy(e: EnemyDef, idx: number): Combatant {
 }
 
 export function startBattle(party: Combatant[], enemies: Combatant[]): BattleState {
+  // v3.1 M12-4: 群れには「長」がいる(最大HPの個体)。斃せば雑兵は浮き足立つ
+  const leader = enemies.length > 1 ? [...enemies].sort((a, b) => b.maxHp - a.maxHp)[0] : undefined
   const st: BattleState = {
     allies: party,
     enemies,
     turn: 1,
     order: [],
     orderIndex: 0,
-    log: [{ text: '魔性が現れた!', kind: 'info' }],
+    log: [
+      { text: '魔性が現れた!', kind: 'info' },
+      ...(leader ? [{ text: `${leader.name}が群れを率いている — 長を斃せば崩れる。`, kind: 'info' as const }] : []),
+    ],
     phase: 'input',
     chain: 0,
+    leaderKey: leader?.key,
   }
   return { ...st, order: computeOrder(st) }
 }
@@ -130,6 +136,12 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
     updateCombatant(actorKey, (c) => ({ ...c, guard: true }))
     push(`${actor.name}は身を固めた。`, 'info', { actorKey: actor.key })
   } else if (action.type === 'flee') {
+    if (!actor.isAlly) {
+      // 浮き足立った雑兵の逃走(M12-4) — その個体だけ戦場から消える
+      updateCombatant(actorKey, (c) => ({ ...c, hp: 0 }))
+      push(`${actor.name}は算を乱して逃げ散った!`, 'info', { actorKey: actor.key })
+      return endOfAction(st, entries)
+    }
     const allyAgi = avg(st.allies.filter((c) => c.hp > 0).map((c) => c.agi))
     const enAgi = avg(st.enemies.filter((c) => c.hp > 0).map((c) => c.agi))
     const p = Math.min(0.9, Math.max(0.25, 0.55 + (allyAgi - enAgi) * 0.012))
@@ -197,6 +209,34 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         if (after && after.hp <= 0) {
           push(`${t.name}は闇に還った。`, 'ko', { targetKey: t.key })
           if (st.chainTarget === t.key) st = { ...st, chain: 0, chainTarget: undefined }
+          // 長の陥落(M12-4): 雑兵が浮き足立つ(攻撃弱体+以後逃走しうる)
+          if (!t.isAlly && st.leaderKey === t.key && !st.morale) {
+            st = {
+              ...st,
+              morale: true,
+              enemies: st.enemies.map((c) =>
+                c.hp > 0 ? { ...c, atk: Math.round(c.atk * 0.72) } : c,
+              ),
+            }
+            push('長が斃れ、魔性どもが浮き足立った!', 'chain')
+          }
+        }
+        // 連携奥義(M12-7): 血縁(兄妹・親子)が同じ的へ追撃する
+        const t2 = findCombatant(st, t.key)
+        if (actor.isAlly && actor.kinKeys && t2 && t2.hp > 0 && targets.length === 1 && rng.chance(0.18)) {
+          const kin = st.allies.find((a) => a.hp > 0 && actor.kinKeys!.includes(a.key))
+          if (kin) {
+            const kdmg = Math.max(1, Math.round(kin.atk * 0.55 * (0.9 + rng.next() * 0.2) - t2.def * 0.45))
+            updateCombatant(t2.key, (c) => ({ ...c, hp: Math.max(0, c.hp - kdmg) }))
+            push(`血の呼応! ${kin.name}が続けて斬り込む — ${t2.name}に${kdmg}のダメージ`, 'chain', {
+              actorKey: kin.key, targetKey: t2.key, amount: kdmg,
+            })
+            const after2 = findCombatant(st, t2.key)
+            if (after2 && after2.hp <= 0) {
+              push(`${t2.name}は闇に還った。`, 'ko', { targetKey: t2.key })
+              if (st.chainTarget === t2.key) st = { ...st, chain: 0, chainTarget: undefined }
+            }
+          }
         }
       }
     } else if (skill.type === 'heal') {
@@ -287,6 +327,8 @@ function endOfAction(st0: BattleState, entries: BattleLogEntry[]): ActionResult 
 
 // 敵AI: スキルか通常攻撃、前列を優先的に狙う
 export function enemyAction(st: BattleState, actor: Combatant, rng: Rng): BattleAction {
+  // 長なき群れは戦意が続かない(M12-4)
+  if (st.morale && rng.chance(0.22)) return { type: 'flee' }
   const alive = st.allies.filter((c) => c.hp > 0)
   if (alive.length === 0) return { type: 'guard' }
   const front = alive.filter((c) => c.row === 'front')
