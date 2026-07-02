@@ -1,10 +1,42 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
 import { regionById } from '../core/data/regions'
+import { MONTH_NAMES } from '../core/types'
 import { dungeonByRegion } from '../dungeon/maps'
 import { DungeonEngine } from '../dungeon/engine'
 import { Bar } from './components'
 import { EventModal } from './Expedition'
+
+// 灯籠の炎リング — 灯ゲージの視覚化(俺屍の月齢リング様式)
+function LanternRing({ pct }: { pct: number }) {
+  const R = 24
+  const C = 2 * Math.PI * R
+  const level = pct < 15 ? 'crit' : pct < 40 ? 'low' : 'ok'
+  return (
+    <div className={`lantern-ring lantern-${level}`} title={`灯 ${Math.round(pct)}/100`}>
+      <svg viewBox="0 0 64 64" width="64" height="64">
+        <circle cx="32" cy="32" r={R} fill="rgba(11,15,30,0.7)" stroke="rgba(201,168,106,0.25)" strokeWidth="3" />
+        <circle
+          cx="32" cy="32" r={R} fill="none"
+          stroke="url(#lg)" strokeWidth="3.6" strokeLinecap="round"
+          strokeDasharray={`${(C * pct) / 100} ${C}`}
+          transform="rotate(-90 32 32)"
+        />
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#c9a86a" />
+            <stop offset="100%" stopColor="#ff9d45" />
+          </linearGradient>
+        </defs>
+        <g className="ring-flame" transform="translate(32 36)">
+          <path d="M0,-14 C6,-7 5,0 0,4 C-5,0 -6,-7 0,-14Z" fill="#ff9d45" />
+          <path d="M0,-8 C3,-4 2.6,0 0,2.4 C-2.6,0 -3,-4 0,-8Z" fill="#ffe8b0" />
+        </g>
+      </svg>
+      <span className="ring-label">灯 {Math.round(pct)}</span>
+    </div>
+  )
+}
 
 type Confirm = { kind: 'stairs' } | { kind: 'return' } | null
 
@@ -109,14 +141,19 @@ function DungeonFloor() {
     <div className="dungeon-screen">
       <div className="dungeon-canvas" ref={hostRef} />
 
-      <div className="dungeon-hud-top">
-        <span className="exp-region">
-          {region.name} 地下{run.floor + 1}層
-        </span>
-        <div className="light-wrap">
-          <div className="light-label">灯</div>
-          <Bar value={Math.round(run.light)} max={100} kind="light" />
+      <div className="dungeon-hud-left">
+        <LanternRing pct={run.light} />
+        <div className="month-plate">
+          <span className="month-name">{MONTH_NAMES[data.seasonIndex % 12]}</span>
+          <span className="month-year">{Math.floor(data.seasonIndex / 12) + 1}年目</span>
         </div>
+      </div>
+
+      <div className="dungeon-title-plate" key={run.floor}>
+        {region.name} 地下{run.floor + 1}層
+      </div>
+
+      <div className="dungeon-hud-top">
         <span className="resource">
           奉燈<b>{run.loot.hoto}</b> 血珠<b>{run.loot.ketsu}</b>
         </span>

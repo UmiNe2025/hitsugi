@@ -10,6 +10,8 @@ import { TextureRegistry, vignetteTexture } from './render/textures'
 import { buildGround, updateWater, type GroundResult } from './render/ground'
 import { buildProps, type PropsResult } from './render/props'
 import { LightingSystem } from './render/lighting'
+import { shadeArchetypes, createShadeVisual, type ShadeVisual } from './render/shades'
+import { Minimap } from './render/minimap'
 import { Rng } from '../core/rng'
 
 const TILE = 44 // px(34→44: プロップ/スプライトが読める密度に)
@@ -32,14 +34,22 @@ export interface EngineOpts {
 interface Shade {
   x: number
   y: number
-  node: Container
-  body: Graphics
+  visual: ShadeVisual
   cd: number // 次の行動までms
   // 滑らか移動(200msトゥイーン)
   fromX: number
   fromY: number
   moveT: number // 1で完了
   bobPhase: number
+  alert: boolean
+}
+
+// エンカウント演出の進行状態
+interface EncounterFx {
+  t: number
+  kind: 'normal' | 'boss'
+  after: () => void
+  irisStarted: boolean
 }
 
 export class DungeonEngine {
@@ -84,6 +94,11 @@ export class DungeonEngine {
   private swayT = 0
   private shake = 0
   private tufts: { sp: Sprite; phase: number }[] = []
+  private minimap: Minimap | null = null
+  private archetypes: ReturnType<typeof shadeArchetypes> = []
+  private fx: EncounterFx | null = null
+  private flashG: Graphics | null = null
+  private frantic = false // 熱狂の赤い火(M12で発火条件をstore側に実装)
 
   private keydown = (e: KeyboardEvent) => {
     const k = keyDir(e.key)
@@ -98,6 +113,7 @@ export class DungeonEngine {
   }
   private onResize = () => {
     this.lighting?.resize()
+    this.minimap?.reposition(this.app.renderer.width)
     if (this.vignette) {
       this.vignette.width = this.app.renderer.width
       this.vignette.height = this.app.renderer.height
@@ -249,8 +265,16 @@ export class DungeonEngine {
     this.player.y = this.py * TILE
     this.player.zIndex = this.player.y + TILE
 
-    // 敵影
-    for (let i = 0; i < this.floor.shades; i++) this.spawnShade()
+    // 敵影(妖怪シルエット: 地域tierの主属性2種+稀に金の変種)
+    this.archetypes = shadeArchetypes(this.opts.tier ?? 1)
+    const goldenIdx = Math.random() < 0.18 ? Math.floor(Math.random() * this.floor.shades) : -1
+    for (let i = 0; i < this.floor.shades; i++) this.spawnShade(i === goldenIdx)
+
+    // ミニマップ(訪問霧)
+    this.minimap = new Minimap(this.grid)
+    this.screenFx.addChild(this.minimap.container)
+    this.minimap.reposition(this.app.renderer.width)
+    this.minimap.reveal(this.px, this.py)
 
     // 照明(半解像度RT+erase穴あけ)+ビネット
     this.lighting = new LightingSystem(this.app.renderer, this.screenFx, this.layerGlow, this.theme, TILE)
@@ -274,7 +298,8 @@ export class DungeonEngine {
     this.centerCamera(true)
   }
 
-  private spawnShade(): void {
+  private spawnShade(golden = false): void {
+    if (!this.registry) return
     let x = 0
     let y = 0
     let guard = 0
@@ -285,30 +310,22 @@ export class DungeonEngine {
     } while ((!isWalkable(this.tileAt(x, y)) || dist(x, y, this.px, this.py) < 6) && guard < 200)
     if (guard >= 200) return
 
-    const node = new Container()
-    const body = new Graphics()
-    this.drawShadeBody(body, false)
-    node.addChild(body)
-    node.x = x * TILE
-    node.y = y * TILE
-    node.zIndex = node.y + TILE
-    this.layerMid.addChild(node)
+    const archetype = this.archetypes[Math.floor(Math.random() * this.archetypes.length)] ?? {
+      species: 'beast' as const,
+      accent: 0xff9d45,
+    }
+    const visual = createShadeVisual(this.registry, TILE, this.opts.tier ?? 1, archetype, golden)
+    visual.node.x = x * TILE
+    visual.node.y = y * TILE
+    visual.node.zIndex = visual.node.y + TILE
+    this.layerMid.addChild(visual.node)
     this.shades.push({
-      x, y, node, body,
+      x, y, visual,
       cd: Math.random() * SHADE_BASE_MS,
       fromX: x, fromY: y, moveT: 1,
       bobPhase: Math.random() * Math.PI * 2,
+      alert: false,
     })
-  }
-
-  // 敵影の見た目(M7cで妖怪シルエットへ差し替え予定の暫定 — 闇色+属性の眼)
-  private drawShadeBody(g: Graphics, alert: boolean): void {
-    g.clear()
-    g.ellipse(TILE / 2, TILE * 0.82, 10, 4).fill({ color: 0x000000, alpha: 0.4 })
-    g.circle(TILE / 2, TILE / 2, 10).fill(0x05070d)
-    const eye = alert ? 0xff4a3a : 0xff9d45
-    g.circle(TILE / 2 - 3.4, TILE / 2 - 2, 1.8).fill(eye)
-    g.circle(TILE / 2 + 3.4, TILE / 2 - 2, 1.8).fill(eye)
   }
 
   setLight(pct: number): void {
@@ -344,6 +361,33 @@ export class DungeonEngine {
       }
     }
     this.lighting?.update(dms, this.world.x, this.world.y)
+    this.minimap?.update(this.time)
+
+    // エンカウント演出中: 白閃2連→虹彩暗転→コールバック(入力/AIは凍結)
+    if (this.fx) {
+      const fx = this.fx
+      fx.t += dms
+      if (this.flashG) {
+        const t = fx.t
+        const color = fx.kind === 'boss' ? 0xc73e3a : 0xffffff
+        const a = t < 70 ? 0.85 : t < 130 ? 0 : t < 200 ? 0.7 : 0
+        this.flashG.clear()
+        if (a > 0) {
+          this.flashG.rect(0, 0, this.app.renderer.width, this.app.renderer.height).fill({ color, alpha: a })
+        }
+      }
+      if (!fx.irisStarted && fx.t >= 140) {
+        fx.irisStarted = true
+        this.lighting?.startIris(300, () => {
+          this.fx = null
+          this.flashG?.clear()
+          fx.after()
+        })
+      }
+      if (this.shake > 0) this.shake = Math.max(0, this.shake - dms * 0.03)
+      this.centerCamera()
+      return
+    }
 
     if (this.paused) return
 
@@ -382,28 +426,38 @@ export class DungeonEngine {
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dms * 0.03)
 
     // 敵影AI(判断はタイル単位のまま、描画は200msトゥイーン+浮遊ボブ)
-    const speedMult = this.lightPct <= 0 ? 0.45 : this.lightPct < 40 ? 0.7 : 1
+    // 熱狂の赤い火(frantic)中は凶暴化(M12でstore側から発火)
+    const franticK = this.frantic ? 0.75 : 1
+    const speedMult = (this.lightPct <= 0 ? 0.45 : this.lightPct < 40 ? 0.7 : 1) * franticK
     for (const s of this.shades) {
       // 滑らか移動
       if (s.moveT < 1) {
         s.moveT = Math.min(1, s.moveT + dms / 200)
         const t = s.moveT
-        s.node.x = (s.fromX + (s.x - s.fromX) * t) * TILE
-        s.node.y = (s.fromY + (s.y - s.fromY) * t) * TILE
-        s.node.zIndex = s.node.y + TILE
+        s.visual.node.x = (s.fromX + (s.x - s.fromX) * t) * TILE
+        s.visual.node.y = (s.fromY + (s.y - s.fromY) * t) * TILE
+        s.visual.node.zIndex = s.visual.node.y + TILE
       }
-      s.node.pivot.y = Math.sin(this.time / 450 + s.bobPhase) * 2.2
+      s.visual.bob(this.time, s.bobPhase)
 
       s.cd -= dms
       if (s.cd > 0) continue
-      s.cd = SHADE_BASE_MS * speedMult * (0.8 + Math.random() * 0.4)
-      const chase = dist(s.x, s.y, this.px, this.py) <= (this.lightPct < 40 ? 6 : 4)
-      this.drawShadeBody(s.body, chase)
+      const near = dist(s.x, s.y, this.px, this.py)
+      // 金の敵影は追わず逃げる(速い)。通常種は灯が細るほど遠くから追う。
+      const chaseRange = (this.lightPct < 40 ? 6 : 4) + (this.frantic ? 2 : 0)
+      const chase = !s.visual.golden && near <= chaseRange
+      const flee = s.visual.golden && near <= 6
+      s.cd = SHADE_BASE_MS * speedMult * (s.visual.golden ? 0.55 : chase ? 0.75 : 1) * (0.8 + Math.random() * 0.4)
+      if (chase !== s.alert) {
+        s.alert = chase
+        s.visual.setAlert(chase)
+      }
       let dx = 0
       let dy = 0
-      if (chase) {
-        dx = Math.sign(this.px - s.x)
-        dy = Math.sign(this.py - s.y)
+      if (chase || flee) {
+        const sign = flee ? -1 : 1
+        dx = Math.sign(this.px - s.x) * sign
+        dy = Math.sign(this.py - s.y) * sign
         if (dx !== 0 && dy !== 0) (Math.random() < 0.5 ? (dx = 0) : (dy = 0))
       } else {
         const d = Object.values(DIRS)[Math.floor(Math.random() * 4)]
@@ -421,10 +475,28 @@ export class DungeonEngine {
       }
       if (s.x === this.px && s.y === this.py) {
         this.removeShade(s)
-        this.events.onEncounter()
+        this.startEncounterFx('normal', () => this.events.onEncounter())
         return
       }
     }
+  }
+
+  // 白閃2連+振動+虹彩暗転 → after(店側でbattle遷移)。演出中は入力/AI凍結。
+  private startEncounterFx(kind: 'normal' | 'boss', after: () => void): void {
+    if (this.fx) return
+    if (!this.flashG) {
+      this.flashG = new Graphics()
+      this.screenFx.addChild(this.flashG)
+    }
+    this.held.clear()
+    this.shake = 9
+    this.fx = { t: 0, kind, after, irisStarted: false }
+  }
+
+  // 熱狂の赤い火(M12): 敵影凶暴化+松明が緋に燃える
+  setFrantic(on: boolean): void {
+    this.frantic = on
+    this.lighting?.setPlayerTint(on ? 0xff5a3a : this.theme.torchTint)
   }
 
   private applyFacing(frame: number): void {
@@ -437,8 +509,8 @@ export class DungeonEngine {
   }
 
   private removeShade(s: Shade): void {
-    this.layerMid.removeChild(s.node)
-    s.node.destroy({ children: true })
+    this.layerMid.removeChild(s.visual.node)
+    s.visual.node.destroy({ children: true })
     this.shades = this.shades.filter((x) => x !== s)
   }
 
@@ -461,17 +533,23 @@ export class DungeonEngine {
 
   private arrive(x: number, y: number): void {
     this.events.onStep(x, y)
+    this.minimap?.reveal(x, y)
     // 敵影との接触
     const hit = this.shades.find((s) => s.x === x && s.y === y)
     if (hit) {
       this.removeShade(hit)
-      this.events.onEncounter()
+      this.startEncounterFx('normal', () => this.events.onEncounter())
       return
     }
     const kind = this.tileAt(x, y)
     if (kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'stairs' || kind === 'entrance' || kind === 'boss' || kind === 'monument') {
       if ((kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'monument') && this.used.has(`${this.floorIndex}:${x}:${y}`)) return
       if (kind === 'monument') return // M14で「調べる」対象化(現状は景観のみ)
+      if (kind === 'boss') {
+        // ボスは緋の閃光で威圧してから対峙
+        this.startEncounterFx('boss', () => this.events.onSpecialTile(kind, x, y))
+        return
+      }
       this.events.onSpecialTile(kind, x, y)
     }
   }

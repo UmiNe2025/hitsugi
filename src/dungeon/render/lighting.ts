@@ -132,6 +132,12 @@ export class LightingSystem {
     this.player.wy = wy
   }
 
+  // 熱狂の赤い火などで松明の色味を切り替える
+  setPlayerTint(tint: number): void {
+    this.player.tint = tint
+    this.player.glow.tint = tint
+  }
+
   setLightPct(pct: number): void {
     this.lightPct = Math.max(0, Math.min(100, pct))
   }

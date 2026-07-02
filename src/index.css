@@ -506,12 +506,57 @@ button {
 }
 .dungeon-canvas { position: absolute; inset: 0; }
 .dungeon-hud-top {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 5;
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  padding: 10px 14px;
-  background: linear-gradient(180deg, rgba(5,8,18,0.9), rgba(5,8,18,0));
+  position: absolute; top: 8px; right: 10px; z-index: 5;
+  display: flex; align-items: center; gap: 10px;
 }
-.dungeon-hud-top .light-wrap { flex: 1; min-width: 140px; }
+.dungeon-hud-top .resource {
+  background: rgba(11, 15, 30, 0.72); border: 1px solid var(--panel-border);
+  border-radius: 20px; padding: 5px 12px; font-size: 12px;
+}
+
+/* 灯籠の炎リング(灯ゲージの視覚化) */
+.dungeon-hud-left {
+  position: absolute; top: 8px; left: 10px; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+}
+.lantern-ring { position: relative; width: 64px; height: 64px; }
+.lantern-ring .ring-label {
+  position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%);
+  font-size: 10px; color: var(--text-dim); white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+.lantern-ring .ring-flame { animation: ringFlicker 1.6s ease-in-out infinite; transform-origin: 32px 36px; }
+.lantern-low .ring-flame { animation-duration: 0.9s; opacity: 0.85; }
+.lantern-crit .ring-flame { animation-duration: 0.45s; opacity: 0.6; }
+@keyframes ringFlicker {
+  0%, 100% { transform: translate(32px, 36px) scale(1); }
+  30% { transform: translate(32px, 36px) scale(1.06) rotate(-2deg); }
+  60% { transform: translate(31px, 36px) scale(0.94) rotate(2deg); }
+}
+.month-plate {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  background: rgba(11, 15, 30, 0.72); border: 1px solid var(--panel-border);
+  border-radius: 6px; padding: 5px 10px;
+}
+.month-plate .month-name { font-size: 15px; color: var(--gold); letter-spacing: 2px; }
+.month-plate .month-year { font-size: 9px; color: var(--text-dim); }
+
+/* 地域題字(入場時に浮かび、3秒で薄れる) */
+.dungeon-title-plate {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 5;
+  font-size: 17px; letter-spacing: 6px; color: var(--text);
+  background: rgba(11, 15, 30, 0.66); border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--gold); border-right: 3px solid var(--gold);
+  padding: 7px 22px; white-space: nowrap;
+  animation: titleFade 4s ease forwards;
+  pointer-events: none;
+}
+@keyframes titleFade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  12% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0.38; }
+}
 .dungeon-hud-party {
   position: absolute; left: 10px; bottom: 10px; z-index: 5;
   display: flex; flex-direction: column; gap: 4px; width: 150px;
@@ -537,6 +582,16 @@ button {
 .dpad-btn:active { background: rgba(232, 163, 61, 0.3); }
 @media (min-width: 900px) {
   .dpad { opacity: 0.35; }
+}
+/* 縦長(スマホ)ではHUDを二段組に */
+@media (max-width: 560px) {
+  .dungeon-title-plate {
+    top: 80px; font-size: 13px; letter-spacing: 3px; padding: 5px 14px;
+  }
+  .dungeon-hud-top .resource { font-size: 11px; padding: 4px 9px; }
+  .dungeon-log { left: 10px; right: 10px; bottom: 168px; max-height: 62px; overflow: hidden; }
+  .dungeon-hud-party { width: 126px; bottom: 8px; }
+  .dungeon-hud-party .ally-name { font-size: 11px; }
 }
 
 /* ---- ミュート ---- */
