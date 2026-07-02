@@ -16,5 +16,10 @@ export function spriteUrl(gata: Tomoshigata, sex: 'm' | 'f'): string {
   return `${import.meta.env.BASE_URL}img/sprites/walk_${gata}_${sex}_down_1.png`
 }
 
+// 任意の歩行スプライトファイル名を解決(v3.1 M8: 戦闘の立ち姿などに使用)
+export function spriteImg(file: string): string {
+  return `${import.meta.env.BASE_URL}img/sprites/${file}`
+}
+
 // 郷(ホーム)の背景。まだ生成されていなければ描画側でCSS/SVGへフォールバックする。
 export const HOME_BG = 'bg_sato.png'

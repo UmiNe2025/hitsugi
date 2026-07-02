@@ -226,7 +226,14 @@ export interface BattleState {
 }
 export interface BattleLogEntry {
   text: string
-  kind: 'info' | 'dmg' | 'heal' | 'ko' | 'chain' | 'win' | 'lose'
+  kind: 'info' | 'dmg' | 'heal' | 'ko' | 'chain' | 'win' | 'lose' | 'voice'
+  // v3.1 M8: ログ駆動演出用メタデータ(全てoptional・戦闘計算には不使用)
+  actorKey?: string
+  targetKey?: string
+  amount?: number
+  element?: Element
+  crit?: boolean
+  weak?: boolean // 弱点を突いた
 }
 
 // ---- 暦(v3: 月次) ----

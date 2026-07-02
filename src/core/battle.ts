@@ -115,7 +115,8 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
   const actor = findCombatant(st, actorKey)
   if (!actor || actor.hp <= 0) return { state: st, entries }
 
-  const push = (text: string, kind: BattleLogEntry['kind'] = 'info') => entries.push({ text, kind })
+  const push = (text: string, kind: BattleLogEntry['kind'] = 'info', meta?: Partial<BattleLogEntry>) =>
+    entries.push({ text, kind, ...meta })
 
   const updateCombatant = (key: string, fn: (c: Combatant) => Combatant): void => {
     st = {
@@ -127,7 +128,7 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
 
   if (action.type === 'guard') {
     updateCombatant(actorKey, (c) => ({ ...c, guard: true }))
-    push(`${actor.name}は身を固めた。`)
+    push(`${actor.name}は身を固めた。`, 'info', { actorKey: actor.key })
   } else if (action.type === 'flee') {
     const allyAgi = avg(st.allies.filter((c) => c.hp > 0).map((c) => c.agi))
     const enAgi = avg(st.enemies.filter((c) => c.hp > 0).map((c) => c.agi))
@@ -168,7 +169,7 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
             const chain = Math.min(st.chain + 1, 4)
             st = { ...st, chain, chainTarget: t.key }
             chainMult = 1 + chain * 0.15
-            if (chain >= 1) push(`継足${chain + 1}連! 一族の連撃が重なる!`, 'chain')
+            if (chain >= 1) push(`継足${chain + 1}連! 一族の連撃が重なる!`, 'chain', { targetKey: t.key })
           } else {
             st = { ...st, chain: 0, chainTarget: t.key }
           }
@@ -190,10 +191,11 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         push(
           `${actor.name}の${skill ? skill.name : '攻撃'}! ${t.name}に${final}のダメージ${crit ? '(会心!)' : ''}${em > 1 ? '(弱点!)' : em < 1 ? '(耐性)' : ''}`,
           'dmg',
+          { actorKey: actor.key, targetKey: t.key, amount: final, element: el, crit, weak: em > 1 },
         )
         const after = findCombatant(st, t.key)
         if (after && after.hp <= 0) {
-          push(`${t.name}は闇に還った。`, 'ko')
+          push(`${t.name}は闇に還った。`, 'ko', { targetKey: t.key })
           if (st.chainTarget === t.key) st = { ...st, chain: 0, chainTarget: undefined }
         }
       }
@@ -206,7 +208,9 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         if (t.hp <= 0) continue
         const amount = Math.round((actor.matk * skill.power) / 100 + 10)
         updateCombatant(t.key, (c) => ({ ...c, hp: Math.min(c.maxHp, c.hp + amount) }))
-        push(`${skill.name}! ${t.name}の傷が${amount}癒えた。`, 'heal')
+        push(`${skill.name}! ${t.name}の傷が${amount}癒えた。`, 'heal', {
+          actorKey: actor.key, targetKey: t.key, amount, element: skill.element,
+        })
       }
     } else if (skill.type === 'buff') {
       const isDef = skill.id === 'himamori' || skill.id === 'g_iwakura'
@@ -216,12 +220,16 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
           buffs: { ...c.buffs, [isDef ? 'defUp' : 'atkUp']: 3 },
         }))
       }
-      push(`${actor.name}の${skill.name}! 一族の${isDef ? '守り' : '闘気'}が高まる。`, 'heal')
+      push(`${actor.name}の${skill.name}! 一族の${isDef ? '守り' : '闘気'}が高まる。`, 'heal', {
+        actorKey: actor.key, element: skill.element,
+      })
     } else if (skill.type === 'debuff') {
       for (const t of foes.filter((c) => c.hp > 0)) {
         updateCombatant(t.key, (c) => ({ ...c, atk: Math.round(c.atk * (1 - skill.power / 100)) }))
       }
-      push(`${actor.name}の${skill.name}! 敵の力が削がれた。`, 'info')
+      push(`${actor.name}の${skill.name}! 敵の力が削がれた。`, 'info', {
+        actorKey: actor.key, element: skill.element,
+      })
     }
   }
 

@@ -1,17 +1,31 @@
+// 戦闘画面(品質刷新v3.1 M8) — 俺屍様式の側面視ステージ
+// 敵は左に雁行、味方は右に雁行(歩行スプライト流用)。演出はBattleLogEntryのメタデータ駆動:
+// 踏み込み→被弾フラッシュ→ダメージ数字ポップ→KO溶暗。属性別バースト、行動者の題字タグ、
+// 戦利品スロット(M12-5)、台詞チャネル(M15-1土台: kind:'voice')を備える。
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
 import type { BattleLogEntry, Combatant } from '../core/types'
-import { ELEMENT_LABELS } from '../core/types'
 import { currentActor } from '../core/battle'
 import { audio } from '../core/audio'
 import { skillById } from '../core/data/skills'
 import { enemyById } from '../core/data/enemies'
+import { regionById } from '../core/data/regions'
 import { Bar } from './components'
-import { gameImg } from './img'
-
-const REVEAL_MS = 420
+import { gameImg, spriteImg } from './img'
 
 type Menu = { kind: 'root' } | { kind: 'skill' } | { kind: 'target'; skillId?: string; side: 'enemy' | 'ally' }
+
+interface FxEvent {
+  id: number
+  kind: 'lunge' | 'hit' | 'heal' | 'ko' | 'guard'
+  amount?: number
+  crit?: boolean
+  weak?: boolean
+  element?: string
+  voice?: string
+}
+
+let fxSeq = 1
 
 export function BattleScreen() {
   const battle = useGame((s) => s.battle)
@@ -19,12 +33,66 @@ export function BattleScreen() {
   const drainBattleLog = useGame((s) => s.drainBattleLog)
   const battleCommand = useGame((s) => s.battleCommand)
   const finishBattle = useGame((s) => s.finishBattle)
+  const regionId = useGame((s) => s.dungeonRun?.regionId)
+  const family = useGame((s) => s.data?.family) ?? []
 
   const [displayed, setDisplayed] = useState<BattleLogEntry[]>([])
   const [pending, setPending] = useState<BattleLogEntry[]>([])
   const [menu, setMenu] = useState<Menu>({ kind: 'root' })
   const [auto, setAuto] = useState(false)
+  const [fx, setFx] = useState<Record<string, FxEvent[]>>({})
+  const [bossShown, setBossShown] = useState(false)
+  const [slotPhase, setSlotPhase] = useState<'spin' | 'done'>('spin')
   const logRef = useRef<HTMLDivElement>(null)
+
+  const stageFamily = (() => {
+    if (!regionId) return 'forest'
+    const bg = regionById(regionId).bg
+    if (bg.includes('zaka')) return 'zaka'
+    if (bg.includes('tani')) return 'tani'
+    if (bg.includes('miyama')) return 'miyama'
+    return 'forest'
+  })()
+
+  const isBossBattle = !!battle?.enemies.some((e) => e.enemyId?.startsWith('boss_'))
+  const bossName = battle?.enemies.find((e) => e.enemyId?.startsWith('boss_'))?.name
+
+  // 演出キューへ変換
+  const applyFx = (entry: BattleLogEntry) => {
+    const events: [string, FxEvent][] = []
+    const mk = (kind: FxEvent['kind'], extra?: Partial<FxEvent>): FxEvent => ({ id: fxSeq++, kind, ...extra })
+    if (entry.kind === 'dmg') {
+      if (entry.actorKey) events.push([entry.actorKey, mk('lunge')])
+      if (entry.targetKey)
+        events.push([entry.targetKey, mk('hit', { amount: entry.amount, crit: entry.crit, weak: entry.weak, element: entry.element })])
+    } else if (entry.kind === 'heal') {
+      if (entry.actorKey) events.push([entry.actorKey, mk('lunge')])
+      if (entry.targetKey) events.push([entry.targetKey, mk('heal', { amount: entry.amount, element: entry.element })])
+    } else if (entry.kind === 'ko' && entry.targetKey) {
+      events.push([entry.targetKey, mk('ko')])
+    } else if (entry.kind === 'voice' && entry.actorKey) {
+      events.push([entry.actorKey, mk('guard', { voice: entry.text })])
+    } else if (entry.kind === 'info' && entry.actorKey) {
+      events.push([entry.actorKey, mk('guard')])
+    }
+    if (events.length === 0) return
+    setFx((old) => {
+      const next = { ...old }
+      for (const [key, ev] of events) next[key] = [...(next[key] ?? []), ev]
+      return next
+    })
+    // 自動掃除
+    setTimeout(() => {
+      setFx((old) => {
+        const next: Record<string, FxEvent[]> = {}
+        for (const [k, evs] of Object.entries(old)) {
+          const keep = evs.filter((e) => !events.some(([, ev]) => ev.id === e.id))
+          if (keep.length > 0) next[k] = keep
+        }
+        return next
+      })
+    }, 900)
+  }
 
   // 新しいログをリビール待ちへ
   useEffect(() => {
@@ -34,7 +102,7 @@ export function BattleScreen() {
     }
   }, [queue, drainBattleLog])
 
-  // 1件ずつ表示(戦闘のテンポ)
+  // 1件ずつ表示(戦闘のテンポ)— オート中は倍速
   useEffect(() => {
     if (pending.length === 0) return
     const t = setTimeout(() => {
@@ -44,15 +112,29 @@ export function BattleScreen() {
       }
       const se = seMap[entry.kind]
       if (se) audio.se(se)
+      applyFx(entry)
       setDisplayed((d) => [...d, entry])
       setPending((p) => p.slice(1))
-    }, REVEAL_MS)
+    }, auto ? 230 : 420)
     return () => clearTimeout(t)
-  }, [pending])
+  }, [pending, auto])
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: 99999, behavior: 'smooth' })
   }, [displayed])
+
+  // ボス題字と戦利品スロットの寿命
+  useEffect(() => {
+    if (isBossBattle) {
+      setBossShown(true)
+      const t = setTimeout(() => setBossShown(false), 2000)
+      return () => clearTimeout(t)
+    }
+  }, [isBossBattle])
+  useEffect(() => {
+    const t = setTimeout(() => setSlotPhase('done'), 1500)
+    return () => clearTimeout(t)
+  }, [])
 
   const revealing = pending.length > 0
   const actor = battle ? currentActor(battle) : undefined
@@ -68,7 +150,7 @@ export function BattleScreen() {
         ? battle.chainTarget
         : foes[0].key
       battleCommand({ type: 'attack', targetKey: target })
-    }, 300)
+    }, 260)
     return () => clearTimeout(t)
   }, [auto, isPlayerTurn, battle, actor, battleCommand])
 
@@ -100,150 +182,297 @@ export function BattleScreen() {
     }
   }
 
+  const charOf = (c: Combatant) => family.find((f) => f.id === c.charId)
+
   return (
-    <div className="screen battle-screen">
-      <div className="battle-field">
-        <div className="enemy-row">
-          {battle.enemies.map((e) => (
-            <div
+    <div className={`screen battle-screen stage-${stageFamily}`}>
+      {bossShown && bossName && (
+        <div className="boss-banner">
+          <span className="boss-banner-sub">主(ぬし)、現る</span>
+          <span className="boss-banner-name">{bossName}</span>
+        </div>
+      )}
+
+      {slotPhase === 'spin' && <LootSlot />}
+
+      <div className="battle-stage">
+        <div className="stage-ground" />
+
+        {isPlayerTurn && actor && (
+          <div className="turn-banner" key={actor.key}>
+            {actor.name}
+          </div>
+        )}
+
+        <div className="enemy-side">
+          {battle.enemies.map((e, i) => (
+            <CombatantNode
               key={e.key}
-              className={`enemy-card ${e.hp <= 0 ? 'dead' : ''} ${isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' ? 'targetable' : ''} ${battle.chainTarget === e.key && battle.chain > 0 ? 'acting' : ''}`}
+              c={e}
+              index={i}
+              fx={fx[e.key] ?? []}
+              targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
+              chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
               onClick={() => onEnemyClick(e)}
             >
-              <EnemyVisual e={e} />
-              <div className="enemy-name">{e.name}</div>
-              <Bar value={e.hp} max={e.maxHp} kind="hp" />
-              <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>{ELEMENT_LABELS[e.element]}の魔性</div>
-              {battle.chainTarget === e.key && battle.chain > 0 && (
-                <span className="chain-badge">継足{battle.chain + 1}連</span>
-              )}
-            </div>
+              <EnemyVisual2 e={e} />
+            </CombatantNode>
           ))}
         </div>
 
-        <div className="battle-log" ref={logRef}>
-          {displayed.slice(-30).map((l, i) => (
-            <p key={i} className={`log-${l.kind}`}>{l.text}</p>
-          ))}
+        <div className="ally-side">
+          {battle.allies.map((a, i) => {
+            const ch = charOf(a)
+            return (
+              <CombatantNode
+                key={a.key}
+                c={a}
+                index={i}
+                fx={fx[a.key] ?? []}
+                targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' && a.hp > 0}
+                acting={actor?.key === a.key && battle.phase === 'input'}
+                chainBadge={0}
+                onClick={() => onAllyClick(a)}
+              >
+                <AllyVisual gata={ch?.tomoshigata ?? 'homura'} sex={ch?.sex ?? 'm'} element={a.element} />
+              </CombatantNode>
+            )
+          })}
         </div>
+      </div>
 
-        <div className="cmd-hint">
-          {over
-            ? battle.phase === 'won'
-              ? '勝利!'
-              : battle.phase === 'fled'
-                ? '離脱した'
-                : '……'
-            : isPlayerTurn
-              ? menu.kind === 'target'
-                ? `${actor?.name} — 的を選べ`
-                : `${actor?.name}の番`
-              : revealing
-                ? ''
-                : '……'}
-        </div>
+      <div className="battle-log" ref={logRef}>
+        {displayed.slice(-24).map((l, i) => (
+          <p key={i} className={`log-${l.kind}`}>{l.text}</p>
+        ))}
+      </div>
 
+      <div className="battle-bottom">
         {over ? (
-          <div className="cmd-row">
+          <div className="victory-scroll">
+            <p className="victory-line">
+              {battle.phase === 'won' ? '勝鬨を上げよ — 夜藪に僅かな静けさが戻った' : battle.phase === 'fled' ? '一族は闇に紛れて退いた' : '一族の灯が、闇に呑まれた……'}
+            </p>
             <button className="btn btn-main" onClick={finishBattle}>
               {battle.phase === 'won' ? '戦果を得る' : battle.phase === 'fled' ? '先へ' : '……'}
             </button>
           </div>
         ) : (
           <>
-            {isPlayerTurn && menu.kind === 'root' && (
-              <div className="cmd-row">
-                <button className="btn btn-main" onClick={() => setMenu({ kind: 'target', side: 'enemy' })}>
-                  攻撃
-                </button>
-                <button className="btn" onClick={() => setMenu({ kind: 'skill' })}>
-                  技
-                </button>
-                <button className="btn" onClick={() => battleCommand({ type: 'guard' })}>
-                  防御
-                </button>
-                <button className="btn" onClick={() => battleCommand({ type: 'flee' })}>
-                  逃げる
-                </button>
-                <button className={`btn btn-ghost ${auto ? 'btn-main' : ''}`} onClick={() => setAuto(!auto)}>
-                  {auto ? 'オート中' : 'オート'}
-                </button>
-              </div>
-            )}
-            {isPlayerTurn && menu.kind === 'skill' && actor && (
-              <div className="cmd-row">
-                {actor.skills.map((id) => {
-                  const sk = skillById(id)
-                  return (
-                    <button key={id} className="btn" disabled={actor.mp < sk.mpCost} onClick={() => castSkill(id)}>
-                      {sk.name}({sk.mpCost})
-                    </button>
-                  )
-                })}
-                <button className="btn btn-ghost" onClick={() => setMenu({ kind: 'root' })}>
-                  戻る
-                </button>
-              </div>
-            )}
-            {isPlayerTurn && menu.kind === 'target' && (
-              <div className="cmd-row">
-                <button className="btn btn-ghost" onClick={() => setMenu({ kind: 'root' })}>
-                  やめる
-                </button>
-              </div>
-            )}
+            <div className="cmd-panel">
+              {isPlayerTurn && menu.kind === 'root' && (
+                <>
+                  <button className="cmd-btn cmd-main" onClick={() => setMenu({ kind: 'target', side: 'enemy' })}>攻撃</button>
+                  <button className="cmd-btn" onClick={() => setMenu({ kind: 'skill' })}>技</button>
+                  <button className="cmd-btn" onClick={() => battleCommand({ type: 'guard' })}>防御</button>
+                  <button className="cmd-btn" onClick={() => battleCommand({ type: 'flee' })}>逃げる</button>
+                  <button className={`cmd-btn cmd-ghost ${auto ? 'cmd-on' : ''}`} onClick={() => setAuto(!auto)}>
+                    {auto ? 'オート中' : 'オート'}
+                  </button>
+                </>
+              )}
+              {isPlayerTurn && menu.kind === 'skill' && actor && (
+                <div className="skill-list">
+                  {actor.skills.map((id) => {
+                    const sk = skillById(id)
+                    return (
+                      <button key={id} className="cmd-btn" disabled={actor.mp < sk.mpCost} onClick={() => castSkill(id)}>
+                        {sk.name} <span className="mp-cost">{sk.mpCost}</span>
+                      </button>
+                    )
+                  })}
+                  <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>戻る</button>
+                </div>
+              )}
+              {isPlayerTurn && menu.kind === 'target' && (
+                <>
+                  <p className="cmd-hint-line">的を選べ</p>
+                  <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>やめる</button>
+                </>
+              )}
+              {!isPlayerTurn && <p className="cmd-hint-line">{revealing ? '' : '……'}</p>}
+            </div>
+
+            <div className="member-cards">
+              {battle.allies.map((a) => (
+                <div
+                  key={a.key}
+                  className={`member-card ${a.hp <= 0 ? 'dead' : ''} ${actor?.key === a.key && battle.phase === 'input' ? 'acting' : ''}`}
+                  onClick={() => onAllyClick(a)}
+                >
+                  <div className="member-name">
+                    {a.name}
+                    <span className="row-tag">{a.row === 'front' ? '前' : '後'}</span>
+                    {a.guard && <span className="row-tag">防</span>}
+                  </div>
+                  <div className="member-stat">
+                    <span className="stat-key">体</span>
+                    <span className="stat-num">{a.hp}</span>
+                    <Bar value={a.hp} max={a.maxHp} kind="hp" />
+                  </div>
+                  <div className="member-stat">
+                    <span className="stat-key">技</span>
+                    <span className="stat-num">{a.mp}</span>
+                    <Bar value={a.mp} max={a.maxMp} kind="mp" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </>
         )}
-      </div>
-
-      <div className="ally-row" style={{ marginTop: 12 }}>
-        {battle.allies.map((a) => (
-          <div
-            key={a.key}
-            className={`ally-cell ${a.hp <= 0 ? 'dead' : ''} ${actor?.key === a.key && battle.phase === 'input' ? 'acting' : ''} ${isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' ? 'targetable' : ''}`}
-            onClick={() => onAllyClick(a)}
-          >
-            <div className="ally-name">
-              {a.name}
-              <span className="row-tag">{a.row === 'front' ? '前衛' : '後衛'}</span>
-              {a.guard && <span className="row-tag">防</span>}
-            </div>
-            <Bar value={a.hp} max={a.maxHp} kind="hp" />
-            <Bar value={a.mp} max={a.maxMp} kind="mp" />
-          </div>
-        ))}
       </div>
     </div>
   )
 }
 
-const ENEMY_EMOJI: Record<string, string> = {
-  chochin_kui: '🏮', kage_nezumi: '🐀', onibi: '🔥', yosuzume: '🐦',
-  hone_dourou: '🕯️', nureginu: '👘', yogumo: '🕷️', naki_ishi: '🪨', kubinashi_andon: '👻',
-  hoshikui_ko: '🌠', gesshoku_juu: '🌑', tanwatari: '🦅', kagami_kurage: '🪼', ochiboshi_mukuro: '✨',
-  tokoyo_musha: '⚔️', hitori: '🫱', yamabiko_bone: '🦴', hoshikuzu_orochi: '🐍',
-  boss_hyakume: '🏮', boss_hoshimukuro: '🐻', boss_gentou: '🌑', boss_shiori: '🎼',
+// 配置スロット+演出クラスを与える共通ラッパ
+function CombatantNode({
+  c, index, fx, targetable, acting, chainBadge, onClick, children,
+}: {
+  c: Combatant
+  index: number
+  fx: FxEvent[]
+  targetable: boolean
+  acting?: boolean
+  chainBadge: number
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  const lunge = fx.some((f) => f.kind === 'lunge')
+  const hit = fx.find((f) => f.kind === 'hit')
+  const heal = fx.find((f) => f.kind === 'heal')
+  const ko = fx.some((f) => f.kind === 'ko')
+  const voice = fx.find((f) => f.voice)
+  const depth = index % 2 // 雁行の前後
+  return (
+    <div
+      className={[
+        'combatant',
+        c.isAlly ? 'is-ally' : 'is-enemy',
+        c.hp <= 0 ? 'dead' : '',
+        targetable ? 'targetable' : '',
+        acting ? 'acting' : '',
+        lunge ? 'fx-lunge' : '',
+        hit ? 'fx-hit' : '',
+        ko ? 'fx-ko' : '',
+      ].join(' ')}
+      style={{ ['--slot' as string]: index, ['--depth' as string]: depth }}
+      onClick={onClick}
+    >
+      {voice && <div className="voice-bubble">{voice.voice}</div>}
+      <div className="combatant-body">{children}</div>
+      {hit && (
+        <>
+          <span className={`dmg-pop ${hit.crit ? 'crit' : ''} ${hit.weak ? 'weak' : ''}`}>
+            {hit.amount}
+            {hit.crit ? '!' : ''}
+          </span>
+          <span className={`burst el-${hit.element ?? 'fire'}`} />
+        </>
+      )}
+      {heal && <span className="dmg-pop heal-pop">+{heal.amount}</span>}
+      <div className="combatant-plate">
+        <span className="combatant-name">{c.name}</span>
+        <Bar value={c.hp} max={c.maxHp} kind="hp" />
+      </div>
+      {chainBadge > 0 && <span className="chain-badge">継足{chainBadge}連</span>}
+    </div>
+  )
 }
 
-function enemySprite(e: Combatant): string {
-  if (!e.enemyId) return '👾'
-  if (ENEMY_EMOJI[e.enemyId]) return ENEMY_EMOJI[e.enemyId]
-  const def = enemyById(e.enemyId)
-  const map: Record<number, string> = { 1: '👺', 2: '👹', 3: '🌑', 4: '⚔️', 5: '💀' }
-  return map[def.tier] ?? '👾'
+// 味方の立ち姿 — 歩行スプライトのleft向き(敵の方を向く)
+function AllyVisual({ gata, sex, element }: { gata: string; sex: string; element: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return <span className="ally-flame" data-el={element}>🔥</span>
+  }
+  return (
+    <img
+      className="ally-stand"
+      src={spriteImg(`walk_${gata}_${sex}_left_1.png`)}
+      alt=""
+      onError={() => setFailed(true)}
+    />
+  )
 }
 
-// 敵の見た目 — 生成スプライトがあれば画像、無ければ絵文字へ静かにフォールバック。
-// 画像は後追い生成のため、揃い次第このまま自動で表示される。
-function EnemyVisual({ e }: { e: Combatant }) {
+// 敵の見た目v2 — 実画像→無ければSVGシルエット妖怪(属性オーラ+眼+呼吸)
+const SPECIES_BY_ELEMENT: Record<string, 'beast' | 'wisp' | 'oni' | 'float'> = {
+  fire: 'wisp', moon: 'float', star: 'float', water: 'float', wind: 'beast', earth: 'oni',
+}
+
+function EnemyVisual2({ e }: { e: Combatant }) {
   const [failed, setFailed] = useState(false)
   const def = e.enemyId ? enemyById(e.enemyId) : null
   if (def && !failed) {
     return (
-      <span className="enemy-sprite">
+      <span className="enemy-sprite2">
         <img className="enemy-img" src={gameImg(def.sprite)} alt="" onError={() => setFailed(true)} />
       </span>
     )
   }
-  return <span className="enemy-sprite">{enemySprite(e)}</span>
+  const tier = def?.tier ?? 1
+  const species = SPECIES_BY_ELEMENT[e.element] ?? 'beast'
+  const scale = 0.9 + tier * 0.14
+  return (
+    <span className={`enemy-sprite2 silhouette sp-${species}`} data-el={e.element} style={{ ['--sc' as string]: scale }}>
+      <svg viewBox="-30 -56 60 60" width={76 * scale} height={76 * scale}>
+        <ellipse cx="0" cy="-18" rx="26" ry="22" className="aura" />
+        {species === 'beast' && (
+          <g className="body">
+            <ellipse cx="0" cy="-10" rx="15" ry="11" />
+            <ellipse cx="-11" cy="-17" rx="5.5" ry="6.5" />
+            <path d="M-16,-21 L-13,-30 L-9,-22 Z" />
+            <path d="M-9,-23 L-6,-29 L-3,-22 Z" />
+            <path d="M14,-12 Q24,-19 20,-5 Q16,-9 13,-8 Z" />
+          </g>
+        )}
+        {species === 'wisp' && (
+          <g className="body">
+            <path d="M0,-34 Q12,-24 9,-10 Q7,-1 0,0 Q-7,-1 -9,-10 Q-12,-24 0,-34 Z" />
+            <path d="M8,-26 Q15,-31 12,-19 Z" />
+            <path d="M-8,-28 Q-14,-33 -11,-20 Z" />
+          </g>
+        )}
+        {species === 'oni' && (
+          <g className="body">
+            <ellipse cx="0" cy="-12" rx="14" ry="13" />
+            <rect x="-10" y="-5" width="20" height="5" />
+            <path d="M-8,-22 L-5,-30 L-2,-22 Z" />
+            <path d="M2,-22 L5,-30 L8,-22 Z" />
+          </g>
+        )}
+        {species === 'float' && (
+          <g className="body">
+            <circle cx="0" cy="-18" r="12" />
+            <path d="M9,-13 Q19,-8 14,-1 Q10,-6 6,-8 Z" />
+            <path d="M-9,-14 Q-17,-7 -12,-2 Q-9,-6 -5,-9 Z" />
+          </g>
+        )}
+        <circle cx="-4.5" cy="-18" r="2.4" className="eye" />
+        <circle cx="4.5" cy="-18" r="2.4" className="eye" />
+        {tier >= 3 && <circle cx="0" cy="-24" r="2" className="eye" />}
+      </svg>
+    </span>
+  )
+}
+
+// 戦利品スロット(俺屍PSP準拠の開幕演出 — 表示は雰囲気、実報酬は勝利時に確定)
+const SLOT_POOL = ['奉燈', '血珠', '武具', '霊薬', '宝珠', '古銭', '巻物', '香木']
+
+function LootSlot() {
+  return (
+    <div className="loot-slot">
+      <span className="slot-label">戦利品</span>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="slot-reel" style={{ animationDelay: `${i * 0.12}s` }}>
+          <span className="slot-strip">
+            {[...SLOT_POOL, ...SLOT_POOL].map((s, j) => (
+              <span key={j} className="slot-item">{s}</span>
+            ))}
+          </span>
+        </span>
+      ))}
+    </div>
+  )
 }
