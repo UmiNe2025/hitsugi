@@ -238,7 +238,9 @@ const CORE_EVENTS: EventDef[] = [
 
 // 結合(初期8件+増員分 — GDD_v3 §1)。実行時循環なし(events.tsは型のみ本ファイルを参照)
 import { EXTRA_EVENTS } from './data/events'
-export const EVENTS: EventDef[] = [...CORE_EVENTS, ...EXTRA_EVENTS]
+import { EXTRA_EVENTS_2 } from './data/events2'
+import { EXTRA_EVENTS_3 } from './data/events3'
+export const EVENTS: EventDef[] = [...CORE_EVENTS, ...EXTRA_EVENTS, ...EXTRA_EVENTS_2, ...EXTRA_EVENTS_3]
 
 export function eventById(id: string): EventDef {
   const e = EVENTS.find((x) => x.id === id)

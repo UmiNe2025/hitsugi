@@ -112,6 +112,14 @@
   - 既存11系譜+新設12系譜=23系譜×15段+初期15点=360点ちょうど
 - **検証**: tsc 0エラー、実行時ITEM_BASES.length=360、id重複0
 - **次回**: 事件60→120、辞世300→600(M3b最終項目)
+- **commit**: `8e261c0`
+
+## 2026-07-02 (M3b 事件121本達成)
+
+- **やったこと**: events2.ts(+30)・events3.ts(+21+8=+29)を新設し事件61→121に拡張
+  - expedition.tsをCORE_EVENTS+EXTRA_EVENTS+EXTRA_EVENTS_2+EXTRA_EVENTS_3の結合に変更
+- **検証**: tsc 0エラー、実行時EVENTS.length=121、id重複0
+- **次回**: 辞世300→600(M3b最終項目)
 - **commit**: (次のコミットにまとめる)
 - **設計決定(敵の変異システム)**: 360種への道は「基礎種を手書き→変異で系統展開」とする。基礎40種(手書き・M3a)×3変異(若=tier-1弱体/常=基準/古株=tier+1強化・名前接頭辞)=120種(M3a)。M3b/cで基礎を+40ずつ書き360へ。実装は enemies.ts に `variantsOf(base)` を追加し ENEMIES を生成結合(数値式は単一情報源 — GDD_v3 §3と同思想)。pickEnemies のtier抽選は既存のまま機能する見込み(要確認: expedition.ts)
 - **検証**: シェル/preview系ツールの障害継続のため未実施(tsc/lint/validate/preview全て保留)。**復旧後は M1/M2/M3a進行分を必ず検証してからコミット**
