@@ -40,8 +40,13 @@ export const SKILLS: Skill[] = [
   { id: 'e_yamiuta', name: '常夜の子守唄', type: 'debuff', target: 'enemies', power: 30, mpCost: 0, inheritable: false, desc: '' },
 ]
 
+import { allTozaSkills } from './toza'
+
+let ALL_SKILLS: Skill[] | null = null
+
 export function skillById(id: string): Skill {
-  const s = SKILLS.find((x) => x.id === id)
+  if (!ALL_SKILLS) ALL_SKILLS = [...SKILLS, ...allTozaSkills()]
+  const s = ALL_SKILLS.find((x) => x.id === id)
   if (!s) throw new Error(`unknown skill: ${id}`)
   return s
 }

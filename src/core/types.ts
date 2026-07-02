@@ -82,6 +82,9 @@ export interface Item {
   price?: number
 }
 
+// ---- 灯型(灯座システムの育成軸。定義本体は data/toza.ts) ----
+export type Tomoshigata = 'homura' | 'iwao' | 'nagi' | 'sumi'
+
 // ---- キャラクター(一族) ----
 export interface Character {
   id: string
@@ -95,7 +98,8 @@ export interface Character {
   maxHp: number
   mp: number
   maxMp: number
-  element: Element
+  element: Element // 星脈(せいみゃく) — 星神の親から継ぐ
+  tomoshigata?: Tomoshigata // 灯型 — 成人の儀で授かる(幼子は未定)
   personalityId: string
   skills: string[]
   equipment: Partial<Record<ItemSlot, Item>>
@@ -211,12 +215,24 @@ export interface BattleLogEntry {
   kind: 'info' | 'dmg' | 'heal' | 'ko' | 'chain' | 'win' | 'lose'
 }
 
-// ---- 季節 ----
+// ---- 暦(v3: 月次) ----
+// seasonIndex は歴史的名称のまま「月インデックス」を表す(0 = 1年目睦月)
+export const MONTH_NAMES = [
+  '睦月', '如月', '弥生', '卯月', '皐月', '水無月',
+  '文月', '葉月', '長月', '神無月', '霜月', '師走',
+] as const
 export const SEASON_NAMES = ['春', '夏', '秋', '冬'] as const
-export const LIFESPAN_SEASONS = 8 // 八季の命
+export const LIFESPAN_MONTHS = 24 // 廿四月の命(旧: 八季)
 export function seasonLabel(abs: number): string {
-  const year = Math.floor(abs / 4) + 1
-  return `${year}年目・${SEASON_NAMES[abs % 4]}`
+  const year = Math.floor(abs / 12) + 1
+  return `${year}年目・${MONTH_NAMES[abs % 12]}`
+}
+export function seasonOfMonth(abs: number): (typeof SEASON_NAMES)[number] {
+  return SEASON_NAMES[Math.floor(((abs % 12) + 1) / 3) % 4]
+}
+// 季の変わり目(祭が開ける月): 弥生・水無月・長月・師走
+export function isFestivalMonth(abs: number): boolean {
+  return abs % 3 === 2
 }
 
 // ---- 画面遷移 ----
@@ -226,6 +242,8 @@ export type Screen =
   | { id: 'home' }
   | { id: 'pact' }
   | { id: 'birth'; charId: string }
+  | { id: 'ceremony'; charId: string } // 成人の儀 — 灯型を授ける
+  | { id: 'life'; title: string; lines: { speaker: string; text: string }[] } // ライフイベント
   | { id: 'depart' } // 出立準備
   | { id: 'expedition' }
   | { id: 'dungeon' } // 歩行ダンジョン(v2)

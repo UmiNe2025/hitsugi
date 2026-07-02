@@ -3,7 +3,7 @@ import type {
   BattleLogEntry, BattleState, GameData, Item, Screen,
 } from './types'
 import type { BattleAction } from './battle'
-import { LIFESPAN_SEASONS, seasonLabel } from './types'
+import { LIFESPAN_MONTHS, seasonLabel, isFestivalMonth } from './types'
 import { Rng } from './rng'
 import { GODS, godById } from './data/gods'
 import { regionById } from './data/regions'
@@ -24,12 +24,17 @@ import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
 import type { DungeonRun } from '../dungeon/types'
 import { dungeonByRegion } from '../dungeon/maps'
+import type { Tomoshigata } from './types'
+import { tozaOf } from './data/toza'
+import { hatsujinScene, kizunaScene, hosoriScene } from './lifeEvents'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene =
   | { kind: 'birth'; charId: string }
   | { kind: 'death'; charId: string }
+  | { kind: 'ceremony'; charId: string }
   | { kind: 'dream' }
+  | { kind: 'life'; title: string; lines: { speaker: string; text: string }[] }
 
 interface GameStore {
   screen: Screen
@@ -54,6 +59,9 @@ interface GameStore {
   doPact: (parentId: string, godId: string) => void
   doFestival: () => void
   doRest: () => void
+
+  // 成人の儀 — 灯型を授ける
+  assignTomoshigata: (charId: string, gata: Tomoshigata) => void
 
   // 店・装備・修練(季を消費しない)
   buyItem: (baseId: string) => void
@@ -136,7 +144,7 @@ export const useGame = create<GameStore>((set, get) => {
     // 寿命 — 八季の命
     for (const c of d.family) {
       if (!c.alive) continue
-      if (ageOf(c, d.seasonIndex) >= LIFESPAN_SEASONS) {
+      if (ageOf(c, d.seasonIndex) >= LIFESPAN_MONTHS) {
         const epitaph = generateEpitaph(c, 'lifespan', rng)
         // 形見: 装備は継承品として蔵へ
         const keepsakes: Item[] = []
@@ -172,11 +180,66 @@ export const useGame = create<GameStore>((set, get) => {
       }
     }
 
+    // 成人の儀 — 生後6月を迎えた子は灯型を授かる
+    for (const c of d.family) {
+      if (c.alive && !c.tomoshigata && ageOf(c, d.seasonIndex) >= 6) {
+        scenes.push({ kind: 'ceremony', charId: c.id })
+      }
+    }
+
+    // 灯細りの夜 — 死のひと月前、最後の対話
+    for (const c of d.family) {
+      if (c.alive && ageOf(c, d.seasonIndex) === 23 && !c.deeds.includes('灯細りの夜を過ごした')) {
+        const witness = d.family.find((x) => x.alive && x.isHead && x.id !== c.id)
+          ?? d.family.find((x) => x.alive && x.id !== c.id)
+          ?? null
+        scenes.push({ kind: 'life', ...hosoriScene(c, witness) })
+        d = {
+          ...d,
+          family: d.family.map((x) =>
+            x.id === c.id ? { ...x, deeds: [...x.deeds, '灯細りの夜を過ごした'] } : x,
+          ),
+        }
+      }
+    }
+
+    // 絆 — 静かな月には、家族の掛け合いがある
+    if (scenes.length === 0 && rng.chance(0.25)) {
+      const adults = d.family.filter((c) => c.alive && ageOf(c, d.seasonIndex) >= 6)
+      if (adults.length >= 2) {
+        const pair = rng.shuffle(adults).slice(0, 2)
+        scenes.push({ kind: 'life', ...kizunaScene(pair[0], pair[1], rng) })
+      }
+    }
+
+    // 灯座の深まり — 月齢で固有技が開く(10月・14月・18月=奥義)
+    d = {
+      ...d,
+      family: d.family.map((c) => {
+        if (!c.alive || !c.tomoshigata) return c
+        const toza = tozaOf(c.tomoshigata, c.element)
+        const age = ageOf(c, d.seasonIndex)
+        const learned = [...c.skills]
+        let awakened = false
+        if (age >= 10 && !learned.includes(toza.skills[1].id)) learned.push(toza.skills[1].id)
+        if (age >= 14 && !learned.includes(toza.skills[2].id)) learned.push(toza.skills[2].id)
+        if (age >= 18 && !learned.includes(toza.ougi.id)) {
+          learned.push(toza.ougi.id)
+          awakened = true
+        }
+        if (learned.length === c.skills.length) return c
+        if (awakened) {
+          d = chronicle(d, 'event', `${c.name}、灯座「${toza.name}」の奥義に開眼す。`)
+        }
+        return { ...c, skills: learned }
+      }),
+    }
+
     // 成長(全員再計算)
     d = { ...d, family: d.family.map((c) => (c.alive ? recalcStats(c, d.seasonIndex) : c)) }
 
-    // 郷の営み — 郷人たちが大燈籠に捧げる奉燈(討伐が進むほど郷が潤う)
-    d = { ...d, hoto: d.hoto + 8 + d.regionsCleared.length * 6 }
+    // 郷の営み — 郷人たちが大燈籠に捧げる奉燈(月次・討伐が進むほど郷が潤う)
+    d = { ...d, hoto: d.hoto + 3 + d.regionsCleared.length * 2 }
 
     // 夢渡り — 星骸の谷を制した夜、当主の夢に家祖が現れる
     if (d.regionsCleared.includes('hoshimukuro_tani') && !d.flags.dreamSeen) {
@@ -215,6 +278,8 @@ export const useGame = create<GameStore>((set, get) => {
       const founder0 = makeFounder(0, rng)
       const founder = {
         ...founder0,
+        tomoshigata: 'homura' as Tomoshigata,
+        skills: [...founder0.skills, 'tz_hf1'],
         equipment: { weapon: makeItem('w_kodachi'), armor: makeItem('a_nunoko') },
       }
       let d: GameData = {
@@ -232,7 +297,7 @@ export const useGame = create<GameStore>((set, get) => {
         narrativeMode,
         seed: rng.state(),
       }
-      d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季。`)
+      d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季(十五月)。`)
       set({ data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [] })
       saveGame(d)
     },
@@ -296,7 +361,11 @@ export const useGame = create<GameStore>((set, get) => {
             ? { id: 'birth', charId: next.charId }
             : next.kind === 'death'
               ? { id: 'death', charId: next.charId }
-              : { id: 'dream' },
+              : next.kind === 'ceremony'
+                ? { id: 'ceremony', charId: next.charId }
+                : next.kind === 'life'
+                  ? { id: 'life', title: next.title, lines: next.lines }
+                  : { id: 'dream' },
       })
     },
 
@@ -320,7 +389,7 @@ export const useGame = create<GameStore>((set, get) => {
     doFestival: () => {
       mutate((d) => {
         const cost = 30
-        if (d.hoto < cost) return d
+        if (d.hoto < cost || !isFestivalMonth(d.seasonIndex)) return d
         let nd: GameData = {
           ...d,
           hoto: d.hoto - cost,
@@ -339,6 +408,30 @@ export const useGame = create<GameStore>((set, get) => {
         family: d.family.map((c) => (c.alive ? { ...c, hp: c.maxHp, mp: c.maxMp, fatigue: Math.max(0, c.fatigue - 60) } : c)),
       }))
       advanceSeason()
+    },
+
+    assignTomoshigata: (charId, gata) => {
+      mutate((d) => {
+        const c = d.family.find((x) => x.id === charId)
+        if (!c || !c.alive || c.tomoshigata) return d
+        const toza = tozaOf(gata, c.element)
+        let nd: GameData = {
+          ...d,
+          family: d.family.map((x) =>
+            x.id === charId
+              ? {
+                  ...x,
+                  tomoshigata: gata,
+                  skills: x.skills.includes(toza.skills[0].id) ? x.skills : [...x.skills, toza.skills[0].id],
+                  deeds: [...x.deeds, `成人の儀にて灯座「${toza.name}」を授かる`],
+                }
+              : x,
+          ),
+        }
+        nd = chronicle(nd, 'event', `${c.name}、成人の儀。灯座「${toza.name}」を授かる。`)
+        return nd
+      })
+      get().processNextScene()
     },
 
     resolveEvent: (choiceIdx) => {
@@ -767,7 +860,20 @@ export const useGame = create<GameStore>((set, get) => {
         fame: d.fame + gainedFame,
       }
       nd = chronicle(nd, 'triumph', `${regionById(run.regionId).name}より帰還。奉燈${run.loot.hoto}、血珠${run.loot.ketsu}、武功${gainedFame}を得た。`)
-      set({ data: nd, dungeonRun: null })
+
+      // 初陣 — 初めての夜藪から帰った子の夜
+      const head = nd.family.find((c) => c.alive && c.isHead) ?? null
+      const debutScenes: PendingScene[] = []
+      for (const c of nd.family) {
+        if (run.partyIds.includes(c.id) && c.alive && c.expeditions === 1 && !c.deeds.includes('初陣を飾った')) {
+          nd = {
+            ...nd,
+            family: nd.family.map((x) => (x.id === c.id ? { ...x, deeds: [...x.deeds, '初陣を飾った'] } : x)),
+          }
+          debutScenes.push({ kind: 'life', ...hatsujinScene(c, head, get().rng) })
+        }
+      }
+      set({ data: nd, dungeonRun: null, pendingScenes: [...get().pendingScenes, ...debutScenes] })
       advanceSeason()
     },
 

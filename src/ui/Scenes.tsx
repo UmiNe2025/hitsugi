@@ -5,6 +5,8 @@ import { STAT_LABELS } from '../core/types'
 import type { StatKey } from '../core/types'
 import { godById } from '../core/data/gods'
 import { personalityById } from '../core/data/personalities'
+import { TOMOSHIGATA, tozaOf } from '../core/data/toza'
+import type { Tomoshigata } from '../core/types'
 import { clearSave } from '../core/save'
 import { downloadChronicleCard } from './shareCard'
 
@@ -43,7 +45,7 @@ export function BirthScene({ charId }: { charId: string }) {
           ))}
         </div>
         <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
-          与えられた命は八季。二季で成人し、隊に加われる。
+          与えられた命は八季(廿四月)。六月で成人し、隊に加われる。
         </p>
       </div>
       <button className="btn btn-main" onClick={processNextScene}>
@@ -83,6 +85,115 @@ export function DeathScene({ charId }: { charId: string }) {
       <button className="btn btn-main" onClick={processNextScene}>
         灯を、継ぐ
       </button>
+    </div>
+  )
+}
+
+// ライフイベント — 家族の人生の一場面(初陣・絆・灯細りの夜)
+export function LifeScene({ title, lines }: { title: string; lines: { speaker: string; text: string }[] }) {
+  const processNextScene = useGame((s) => s.processNextScene)
+  const [beat, setBeat] = useState(0)
+  const done = beat >= lines.length - 1
+  return (
+    <div className="scene-screen screen" onClick={() => !done && setBeat(beat + 1)}>
+      <h1 className="scene-title">{title}</h1>
+      <div className="scene-body" style={{ textAlign: 'left' }}>
+        {lines.slice(0, beat + 1).map((l, i) => (
+          <p key={i} className={i === beat ? 'intro-current' : 'intro-past'}>
+            {l.speaker ? (
+              <>
+                <b style={{ color: 'var(--amber)' }}>{l.speaker}</b>
+                <span style={{ color: 'var(--text-dim)' }}> — </span>
+                {l.text}
+              </>
+            ) : (
+              <span style={{ color: 'var(--text-dim)' }}>{l.text}</span>
+            )}
+          </p>
+        ))}
+      </div>
+      {done ? (
+        <button className="btn btn-main" onClick={processNextScene}>
+          この夜を憶えておく
+        </button>
+      ) : (
+        <div className="intro-hint">クリックで進む</div>
+      )}
+    </div>
+  )
+}
+
+// 成人の儀 — 生後六月、灯型を授ける。血潮から推奨を示す
+export function CeremonyScene({ charId }: { charId: string }) {
+  const data = useGame((s) => s.data)!
+  const assignTomoshigata = useGame((s) => s.assignTomoshigata)
+  const [chosen, setChosen] = useState<Tomoshigata | null>(null)
+  const char = data.family.find((c) => c.id === charId)
+  if (!char) return null
+  const p = personalityById(char.personalityId)
+
+  // 血潮による推奨灯型
+  const rec: Tomoshigata =
+    char.potential.mnd >= Math.max(char.potential.str, char.potential.vit, char.potential.agi)
+      ? 'sumi'
+      : char.potential.vit >= Math.max(char.potential.str, char.potential.agi)
+        ? 'iwao'
+        : char.potential.agi >= char.potential.str
+          ? 'nagi'
+          : 'homura'
+
+  if (chosen) {
+    const gataDef = TOMOSHIGATA.find((t) => t.id === chosen)!
+    const toza = tozaOf(chosen, char.element)
+    return (
+      <div className="scene-screen screen">
+        <div className="birth-flame">🔥</div>
+        <h1 className="scene-title">成人の儀</h1>
+        <div className="scene-body">
+          <p style={{ fontSize: 18, color: 'var(--amber)' }}>{gataDef.ritual}</p>
+          <p style={{ margin: '18px 0' }}>
+            {char.name}は灯を受け取り、静かに頷いた。
+          </p>
+          <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.2em' }}>
+            灯座「{toza.name}」— {toza.title}
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 10 }}>
+            初伝「{toza.skills[0].name}」を習得。灯は月齢とともに深まり、やがて奥義に至る。
+          </p>
+        </div>
+        <button className="btn btn-main" onClick={() => assignTomoshigata(char.id, chosen)}>
+          家譜に記す
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="scene-screen screen">
+      <h1 className="scene-title">成人の儀</h1>
+      <div className="scene-body">
+        <p>
+          {char.name}(第{char.gen}代・{p.label})、生後六月。大燈籠の前に立ち、灯型を授かる時が来た。
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
+          灯型×星脈({char.element === 'fire' ? '火' : char.element === 'water' ? '水' : char.element === 'wind' ? '風' : char.element === 'earth' ? '土' : char.element === 'moon' ? '月' : '星'}
+          の脈)で、この子だけの灯座が決まる。
+        </p>
+      </div>
+      <div className="god-grid" style={{ maxWidth: 720, marginTop: 16 }}>
+        {TOMOSHIGATA.map((t) => {
+          const toza = tozaOf(t.id, char.element)
+          return (
+            <div key={t.id} className="god-card" onClick={() => setChosen(t.id)}>
+              <div className="god-name">
+                {t.label}({t.kana}){t.id === rec ? ' ★血潮の勧め' : ''}
+              </div>
+              <div className="god-person">→ 灯座「{toza.name}」{toza.title}</div>
+              <div className="god-desc">{t.desc}</div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

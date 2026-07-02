@@ -71,7 +71,7 @@ export function DepartScreen() {
           else depart(regionId, party)
         }}
       >
-        出立する(今季を使う)
+        出立する(今月を使う)
       </button>
       <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
         郷へ戻る

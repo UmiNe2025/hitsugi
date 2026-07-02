@@ -9,7 +9,7 @@ import { DepartScreen, ExpeditionScreen } from './ui/Expedition'
 import { DungeonScreen } from './ui/Dungeon'
 import { BattleScreen } from './ui/Battle'
 import { ChronicleScreen } from './ui/Chronicle'
-import { BirthScene, DeathScene, DreamScene, EndingScene } from './ui/Scenes'
+import { BirthScene, CeremonyScene, DeathScene, DreamScene, EndingScene, LifeScene } from './ui/Scenes'
 
 function MuteButton() {
   const [muted, setMuted] = useState(audio.muted)
@@ -62,6 +62,8 @@ function App() {
         case 'birth':
         case 'death':
         case 'dream':
+        case 'ceremony':
+        case 'life':
         case 'ending':
           return 'scene'
         default:
@@ -93,6 +95,10 @@ function App() {
         return <ChronicleScreen />
       case 'birth':
         return <BirthScene charId={screen.charId} />
+      case 'ceremony':
+        return <CeremonyScene charId={screen.charId} />
+      case 'life':
+        return <LifeScene title={screen.title} lines={screen.lines} />
       case 'death':
         return <DeathScene charId={screen.charId} />
       case 'dream':

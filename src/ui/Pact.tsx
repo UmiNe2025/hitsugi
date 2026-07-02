@@ -102,11 +102,15 @@ export function PactScreen() {
               </div>
             )
           })}
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 8 }}>
+            子の星脈(灯座の血の軸): {ELEMENT_LABELS[god.element]}の脈(七割)/{ELEMENT_LABELS[parent.element]}の脈(三割) —
+            成人の儀で授ける灯型と掛け合わさり、この子の灯座が決まる。
+          </p>
           <div className="pact-quote">
             「{god.pactLines[Math.min(Math.floor(data.godAffinity[god.id] ?? 0), god.pactLines.length - 1)]}」
           </div>
           <button className="btn btn-main" onClick={() => doPact(parent.id, god.id)}>
-            契りを結ぶ(奉燈{god.cost}・今季を使う)
+            契りを結ぶ(奉燈{god.cost}・今月を使う)
           </button>
         </Panel>
       )}

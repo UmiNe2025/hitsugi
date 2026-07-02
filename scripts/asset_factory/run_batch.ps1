@@ -1,0 +1,86 @@
+# 素材工場 — manifest.json 駆動の codex 画像量産ランナー
+# 使い方:   pwsh scripts/asset_factory/run_batch.ps1 [-MaxSessions 8]
+# 仕組み:   15枚/セッションで codex exec(stdinを閉じる)→ DONE順とセッション
+#           フォルダの生成順を照合してコピー → 圧縮 → factory_state.json に記録。
+#           何度でも再実行可能(完了分はスキップ)。夜間はタスクスケジューラ等でループ起動。
+param(
+  [int]$MaxSessions = 8,
+  [int]$PerSession = 15
+)
+
+$root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$manifestPath = Join-Path $PSScriptRoot 'manifest.json'
+$statePath = Join-Path $root 'assets_src\factory_state.json'
+$outDir = Join-Path $root 'public\img'
+$origDir = Join-Path $root 'assets_src\orig'
+New-Item -ItemType Directory -Force $origDir | Out-Null
+
+$STYLE = 'Unified style for ALL images: japanese kirie(papercut) + watercolor, ink outlines, dark indigo night background (#0b0f1e), amber lantern light accents, NO text, NO watermark.'
+
+$manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+$state = if (Test-Path $statePath) { Get-Content $statePath -Raw | ConvertFrom-Json } else { [pscustomobject]@{ done = @() } }
+$doneSet = [System.Collections.Generic.HashSet[string]]::new([string[]]$state.done)
+
+Add-Type -AssemblyName System.Drawing
+function Compress-One([string]$png, [string]$name) {
+  $maxW = if ($name -like 'bg_*' -or $name -like 'cg_*' -or $name -like 'title_*') { 1600 }
+          elseif ($name -like 'boss_*' -or $name -like 'tile_*') { 1024 }
+          elseif ($name -like 'icon_*') { 256 }
+          else { 768 }
+  $img = [System.Drawing.Image]::FromFile($png)
+  try {
+    $w = [Math]::Min($maxW, $img.Width); $h = [int]($img.Height * $w / $img.Width)
+    $bmp = [System.Drawing.Bitmap]::new($w, $h)
+    $gr = [System.Drawing.Graphics]::FromImage($bmp)
+    $gr.InterpolationMode = 'HighQualityBicubic'
+    $gr.DrawImage($img, [System.Drawing.Rectangle]::new(0, 0, $w, $h))
+    $enc = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object MimeType -eq 'image/jpeg'
+    $p = [System.Drawing.Imaging.EncoderParameters]::new(1)
+    $p.Param[0] = [System.Drawing.Imaging.EncoderParameter]::new([System.Drawing.Imaging.Encoder]::Quality, 82L)
+    $bmp.Save(($png -replace '\.png$', '.jpg'), $enc, $p)
+    $gr.Dispose(); $bmp.Dispose()
+  } finally { $img.Dispose() }
+  Move-Item $png (Join-Path $origDir $name) -Force
+}
+
+for ($s = 0; $s -lt $MaxSessions; $s++) {
+  $todo = @($manifest | Where-Object { -not $doneSet.Contains($_.id) } | Select-Object -First $PerSession)
+  if ($todo.Count -eq 0) { Write-Output 'FACTORY: all done'; break }
+
+  $lines = $todo | ForEach-Object { "$($_.file) ($($_.w)x$($_.h)): $($_.prompt)" }
+  $prompt = @(
+    "Generate the following $($todo.Count) images ONE BY ONE with your image generation tool.",
+    "Save each to public/img/ with the EXACT filename given (create the dir if needed).",
+    $STYLE,
+    'After each image print exactly: DONE: <filename>',
+    "At the end print exactly: ALL COMPLETE",
+    ''
+  ) + $lines -join "`n"
+
+  $log = Join-Path $env:TEMP "factory_s$s.log"
+  Write-Output "FACTORY: session $s starting ($($todo.Count) images)"
+  # stdinを閉じるのが肝(閉じないとcodexは永久待機する)
+  cmd /c "codex exec --skip-git-repo-check --full-auto -C `"$root`" `"$($prompt -replace '"','\"')`" < NUL > `"$log`" 2>&1"
+
+  # DONE行と生成フォルダの照合コピー(codexが直接保存していない場合の保険)
+  $doneNames = Select-String -Path $log -Pattern 'DONE: ([a-z0-9_]+\.png)' -AllMatches |
+    ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value }
+  $genRoot = Join-Path $env:USERPROFILE '.codex\generated_images'
+  $sessDir = Get-ChildItem $genRoot -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  $genFiles = @(Get-ChildItem $sessDir.FullName -Filter *.png | Sort-Object LastWriteTime)
+  for ($i = 0; $i -lt $doneNames.Count; $i++) {
+    $target = Join-Path $outDir $doneNames[$i]
+    if (-not (Test-Path $target) -and $i -lt $genFiles.Count) {
+      Copy-Item $genFiles[$i].FullName $target
+    }
+    if (Test-Path $target) {
+      Compress-One $target $doneNames[$i]
+      $id = ($manifest | Where-Object { $_.file -eq $doneNames[$i] } | Select-Object -First 1).id
+      if ($id) { [void]$doneSet.Add($id) }
+      Write-Output "FACTORY: ok $($doneNames[$i])"
+    }
+  }
+  # 進捗保存
+  [pscustomobject]@{ done = @($doneSet) } | ConvertTo-Json | Set-Content $statePath
+}
+Write-Output "FACTORY: state -> $statePath ($($doneSet.Count) done)"

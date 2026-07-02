@@ -183,7 +183,8 @@ button {
 .intro-skip { position: absolute; top: 16px; right: 16px; }
 
 /* ---- 命の灯 ---- */
-.life-flames { display: inline-flex; gap: 2px; font-size: 12px; letter-spacing: 0; }
+.life-flames { display: inline-flex; gap: 2px; font-size: 12px; letter-spacing: 0; align-items: baseline; }
+.life-months { margin-left: 6px; font-size: 11px; color: var(--text-dim); }
 .flame.out { color: #3a3f52; }
 .flame.lit { filter: drop-shadow(0 0 3px rgba(255, 157, 69, 0.7)); }
 .flame.last { animation: flicker 1.4s infinite; }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useGame } from '../core/store'
-import { seasonLabel, STAT_LABELS } from '../core/types'
+import { seasonLabel, isFestivalMonth, STAT_LABELS } from '../core/types'
 import type { StatKey } from '../core/types'
 import { isAdult, seasonsLeft } from '../core/inheritance'
 import { ITEM_BASES } from '../core/data/items'
@@ -41,7 +41,7 @@ export function HomeScreen() {
         </div>
       </Panel>
 
-      <Panel title="今季の行い(一つ選べば季節が移ろう)">
+      <Panel title="今月の行い(一つ選べば月が替わる)">
         <div className="home-actions">
           <button className="btn btn-main" disabled={adults.length === 0} onClick={() => setScreen({ id: 'depart' })}>
             出立 — 夜藪へ
@@ -49,14 +49,19 @@ export function HomeScreen() {
           <button className="btn" disabled={!canPact} onClick={() => setScreen({ id: 'pact' })}>
             星契り — 次代を授かる
           </button>
-          <button className="btn" disabled={data.hoto < 30} onClick={doFestival}>
-            祭 — 奉燈30(全快・星神との縁)
+          <button
+            className="btn"
+            disabled={data.hoto < 30 || !isFestivalMonth(data.seasonIndex)}
+            onClick={doFestival}
+            title={isFestivalMonth(data.seasonIndex) ? '' : '祭は季の変わり目(弥生・水無月・長月・師走)のみ'}
+          >
+            祭 — 奉燈30{isFestivalMonth(data.seasonIndex) ? '(季の祭月!)' : '(季の変わり目のみ)'}
           </button>
           <button className="btn" onClick={doRest}>
             静養 — 傷と心労を癒す
           </button>
         </div>
-        <p className="action-note">季節が移ろうたび、一族は歳を取る。八季で灯は尽きる — 時を無駄にするな。</p>
+        <p className="action-note">月が替わるたび、一族は歳を取る。八季(廿四月)で灯は尽きる — 時を無駄にするな。</p>
       </Panel>
 
       <div className="home-actions">
@@ -84,7 +89,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
         <h2 className="panel-title">綴の手引き — 千年ぶん、要点だけな</h2>
         <div style={{ fontSize: 14, lineHeight: 1.9 }}>
           <p><b style={{ color: 'var(--amber)' }}>命は八季。</b>生まれて八つの季節で、一族は必ず灯が尽きる。名前の下の炎が残り寿命だ。</p>
-          <p><b style={{ color: 'var(--amber)' }}>星契りを絶やすな。</b>子は翌季に生まれ、二季で成人する。親の血潮と星神の血潮を継ぐ — 高い位の星ほど濃い血をくれる。</p>
+          <p><b style={{ color: 'var(--amber)' }}>星契りを絶やすな。</b>子は翌月に生まれ、六月(半年)で成人する。親の血潮と星神の血潮を継ぐ — 高い位の星ほど濃い血をくれる。</p>
           <p><b style={{ color: 'var(--amber)' }}>夜藪では灯が命綱。</b>灯が尽きると魔性が狂暴化する。「帰り火」はいつでも焚ける — 欲と命を天秤にかけろ。</p>
           <p><b style={{ color: 'var(--amber)' }}>継足(つぎたし)。</b>戦いで家族が同じ敵を続けて狙うと、連撃の倍率が上がる。血の繋がりは技になる。</p>
           <p><b style={{ color: 'var(--amber)' }}>形見は強くなる。</b>死者の装備は「形見」として蔵に還り、代を継ぐごとに強まる。祖母の簪は、孫の代で名刀に劣らん。</p>
@@ -100,8 +105,8 @@ function tsuzuriHint(data: ReturnType<typeof useGame.getState>['data'] & object,
   const alive = data.family.filter((c) => c.alive)
   const head = alive.find((c) => c.isHead)
   if (alive.length === 0) return '……一族は今、腹の中の子ひとりに懸かっとる。祈って待て。'
-  if (head && seasonsLeft(head, data.seasonIndex) <= 1) {
-    return `${head.name}の灯は、もってあと一季。……契りを済ませたか? 家譜に次の名を書かせてくれよ。`
+  if (head && seasonsLeft(head, data.seasonIndex) <= 3) {
+    return `${head.name}の灯は、もってあとひと季。……契りを済ませたか? 家譜に次の名を書かせてくれよ。`
   }
   if (adultCount > 0 && data.pendingBirths.length === 0 && alive.length <= 2 && data.hoto >= 80) {
     return '血が細い。星契りを急げ。一族が絶えれば、郷の大燈籠も消える。'
@@ -110,7 +115,7 @@ function tsuzuriHint(data: ReturnType<typeof useGame.getState>['data'] & object,
     return '武功が上がったな。提灯坂への道が開けとるぞ。あそこの主は……まあ、行けば分かる。'
   }
   const lines = [
-    '書くことがないのは良い日だ、と千年書いてきて思う。……さ、今季はどう動く?',
+    '書くことがないのは良い日だ、と千年書いてきて思う。……さ、今月はどう動く?',
     '夜藪は深いほど実り多い。だが灯が尽きた闇で死ぬなよ。「行方知れず」と書くのは、儂とて辛い。',
     '奉燈は使ってこそ。蔵で錆びさせるな、契りに、装備に、祭に回せ。',
     '同じ的を家族で続けて狙え。「継足」の連撃は、血の繋がりの技よ。',

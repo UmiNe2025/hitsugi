@@ -1,5 +1,5 @@
 import type { Character, God, Stats, StatKey } from './types'
-import { LIFESPAN_SEASONS } from './types'
+import { LIFESPAN_MONTHS } from './types'
 import { Rng, uid } from './rng'
 import { MALE_NAMES, FEMALE_NAMES } from './data/names'
 import { PERSONALITIES } from './data/personalities'
@@ -7,24 +7,31 @@ import { skillById } from './data/skills'
 
 const STAT_KEYS: StatKey[] = ['str', 'vit', 'dex', 'agi', 'mnd', 'luk']
 
-// 成長曲線 — 生後n季の血潮発現率。5〜6季目が全盛、8季目(最後の季)は僅かに衰える
-export const AGE_CURVE = [0.3, 0.46, 0.62, 0.76, 0.9, 1.0, 1.0, 0.93]
+// 成長曲線 — 生後nヶ月の血潮発現率。16〜20ヶ月が全盛、晩年は僅かに衰える
+export const AGE_CURVE = [
+  0.30, 0.34, 0.38, 0.42, 0.47, 0.52, // 0-5月: 幼子
+  0.60, 0.65, 0.70, 0.74, 0.78, 0.82, // 6-11月: 成人・伸び盛り
+  0.86, 0.90, 0.93, 0.96, 1.00, 1.00, // 12-17月: 充実
+  1.00, 1.00, 0.98, 0.96, 0.93, 0.90, // 18-23月: 全盛から灯細り
+]
+
+export const ADULT_MONTHS = 6 // 成人(初陣が許される月齢)
 
 export function ageOf(c: Character, seasonIndex: number): number {
   return seasonIndex - c.bornSeason
 }
 
 export function isAdult(c: Character, seasonIndex: number): boolean {
-  return c.alive && ageOf(c, seasonIndex) >= 2
+  return c.alive && ageOf(c, seasonIndex) >= ADULT_MONTHS
 }
 
 export function seasonsLeft(c: Character, seasonIndex: number): number {
-  return LIFESPAN_SEASONS - ageOf(c, seasonIndex)
+  return LIFESPAN_MONTHS - ageOf(c, seasonIndex)
 }
 
 // 現在ステータスを血潮×年齢曲線から再計算(HP/MP割合は維持)
 export function recalcStats(c: Character, seasonIndex: number): Character {
-  const age = Math.min(Math.max(ageOf(c, seasonIndex), 0), LIFESPAN_SEASONS - 1)
+  const age = Math.min(Math.max(ageOf(c, seasonIndex), 0), LIFESPAN_MONTHS - 1)
   const mult = AGE_CURVE[age]
   const stats = Object.fromEntries(
     STAT_KEYS.map((k) => [k, Math.max(1, Math.round(c.potential[k] * mult))]),
@@ -128,7 +135,7 @@ export function makeFounder(bornSeason: number, rng: Rng): Character {
     name: '燈吾',
     gen: 1,
     sex: 'm',
-    bornSeason: bornSeason - 3, // 既に3季生きている(残り5季)
+    bornSeason: bornSeason - 9, // 既に9ヶ月生きている(残り15ヶ月)
     potential,
     stats: { ...potential },
     hp: 1, maxHp: 1, mp: 1, maxMp: 1,

@@ -1,21 +1,24 @@
 import type { ReactNode } from 'react'
 import type { Character } from '../core/types'
-import { STAT_LABELS, ELEMENT_LABELS, LIFESPAN_SEASONS } from '../core/types'
+import { STAT_LABELS, ELEMENT_LABELS, LIFESPAN_MONTHS } from '../core/types'
 import { ageOf } from '../core/inheritance'
 import { personalityById } from '../core/data/personalities'
 import { godById } from '../core/data/gods'
+import { tozaOf } from '../core/data/toza'
 
-// 命の灯 — 残り季節を炎の点で表す(本作の象徴UI)
+// 命の灯 — 炎ひとつが一季(三月)。八つの炎が「八季の命」を表す(本作の象徴UI)
 export function LifeFlames({ char, seasonIndex }: { char: Character; seasonIndex: number }) {
   const age = ageOf(char, seasonIndex)
-  const left = Math.max(0, LIFESPAN_SEASONS - age)
+  const left = Math.max(0, LIFESPAN_MONTHS - age) // 残り月数
+  const flames = Math.ceil(left / 3) // 灯っている炎(=残り季)
   return (
-    <span className="life-flames" title={`残り${left}季`}>
-      {Array.from({ length: LIFESPAN_SEASONS }, (_, i) => (
-        <span key={i} className={`flame ${i < left ? 'lit' : 'out'} ${i === left - 1 ? 'last' : ''}`}>
-          {i < left ? '🔥' : '・'}
+    <span className="life-flames" title={`残り${left}ヶ月`}>
+      {Array.from({ length: 8 }, (_, i) => (
+        <span key={i} className={`flame ${i < flames ? 'lit' : 'out'} ${i === flames - 1 ? 'last' : ''}`}>
+          {i < flames ? '🔥' : '・'}
         </span>
       ))}
+      <span className="life-months">{left}月</span>
     </span>
   )
 }
@@ -60,7 +63,7 @@ export function CharCard({
   const age = ageOf(char, seasonIndex)
   return (
     <div
-      className={`char-card ${selected ? 'selected' : ''} ${onClick ? 'clickable' : ''} ${age < 2 ? 'child' : ''}`}
+      className={`char-card ${selected ? 'selected' : ''} ${onClick ? 'clickable' : ''} ${age < 6 ? 'child' : ''}`}
       onClick={onClick}
     >
       <div className="char-head">
@@ -72,11 +75,12 @@ export function CharCard({
         <span className="char-gen">{char.gen}代</span>
       </div>
       <LifeFlames char={char} seasonIndex={seasonIndex} />
-      {age < 2 && <div className="child-note">幼子(あと{2 - age}季で成人)</div>}
+      {age < 6 && <div className="child-note">幼子(あと{6 - age}月で成人)</div>}
       {!compact && (
         <>
           <div className="char-meta">
             {p.label} / {god.name}の子
+            {char.tomoshigata && ` / 灯座「${tozaOf(char.tomoshigata, char.element).name}」`}
           </div>
           <Bar value={char.hp} max={char.maxHp} kind="hp" />
           <Bar value={char.mp} max={char.maxMp} kind="mp" />
