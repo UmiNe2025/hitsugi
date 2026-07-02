@@ -14,8 +14,18 @@ export const REGIONS: Region[] = [
     bg: 'bg_forest.png',
   },
   {
+    id: 'yaregasa_douhyou', name: '破れ傘の道標', tier: 1, depth: 6, unlockFame: 45, bossId: 'boss_karakasababa',
+    desc: '朽ちた傘が道しるべのように連なる山道。数えるたび本数が違うという。',
+    bg: 'bg_forest.png',
+  },
+  {
     id: 'chochin_zaka', name: '提灯坂', tier: 2, depth: 8, unlockFame: 60, bossId: 'boss_hyakume',
     desc: '無数の朽ちた提灯が並ぶ古い参道。誰が灯すのか、火だけは絶えない。',
+    bg: 'bg_zaka.png',
+  },
+  {
+    id: 'haikyo_goten', name: '廃墟の御殿', tier: 2, depth: 8, unlockFame: 180, bossId: 'boss_yureidono',
+    desc: '誰の持ち物だったかも忘れられた大きな御殿の廃墟。夜ごと奥座敷に灯りが点る。',
     bg: 'bg_zaka.png',
   },
   {

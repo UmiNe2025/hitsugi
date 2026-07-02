@@ -113,6 +113,8 @@ const BASE_ENEMIES: EnemyDef[] = [
 // ---- ボス(変異なし・固有) ----
 const BOSSES: EnemyDef[] = [
   { id: 'boss_kokenushi', name: '苔ノ主', element: 'earth', tier: 5, hp: 480, atk: 32, def: 20, agi: 10, skillIds: [], hoto: 130, ketsu: 6, sprite: 'boss_kokenushi.png', desc: '蟲時雨の径の主。全身を苔と羽虫の羽音が覆う古木の精。動きは鈍いが、絡みつく苔は容赦がない。' },
+  { id: 'boss_karakasababa', name: '傘婆', element: 'wind', tier: 5, hp: 540, atk: 36, def: 22, agi: 20, skillIds: ['e_kurayami'], hoto: 150, ketsu: 7, sprite: 'boss_karakasababa.png', desc: '数多の唐傘小僧を従える傘婆。開いた傘の骨は数え切れず、閉じれば骨だけの姿が覗く。' },
+  { id: 'boss_yureidono', name: '幽霊殿', element: 'moon', tier: 5, hp: 690, atk: 40, def: 25, agi: 18, skillIds: ['e_kurayami', 'e_yamiuta'], hoto: 220, ketsu: 11, sprite: 'boss_yureidono.png', desc: '打ち捨てられた御殿の主。誰も住んでいないはずの奥座敷に、今も灯りが点る。' },
   { id: 'boss_hiruhime', name: '沼主蛭姫', element: 'water', tier: 5, hp: 620, atk: 38, def: 24, agi: 14, skillIds: ['e_kurayami'], hoto: 200, ketsu: 10, sprite: 'boss_hiruhime.png', desc: '涸れ沼の畔に棲む蛭の女王。沼が涸れてなお、地中の水脈を吸い続けている。' },
   { id: 'boss_hakkotsu', name: '白骨大将', element: 'moon', tier: 5, hp: 780, atk: 46, def: 28, agi: 16, skillIds: ['e_kurayami', 'e_hisui'], hoto: 260, ketsu: 13, sprite: 'boss_hakkotsu.png', desc: '白骨林に眠る古戦場の総大将。骨の軍勢を率いた無念が、今も戦を終えられずにいる。' },
   { id: 'boss_hyakume', name: '百目行灯', element: 'fire', tier: 5, hp: 900, atk: 50, def: 26, agi: 14, skillIds: ['e_hisui', 'e_kurayami'], hoto: 300, ketsu: 15, sprite: 'boss_hyakume.png', desc: '提灯坂の主。百の目で百年、郷の灯を見つめてきた。目を閉じる時、坂は闇に沈む。' },
