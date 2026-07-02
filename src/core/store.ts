@@ -70,6 +70,13 @@ function newRng(): Rng {
   return new Rng((Date.now() ^ (Math.random() * 0xffffffff)) >>> 0)
 }
 
+// dev時のみ: 自動プレイテスト用にストアを公開
+declare global {
+  interface Window {
+    __game?: unknown
+  }
+}
+
 export const useGame = create<GameStore>((set, get) => {
   // ---- 内部ヘルパ ----
   const mutate = (fn: (d: GameData) => GameData): GameData => {
@@ -151,6 +158,9 @@ export const useGame = create<GameStore>((set, get) => {
     // 成長(全員再計算)
     d = { ...d, family: d.family.map((c) => (c.alive ? recalcStats(c, d.seasonIndex) : c)) }
 
+    // 郷の営み — 郷人たちが大燈籠に捧げる奉燈(討伐が進むほど郷が潤う)
+    d = { ...d, hoto: d.hoto + 8 + d.regionsCleared.length * 6 }
+
     // 血脈断絶チェック
     const extinct = !d.family.some((c) => c.alive) && d.pendingBirths.length === 0
     d = { ...d, seed: rng.state() }
@@ -176,13 +186,17 @@ export const useGame = create<GameStore>((set, get) => {
 
     newGame: (narrativeMode) => {
       const rng = newRng()
-      const founder = makeFounder(0, rng)
+      const founder0 = makeFounder(0, rng)
+      const founder = {
+        ...founder0,
+        equipment: { weapon: makeItem('w_kodachi'), armor: makeItem('a_nunoko') },
+      }
       let d: GameData = {
         seasonIndex: 0,
         family: [founder],
         hoto: 150,
         ketsu: 0,
-        inventory: [makeItem('w_kodachi'), makeItem('a_nunoko')],
+        inventory: [],
         godAffinity: {},
         fame: 0,
         regionsCleared: [],
@@ -193,14 +207,19 @@ export const useGame = create<GameStore>((set, get) => {
         seed: rng.state(),
       }
       d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季。`)
-      set({ data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null })
+      set({ data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [] })
       saveGame(d)
     },
 
     continueGame: () => {
       const d = loadGame()
       if (!d) return false
-      set({ data: d, rng: new Rng(d.seed ^ (Date.now() >>> 0)), screen: { id: 'home' }, pendingScenes: [] })
+      set({
+        data: { ...d, expedition: undefined },
+        rng: new Rng(d.seed ^ (Date.now() >>> 0)),
+        screen: { id: 'home' },
+        pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [],
+      })
       return true
     },
 
@@ -264,10 +283,14 @@ export const useGame = create<GameStore>((set, get) => {
       const { rng, pendingEvent } = get()
       const d = get().data!
       const exp = d.expedition
-      if (!pendingEvent || !exp) return
+      if (!pendingEvent || !exp || !exp.nodes[pendingEvent.nodeId]) {
+        set({ pendingEvent: null })
+        return
+      }
       const ev = eventById(pendingEvent.eventId)
       const choice = ev.choices[choiceIdx]
       if (!choice) return
+      if (choice.requireHoto !== undefined && d.hoto < choice.requireHoto) return
       const success = choice.successRate === undefined || rng.chance(choice.successRate)
       const effect = success ? choice.outcomes[0] : (choice.outcomes[1] ?? choice.outcomes[0])
       const region = regionById(exp.regionId)
@@ -458,7 +481,7 @@ export const useGame = create<GameStore>((set, get) => {
       const d = get().data!
       const exp = d.expedition
       if (!exp) return
-      const gainedFame = Math.round(exp.loot.hoto / 4) + exp.loot.ketsu * 3
+      const gainedFame = Math.round(exp.loot.hoto / 10) + exp.loot.ketsu * 2
       let nd: GameData = {
         ...d,
         hoto: d.hoto + exp.loot.hoto,
@@ -594,9 +617,12 @@ export const useGame = create<GameStore>((set, get) => {
                 : c,
             ),
           }
-          // 最終ボス撃破 → エンディング
+          // 最終ボス撃破 → エンディング(探索状態は畳む)
           if (region.id === 'akashi_miyama') {
-            set({ data: { ...nd, flags: { ...nd.flags, cleared: true } }, battle: null, battleNodeId: null, screen: { id: 'ending' } })
+            set({
+              data: { ...nd, expedition: undefined, flags: { ...nd.flags, cleared: true } },
+              battle: null, battleNodeId: null, pendingScenes: [], screen: { id: 'ending' },
+            })
             saveGame(get().data!)
             return
           }
@@ -614,13 +640,23 @@ export const useGame = create<GameStore>((set, get) => {
         return
       }
 
-      // 全滅 — 隊は夜藪に消える(行方知れず)。持ち帰りは半分だけ届く。
+      // 全滅 — 隊は夜藪に消える(行方知れず)。ただし最も星運の強い一人だけ、
+      // 綴が家譜の頁を燃やした灯に導かれて生還する。持ち帰りは半分だけ届く。
       let nd: GameData = { ...d, family }
+      const partyAlive = nd.family.filter((c) => exp.partyIds.includes(c.id) && c.alive)
+      const survivor = [...partyAlive].sort((a, b) => b.potential.luk - a.potential.luk)[0]
       const lostNames: string[] = []
       nd = {
         ...nd,
         family: nd.family.map((c) => {
           if (!exp.partyIds.includes(c.id) || !c.alive) return c
+          if (survivor && c.id === survivor.id) {
+            return {
+              ...c, hp: 1, mp: 0,
+              fatigue: Math.min(100, c.fatigue + 40),
+              deeds: [...c.deeds, '全滅の夜藪から独り生還した'],
+            }
+          }
           lostNames.push(c.name)
           const epitaph = generateEpitaph(c, 'lost', rng)
           return {
@@ -635,11 +671,14 @@ export const useGame = create<GameStore>((set, get) => {
         ketsu: nd.ketsu + Math.round(exp.loot.ketsu / 2),
         expedition: undefined,
       }
+      const wipeText = lostNames.length > 0
+        ? `${regionById(exp.regionId).name}にて隊は壊滅。${lostNames.join('、')}、行方知れず。${survivor ? `${survivor.name}だけが、綴の灯に導かれて生還した。` : ''}`
+        : `${regionById(exp.regionId).name}より${survivor?.name ?? '当主'}、満身創痍で生還。`
       nd = {
         ...nd,
         chronicle: [...nd.chronicle, {
           season: nd.seasonIndex, kind: 'death' as const,
-          text: `${regionById(exp.regionId).name}にて隊は全滅。${lostNames.join('、')}、行方知れず。`,
+          text: wipeText,
         }],
       }
       set({ data: nd, battle: null, battleNodeId: null })
@@ -647,3 +686,7 @@ export const useGame = create<GameStore>((set, get) => {
     },
   }
 })
+
+if (import.meta.env.DEV) {
+  window.__game = useGame
+}

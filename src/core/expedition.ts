@@ -65,8 +65,15 @@ function pickNodeType(depth: number, maxDepth: number, rng: Rng): NodeType {
   return 'camp'
 }
 
+// ボスの取り巻き — 単体集中で溶けないための盤面圧
+const BOSS_MINIONS: Record<string, string[]> = {
+  boss_hyakume: ['hone_dourou'],
+  boss_hoshimukuro: ['hoshikui_ko'],
+  boss_gentou: ['tokoyo_musha', 'hitori'],
+}
+
 export function pickEnemies(region: Region, type: NodeType, depth: number, rng: Rng): string[] {
-  if (type === 'boss' && region.bossId) return [region.bossId]
+  if (type === 'boss' && region.bossId) return [region.bossId, ...(BOSS_MINIONS[region.bossId] ?? [])]
   const tierPool = ENEMIES.filter((e) => e.tier === region.tier)
   const upperPool = ENEMIES.filter((e) => e.tier === region.tier && e.hoto >= 50)
   if (type === 'elite') {

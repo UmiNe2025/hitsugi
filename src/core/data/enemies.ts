@@ -29,10 +29,10 @@ export const ENEMIES: EnemyDef[] = [
   { id: 'hoshikuzu_orochi', name: '星屑大蛇', element: 'star', tier: 4, hp: 320, atk: 58, def: 32, agi: 20, skillIds: ['e_hoshikui'], hoto: 120, ketsu: 8, sprite: 'en_orochi.png', desc: '喰われた星々の屑が寄り集まった大蛇。鱗の一枚一枚が消えた星座。' },
 
   // ---- ボス ----
-  { id: 'boss_hyakume', name: '百目行灯', element: 'fire', tier: 5, hp: 480, atk: 40, def: 22, agi: 14, skillIds: ['e_hisui', 'e_kurayami'], hoto: 300, ketsu: 15, sprite: 'boss_hyakume.png', desc: '提灯坂の主。百の目で百年、郷の灯を見つめてきた。目を閉じる時、坂は闇に沈む。' },
-  { id: 'boss_hoshimukuro', name: '骸星の大熊', element: 'star', tier: 5, hp: 750, atk: 55, def: 30, agi: 18, skillIds: ['e_hoshikui', 'e_kurayami'], hoto: 500, ketsu: 25, sprite: 'boss_hoshimukuro.png', desc: '星骸の谷の主。大熊星辰の兄星が玄冬に喰われた成れの果て。弟の名を呼びながら暴れる。' },
-  { id: 'boss_gentou', name: '玄冬', element: 'moon', tier: 5, hp: 1200, atk: 68, def: 36, agi: 26, skillIds: ['e_hoshikui', 'e_hisui', 'e_yamiuta'], hoto: 0, ketsu: 0, sprite: 'boss_gentou.png', desc: '常夜の源、星喰いの神。その面の下は — 。' },
-  { id: 'boss_shiori', name: '汐里', element: 'star', tier: 5, hp: 800, atk: 60, def: 28, agi: 30, skillIds: ['e_yamiuta', 'e_hoshikui'], hoto: 0, ketsu: 0, sprite: 'boss_shiori.png', desc: '千年前、郷を救った楽士。千年、たった独りで星喰いを封じ続けた家祖。もう、疲れている。' },
+  { id: 'boss_hyakume', name: '百目行灯', element: 'fire', tier: 5, hp: 900, atk: 50, def: 26, agi: 14, skillIds: ['e_hisui', 'e_kurayami'], hoto: 300, ketsu: 15, sprite: 'boss_hyakume.png', desc: '提灯坂の主。百の目で百年、郷の灯を見つめてきた。目を閉じる時、坂は闇に沈む。' },
+  { id: 'boss_hoshimukuro', name: '骸星の大熊', element: 'star', tier: 5, hp: 1600, atk: 70, def: 34, agi: 18, skillIds: ['e_hoshikui', 'e_kurayami'], hoto: 500, ketsu: 25, sprite: 'boss_hoshimukuro.png', desc: '星骸の谷の主。大熊星辰の兄星が玄冬に喰われた成れの果て。弟の名を呼びながら暴れる。' },
+  { id: 'boss_gentou', name: '玄冬', element: 'moon', tier: 5, hp: 2400, atk: 85, def: 40, agi: 26, skillIds: ['e_hoshikui', 'e_hisui', 'e_yamiuta'], hoto: 0, ketsu: 0, sprite: 'boss_gentou.png', desc: '常夜の源、星喰いの神。その面の下は — 。' },
+  { id: 'boss_shiori', name: '汐里', element: 'star', tier: 5, hp: 1500, atk: 78, def: 32, agi: 30, skillIds: ['e_yamiuta', 'e_hoshikui'], hoto: 0, ketsu: 0, sprite: 'boss_shiori.png', desc: '千年前、郷を救った楽士。千年、たった独りで星喰いを封じ続けた家祖。もう、疲れている。' },
 ]
 
 export function enemyById(id: string): EnemyDef {

@@ -45,7 +45,9 @@ export function PactScreen() {
       <Panel title={`星神を選ぶ — 奉燈 ${data.hoto}`}>
         <div className="god-grid">
           {GODS.map((g) => {
-            const affordable = data.hoto >= g.cost
+            // 北辰老は最奥への道(武功520)が開くまで姿を見せない
+            const sealed = g.rank === 4 && data.fame < 520
+            const affordable = data.hoto >= g.cost && !sealed
             const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
             return (
               <div
@@ -54,11 +56,11 @@ export function PactScreen() {
                 onClick={() => affordable && setGodId(g.id)}
               >
                 <div className="god-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
-                <div className="god-name">{g.name}</div>
-                <div className="god-kana">{g.kana}</div>
-                <div className="god-cost">奉燈 {g.cost}{affinity > 0 ? ` ・縁 ${affinity}` : ''}</div>
-                <div className="god-person">{g.personality}</div>
-                {godId === g.id && <div className="god-desc">{g.desc}</div>}
+                <div className="god-name">{sealed ? '???' : g.name}</div>
+                <div className="god-kana">{sealed ? '北天に、まだ遠い星がある' : g.kana}</div>
+                <div className="god-cost">{sealed ? `武功520で道が開く` : `奉燈 ${g.cost}${affinity > 0 ? ` ・縁 ${affinity}` : ''}`}</div>
+                <div className="god-person">{sealed ? '' : g.personality}</div>
+                {godId === g.id && !sealed && <div className="god-desc">{g.desc}</div>}
               </div>
             )
           })}
