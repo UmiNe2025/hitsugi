@@ -81,8 +81,10 @@ for ($s = 0; $s -lt $MaxSessions; $s++) {
   # WebSocket切断後にcodexがハングする事例があるため、45分で子プロセスごと強制終了して次へ進む
   $errLog = "$log.err"
   # --profile eco: エージェント側の思考トークンを節約(low effort/low verbosity — 画像生成の質はツール側なので不変)
-  $proc = Start-Process -FilePath 'codex' `
-    -ArgumentList 'exec', '--profile', 'eco', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
+  # 注意: codexの実体はnpmの codex.ps1 シム — Start-Processは.ps1を直接起動できないためpwsh -File経由で呼ぶ
+  $codexShim = Join-Path $env:APPDATA 'npm\codex.ps1'
+  $proc = Start-Process -FilePath 'pwsh' `
+    -ArgumentList '-NoProfile', '-File', $codexShim, 'exec', '--profile', 'eco', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
     -RedirectStandardInput $promptFile -RedirectStandardOutput $log -RedirectStandardError $errLog `
     -NoNewWindow -PassThru
   if (-not $proc.WaitForExit(2700000)) {
