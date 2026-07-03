@@ -262,6 +262,21 @@
     "god_ushimitsu",
     "god_amanogawa",
     "god_genkou",
-    "god_shukuyou"
+    "god_shukuyou",
+    "god_reimei",
+    "god_owarinaki",
+    "bg_r_yoi_forest",
+    "bossbg_yoi_forest",
+    "bg_r_nureen_no_tsuji",
+    "bossbg_nureen_no_tsuji",
+    "bg_r_karasu_no_sato",
+    "bossbg_karasu_no_sato",
+    "bg_r_tourou_kuzure_michi",
+    "bossbg_tourou_kuzure_michi",
+    "bg_r_mushishigure_michi",
+    "bossbg_mushishigure_michi",
+    "bg_r_karita_no_bourei",
+    "bossbg_karita_no_bourei",
+    "bg_r_yaregasa_douhyou"
   ]
 }
