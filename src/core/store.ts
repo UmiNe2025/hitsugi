@@ -247,6 +247,15 @@ export const useGame = create<GameStore>((set, get) => {
           family: d.family.map((x) => (x.id === successor.id ? { ...x, isHead: true, deeds: [...x.deeds, '当主を継いだ'] } : x)),
         }
         d = chronicle(d, 'era', `${successor.name}、第${successor.gen}代当主を継ぐ。`)
+        // M17: 継承を一場面として見せる(cg2_succession — 未生成なら文字だけで成立)
+        scenes.push({
+          kind: 'life', bg: 'cg2_succession.png', title: '当主継承',
+          lines: [
+            { speaker: '綴', text: `「先代の灯が、汝の掌へ落ちた。${successor.name} — 第${successor.gen}代当主である」` },
+            { speaker: successor.name, text: '……重い。でも、温かい。' },
+            { speaker: '綴', text: '「その重さが家というものだ。継いだ火を、絶やすでないぞ」' },
+          ],
+        })
       }
     }
 

@@ -80,8 +80,9 @@ for ($s = 0; $s -lt $MaxSessions; $s++) {
   # プロンプトはstdin リダイレクトで渡す(EOFでstdinが閉じ、codexの永久待機を防ぐ)。
   # WebSocket切断後にcodexがハングする事例があるため、45分で子プロセスごと強制終了して次へ進む
   $errLog = "$log.err"
+  # --profile eco: エージェント側の思考トークンを節約(low effort/low verbosity — 画像生成の質はツール側なので不変)
   $proc = Start-Process -FilePath 'codex' `
-    -ArgumentList 'exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
+    -ArgumentList 'exec', '--profile', 'eco', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
     -RedirectStandardInput $promptFile -RedirectStandardOutput $log -RedirectStandardError $errLog `
     -NoNewWindow -PassThru
   if (-not $proc.WaitForExit(2700000)) {
