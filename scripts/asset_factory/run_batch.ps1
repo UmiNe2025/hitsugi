@@ -73,13 +73,15 @@ for ($s = 0; $s -lt $MaxSessions; $s++) {
     ''
   ) + $lines -join "`n"
 
-  $log = Join-Path $env:TEMP "factory_s$s.log"
-  $promptFile = Join-Path $env:TEMP "factory_prompt_$s.txt"
+  # ログ/プロンプトはインスタンス(PID)×セッションで一意化 — 併走インスタンスやhourlyタスクとのファイル競合を防ぐ
+  $log = Join-Path $env:TEMP "factory_${PID}_s$s.log"
+  $errLog = "$log.err"
+  $promptFile = Join-Path $env:TEMP "factory_${PID}_prompt_$s.txt"
+  # 【重要】前セッション残骸のALL COMPLETE/DONEを誤検出してcodexを早期killしないよう、開始前に必ずクリア
+  Remove-Item $log, $errLog -Force -ErrorAction SilentlyContinue
   Set-Content -Path $promptFile -Value $prompt -Encoding utf8
   Write-Output "FACTORY: session $s starting ($($todo.Count) images)"
   # プロンプトはstdin リダイレクトで渡す(EOFでstdinが閉じ、codexの永久待機を防ぐ)。
-  # WebSocket切断後にcodexがハングする事例があるため、45分で子プロセスごと強制終了して次へ進む
-  $errLog = "$log.err"
   # 【重要】--profile eco は使わない: low effortだとcodexが本物の画像生成ツールを呼ばず、
   #   簡易フォールバック(28KBの棒人間レベル)を出す。同プロンプトでもeco無しなら2.9MBの精細画像。
   #   トークン節約より画質が目的なのでデフォルトプロファイルで回す(2026-07-03検証)。
@@ -89,21 +91,36 @@ for ($s = 0; $s -lt $MaxSessions; $s++) {
     -ArgumentList '-NoProfile', '-File', $codexShim, 'exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
     -RedirectStandardInput $promptFile -RedirectStandardOutput $log -RedirectStandardError $errLog `
     -NoNewWindow -PassThru
-  # codexは生成完了後(ALL COMPLETE後)もWebSocketを掴んでハングしがち。
-  # errLogに ALL COMPLETE が出たら猶予後に強制終了し、45分の空待ちを避ける。
+  # 完了検出は「本物のDONE行数」で行う(codexは生成後もハングし自力終了しないため)。
+  # 【重要】'ALL COMPLETE'文字列での検出はプロンプトの指示文がerrLogにエコーされ誤検出→早期killを招く。
+  #   本物のDONE行 'DONE: en_xxx.png' は [a-z0-9_]+\.png に合致するが、プロンプトの 'DONE: <filename>'
+  #   プレースホルダは<>のため合致しない。この差でエコーを除外して真の進捗だけ数える。
   $deadline = (Get-Date).AddMinutes(45)
+  $lastDone = 0; $quiet = 0
+  function Get-DoneCount($p) {
+    if (-not (Test-Path $p)) { return 0 }
+    $c = (Select-String -Path $p -Pattern 'DONE: [a-z0-9_]+\.png' -AllMatches -ErrorAction SilentlyContinue |
+      ForEach-Object { $_.Matches.Count } | Measure-Object -Sum).Sum
+    if ($null -eq $c) { 0 } else { $c }
+  }
   while (-not $proc.HasExited) {
-    Start-Sleep -Seconds 10
-    if ((Test-Path $errLog) -and (Select-String -Path $errLog -Pattern 'ALL COMPLETE' -Quiet -ErrorAction SilentlyContinue)) {
-      Write-Output "FACTORY: session $s ALL COMPLETE — grace 8s then close"
-      Start-Sleep -Seconds 8
+    Start-Sleep -Seconds 15
+    $dc = [Math]::Max((Get-DoneCount $errLog), (Get-DoneCount $log))
+    if ($dc -ge $todo.Count) {
+      Write-Output "FACTORY: session $s all $dc/$($todo.Count) done — grace 10s then close"
+      Start-Sleep -Seconds 10
       if (-not $proc.HasExited) { taskkill /T /F /PID $proc.Id 2>$null | Out-Null }
       break
     }
-    if ((Get-Date) -gt $deadline) {
-      Write-Output "FACTORY: session $s TIMEOUT (45min) — killing codex tree"
+    if ($dc -eq $lastDone) { $quiet++ } else { $quiet = 0; $lastDone = $dc }
+    if ($quiet -ge 24) {  # 15s×24 = 6分 無進捗 → 生成停止/ハングと判断して打ち切り(部分成果は救う)
+      Write-Output "FACTORY: session $s STALLED at $dc/$($todo.Count) — killing"
       taskkill /T /F /PID $proc.Id 2>$null | Out-Null
-      Start-Sleep 3
+      break
+    }
+    if ((Get-Date) -gt $deadline) {
+      Write-Output "FACTORY: session $s TIMEOUT (45min) at $dc/$($todo.Count) — killing"
+      taskkill /T /F /PID $proc.Id 2>$null | Out-Null
       break
     }
   }
