@@ -624,3 +624,21 @@
 - **教訓**: **codexの画像生成にeco/low effortは厳禁**。トークン節約プロファイルはツール品質まで落とす
 - **進捗**: 115/2,096。以降セッション完了ごとにcommit&push、クォータ窓ごとにバースト進行
 - **commit**: fix(factory): --profile eco 除去(9120d3a) 他
+
+## 2026-07-03 (M17 障害4-8: 後処理パイプラインの連鎖バグを全修正)
+
+- eco修正後も生成が記録されず、掘り下げて更に4バグを発見・修正(全てrun_batch.ps1):
+  - **A: DONE行のストリーム誤り** — codexはDONE:/ALL COMPLETEをstderrに出すがランナーはstdout(空)をgrep。→両ログgrep
+  - **F(最重要): プロンプトエコー誤検出** — 完了判定を`ALL COMPLETE`文字列で行っていたが、プロンプトの指示文
+    「print exactly: ALL COMPLETE」がerrLogにエコーされ即座に誤検出→codexを数秒で早期kill(生成ゼロ)。
+    →**本物のDONE行数(`DONE: en_xxx.png`、プレースホルダ`<filename>`は正規表現で除外)がPerSession到達で完了判定**に変更
+  - **D: ログ残留** — errLogがセッション間で再利用され前回signalが残る。→開始前に必ずクリア
+  - **E: インスタンス競合** — 再起動で残る孤児run_batchが同名prompt fileを奪合いロック。→一時ファイルをPID×session一意化
+  - **G: state id不一致** — rescue/記録がファイル名stem(`en_nurikabeoni`)を使うがmanifest idは`en_nurikabe_oni`/`ishidourou_kobi`等
+    別体系。不一致で既生成分を再選択。→**必ずmanifest id(file照合)で記録**、既存state 7件を整合
+  - ハング対策: `ALL COMPLETE`後もcodexは終了しないため、DONE到達/6分無進捗/45分でtaskkill /T
+- **検証**: 2枚試走で state 129→131 自動前進、`ok`ログ・良品(蜘蛛叢雲/糠坊主)・滞留png 0・ハング無しを確認。
+  フル投入で6枚生成→全記録→クォータ上限で正常early-exit(137)、石灯籠小火をmanifest id救済(138)
+- **現状**: 138/2,096。クォータ枯渇(次回回復 7/4 0:19)。毎時タスク(修正版)がクォータ窓ごとに自動再開、
+  セッション完了通知で私がcommit&push。パイプラインは手動介入不要で自走可能に
+- **commit**: fix(factory): 完了検出をDONE行数方式へ(234b9f3) / 画像バッチ7種(a301de2) 他
