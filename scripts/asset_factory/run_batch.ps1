@@ -80,11 +80,13 @@ for ($s = 0; $s -lt $MaxSessions; $s++) {
   # プロンプトはstdin リダイレクトで渡す(EOFでstdinが閉じ、codexの永久待機を防ぐ)。
   # WebSocket切断後にcodexがハングする事例があるため、45分で子プロセスごと強制終了して次へ進む
   $errLog = "$log.err"
-  # --profile eco: エージェント側の思考トークンを節約(low effort/low verbosity — 画像生成の質はツール側なので不変)
+  # 【重要】--profile eco は使わない: low effortだとcodexが本物の画像生成ツールを呼ばず、
+  #   簡易フォールバック(28KBの棒人間レベル)を出す。同プロンプトでもeco無しなら2.9MBの精細画像。
+  #   トークン節約より画質が目的なのでデフォルトプロファイルで回す(2026-07-03検証)。
   # 注意: codexの実体はnpmの codex.ps1 シム — Start-Processは.ps1を直接起動できないためpwsh -File経由で呼ぶ
   $codexShim = Join-Path $env:APPDATA 'npm\codex.ps1'
   $proc = Start-Process -FilePath 'pwsh' `
-    -ArgumentList '-NoProfile', '-File', $codexShim, 'exec', '--profile', 'eco', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
+    -ArgumentList '-NoProfile', '-File', $codexShim, 'exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', "$root", '-' `
     -RedirectStandardInput $promptFile -RedirectStandardOutput $log -RedirectStandardError $errLog `
     -NoNewWindow -PassThru
   if (-not $proc.WaitForExit(2700000)) {
