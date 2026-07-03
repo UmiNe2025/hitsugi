@@ -7,6 +7,7 @@ import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
 import { GODS } from '../core/data/gods'
 import { FACILITIES, FACILITY_MAX_LV, facilityCost, facilityLevel } from '../core/data/facilities'
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
+import { GOSSIP } from '../core/data/gossip'
 import { CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, HOME_BG, itemIcon, villagerImg } from './img'
 import { FamilyTree } from './FamilyTree'
@@ -24,6 +25,7 @@ export function HomeScreen() {
   const [showVillage, setShowVillage] = useState(false)
   const [showTree, setShowTree] = useState(false)
   const [showFacilities, setShowFacilities] = useState(false)
+  const [showGossip, setShowGossip] = useState(false)
 
   const alive = data.family.filter((c) => c.alive)
   const adults = alive.filter((c) => isAdult(c, data.seasonIndex))
@@ -102,6 +104,7 @@ export function HomeScreen() {
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="📜" /> 家譜を繰る</button>
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="📚" /> 図鑑</button>
         <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="🌳" /> 家系図</button>
+        <button className="btn btn-ghost" onClick={() => setShowGossip(true)}>🕯️ 郷の声</button>
         <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="🏘️" /> 郷を歩く</button>
         <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="🏗️" /> 郷普請</button>
         <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
@@ -128,6 +131,7 @@ export function HomeScreen() {
       {showVillage && <VillageModal onClose={() => setShowVillage(false)} />}
       {showTree && <FamilyTree onClose={() => setShowTree(false)} />}
       {showFacilities && <FacilitiesModal onClose={() => setShowFacilities(false)} />}
+      {showGossip && <GossipModal onClose={() => setShowGossip(false)} />}
     </div>
   )
 }
@@ -408,6 +412,40 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
         )}
         <button className="btn btn-ghost" onClick={onClose}>
           閉じる
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// 郷の声(v3.1 M16-3) — 解禁済みの会話キューを読み返す。未解禁は「？？？」で伏せる
+function GossipModal({ onClose }: { onClose: () => void }) {
+  const data = useGame((s) => s.data)!
+  const unlocked = data.gossipIndex ?? 0
+
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="panel-title">🕯️ 郷の声 — 聞こえてきた話</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
+          死や代替わり、夜藪からの帰還のたび、郷の誰かの一言がひとつずつ届く。
+        </p>
+        <div className="chronicle-scroll">
+          {GOSSIP.map((g, i) => (
+            <div key={g.id} className="chron-entry">
+              {i < unlocked ? (
+                <>
+                  <b style={{ color: 'var(--amber)' }}>{g.speaker}</b>
+                  <span className="chron-era" style={{ fontWeight: 400, marginLeft: 6 }}>「{g.text}」</span>
+                </>
+              ) : (
+                <span style={{ color: 'var(--text-dim)' }}>？？？</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 10 }}>
+          家に戻る
         </button>
       </div>
     </div>

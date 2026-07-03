@@ -36,6 +36,7 @@ import type { Tomoshigata, JobClassId } from './types'
 import { tozaOf } from './data/toza'
 import { jobById, JOB_SKILL_UNLOCK_AGES } from './data/jobs'
 import { hatsujinScene, kizunaScene, hosoriScene, dailyScene } from './lifeEvents'
+import { nextGossip } from './data/gossip'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene =
@@ -147,6 +148,18 @@ export const useGame = create<GameStore>((set, get) => {
     chronicle: [...d.chronicle, { season: d.seasonIndex, kind, text, charId }],
   })
 
+  // v3.1 M16-3: 郷の物語(会話キュー) — 死/代替わり/帰還のたび、一本だけ解禁を試みる
+  const tryUnlockGossip = (d: GameData): GameData => {
+    const gen = Math.max(0, ...d.family.map((c) => c.gen))
+    const deaths = d.family.filter((c) => !c.alive).length
+    const cleared = d.regionsCleared.length
+    const entry = nextGossip(d.gossipIndex, { gen, deaths, cleared })
+    if (!entry) return d
+    let nd: GameData = { ...d, gossipIndex: (d.gossipIndex ?? 0) + 1 }
+    nd = chronicle(nd, 'era', `郷の声 — ${entry.speaker}「${entry.text}」`)
+    return nd
+  }
+
   // v3.1 M12/M16: 血縁(連携奥義)・家訓・灯の加護の補正を戦闘員へ付与
   const enrichAllies = (party: Combatant[], chars: Character[], motto?: MottoId, boons?: string[]): Combatant[] => {
     const byId = new Map(chars.map((c) => [c.id, c]))
@@ -247,6 +260,7 @@ export const useGame = create<GameStore>((set, get) => {
           ),
         }
         d = chronicle(d, 'death', `${c.name}、${deathCauseLabel('lifespan')}。享年八季。「${epitaph}」`, c.id)
+        d = tryUnlockGossip(d)
         scenes.push({ kind: 'death', charId: c.id })
       }
     }
@@ -262,6 +276,7 @@ export const useGame = create<GameStore>((set, get) => {
           family: d.family.map((x) => (x.id === successor.id ? { ...x, isHead: true, deeds: [...x.deeds, '当主を継いだ'] } : x)),
         }
         d = chronicle(d, 'era', `${successor.name}、第${successor.gen}代当主を継ぐ。`)
+        d = tryUnlockGossip(d)
         // M17: 継承を一場面として見せる(cg2_succession — 未生成なら文字だけで成立)
         scenes.push({
           kind: 'life', bg: 'cg2_succession.png', title: '当主継承',
@@ -1397,6 +1412,7 @@ export const useGame = create<GameStore>((set, get) => {
           debutScenes.push({ kind: 'life', ...hatsujinScene(c, head, get().rng) })
         }
       }
+      nd = tryUnlockGossip(nd)
       set({ data: nd, dungeonRun: null, pendingScenes: [...get().pendingScenes, ...debutScenes] })
       advanceSeason()
     },

@@ -9,6 +9,12 @@ import { Bar, MaybeImg } from './components'
 import { stageOf, uiIcon } from './img'
 import { ageOf } from '../core/inheritance'
 import { EventModal } from './Expedition'
+import { audio } from '../core/audio'
+
+// 地域背景 → 環境音レイヤーの対応(M10)
+const AMBIENCE_BY_BG: Record<string, 'forest' | 'zaka' | 'tani' | 'miyama'> = {
+  'bg_forest.png': 'forest', 'bg_zaka.png': 'zaka', 'bg_tani.png': 'tani', 'bg_miyama.png': 'miyama',
+}
 
 // 灯籠の炎リング — 灯ゲージの視覚化(俺屍の月齢リング様式)
 function LanternRing({ pct }: { pct: number }) {
@@ -83,8 +89,12 @@ function DungeonFloor() {
         onStep: (x, y) => {
           dungeonSetPos(x, y)
           dungeonStep()
+          audio.se('footstep')
         },
-        onEncounter: (golden) => dungeonEncounter(false, golden),
+        onEncounter: (golden) => {
+          audio.se('encounter')
+          dungeonEncounter(false, golden)
+        },
         onSpecialTile: (kind, x, y) => {
           if (kind === 'stairs') setConfirm({ kind: 'stairs' })
           else if (kind === 'entrance') setConfirm({ kind: 'return' })
@@ -123,6 +133,13 @@ function DungeonFloor() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run.floor])
+
+  // 地域の環境音(M10): 探索中だけ地域系統の音を敷き、離脱で止める
+  useEffect(() => {
+    audio.startAmbience(AMBIENCE_BY_BG[region.bg] ?? 'none')
+    return () => audio.stopAmbience()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region.bg])
 
   useEffect(() => {
     engineRef.current?.setLight(run.light)
