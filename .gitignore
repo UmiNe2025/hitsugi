@@ -25,3 +25,7 @@ dist-ssr
 
 # 生成画像の原本(重いのでgit外)
 assets_src/orig/
+
+# 素材工場の一時物(ロック/圧縮前の中間png — jpg化後に消えるためgit外)
+scripts/asset_factory/.factory.lock
+public/img/*.png
