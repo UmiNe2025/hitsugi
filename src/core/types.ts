@@ -307,6 +307,8 @@ export interface GameData {
   loreFrags?: Record<string, number> // 地域ごとの縁起の欠片(0〜3)
   regionsVisited?: string[] // 足を踏み入れた地域
   nemeses?: NemesisRecord[] // v3.1 M16-1: 一族を殺し、名を得た魔性
+  lastPlayedAt?: number // v3.1 M16-8: 留守番内職(実時間の刻印、保存時に更新)
+  gossipIndex?: number // v3.1 M16-3: 郷の物語(会話キュー)の進行度
 }
 
 // 宿敵(名持ち) — 一族の誰かを殺した魔性が名を得て成長・再来する

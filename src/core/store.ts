@@ -480,8 +480,25 @@ export const useGame = create<GameStore>((set, get) => {
     continueGame: () => {
       const d = loadGame()
       if (!d) return false
+      // v3.1 M16-8: 留守番内職 — 離れていた実時間ぶん、家族が内職をしていた(1時間4燈・上限24時間)
+      let nd: GameData = { ...d, expedition: undefined }
+      if (d.lastPlayedAt) {
+        const hours = Math.min(24, (Date.now() - d.lastPlayedAt) / 3_600_000)
+        if (hours >= 1) {
+          const earned = Math.floor(hours * 4)
+          const worker = d.family.filter((c) => c.alive)[0]
+          nd = { ...nd, hoto: nd.hoto + earned }
+          nd = {
+            ...nd,
+            chronicle: [...nd.chronicle, {
+              season: nd.seasonIndex, kind: 'event' as const,
+              text: `留守の間、${worker ? `${worker.name}たち` : '家の者'}が内職に励んでいた — 奉燈${earned}。文が添えてある。「おかえりなさい。夜は変わらずですが、家は息災です」`,
+            }],
+          }
+        }
+      }
       set({
-        data: { ...d, expedition: undefined },
+        data: nd,
         rng: new Rng(d.seed ^ (Date.now() >>> 0)),
         screen: { id: 'home' },
         pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [],

@@ -6,7 +6,8 @@ const KEY = 'hitsugi_save_v4' // 家業(jobClass)導入後 — GDD_v3 §2
 
 export function saveGame(data: GameData): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(data))
+    // v3.1 M16-8: 留守番内職のため、実時間の刻印を添えて保存
+    localStorage.setItem(KEY, JSON.stringify({ ...data, lastPlayedAt: Date.now() }))
   } catch {
     // 容量超過等 — ゲーム進行は止めない
   }
