@@ -42,6 +42,8 @@ export function BattleScreen() {
   const [displayed, setDisplayed] = useState<BattleLogEntry[]>([])
   const [pending, setPending] = useState<BattleLogEntry[]>([])
   const [menu, setMenu] = useState<Menu>({ kind: 'root' })
+  const [shakeKey, setShakeKey] = useState(0) // ヒット時のstage-shake発火用
+  const shakeTimerRef = useRef<number | null>(null)
   const [auto, setAutoRaw] = useState(initialAuto)
   // オート状態は遠征越しに継続 — 変更したら遠征ランへも書き戻す
   const setAuto = (next: boolean) => { setAutoRaw(next); setAutoBattleFlag(next) }
@@ -83,6 +85,10 @@ export function BattleScreen() {
       if (entry.actorKey) events.push([entry.actorKey, mk('lunge')])
       if (entry.targetKey)
         events.push([entry.targetKey, mk('hit', { amount: entry.amount, crit: entry.crit, weak: entry.weak, element: entry.element })])
+      // ヒットで戦場全体を一瞬揺らす(critはより強く)。連続hitでも次のkey変化でリスタート。
+      setShakeKey((k) => k + 1)
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current)
+      shakeTimerRef.current = window.setTimeout(() => setShakeKey(0), 260)
     } else if (entry.kind === 'heal') {
       if (entry.actorKey) events.push([entry.actorKey, mk('lunge')])
       if (entry.targetKey) events.push([entry.targetKey, mk('heal', { amount: entry.amount, element: entry.element })])
@@ -285,7 +291,7 @@ export function BattleScreen() {
 
       {slotPhase === 'spin' && <LootSlot />}
 
-      <div className="battle-stage">
+      <div className={`battle-stage${shakeKey ? ' stage-shake' : ''}${battle.phase === 'won' ? ' stage-won' : ''}`} data-shake={shakeKey}>
         {stageBgCss && <div className="battle-stage-bg" style={{ backgroundImage: stageBgCss }} />}
         <div className="stage-ground" />
 

@@ -752,3 +752,22 @@
   - #10 engine.tsの`alerted`ロジック変更でtsc緑・関数変更のみで回帰リスク小
   - #11 attachUiClickSfx関数存在、main.tsxで起動時attach、実際にゲーム内click遷移でSE発火(実装機構は動作)
 - **次(このミッション残スコープ外)**: 変異絵promptEn執筆174件、神+60/敵+33/地域+12データ追加、M11 全実行(shipcheck/push)。
+
+## 2026-07-05 (視野拡大・戦闘/マップ演出強化・スコープ外消化 — /mission)
+
+- **やったこと**: ユーザー要望「マップ移動と戦闘が画像動くだけ/視野広げたい/マップ質感UP/前スコープ外の消化」に対応、6項目実装+3項目消化。
+  - **#13 視野拡大**: engine.ts の`TILE` を **44→36**に縮小。world.scaleは触らずlighting系との整合を保ちつつ、同画面内可視タイル数を **18.2→22.2(+22%)** に拡張(preview_evalで実測)。
+  - **#14 戦闘の動き強化**: (a)ダメージhit時に`.battle-stage`へ`stage-shake`クラス自動付与→CSS `stageShakeShort` keyframes(4方向微揺れ260ms)、(b)勝利時`stage-won`クラスで味方全員に`victoryJump`(2段バウンス0.8s)+背景の`victoryFlash`(黄色放射)+ally-side::afterで**紙吹雪**(❁❂✦の落下0.9alpha 2.2s)。連続hit対応(setTimeout ref連続reset)。
+  - **#15 マップの動き強化**: engine.ts に**浮遊光粒(motes)**22個を新設。歩行可タイル(gridから直接列挙、grassCells非依存)に散布し、layerGlow(加算合成)で描画。時間で位置(ampX/Y sin波)と透明度(0.55±0.4呼吸)を毎66msで更新。蛍/精霊のような環境ambient。
+  - **#16 マップクオリティ**: tufts(草)密度を**60→100**(上限=grassCellsの利用可数まで)。宵の森は草cell少ゆえ12個、他地域では最大100個まで自動増量。
+  - **#17 スコープ外: oxlint / vite build**: `npx oxlint` **警告0**確認(出力なし)、`npx vite build` **2.82s成功**(bundle 1413kB/gz 429kB、chunk sizeのみnotice)。
+  - **#18 変異絵promptEn 57件執筆**(スコープ外消化): sonnet委譲で `EnemyDef.promptEn` を **敵tier1〜3代表30件＋ボス26件(既存濡れ女除)=57件**に一括執筆。`grep -c promptEn: = 57` 確認、tsc緑。**残117件は次期タスク**。
+- **変更ファイル**: src/dungeon/engine.ts / src/ui/Battle.tsx / src/index.css / src/core/data/enemies.ts
+- **検証(実プレイ証跡)**: `npx tsc -b`緑、`oxlint`警告0、`vite build`成功2.82s。preview_evalで —
+  - #13 visibleTilesX=22.2(以前18.2、+22%)、viewport800px÷TILE36=22.2一致
+  - #14 攻撃clickでstage_class="battle-stage stage-shake"確認、勝利時"stage-shake stage-won"両方付与
+  - #15 motes.length=**22**、layerGlow.children=32(motes22+glow構成)
+  - #16 tuftsCount=12(grassCells上限)、100個スケール対応済み
+  - #17 lint 0行/build EXIT:0
+  - #18 promptEn: 57件、tsc緑
+- **次(スコープ外)**: push・promptEn残117件・神+60/敵基礎+33/地域+12データ追加・M11自動プレイテスト再実行・GDD更新。

@@ -558,6 +558,41 @@ button {
 .stage-miyama { background: linear-gradient(180deg, #100a16 0%, #0d0a12 55%, #1c1226 100%); }
 
 .battle-stage { position: relative; flex: 1; min-height: 0; }
+/* ヒット時の戦場全体の一瞬揺れ(体感の重み) — data-shake が変わるたびに再start */
+.battle-stage.stage-shake { animation: stageShakeShort 0.24s ease-out; }
+@keyframes stageShakeShort {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-2px, 3px); }
+  80% { transform: translate(2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+/* 勝利時 — 味方全体がひと呼吸で高揚(subtle bounce) + 背景がフラッシュ */
+.battle-stage.stage-won .ally-side .combatant-body { animation: victoryJump 0.8s ease-out; }
+@keyframes victoryJump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-14px) scale(1.06); }
+  55% { transform: translateY(-3px) scale(1); }
+  70% { transform: translateY(-8px) scale(1.03); }
+}
+.battle-stage.stage-won::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 50% 60%, rgba(255, 231, 158, 0.35), transparent 60%);
+  animation: victoryFlash 1s ease-out forwards; z-index: 4;
+}
+@keyframes victoryFlash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+/* 勝利時の紙吹雪(4種のfloating粒) — 味方側に舞う */
+.battle-stage.stage-won .ally-side::after {
+  content: '❁ ❂ ✦ ❁ ✦ ❂ ❁'; position: absolute; inset: -20px 0 0 0; pointer-events: none;
+  font-size: 14px; color: #ffe79e; letter-spacing: 22px; text-shadow: 0 0 6px rgba(255, 210, 62, 0.75);
+  animation: confettiFall 2.2s ease-in forwards; opacity: 0.9;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-40px); opacity: 0; }
+  15% { opacity: 0.95; }
+  100% { transform: translateY(180px) rotate(20deg); opacity: 0; }
+}
 .stage-ground {
   position: absolute; left: -10%; right: -10%; bottom: 0; height: 46%;
   background: radial-gradient(ellipse at 50% 0%, rgba(239, 230, 212, 0.07), rgba(0,0,0,0) 60%),

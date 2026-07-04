@@ -14,7 +14,7 @@ import { shadeArchetypes, createShadeVisual, type ShadeVisual } from './render/s
 import { Minimap } from './render/minimap'
 import { Rng } from '../core/rng'
 
-const TILE = 44 // px(34→44: プロップ/スプライトが読める密度に)
+const TILE = 36 // px(44→36 に縮小: 同画面内タイル数を約1.22倍に広げつつ、プロップ/スプライトの視認性を維持)
 const MOVE_MS = 130
 const SHADE_BASE_MS = 620
 
@@ -95,6 +95,8 @@ export class DungeonEngine {
   private swayT = 0
   private shake = 0
   private tufts: { sp: Sprite; phase: number }[] = []
+  // 浮遊する光の粒(蛍/精霊のような淡い光)。夜藪の空気感を出す環境要素。
+  private motes: { g: Graphics; cx: number; cy: number; phase: number; ampX: number; ampY: number }[] = []
   private minimap: Minimap | null = null
   private nightVision = false // 眷属「夜目」(月): 敵影をミニマップに点す
   private readonly nightVisionTiles = 5 // 夜目の敵影検知半径(マス)
@@ -224,12 +226,33 @@ export class DungeonEngine {
       g.moveTo(3, 0).lineTo(6, -8).lineTo(4.4, -0.5).closePath().fill({ color: this.theme.grass, alpha: 0.9 })
     })
     const tuftRng = new Rng(seed ^ 0x5f3759df)
-    for (const { x, y } of tuftRng.shuffle(this.groundData.grassCells).slice(0, 60)) {
+    // 草むら密度: 草cellが十分あれば100、不足なら全て使う。マップの生き生きした印象が上がる
+    const grassPool = tuftRng.shuffle(this.groundData.grassCells)
+    for (const { x, y } of grassPool.slice(0, Math.min(100, grassPool.length))) {
       const sp = new Sprite(tuftTex)
       sp.anchor.set(0.5, 1)
       sp.position.set(x * TILE + TILE / 2 + tuftRng.int(-8, 8), y * TILE + TILE - tuftRng.int(2, 10))
       this.layerDecal.addChild(sp)
       this.tufts.push({ sp, phase: tuftRng.next() * Math.PI * 2 })
+    }
+    // 環境の浮遊光粒(蛍/精霊のような点) — 歩行可タイルから20〜24個散布
+    // grassCellsに依存せず、gridから直接列挙(森以外の地域=草cell少でも配置される)
+    const walkableCells: { x: number; y: number }[] = []
+    for (let y = 0; y < this.grid.length; y++) {
+      for (let x = 0; x < this.grid[y].length; x++) {
+        if (isWalkable(this.grid[y][x])) walkableCells.push({ x, y })
+      }
+    }
+    const moteCells = tuftRng.shuffle(walkableCells).slice(0, Math.min(22, walkableCells.length))
+    for (const { x, y } of moteCells) {
+      const g = new Graphics()
+      g.circle(0, 0, 2.5).fill({ color: 0xffe79e, alpha: 0.9 })
+      g.blendMode = 'add'
+      const cx = x * TILE + TILE / 2 + tuftRng.int(-6, 6)
+      const cy = y * TILE + TILE / 2 - tuftRng.int(0, 10)
+      g.position.set(cx, cy)
+      this.layerGlow.addChild(g)
+      this.motes.push({ g, cx, cy, phase: tuftRng.next() * Math.PI * 2, ampX: 4 + tuftRng.next() * 6, ampY: 3 + tuftRng.next() * 5 })
     }
 
     // プレイヤー — 灯型×性別の切り絵シルエット歩行スプライト(読めなければ灯印で代替)
@@ -372,6 +395,12 @@ export class DungeonEngine {
       this.swayT = 0
       for (const t of this.tufts) {
         t.sp.rotation = Math.sin(this.time / 1100 + t.phase) * 0.07
+      }
+      // 浮遊光粒: 位置と透明度を呼吸させ、生きている印象を出す
+      for (const m of this.motes) {
+        const t = this.time / 900 + m.phase
+        m.g.position.set(m.cx + Math.sin(t) * m.ampX, m.cy + Math.cos(t * 0.7) * m.ampY)
+        m.g.alpha = 0.55 + 0.4 * Math.sin(this.time / 600 + m.phase)
       }
     }
     if (this.groundData?.water) {
