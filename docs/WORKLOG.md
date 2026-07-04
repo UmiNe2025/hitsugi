@@ -656,3 +656,17 @@
   M17障害4-8の後処理バグ(stderr DONE/エコー早期kill/id不一致/PID競合)は真の不具合で修正は有効
 - **教訓**: 生成画像の異常は「使ったツール」だけでなく「public/imgに何が書き込まれたか(別スクリプトの混入)」を疑え
 - **commit**: chore: プレースホルダ生成器を隔離+記録訂正
+
+## 2026-07-04 (M18 画像工場のComfyUI移行 + 眷属確定)
+
+- **やったこと**:
+  - 画像生成を codex→**別PCのローカルComfyUI(novaAnimeXL, RTX3060 12GB)**へ移行。母艦からLAN API(192.168.1.10:8188)駆動。`scripts/asset_factory/run_batch_comfy.ps1` 新設(逐次20枚コミット・多重起動ロック共用・接続プリフライト)。スケジューラ hitsugi_asset_factory を comfy版へ張替(codex版run_batch.ps1は温存)。
+  - **カテゴリ別スタイル**実装(A/B検証で確定): icon(it/sk/ic等)=単体オブジェクト768 / enemy(en)=papercut妖怪+amber rim / face=肖像 / hero(boss/bg等)=hires2パス / scene=夜景水彩。
+  - 画風検証: Red-ERNIE(写実系)不採用 → **novaAnimeXL(調整プロンプトでcodex水彩-切り絵に高一致)採用**。証跡=苔ノ主のside-by-side目視。
+  - **hero高精細(hires-fix)は見送り決定**: 2パスhires自体はv2aで動作確認したが、manifestのheroプロンプトが日本語主体でnova(Illustrious)が主題を誤読→劣化(苔ノ主が炎の人物+偽文字)。段階検証(ボス先行→実物確認)で検知し、codexボス全復元・doneへ復帰・hero-hires無効化(Invoke-ComfyHires関数は温存)。ユーザー判断で「codex hero維持」。
+  - **眷属(式神, M16-5)を確定・commit**: 6属性を実プレイ(window.__game)で証跡検証 — fire灯-10%/water戦端癒し6%/wind隠密/earth宝目/star戦利品+10%は数値完全一致、moon夜目は現状フレーバー。UIモーダル+切替も実クリック確認。
+- **変更ファイル**: scripts/asset_factory/{run_batch_comfy.ps1, comfy_workflow.template.json}(新), src/core/store.ts, types.ts, dungeon/engine.ts, render/minimap.ts, ui/{Dungeon,Home}.tsx, core/data/familiars.ts(新)
+- **検証**: tsc緑 / 実プレイで眷属6属性を証跡確認 / 生成画像を目視(bg/boss/変異絵/アイコン) / consoleエラー0
+- **既知の課題(要判断・保留)**: 変異絵(_w/_o)はnovaが基礎種の同一性を掴めず別creature化(hero-hiresと同根=JPプロンプト)。同一性向上には英語プロンプト整備が要る。moon実効き化は敵shade表示のrender loop改変が要る。
+- **次回**: 変異絵/moonの改善判断、M10/M13/M11。
+- **commit**: aa03c85 feat(m16-5)眷属6種 / df3854f feat(factory)ComfyUI版ランナー
