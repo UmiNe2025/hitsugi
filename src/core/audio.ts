@@ -342,7 +342,8 @@ class AudioEngine {
 
   // ---- 効果音 ----
   se(kind: 'hit' | 'heal' | 'ko' | 'chain' | 'win' | 'click' | 'treasure' | 'birth' | 'death'
-    | 'footstep' | 'encounter' | 'slot' | 'forge' | 'lore'): void {
+    | 'footstep' | 'encounter' | 'slot' | 'forge' | 'lore'
+    | 'page' | 'confirm' | 'cancel' | 'error' | 'tab'): void {
     if (this._muted) return
     const ctx = this.ensure()
     const at = ctx.currentTime
@@ -411,6 +412,30 @@ class AudioEngine {
         this.bellTone(deg(3), at, 0.28)
         this.bellTone(deg(5), at + 0.35, 0.28)
         this.bellTone(deg(7), at + 0.7, 0.32)
+        break
+      // ── 和風UI音(M10) ──
+      case 'page':
+        // 頁めくり — 箏を軽く撫でる一音
+        this.pluck(deg(1), at, 0.05, 0.08)
+        break
+      case 'confirm':
+        // 決定 — 和やかに上がる二音
+        this.pluck(deg(0), at, 0.1, 0.26)
+        this.bellTone(deg(4), at + 0.05, 0.16)
+        break
+      case 'cancel':
+        // 戻る — そっと下がる二音
+        this.pluck(deg(4), at, 0.08, 0.2)
+        this.pluck(deg(2), at + 0.05, 0.12, 0.16)
+        break
+      case 'error':
+        // 不可 — 籠もった低い二打
+        this.bassTone(deg(-7), at, 0.14)
+        this.bassTone(deg(-7), at + 0.09, 0.14)
+        break
+      case 'tab':
+        // 面替え — 澄んだ一鈴
+        this.bellTone(deg(6), at, 0.13)
         break
     }
   }

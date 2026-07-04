@@ -149,7 +149,7 @@ export function DeathScene({ charId }: { charId: string }) {
   }
 
   return (
-    <div className="scene-screen screen" onClick={() => !digestDone && setBeat(beat + 1)}>
+    <div className="scene-screen screen" onClick={() => { if (!digestDone) { audio.se('page'); setBeat(beat + 1) } }}>
       <SceneBg file="cg2_mitori.png" />
       <div className="death-flame">🔥</div>
       <h1 className="scene-title">看取り</h1>
@@ -210,7 +210,7 @@ export function LifeScene({ title, lines, bg }: { title: string; lines: { speake
   // dailyIndexは素のファイル名(life_daily_NN.png)として組み立てる(dailyImg()は使わない)。
   const resolvedBg = bg ?? CHAPTER_BG[title] ?? `life_daily_${String(stableDailyIndex(title, lines)).padStart(2, '0')}.png`
   return (
-    <div className="scene-screen screen" onClick={() => !done && setBeat(beat + 1)}>
+    <div className="scene-screen screen" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
       <SceneBg file={resolvedBg} />
       <h1 className="scene-title">{title}</h1>
       <div className="scene-body" style={{ textAlign: 'left' }}>
@@ -406,7 +406,7 @@ export function DreamScene() {
   const [beat, setBeat] = useState(0)
   const done = beat >= DREAM_BEATS.length - 1
   return (
-    <div className="scene-screen screen" onClick={() => !done && setBeat(beat + 1)}>
+    <div className="scene-screen screen" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
       <h1 className="scene-title">夢渡り</h1>
       <div className="scene-body">
         {DREAM_BEATS.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (
@@ -513,7 +513,7 @@ export function EndingScene() {
   const years = Math.floor(data.seasonIndex / 4) + 1
 
   return (
-    <div className="scene-screen screen" onClick={() => !done && setBeat(beat + 1)}>
+    <div className="scene-screen screen" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
       {endingBg && <SceneBg file={endingBg} />}
       <h1 className="scene-title">{cleared ? '灯継ぎ' : '断絶'}</h1>
       <div className="scene-body">
