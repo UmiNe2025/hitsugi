@@ -1450,6 +1450,26 @@
     "sk_tz_is2",
     "sk_tz_is3",
     "sk_tz_iso",
-    "sk_tz_nf1"
+    "sk_tz_nf1",
+    "sk_tz_nf2",
+    "sk_tz_nf3",
+    "sk_tz_nfo",
+    "sk_tz_nw1",
+    "sk_tz_nw2",
+    "sk_tz_nw3",
+    "sk_tz_nwo",
+    "sk_tz_nd1",
+    "sk_tz_nd2",
+    "sk_tz_nd3",
+    "sk_tz_ndo",
+    "sk_tz_ne1",
+    "sk_tz_ne2",
+    "sk_tz_ne3",
+    "sk_tz_neo",
+    "sk_tz_nm1",
+    "sk_tz_nm2",
+    "sk_tz_nm3",
+    "sk_tz_nmo",
+    "sk_tz_ns1"
   ]
 }
