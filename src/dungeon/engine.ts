@@ -29,6 +29,7 @@ export interface EngineOpts {
   tier?: 1 | 2 | 3 | 4
   seed?: number // FloorDef.seed(プロップ散布の決定論)
   isBossFloor?: boolean
+  familiarReveal?: boolean // v3.1 M16-5: 眷属「宝目」(土)在中 — 開幕にミニマップへ宝箱/石碑を表示
 }
 
 interface Shade {
@@ -282,6 +283,8 @@ export class DungeonEngine {
     this.screenFx.addChild(this.minimap.container)
     this.minimap.reposition(this.app.renderer.width)
     this.minimap.reveal(this.px, this.py)
+    // 眷属「宝目」(土, M16-5): 随行中なら開幕に宝箱/石碑の在処を示す
+    if (this.opts.familiarReveal) this.minimap.revealSpecials()
 
     // 照明(半解像度RT+erase穴あけ)+ビネット
     this.lighting = new LightingSystem(this.app.renderer, this.screenFx, this.layerGlow, this.theme, TILE)

@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useGame } from '../core/store'
 import { seasonLabel, isFestivalMonth, STAT_LABELS, MOTTOS } from '../core/types'
-import type { StatKey, MottoId } from '../core/types'
+import type { StatKey, MottoId, Element } from '../core/types'
 import { isAdult, seasonsLeft } from '../core/inheritance'
 import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
 import { GODS } from '../core/data/gods'
 import { FACILITIES, FACILITY_MAX_LV, facilityCost, facilityLevel } from '../core/data/facilities'
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { GOSSIP } from '../core/data/gossip'
+import { FAMILIAR_KINDS } from '../core/data/familiars'
 import { CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, HOME_BG, itemIcon, villagerImg } from './img'
 import { FamilyTree } from './FamilyTree'
@@ -26,6 +27,7 @@ export function HomeScreen() {
   const [showTree, setShowTree] = useState(false)
   const [showFacilities, setShowFacilities] = useState(false)
   const [showGossip, setShowGossip] = useState(false)
+  const [showFamiliars, setShowFamiliars] = useState(false)
 
   const alive = data.family.filter((c) => c.alive)
   const adults = alive.filter((c) => isAdult(c, data.seasonIndex))
@@ -107,6 +109,7 @@ export function HomeScreen() {
         <button className="btn btn-ghost" onClick={() => setShowGossip(true)}>🕯️ 郷の声</button>
         <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="🏘️" /> 郷を歩く</button>
         <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="🏗️" /> 郷普請</button>
+        <button className="btn btn-ghost" onClick={() => setShowFamiliars(true)}>🦊 眷属</button>
         <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
           <Ico name="ic_motto" fb="🏮" /> 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
         </button>
@@ -132,6 +135,7 @@ export function HomeScreen() {
       {showTree && <FamilyTree onClose={() => setShowTree(false)} />}
       {showFacilities && <FacilitiesModal onClose={() => setShowFacilities(false)} />}
       {showGossip && <GossipModal onClose={() => setShowGossip(false)} />}
+      {showFamiliars && <FamiliarsModal onClose={() => setShowFamiliars(false)} />}
     </div>
   )
 }
@@ -488,6 +492,54 @@ function FacilitiesModal({ onClose }: { onClose: () => void }) {
             </Panel>
           )
         })}
+        <button className="btn btn-ghost" onClick={onClose}>
+          閉じる
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// 眷属(式神) v3.1 M16-5 — 討った魔性が稀に懐く。一体だけ随行させ、夜藪で共に働く
+function FamiliarsModal({ onClose }: { onClose: () => void }) {
+  const data = useGame((s) => s.data)!
+  const setActiveFamiliar = useGame((s) => s.setActiveFamiliar)
+  const familiars = data.familiars ?? []
+
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="panel-title">🦊 眷属 — 懐いた魔性たち</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
+          討った魔性は、ごく稀に懐いて眷属となる。一体だけを随行させられる — 夜藪で小さな助けになる。
+        </p>
+        {familiars.length === 0 ? (
+          <p style={{ fontSize: 13 }}>
+            まだ懐いた者はいない。夜藪で魔性を討ち続ければ、いつか気まぐれに懐くだろう。
+          </p>
+        ) : (
+          familiars.map((f) => {
+            const kind = FAMILIAR_KINDS[f.element as Element]
+            const active = data.activeFamiliar === f.enemyId
+            return (
+              <button
+                key={f.enemyId}
+                className={`btn ${active ? 'btn-main' : ''}`}
+                style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 6 }}
+                onClick={() => setActiveFamiliar(f.enemyId)}
+              >
+                <b>{f.name}</b>
+                <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 8 }}>
+                  {kind?.label ?? f.element}
+                </span>
+                {active && <span style={{ fontSize: 11, color: 'var(--amber)', marginLeft: 8 }}>随行中</span>}
+                <span style={{ display: 'block', fontSize: 12, color: 'var(--text-dim)' }}>
+                  {kind?.perk ?? ''}
+                </span>
+              </button>
+            )
+          })
+        )}
         <button className="btn btn-ghost" onClick={onClose}>
           閉じる
         </button>

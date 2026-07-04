@@ -59,6 +59,17 @@ export class Minimap {
     this.dirty = true
   }
 
+  // 眷属「宝目」(土, v3.1 M16-5): 開幕にフロア中の宝箱・石碑の在処だけを点で示す
+  revealSpecials(): void {
+    for (let y = 0; y < this.h; y++) {
+      for (let x = 0; x < this.w; x++) {
+        const kind = this.grid[y]?.[x]
+        if (kind === 'chest' || kind === 'monument') this.visited.add(`${x}:${y}`)
+      }
+    }
+    this.dirty = true
+  }
+
   update(timeMs: number): void {
     if (this.dirty) {
       this.dirty = false

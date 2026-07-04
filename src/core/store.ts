@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type {
-  BattleLogEntry, BattleState, Character, Combatant, GameData, Item, MottoId, Screen,
+  BattleLogEntry, BattleState, Character, Combatant, Element, GameData, Item, MottoId, Screen,
 } from './types'
 import type { BattleAction } from './battle'
 import { LIFESPAN_MONTHS, seasonLabel, isFestivalMonth } from './types'
@@ -80,6 +80,7 @@ interface GameStore {
   setMotto: (motto: MottoId) => void
   forgeUpgrade: (itemId: string) => void
   buildFacility: (id: string) => void // v3.1 M16-6: 郷普請 — 施設を建てる/普請を進める
+  setActiveFamiliar: (enemyId: string) => void // v3.1 M16-5: 随行させる眷属を選ぶ
   setLastWords: (charId: string, words: string) => void
   resolveFinale: (choiceIndex: number) => void
 
@@ -161,7 +162,10 @@ export const useGame = create<GameStore>((set, get) => {
   }
 
   // v3.1 M12/M16: 血縁(連携奥義)・家訓・灯の加護の補正を戦闘員へ付与
-  const enrichAllies = (party: Combatant[], chars: Character[], motto?: MottoId, boons?: string[]): Combatant[] => {
+  // familiarElement: v3.1 M16-5 — 随行中の眷属の属性(water=戦端で先頭が少し癒える)
+  const enrichAllies = (
+    party: Combatant[], chars: Character[], motto?: MottoId, boons?: string[], familiarElement?: Element,
+  ): Combatant[] => {
     const byId = new Map(chars.map((c) => [c.id, c]))
     const has = (id: string) => !!boons?.includes(id)
     return party.map((cb) => {
@@ -178,8 +182,13 @@ export const useGame = create<GameStore>((set, get) => {
             })
             .map((o) => o.key)
         : []
+      // 眷属「癒し」(水): 先頭(row='front'の最初)だけ、戦端で最大HPの6%を癒す
+      const isFrontLead = cb.row === 'front' && party.findIndex((p) => p.row === 'front') === party.indexOf(cb)
+      const familiarHeal =
+        familiarElement === 'water' && isFrontLead ? Math.round(cb.maxHp * 0.06) : 0
       return {
         ...cb,
+        hp: familiarHeal > 0 ? Math.min(cb.maxHp, cb.hp + familiarHeal) : cb.hp,
         kinKeys: kinKeys.length > 0 ? kinKeys : undefined,
         atk: Math.round((cb.atk + (motto === 'budan' ? 2 : 0)) * (has('kasei') ? 1.12 : 1)),
         def: Math.round(cb.def * (has('teppeki') ? 1.18 : 1)),
@@ -191,6 +200,10 @@ export const useGame = create<GameStore>((set, get) => {
       }
     })
   }
+
+  // v3.1 M16-5: 随行中の眷属の属性を引く(未捕獲/未設定ならundefined)
+  const activeFamiliarElement = (d: GameData): Element | undefined =>
+    d.familiars?.find((f) => f.enemyId === d.activeFamiliar)?.element as Element | undefined
 
   // 季節を進める — 誕生と死(寿命)をここで処理
   const advanceSeason = (): void => {
@@ -689,6 +702,14 @@ export const useGame = create<GameStore>((set, get) => {
       })
     },
 
+    // v3.1 M16-5: 随行させる眷属を選ぶ(懐いた眷属のうちから一体だけ)
+    setActiveFamiliar: (enemyId) => {
+      mutate((d) => {
+        if (!(d.familiars ?? []).some((f) => f.enemyId === enemyId)) return d
+        return { ...d, activeFamiliar: enemyId }
+      })
+    },
+
     // v3.1 M12-1: 打ち直し — 鍛冶で装備を鍛える(遺品は銘を保ったまま深まる)
     forgeUpgrade: (itemId) => {
       mutate((d) => {
@@ -1144,9 +1165,10 @@ export const useGame = create<GameStore>((set, get) => {
         frantic = 45
         log = [...log, '灯が緋に燃え上がった! 熱狂の赤い火 — 魔性は猛るが、実りは倍加する!']
       }
-      // 加護(M16-4): 大灯=灯費約2/3、湯治=一歩ごと微回復
+      // 加護(M16-4): 大灯=灯費約2/3、湯治=一歩ごと微回復。眷属「灯強め」(火, M16-5): 灯消費-10%
       const boons = run.boons ?? []
-      const lightCost = 0.45 * (boons.includes('oohi') ? 0.65 : 1)
+      const familiarFire = activeFamiliarElement(get().data!) === 'fire'
+      const lightCost = 0.45 * (boons.includes('oohi') ? 0.65 : 1) * (familiarFire ? 0.9 : 1)
       if (boons.includes('touji')) {
         mutate((d) => ({
           ...d,
@@ -1181,6 +1203,7 @@ export const useGame = create<GameStore>((set, get) => {
           d.family,
           d.motto,
           run.boons,
+          activeFamiliarElement(d),
         )
         const nemDef = {
           ...base,
@@ -1219,6 +1242,7 @@ export const useGame = create<GameStore>((set, get) => {
         d.family,
         d.motto,
         run.boons,
+        activeFamiliarElement(d),
       )
       // 主が未設定の地域はエリート級を主に見立てて強化する。真の主(tier5)は素の強さで十分
       const standInBoss = boss && !region.bossId
@@ -1518,12 +1542,13 @@ export const useGame = create<GameStore>((set, get) => {
           const defs = battle.enemies
             .map((e) => (e.enemyId ? enemyById(e.enemyId) : null))
             .filter((x): x is NonNullable<typeof x> => !!x)
-          // 赤い火(M12-6)+商売の家訓(M12-8)+金の敵影(M15-5)+福運の加護(M16-4)で実りが増す
+          // 赤い火(M12-6)+商売の家訓(M12-8)+金の敵影(M15-5)+福運の加護(M16-4)+眷属の福(M16-5)で実りが増す
           const lootK =
             ((run.frantic ?? 0) > 0 ? 1.5 : 1) *
             (d.motto === 'shobai' ? 1.08 : 1) *
             (get().goldenBattle ? 2.5 : 1) *
-            ((run.boons ?? []).includes('fukuun') ? 1.3 : 1)
+            ((run.boons ?? []).includes('fukuun') ? 1.3 : 1) *
+            (activeFamiliarElement(d) === 'star' ? 1.1 : 1)
           const hoto = Math.round(defs.reduce((s, e) => s + e.hoto, 0) * lootK)
           const ketsu = Math.round(defs.reduce((s, e) => s + e.ketsu, 0) * lootK)
           family = family.map((c) =>
@@ -1531,6 +1556,23 @@ export const useGame = create<GameStore>((set, get) => {
           )
           const isBoss = battleSource === 'dungeonBoss'
           let nd: GameData = { ...d, family }
+          // 眷属(式神) v3.1 M16-5: 討った雑兵が稀に懐く(主・宿敵は対象外)。既知の種は増えない
+          if (!isBoss && !get().nemesisBattleId) {
+            const owned = new Set((nd.familiars ?? []).map((f) => f.enemyId))
+            const candidates = defs.filter((e) => e.tier < 5 && !owned.has(e.id))
+            const uniqueCandidates = [...new Map(candidates.map((e) => [e.id, e])).values()]
+            for (const foe of uniqueCandidates) {
+              if (!rng.chance(0.04)) continue
+              const famName = `${foe.name}の眷属`
+              nd = {
+                ...nd,
+                familiars: [...(nd.familiars ?? []), { enemyId: foe.id, name: famName, element: foe.element }],
+                activeFamiliar: nd.activeFamiliar ?? foe.id,
+              }
+              nd = chronicle(nd, 'event', `${foe.name}が懐いた — 眷属となった。`)
+              owned.add(foe.id) // 同じ戦闘で同種が複数いても二重に捕らえない
+            }
+          }
           // 仇討ち成就(v3.1 M16-1): 宿敵を討てば、犠牲者の銘を刻んだ得物が残る
           const nemId = get().nemesisBattleId
           if (nemId) {

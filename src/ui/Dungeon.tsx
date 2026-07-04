@@ -76,6 +76,8 @@ function DungeonFloor() {
   const dungeon = dungeonByRegion(run.regionId)!
   const floorDef = dungeon.floors[run.floor]
   const party = data.family.filter((c) => run.partyIds.includes(c.id) && c.alive)
+  // 眷属(式神, v3.1 M16-5): 随行中の一体の属性(未捕獲/未設定ならundefined)
+  const familiarElement = data.familiars?.find((f) => f.enemyId === data.activeFamiliar)?.element
 
   useEffect(() => {
     if (!hostRef.current) return
@@ -120,6 +122,7 @@ function DungeonFloor() {
         tier: region.tier as 1 | 2 | 3 | 4,
         seed: floorDef.seed,
         isBossFloor: run.floor === dungeon.floors.length - 1,
+        familiarReveal: familiarElement === 'earth', // 眷属「宝目」(M16-5): 開幕に宝箱/石碑を表示
       },
     )
     engineRef.current = engine
@@ -150,10 +153,10 @@ function DungeonFloor() {
     engineRef.current?.setFrantic((run.frantic ?? 0) > 0)
   }, [run.frantic])
 
-  // 闇夜の目(v3.1 M16-4): 敵影に気取られにくく
+  // 闇夜の目(v3.1 M16-4)+眷属「韋駄天」(風, v3.1 M16-5): 敵影に気取られにくく
   useEffect(() => {
-    engineRef.current?.setStealth((run.boons ?? []).includes('yamiyo'))
-  }, [run.boons])
+    engineRef.current?.setStealth((run.boons ?? []).includes('yamiyo') || familiarElement === 'wind')
+  }, [run.boons, familiarElement])
 
   useEffect(() => {
     engineRef.current?.setPaused(!!pendingEvent || confirm !== null || !!boonDraft)
