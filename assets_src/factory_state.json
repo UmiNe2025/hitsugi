@@ -451,6 +451,26 @@
     "sc_forge",
     "sc_shop",
     "sc_shrine",
-    "sc_bath"
+    "sc_bath",
+    "sc_gate",
+    "face_homura_m_brave",
+    "face_homura_m_timid",
+    "face_homura_m_kind",
+    "face_homura_m_rival",
+    "face_homura_m_easy",
+    "face_homura_m_cool",
+    "face_homura_m_wild",
+    "face_homura_m_lonely",
+    "sprite_walk_homura_m_child",
+    "sprite_walk_homura_m_elder",
+    "pose_homura_m_child",
+    "pose_homura_m_adult",
+    "pose_homura_m_elder",
+    "face_homura_f_brave",
+    "face_homura_f_timid",
+    "face_homura_f_kind",
+    "face_homura_f_rival",
+    "face_homura_f_easy",
+    "face_homura_f_cool"
   ]
 }
