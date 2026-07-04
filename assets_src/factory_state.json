@@ -551,6 +551,26 @@
     "face_sumi_f_easy",
     "face_sumi_f_cool",
     "face_sumi_f_wild",
-    "face_sumi_f_lonely"
+    "face_sumi_f_lonely",
+    "sprite_walk_sumi_f_child",
+    "sprite_walk_sumi_f_elder",
+    "pose_sumi_f_child",
+    "pose_sumi_f_adult",
+    "pose_sumi_f_elder",
+    "en_chochin_w",
+    "en_chochin_o",
+    "en_kagenezumi_w",
+    "en_kagenezumi_o",
+    "en_onibi_w",
+    "en_onibi_o",
+    "en_yosuzume_w",
+    "en_yosuzume_o",
+    "en_honedourou_w",
+    "en_honedourou_o",
+    "en_nureginu_w",
+    "en_nureginu_o",
+    "en_yogumo_w",
+    "en_yogumo_o",
+    "en_nakiishi_w"
   ]
 }
