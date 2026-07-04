@@ -491,6 +491,26 @@
     "sprite_walk_iwao_m_elder",
     "pose_iwao_m_child",
     "pose_iwao_m_adult",
-    "pose_iwao_m_elder"
+    "pose_iwao_m_elder",
+    "face_iwao_f_brave",
+    "face_iwao_f_timid",
+    "face_iwao_f_kind",
+    "face_iwao_f_rival",
+    "face_iwao_f_easy",
+    "face_iwao_f_cool",
+    "face_iwao_f_wild",
+    "face_iwao_f_lonely",
+    "sprite_walk_iwao_f_child",
+    "sprite_walk_iwao_f_elder",
+    "pose_iwao_f_child",
+    "pose_iwao_f_adult",
+    "pose_iwao_f_elder",
+    "face_nagi_m_brave",
+    "face_nagi_m_timid",
+    "face_nagi_m_kind",
+    "face_nagi_m_rival",
+    "face_nagi_m_easy",
+    "face_nagi_m_cool",
+    "face_nagi_m_wild"
   ]
 }
