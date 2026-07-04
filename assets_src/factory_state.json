@@ -389,6 +389,26 @@
     "boon_fukuun",
     "boon_mekiki",
     "boon_seishin",
-    "boon_kaeribi"
+    "boon_kaeribi",
+    "boon_yamiyo",
+    "boon_chisio",
+    "job_kanuchi",
+    "job_ishiku",
+    "job_houjin",
+    "job_kikori",
+    "job_touban",
+    "job_kabenuri",
+    "job_sekimori",
+    "job_kakiyui",
+    "job_hikeshi",
+    "job_yamagake",
+    "job_ushou",
+    "job_kamiyui",
+    "job_yumori",
+    "job_kusurigari",
+    "job_ubushi",
+    "job_koutaki",
+    "job_kageeshi",
+    "job_menuchi"
   ]
 }
