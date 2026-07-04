@@ -30,7 +30,7 @@
   100% { opacity: 0; transform: translateX(6%) scale(1); }
 }
 
-/* 戦場背景 — 地域別背景(bg_r_*/bossbg_*)を多層合成。未生成の層は自然に透過する */
+/* 戦場背景 — 地域別背景(bg_r_ 系・bossbg_ 系)を多層合成。未生成の層は自然に透過する */
 .battle-stage-bg {
   position: absolute; inset: 0; z-index: 0;
   background-repeat: no-repeat, no-repeat, no-repeat;
