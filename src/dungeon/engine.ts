@@ -468,7 +468,10 @@ export class DungeonEngine {
         const sign = flee ? -1 : 1
         dx = Math.sign(this.px - s.x) * sign
         dy = Math.sign(this.py - s.y) * sign
-        if (dx !== 0 && dy !== 0) (Math.random() < 0.5 ? (dx = 0) : (dy = 0))
+        if (dx !== 0 && dy !== 0) {
+          if (Math.random() < 0.5) dx = 0
+          else dy = 0
+        }
       } else {
         const d = Object.values(DIRS)[Math.floor(Math.random() * 4)]
         dx = d[0]
