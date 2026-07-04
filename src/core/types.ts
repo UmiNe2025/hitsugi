@@ -147,6 +147,7 @@ export interface EnemyDef {
   ketsu: number // ドロップ血珠
   desc: string
   sprite: string
+  promptEn?: string // 画像生成用の英語外見記述(M18, nova誤読対策)。base/若/老で同一値をアンカーに使う。未指定時はdescにフォールバック
 }
 
 // ---- 探索(夜藪行) ----

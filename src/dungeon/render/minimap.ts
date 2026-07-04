@@ -21,8 +21,10 @@ export class Minimap {
   container = new Container()
   private back = new Graphics()
   private g = new Graphics()
+  private sg = new Graphics() // 眷属「夜目」(月): 敵影ドット(毎フレーム更新)
   private grid: TileKind[][]
   private visited = new Set<string>()
+  private nvRadius = 0 // 0 = 夜目オフ / >0 = 敵影検知半径(マス)
   private dirty = true
   private px = 0
   private py = 0
@@ -33,7 +35,7 @@ export class Minimap {
     this.grid = grid
     this.h = grid.length
     this.w = grid[0]?.length ?? 0
-    this.container.addChild(this.back, this.g)
+    this.container.addChild(this.back, this.g, this.sg)
     this.back
       .roundRect(-PAD, -PAD, this.w * CELL + PAD * 2, this.h * CELL + PAD * 2, 5)
       .fill({ color: 0x0b0f1e, alpha: 0.6 })
@@ -70,7 +72,13 @@ export class Minimap {
     this.dirty = true
   }
 
-  update(timeMs: number): void {
+  // 眷属「夜目」(月, M16-5→実効化): 検知半径内の敵影をミニマップに点す(0でオフ)
+  setNightVision(radius: number): void {
+    this.nvRadius = radius
+    if (radius === 0) this.sg.clear()
+  }
+
+  update(timeMs: number, shades?: { x: number; y: number }[]): void {
     if (this.dirty) {
       this.dirty = false
       const g = this.g
@@ -89,6 +97,17 @@ export class Minimap {
       }
       // 自機
       g.circle(this.px * CELL + CELL / 2, this.py * CELL + CELL / 2, CELL * 0.85).fill(0xffd23e)
+    }
+    // 夜目(月眷属): 敵影を検知半径内で点描(visited非依存・毎フレーム更新)
+    if (this.nvRadius > 0 && shades) {
+      const sg = this.sg
+      sg.clear()
+      for (const s of shades) {
+        const d = Math.max(Math.abs(s.x - this.px), Math.abs(s.y - this.py))
+        if (d <= this.nvRadius) {
+          sg.circle(s.x * CELL + CELL / 2, s.y * CELL + CELL / 2, CELL * 0.5).fill({ color: 0xc73e3a, alpha: 0.92 })
+        }
+      }
     }
     this.container.alpha = 0.92 + Math.sin(timeMs / 600) * 0.08
   }

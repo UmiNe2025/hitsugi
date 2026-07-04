@@ -24,6 +24,7 @@ export const DUMP = {
   })),
   enemies: ENEMIES.map((e) => ({
     id: e.id, name: e.name, element: e.element, tier: e.tier, sprite: e.sprite, desc: e.desc,
+    promptEn: (e as { promptEn?: string }).promptEn ?? '',
   })),
   items: ITEM_BASES.map((it) => ({
     baseId: it.baseId, name: it.name, slot: it.slot, shopTier: it.shopTier,

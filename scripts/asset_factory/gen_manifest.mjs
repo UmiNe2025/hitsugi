@@ -43,6 +43,9 @@ function add(prio, id, file, w, h, prompt) {
 }
 const EN_ELEM = { fire: 'fire', water: 'water', wind: 'wind', earth: 'earth', moon: 'moon', star: 'star' }
 const clean = (s, n = 140) => (s ?? '').replace(/\s+/g, ' ').slice(0, n)
+// 画像プロンプト用の外見記述(M18): promptEn(英語)があれば最優先、無ければ JP名+desc に後方互換フォールバック。
+// nova(Illustrious=英語ネイティブ)のJP誤読対策。base/若/老で同一の enDesc をアンカーに使い変異絵の同一性を担保する。
+const enDesc = (e, n = 120) => (e.promptEn && e.promptEn.trim()) ? e.promptEn.trim() : `${e.name} — ${clean(e.desc, n)}`
 
 // P0: 郷背景(既存キュー)
 add(0, 'bg_sato', 'bg_sato.png', 1600, 900, 'wide night scene of a japanese mountain village under eternal night, giant amber paper lantern at center, thatched rooftops, starry indigo sky')
@@ -51,10 +54,10 @@ add(0, 'bg_sato', 'bg_sato.png', 1600, 900, 'wide night scene of a japanese moun
 const bosses = DUMP.enemies.filter((e) => e.id.startsWith('boss_'))
 const baseEnemies = DUMP.enemies.filter((e) => !e.id.startsWith('boss_') && !e.id.endsWith('_w') && !e.id.endsWith('_o'))
 for (const b of bosses) {
-  add(1, b.id, b.sprite, 1024, 1024, `boss illustration: ${b.name} — japanese yokai lord, ${clean(b.desc)}, menacing presence, ${EN_ELEM[b.element]} aura`)
+  add(1, b.id, b.sprite, 1024, 1024, `boss illustration: japanese yokai lord, ${enDesc(b)}, menacing presence, ${EN_ELEM[b.element]} aura`)
 }
 for (const e of baseEnemies) {
-  add(2, e.id, e.sprite, 768, 768, `japanese yokai creature, centered, plain dark background: ${e.name} — ${clean(e.desc)}, ${EN_ELEM[e.element]} element`)
+  add(2, e.id, e.sprite, 768, 768, `japanese yokai creature, centered, plain dark background: ${enDesc(e)}, ${EN_ELEM[e.element]} element`)
 }
 
 // P3: 星神立ち絵120
@@ -168,8 +171,8 @@ for (const g of DUMP.tomoshigata) {
 // P8: 敵変異(若/老)240
 for (const e of baseEnemies) {
   const stem = e.sprite.replace(/\.png$/, '')
-  add(8, `${stem}_w`, `${stem}_w.png`, 768, 768, `japanese yokai creature, YOUNG immature variant, smaller slimmer silhouette, lighter tones: 若き${e.name} — ${clean(e.desc, 100)}`)
-  add(8, `${stem}_o`, `${stem}_o.png`, 768, 768, `japanese yokai creature, ANCIENT elder variant, larger heavier, battle-scarred, ornate growths, dim glowing eyes: 老いたる${e.name} — ${clean(e.desc, 100)}`)
+  add(8, `${stem}_w`, `${stem}_w.png`, 768, 768, `japanese yokai creature, YOUNG immature variant of the same creature, smaller slimmer silhouette, softer features, lighter tones: ${enDesc(e)}`)
+  add(8, `${stem}_o`, `${stem}_o.png`, 768, 768, `japanese yokai creature, ANCIENT elder variant of the same creature, larger heavier, battle-scarred, ornate growths, dim glowing eyes: ${enDesc(e)}`)
 }
 
 // P9: 装備540

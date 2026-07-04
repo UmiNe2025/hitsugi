@@ -5,6 +5,7 @@ import { EPITAPHS_EXTRA } from './epitaph_extra'
 import { EPITAPHS_EXTRA_2 } from './epitaph_extra2'
 import { EPITAPHS_EXTRA_3 } from './epitaph_extra3'
 import { EPITAPHS_EXTRA_4 } from './epitaph_extra4'
+import { EPITAPHS_EXTRA_5 } from './epitaph_extra5'
 
 // 辞世 — 性根×死因から自動生成される、その人だけの最期の言葉
 export type DeathCause = 'lifespan' | 'battle' | 'lost'
@@ -396,7 +397,7 @@ function mergeEpitaphs(
   return out
 }
 
-const ALL_EPITAPHS = mergeEpitaphs(EPITAPHS, EPITAPHS_EXTRA, EPITAPHS_EXTRA_2, EPITAPHS_EXTRA_3, EPITAPHS_EXTRA_4)
+const ALL_EPITAPHS = mergeEpitaphs(EPITAPHS, EPITAPHS_EXTRA, EPITAPHS_EXTRA_2, EPITAPHS_EXTRA_3, EPITAPHS_EXTRA_4, EPITAPHS_EXTRA_5)
 
 export function generateEpitaph(c: Character, cause: DeathCause, rng: Rng): string {
   const voice = personalityById(c.personalityId).voice

@@ -96,6 +96,8 @@ export class DungeonEngine {
   private shake = 0
   private tufts: { sp: Sprite; phase: number }[] = []
   private minimap: Minimap | null = null
+  private nightVision = false // 眷属「夜目」(月): 敵影をミニマップに点す
+  private readonly nightVisionTiles = 5 // 夜目の敵影検知半径(マス)
   private archetypes: ReturnType<typeof shadeArchetypes> = []
   private fx: EncounterFx | null = null
   private flashG: Graphics | null = null
@@ -285,6 +287,8 @@ export class DungeonEngine {
     this.minimap.reveal(this.px, this.py)
     // 眷属「宝目」(土, M16-5): 随行中なら開幕に宝箱/石碑の在処を示す
     if (this.opts.familiarReveal) this.minimap.revealSpecials()
+    // 眷属「夜目」(月, M16-5→実効化): 随行中なら敵影検知を有効化(setNightVisionが先に来ても反映)
+    this.minimap.setNightVision(this.nightVision ? this.nightVisionTiles : 0)
 
     // 照明(半解像度RT+erase穴あけ)+ビネット
     this.lighting = new LightingSystem(this.app.renderer, this.screenFx, this.layerGlow, this.theme, TILE)
@@ -371,7 +375,7 @@ export class DungeonEngine {
       }
     }
     this.lighting?.update(dms, this.world.x, this.world.y)
-    this.minimap?.update(this.time)
+    this.minimap?.update(this.time, this.nightVision ? this.shades : undefined)
 
     // エンカウント演出中: 白閃2連→虹彩暗転→コールバック(入力/AIは凍結)
     if (this.fx) {
@@ -516,6 +520,12 @@ export class DungeonEngine {
   // 闇夜の目(M16-4): 敵影に気取られにくくなる
   setStealth(on: boolean): void {
     this.stealth = on
+  }
+
+  // 眷属「夜目」(月, M16-5→実効化): ミニマップに敵影を検知半径内で点す
+  setNightVision(on: boolean): void {
+    this.nightVision = on
+    this.minimap?.setNightVision(on ? this.nightVisionTiles : 0)
   }
 
   private applyFacing(frame: number): void {

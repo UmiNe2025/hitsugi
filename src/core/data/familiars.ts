@@ -1,10 +1,9 @@
 // 眷属(式神) v3.1 M16-5 — 討った魔性が稀に懐き、一族に随行する
-// 属性ごとに一つの加護。実効き5属性:
+// 属性ごとに一つの加護。全6属性が実効き:
 //   fire=灯消費-10%(store lightCost) / water=戦端に先頭を癒し(store) /
 //   wind=隠密・追跡半径-2(Dungeon→engine.setStealth) / earth=宝目・開幕にミニマップ表示(DungeonEngine) /
-//   star=戦利品+10%(store lootK)。
-// moon=夜目は現状フレーバーのみ(敵影の検知/表示フックが未実装。実装するなら
-//   ミニマップへの敵影ドット表示 or 検知半径の設計が要る — 要プロダクト判断)。
+//   star=戦利品+10%(store lootK) /
+//   moon=夜目・敵影を検知半径5マスでミニマップに点描(Dungeon→engine.setNightVision→Minimap.setNightVision、M18で実効化)。
 import type { Element } from '../types'
 
 export interface FamiliarPerk {

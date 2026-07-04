@@ -158,6 +158,11 @@ function DungeonFloor() {
     engineRef.current?.setStealth((run.boons ?? []).includes('yamiyo') || familiarElement === 'wind')
   }, [run.boons, familiarElement])
 
+  // 眷属「夜目」(月, v3.1 M16-5→実効化): ミニマップに敵影を検知半径内で点す
+  useEffect(() => {
+    engineRef.current?.setNightVision(familiarElement === 'moon')
+  }, [familiarElement])
+
   useEffect(() => {
     engineRef.current?.setPaused(!!pendingEvent || confirm !== null || !!boonDraft)
   }, [pendingEvent, confirm, boonDraft])
