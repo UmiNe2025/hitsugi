@@ -369,6 +369,26 @@
     "ic_sound_off",
     "ic_birth",
     "ic_boon",
-    "ic_nemesis"
+    "ic_nemesis",
+    "node_battle",
+    "node_elite",
+    "node_treasure",
+    "node_camp",
+    "node_event",
+    "node_boss",
+    "node_start",
+    "slot_weapon",
+    "slot_armor",
+    "slot_charm",
+    "boon_kasei",
+    "boon_teppeki",
+    "boon_idaten",
+    "boon_kyoun",
+    "boon_oohi",
+    "boon_touji",
+    "boon_fukuun",
+    "boon_mekiki",
+    "boon_seishin",
+    "boon_kaeribi"
   ]
 }
