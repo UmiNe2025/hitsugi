@@ -1430,6 +1430,26 @@
     "sk_tz_if2",
     "sk_tz_if3",
     "sk_tz_ifo",
-    "sk_tz_iw1"
+    "sk_tz_iw1",
+    "sk_tz_iw2",
+    "sk_tz_iw3",
+    "sk_tz_iwo",
+    "sk_tz_id1",
+    "sk_tz_id2",
+    "sk_tz_id3",
+    "sk_tz_ido",
+    "sk_tz_ie1",
+    "sk_tz_ie2",
+    "sk_tz_ie3",
+    "sk_tz_ieo",
+    "sk_tz_im1",
+    "sk_tz_im2",
+    "sk_tz_im3",
+    "sk_tz_imo",
+    "sk_tz_is1",
+    "sk_tz_is2",
+    "sk_tz_is3",
+    "sk_tz_iso",
+    "sk_tz_nf1"
   ]
 }
