@@ -349,6 +349,26 @@
     "nem_kagematoi",
     "nem_tsumenaga",
     "nem_kagitogi",
-    "nem_yonaki"
+    "nem_yonaki",
+    "ic_hoto",
+    "ic_ketsu",
+    "ic_buko",
+    "ic_expedition",
+    "ic_pact",
+    "ic_festival",
+    "ic_rest",
+    "ic_forge",
+    "ic_chronicle",
+    "ic_codex",
+    "ic_tree",
+    "ic_village",
+    "ic_motto",
+    "ic_tower",
+    "ic_help",
+    "ic_sound_on",
+    "ic_sound_off",
+    "ic_birth",
+    "ic_boon",
+    "ic_nemesis"
   ]
 }
