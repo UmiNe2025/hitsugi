@@ -431,6 +431,26 @@
     "emb_nagi_fire",
     "emb_nagi_water",
     "emb_nagi_wind",
-    "emb_nagi_earth"
+    "emb_nagi_earth",
+    "emb_nagi_moon",
+    "emb_nagi_star",
+    "emb_sumi_fire",
+    "emb_sumi_water",
+    "emb_sumi_wind",
+    "emb_sumi_earth",
+    "emb_sumi_moon",
+    "emb_sumi_star",
+    "bg_sato_haru",
+    "fes_haru",
+    "bg_sato_natsu",
+    "fes_natsu",
+    "bg_sato_aki",
+    "fes_aki",
+    "bg_sato_fuyu",
+    "fes_fuyu",
+    "sc_forge",
+    "sc_shop",
+    "sc_shrine",
+    "sc_bath"
   ]
 }
