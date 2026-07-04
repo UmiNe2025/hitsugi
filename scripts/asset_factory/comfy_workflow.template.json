@@ -1,0 +1,10 @@
+{
+  "_comment": "ComfyUI API形式のtxt2img雛形。run_batch_comfy.ps1 が class_type を見て値を注入する: CheckpointLoaderSimple.ckpt_name / EmptyLatentImage.width,height / KSampler.seed,steps,cfg,sampler_name,scheduler / CLIPTextEncode(text に %POSITIVE% or %NEGATIVE% を含むノード)。自前ワークフローに差し替える場合は ComfyUI の『Save (API Format)』JSONで丸ごと置換し、正プロンプト欄に %POSITIVE%、負プロンプト欄に %NEGATIVE% とだけ書いておけば同様に注入される。",
+  "4": { "class_type": "CheckpointLoaderSimple", "inputs": { "ckpt_name": "%CKPT%" } },
+  "5": { "class_type": "EmptyLatentImage", "inputs": { "width": 1024, "height": 1024, "batch_size": 1 } },
+  "6": { "class_type": "CLIPTextEncode", "inputs": { "text": "%POSITIVE%", "clip": ["4", 1] } },
+  "7": { "class_type": "CLIPTextEncode", "inputs": { "text": "%NEGATIVE%", "clip": ["4", 1] } },
+  "3": { "class_type": "KSampler", "inputs": { "seed": 0, "steps": 30, "cfg": 6.5, "sampler_name": "euler", "scheduler": "normal", "denoise": 1, "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0] } },
+  "8": { "class_type": "VAEDecode", "inputs": { "samples": ["3", 0], "vae": ["4", 2] } },
+  "9": { "class_type": "SaveImage", "inputs": { "filename_prefix": "hitsugi", "images": ["8", 0] } }
+}
