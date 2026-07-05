@@ -4,8 +4,18 @@
 // 戦利品スロット(M12-5)、台詞チャネル(M15-1土台: kind:'voice')を備える。
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import type { BattleLogEntry, Combatant } from '../core/types'
+import type { BattleLogEntry, Combatant, Element } from '../core/types'
+import { ELEMENT_LABELS, ELEMENT_ADVANTAGE } from '../core/types'
 import { currentActor } from '../core/battle'
+
+// 相性: 攻がADVANTAGEで防を突けば有利、逆なら不利
+type Matchup = 'adv' | 'dis' | 'even'
+function matchup(atk: Element | undefined, def: Element): Matchup {
+  if (!atk) return 'even'
+  if (ELEMENT_ADVANTAGE[atk] === def) return 'adv'
+  if (ELEMENT_ADVANTAGE[def] === atk) return 'dis'
+  return 'even'
+}
 import { audio } from '../core/audio'
 import { getAutoBattleDefault } from '../core/settings'
 import { skillById } from '../core/data/skills'
@@ -316,6 +326,7 @@ export function BattleScreen() {
               targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
               chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
               leader={battle.leaderKey === e.key}
+              elementBadge={{ el: e.element, adv: isPlayerTurn && actor?.isAlly ? matchup(actor.element, e.element) : 'even' }}
               onClick={() => onEnemyClick(e)}
             >
               <EnemyVisual2 e={e} />
@@ -434,7 +445,7 @@ export function BattleScreen() {
 
 // 配置スロット+演出クラスを与える共通ラッパ
 function CombatantNode({
-  c, index, fx, targetable, acting, chainBadge, leader, onClick, children,
+  c, index, fx, targetable, acting, chainBadge, leader, elementBadge, onClick, children,
 }: {
   c: Combatant
   index: number
@@ -443,6 +454,7 @@ function CombatantNode({
   acting?: boolean
   chainBadge: number
   leader?: boolean
+  elementBadge?: { el: Element; adv: Matchup }
   onClick: () => void
   children: React.ReactNode
 }) {
@@ -482,6 +494,12 @@ function CombatantNode({
       <div className="combatant-plate">
         <span className="combatant-name">
           {leader && <span className="leader-tag">長</span>}
+          {elementBadge && (
+            <span className={`el-chip el-${elementBadge.el} adv-${elementBadge.adv}`} title="属性相性">
+              {ELEMENT_LABELS[elementBadge.el]}
+              {elementBadge.adv === 'adv' ? '▲' : elementBadge.adv === 'dis' ? '▽' : ''}
+            </span>
+          )}
           {c.name}
         </span>
         <Bar value={c.hp} max={c.maxHp} kind="hp" />
