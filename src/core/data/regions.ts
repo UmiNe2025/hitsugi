@@ -9,8 +9,18 @@ export const REGIONS: Region[] = [
     bg: 'bg_forest.png',
   },
   {
+    id: 'hotarubi_no_kubochi', name: '蛍火の窪地', tier: 1, depth: 6, unlockFame: 5, bossId: 'boss_hotarubime',
+    desc: '無数の蛍火が音もなく漂う窪地。近づくと、火はまるで数を数えるように群れを乱す。',
+    bg: 'bg_forest.png',
+  },
+  {
     id: 'nureen_no_tsuji', name: '濡れ縁の辻', tier: 1, depth: 6, unlockFame: 8, bossId: 'boss_nureonna',
     desc: '雨も降らぬのに、いつも湿っている辻。踏み込むと、静かに水音がついてくる。',
+    bg: 'bg_forest.png',
+  },
+  {
+    id: 'nemurijizou_no_michi', name: '眠り地蔵の道', tier: 1, depth: 6, unlockFame: 12, bossId: 'boss_jizouoi',
+    desc: '苔むした地蔵が並ぶ古道。数えるたび、目を伏せた地蔵の数がひとつ増えている。',
     bg: 'bg_forest.png',
   },
   {
@@ -69,6 +79,16 @@ export const REGIONS: Region[] = [
     bg: 'bg_zaka.png',
   },
   {
+    id: 'kuchinawa_no_hotoke', name: '朽縄の仏道', tier: 2, depth: 8, unlockFame: 90, bossId: 'boss_kuchinawanushi',
+    desc: '朽ちた注連縄が延々と垂れる仏道。触れると縄の先が、蛇のように微かにうねる。',
+    bg: 'bg_zaka.png',
+  },
+  {
+    id: 'usugiri_no_watashiba', name: '薄霧の渡し場', tier: 2, depth: 8, unlockFame: 110, bossId: 'boss_watashimori',
+    desc: '対岸の見えぬ渡し場。舟はあれど漕ぎ手はなく、乗れば勝手に霧の奥へ進む。',
+    bg: 'bg_zaka.png',
+  },
+  {
     id: 'suzuriishi_no_saka', name: '硯石の坂', tier: 2, depth: 8, unlockFame: 120, bossId: 'boss_suzuridama',
     desc: '硯の形をした岩がいくつも転がる坂道。踏むたびに、微かに墨の匂いがする。',
     bg: 'bg_zaka.png',
@@ -89,6 +109,11 @@ export const REGIONS: Region[] = [
     bg: 'bg_tani.png',
   },
   {
+    id: 'hisui_no_sawa', name: '翡翠の沢', tier: 3, depth: 10, unlockFame: 230, bossId: 'boss_hisuinushi',
+    desc: '翡翠色に濁った沢。水面は凪いでいるのに、底の方でずっと何かが動いている。',
+    bg: 'bg_tani.png',
+  },
+  {
     id: 'kageboushi_no_oka', name: '影法師の丘', tier: 3, depth: 10, unlockFame: 240, bossId: 'boss_kageboushiosa',
     desc: '無数の影だけが行き交う丘。持ち主のいない影が、風もないのに長く伸びる。',
     bg: 'bg_tani.png',
@@ -99,13 +124,28 @@ export const REGIONS: Region[] = [
     bg: 'bg_tani.png',
   },
   {
+    id: 'nakiotoko_no_hara', name: '泣き男の原', tier: 3, depth: 10, unlockFame: 275, bossId: 'boss_nakiotoko',
+    desc: '枯野の原。夜ごと、誰のものとも知れぬ男泣きが遠く近く響き渡る。',
+    bg: 'bg_tani.png',
+  },
+  {
     id: 'kottou_zaka', name: '骨董坂', tier: 3, depth: 10, unlockFame: 290, bossId: 'boss_kottounonushi',
     desc: '誰が並べたとも知れない古道具の坂。値札の文字はどれも、既に読めなくなっている。',
     bg: 'bg_tani.png',
   },
   {
+    id: 'sabigatana_no_haka', name: '錆刀の墓', tier: 3, depth: 10, unlockFame: 305, bossId: 'boss_sabigatananomononofu',
+    desc: '無数の錆びた刀が突き立つ墓所。柄を握る手の跡だけが、今も土に残っている。',
+    bg: 'bg_tani.png',
+  },
+  {
     id: 'hyakki_yakou_no_tsuji', name: '百鬼夜行の辻', tier: 3, depth: 10, unlockFame: 320, bossId: 'boss_hyakkiyakousendatsu',
     desc: '夜ごと行列が横切るという辻。数えようとすると、必ず数え間違える。',
+    bg: 'bg_tani.png',
+  },
+  {
+    id: 'yumemaboroshi_no_yakata', name: '夢幻の館', tier: 3, depth: 10, unlockFame: 335, bossId: 'boss_yumemaboroshi',
+    desc: '入るたびに間取りが変わる館。出口を探すほど、奥へ奥へと誘われていく。',
     bg: 'bg_tani.png',
   },
   {
@@ -124,13 +164,33 @@ export const REGIONS: Region[] = [
     bg: 'bg_miyama.png',
   },
   {
+    id: 'maboroshi_no_sandou', name: '幻の参道', tier: 4, depth: 12, unlockFame: 435, bossId: 'boss_maborosendatsu',
+    desc: '御山へ続くと伝わる参道。歩けど歩けど鳥居が尽きず、振り返れば道そのものが消えている。',
+    bg: 'bg_miyama.png',
+  },
+  {
     id: 'mouja_machi', name: '亡者町', tier: 4, depth: 12, unlockFame: 460, bossId: 'boss_chouchounomukuro',
     desc: '千年前に滅んだはずの町の跡。夜ごと、誰もいない家々に灯りが点る。',
     bg: 'bg_miyama.png',
   },
   {
+    id: 'nakiryuu_no_mine', name: '泣き竜の峰', tier: 4, depth: 12, unlockFame: 475, bossId: 'boss_nakiryuu',
+    desc: '常夜に閉ざされた峰。頂近くで、龍の啼く声のような風音が絶え間なく響く。',
+    bg: 'bg_miyama.png',
+  },
+  {
     id: 'gentou_zentei', name: '玄冬前庭', tier: 4, depth: 12, unlockFame: 490, bossId: 'boss_maeburenokage',
     desc: '灯ノ御山の麓、頂への最後の庭。ここに立つと、常夜の重みがはっきりと肩にのしかかる。',
+    bg: 'bg_miyama.png',
+  },
+  {
+    id: 'todome_no_kaidan', name: '止めの階段', tier: 4, depth: 12, unlockFame: 505, bossId: 'boss_todomenomono',
+    desc: '玄冬前庭の先、頂へ最後にのぼる石段。数えた段数を、誰もが違えて記憶するという。',
+    bg: 'bg_miyama.png',
+  },
+  {
+    id: 'gentou_no_zenya', name: '玄冬の前夜', tier: 4, depth: 12, unlockFame: 515, bossId: 'boss_zenyanoutage',
+    desc: '頂上一歩手前、玄冬が最後に見せる宴の幻。灯りだけが妙に明るく、宴の主はどこにもいない。',
     bg: 'bg_miyama.png',
   },
   {
