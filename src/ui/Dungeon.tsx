@@ -60,7 +60,7 @@ function LanternRing({ pct }: { pct: number }) {
   )
 }
 
-type Confirm = { kind: 'stairs' } | { kind: 'return' } | null
+type Confirm = { kind: 'stairs' } | { kind: 'return' } | { kind: 'pause' } | null
 
 export function DungeonScreen() {
   const run = useGame((s) => s.dungeonRun)
@@ -186,6 +186,17 @@ function DungeonFloor() {
     engineRef.current?.setPaused(!!pendingEvent || confirm !== null || !!boonDraft)
   }, [pendingEvent, confirm, boonDraft])
 
+  // ESC / P で一時停止メニュー(他モーダルが開いていない時のみ)。開いていれば閉じる。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' && e.key !== 'p' && e.key !== 'P') return
+      if (pendingEvent || boonDraft) return
+      setConfirm((c) => (c === null ? { kind: 'pause' } : c.kind === 'pause' ? null : c))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pendingEvent, boonDraft])
+
   const dpad = (dir: 'up' | 'down' | 'left' | 'right', label: string) => (
     <button
       className="dpad-btn"
@@ -221,6 +232,7 @@ function DungeonFloor() {
         <span className="resource">
           奉燈<b>{run.loot.hoto}</b> 血珠<b>{run.loot.ketsu}</b>
         </span>
+        <button className="btn" onClick={() => setConfirm({ kind: 'pause' })} title="小休止(ESC)">☰ 小休止</button>
         <button className="btn btn-danger" onClick={() => setConfirm({ kind: 'return' })}>
           帰り火
         </button>
@@ -256,7 +268,18 @@ function DungeonFloor() {
       {confirm && (
         <div className="modal-back">
           <div className="modal" style={{ maxWidth: 420 }}>
-            {confirm.kind === 'stairs' ? (
+            {confirm.kind === 'pause' ? (
+              <>
+                <h2 className="panel-title" style={{ textAlign: 'center' }}>小休止</h2>
+                <p style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.8, marginBottom: 12 }}>
+                  移動: 矢印キー / 画面をタップ。<br />
+                  設定(音量・演出): 画面右上の ⚙。<br />
+                  灯が細るほど魔性は狂暴になる。深追いは禁物。
+                </p>
+                <button className="btn btn-main" onClick={() => setConfirm(null)}>探索に戻る</button>
+                <button className="btn btn-danger" onClick={() => { setConfirm({ kind: 'return' }) }}>帰り火を焚く(郷へ)</button>
+              </>
+            ) : confirm.kind === 'stairs' ? (
               <>
                 <p style={{ marginBottom: 12 }}>下り階段がある。さらに深く潜るか?(深いほど実りは多いが、夜も濃い)</p>
                 <button
