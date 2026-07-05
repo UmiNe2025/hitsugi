@@ -967,8 +967,14 @@ button {
   padding: 20px 24px;
   max-height: 60vh; overflow-y: auto;
 }
-.chron-entry { display: flex; gap: 14px; margin-bottom: 8px; font-size: 14px; }
-.chron-season { color: var(--gold); flex-shrink: 0; width: 110px; font-size: 12px; padding-top: 3px; }
+.chron-entry { display: flex; gap: 10px; margin-bottom: 8px; font-size: 14px; align-items: flex-start; }
+/* 年代記の故人・当該人物の顔絵(あれば) */
+.chron-face {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--panel-border); background: rgba(0, 0, 0, 0.4);
+}
+.chron-kind-death .chron-face { filter: grayscale(0.4) brightness(0.85); }
+.chron-season { color: var(--gold); flex-shrink: 0; width: 100px; font-size: 12px; padding-top: 6px; }
 .chron-death { color: #d8a7a0; }
 .chron-birth { color: #a9c8e8; }
 .chron-triumph { color: var(--el-star); }
@@ -1203,6 +1209,22 @@ button {
 .codex-thumb { width: 100%; height: 110px; object-fit: cover; object-position: center 25%; border-radius: 5px; margin-bottom: 6px; border: 1px solid var(--panel-border); }
 .codex-thumb-tall { height: 150px; object-position: top center; }
 .lore-banner { width: 100%; max-height: 120px; object-fit: cover; border-radius: 5px; margin-bottom: 8px; opacity: 0.9; }
+/* 鎮魂演出 — 主を鎮めた地は暖色に落ち着き、朱の封印「鎮」が捺される */
+.lore-banner-wrap { position: relative; }
+.lore-entry.pacified .lore-banner { opacity: 1; filter: saturate(0.85) brightness(0.92) sepia(0.12); }
+.lore-seal {
+  position: absolute; top: 8px; right: 8px; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #f4e7d0;
+  background: rgba(155, 40, 34, 0.82); border: 2px solid rgba(244, 231, 208, 0.85);
+  border-radius: 6px; box-shadow: 0 0 12px rgba(199, 62, 58, 0.6);
+  transform: rotate(-8deg); letter-spacing: 0; animation: sealStamp 0.5s ease both;
+}
+@keyframes sealStamp {
+  0% { transform: rotate(-8deg) scale(1.8); opacity: 0; }
+  60% { transform: rotate(-8deg) scale(0.92); opacity: 1; }
+  100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
 /* M17: 家系図ノードの顔絵チップ */
 .tree-face { width: 26px; height: 26px; object-fit: cover; object-position: top center; border-radius: 50%; border: 1px solid var(--gold); margin-right: 4px; vertical-align: middle; flex-shrink: 0; }
 

@@ -45,12 +45,16 @@ export function ChronicleScreen() {
 
       <Panel title="年代記">
         <div className="chronicle-scroll">
-          {[...data.chronicle].reverse().map((e, i) => (
-            <div key={i} className="chron-entry">
-              <span className="chron-season">{seasonLabel(e.season)}</span>
-              <span className={`chron-${e.kind}`}>{e.text}</span>
-            </div>
-          ))}
+          {[...data.chronicle].reverse().map((e, i) => {
+            const ch = e.charId ? data.family.find((c) => c.id === e.charId) : undefined
+            return (
+              <div key={i} className={`chron-entry chron-kind-${e.kind}`}>
+                {ch && <MaybeImg src={faceImg(ch)} className="chron-face" />}
+                <span className="chron-season">{seasonLabel(e.season)}</span>
+                <span className={`chron-${e.kind}`}>{e.text}</span>
+              </div>
+            )
+          })}
         </div>
       </Panel>
 

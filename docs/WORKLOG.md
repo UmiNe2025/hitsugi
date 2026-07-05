@@ -1,5 +1,16 @@
 # 作業ログ(WORKLOG) — 追記式
 
+## 2026-07-05 (中ROI仕上げ: 年代記顔絵・鎮魂演出 + push — /mission, Opus 4.8)
+
+- **やったこと**: 残る中ROI画像項目を実装しライブへpush。
+  - **① Chronicle年代記の各行に故人顔絵**: `ChronicleEntry.charId`から`data.family`を引き、`faceImg(ch)`を`chron-face`(30px円形)で行頭に配置。死亡エントリ(chron-kind-death)は grayscale で沈める。charIdなしエントリは従来通り。
+  - **② Codex土地の記の鎮魂演出**: 主討伐済(`cleared`)の地に、bannerを`lore-banner-wrap`で包み朱の封印「鎮」(`lore-seal`、`sealStamp`で捺印アニメ)を右上に配置。`lore-entry.pacified`でbannerを暖色に落ち着かせる(sepia/saturate調整)。
+- **変更ファイル**: src/ui/Chronicle.tsx / Codex.tsx / index.css
+- **検証(実プレイ証跡)**: `npx tsc -b`緑・`oxlint`0・`vite build`1.93s成功。preview_evalで —
+  - ① death charIdエントリ注入→`chron-face` src=`/img/face_homura_m_brave.jpg`実表示
+  - ② regionsCleared強制→Codex土地の記に`lore-entry.pacified`=1・`lore-seal`「鎮」=1
+  - CSS: `.chron-face`/`.lore-seal`ロード、`sealStamp`keyframe存在
+- **push**: ユーザー明示認可のもと origin/main へ push(前コミット`9180304`の中/小ROI第二弾も同時に公開)。GitHub Pages自動デプロイ。
 ## 2026-07-05 (中/小ROI画像活用 第二弾 — /mission, Opus 4.8)
 
 - **やったこと**: 前回discovery Top5後の中/小ROI画像未活用箇所を、**既存アセットの再利用**を軸に実装(工場依存ゼロ)。

@@ -63,7 +63,7 @@ export function CodexScreen() {
             const f = frags[r.id] ?? 0
             const c = cleared.has(r.id)
             return (
-              <div key={r.id} className="lore-entry">
+              <div key={r.id} className={`lore-entry ${c ? 'pacified' : ''}`}>
                 <div className="lore-head">
                   <span className="lore-name">{v ? r.name : '???'}</span>
                   <span className="lore-state">
@@ -73,7 +73,10 @@ export function CodexScreen() {
                 </div>
                 {v && (
                   <div className="lore-body">
-                    <MaybeImg src={regionBgR(r.id)} className="lore-banner" />
+                    <div className="lore-banner-wrap">
+                      <MaybeImg src={regionBgR(r.id)} className="lore-banner" />
+                      {c && <span className="lore-seal" title="主を鎮めた地">鎮</span>}
+                    </div>
                     {lore.intro.map((l, i) => <p key={`i${i}`}>{l}</p>)}
                     {f >= 1 && lore.stir.map((l, i) => <p key={`s${i}`} className="lore-stir">{l}</p>)}
                     {f >= 3 && lore.core.map((l, i) => <p key={`c${i}`} className="lore-core">{l}</p>)}
