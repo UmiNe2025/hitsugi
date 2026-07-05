@@ -400,7 +400,10 @@ export function BattleScreen() {
                       <button key={id} className="cmd-btn" disabled={actor.mp < sk.mpCost} onClick={() => castSkill(id)}>
                         <MaybeImg src={skillIcon(sk.id)} className="sk-ico" />
                         {sk.element && <span className={`el-chip el-${sk.element}`}>{ELEMENT_LABELS[sk.element]}</span>}
-                        {sk.name} <span className="mp-cost">{sk.mpCost}</span>
+                        {sk.name}
+                        {(sk.type === 'attack' || sk.type === 'heal') && <span className="sk-info">威{sk.power}</span>}
+                        {(sk.target === 'enemies' || sk.target === 'allies') && <span className="sk-info sk-aoe">全</span>}
+                        <span className="mp-cost">{sk.mpCost}</span>
                       </button>
                     )
                   })}
