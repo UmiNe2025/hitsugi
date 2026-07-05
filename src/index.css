@@ -568,13 +568,16 @@ button {
   80% { transform: translate(2px, -1px); }
   100% { transform: translate(0, 0); }
 }
-/* 勝利時 — 味方全体がひと呼吸で高揚(subtle bounce) + 背景がフラッシュ */
-.battle-stage.stage-won .ally-side .combatant-body { animation: victoryJump 0.8s ease-out; }
+/* 勝利時 — キャラの身体動作: 沈み込み(膝曲げ) → 跳躍 → 着地 → 余韻の小ジャンプ */
+.battle-stage.stage-won .ally-side .combatant-body { animation: victoryJump 1.1s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 50% 100%; }
 @keyframes victoryJump {
-  0%, 100% { transform: translateY(0) scale(1); }
-  30% { transform: translateY(-14px) scale(1.06); }
-  55% { transform: translateY(-3px) scale(1); }
-  70% { transform: translateY(-8px) scale(1.03); }
+  0% { transform: translateY(0) scaleY(1) scaleX(1); }
+  10% { transform: translateY(2px) scaleY(0.85) scaleX(1.08); }    /* 膝を曲げる沈み込み */
+  30% { transform: translateY(-18px) scaleY(1.08) scaleX(0.94); }   /* 跳躍 */
+  50% { transform: translateY(-10px) scaleY(1.02) scaleX(0.98); }
+  65% { transform: translateY(1px) scaleY(0.92) scaleX(1.04); }     /* 着地の潰れ */
+  80% { transform: translateY(-6px) scaleY(1.03) scaleX(0.99); }    /* 小ジャンプ余韻 */
+  100% { transform: translateY(0) scaleY(1) scaleX(1); }
 }
 .battle-stage.stage-won::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -626,13 +629,16 @@ button {
   right: calc(7% + (1 - var(--depth)) * 9%);
   top: calc(16% + var(--slot) * 16%);
 }
-.combatant .combatant-body { position: relative; animation: bodyBreath 3.4s ease-in-out infinite; }
+.combatant .combatant-body { position: relative; transform-origin: 50% 100%; animation: bodyBreath 3.4s ease-in-out infinite; }
 /* 味方と敵で位相をずらして群れ感を消す */
 .is-enemy .combatant-body { animation-duration: 2.9s; animation-delay: -0.7s; }
 .is-ally .combatant-body { animation-duration: 3.6s; animation-delay: -1.4s; }
+/* 呼吸を二重化: 肩上下(translateY)+胸のふくらみ(scaleY)+わずかな重心ゆれ(skewX)で
+   「絵が動く」でなく「胴体が息をしている」印象に */
 @keyframes bodyBreath {
-  0%, 100% { transform: translateY(0) scaleY(1); }
-  50% { transform: translateY(-2px) scaleY(1.012); }
+  0%, 100% { transform: translateY(0) scaleY(1) skewX(0deg); }
+  40% { transform: translateY(-2.5px) scaleY(1.018) skewX(-0.4deg); }
+  60% { transform: translateY(-3.2px) scaleY(1.024) skewX(0.4deg); }
 }
 /* 死亡・KO演出中は待機モーションを止めて、既存演出を優先 */
 .combatant.dead .combatant-body,
@@ -649,17 +655,48 @@ button {
   50% { filter: drop-shadow(0 0 14px rgba(232, 163, 61, 0.95)); }
 }
 
-/* 演出: 踏み込み/被弾/KO */
-.is-ally.fx-lunge .combatant-body { animation: lungeL 0.4s ease both; }
-.is-enemy.fx-lunge .combatant-body { animation: lungeR 0.4s ease both; }
-@keyframes lungeL { 0% { transform: translateX(0); } 35% { transform: translateX(-26px); } 100% { transform: translateX(0); } }
-@keyframes lungeR { 0% { transform: translateX(0); } 35% { transform: translateX(26px); } 100% { transform: translateX(0); } }
-.fx-hit .combatant-body { animation: hitShake 0.4s ease both; }
+/* 演出: 踏み込み/被弾/KO — キャラの身体動作として3段構成 */
+/* Lunge = 踏み込み → 前傾振り下ろし → 復帰。translateXだけでなくrotateとscaleを重ねる */
+.is-ally.fx-lunge .combatant-body { animation: lungeL 0.42s cubic-bezier(0.34, 1.2, 0.5, 1) both; }
+.is-enemy.fx-lunge .combatant-body { animation: lungeR 0.42s cubic-bezier(0.34, 1.2, 0.5, 1) both; }
+@keyframes lungeL {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  15% { transform: translate(6px, -2px) rotate(4deg) scale(1.02); }        /* タメ(後ろに引く) */
+  45% { transform: translate(-30px, -3px) rotate(-8deg) scale(1.06); }     /* 踏み込み+前傾 */
+  70% { transform: translate(-14px, 0) rotate(-4deg) scale(1.02); }         /* 振り下ろし残心 */
+  100% { transform: translate(0, 0) rotate(0deg) scale(1); }                /* 復帰 */
+}
+@keyframes lungeR {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  15% { transform: translate(-6px, -2px) rotate(-4deg) scale(1.02); }
+  45% { transform: translate(30px, -3px) rotate(8deg) scale(1.06); }
+  70% { transform: translate(14px, 0) rotate(4deg) scale(1.02); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+}
+/* Hit = 衝撃の被弾傾き。translateXだけでなく反対方向へのけぞる rotate を加える */
+.fx-hit .combatant-body { animation: hitShake 0.46s ease both; }
+.is-ally.fx-hit .combatant-body { animation: hitShakeL 0.46s ease both; }
+.is-enemy.fx-hit .combatant-body { animation: hitShakeR 0.46s ease both; }
+@keyframes hitShakeL {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); filter: none; }
+  15% { transform: translate(8px, -3px) rotate(6deg); filter: brightness(2.4) saturate(0.4); }
+  35% { transform: translate(-4px, 1px) rotate(-4deg); filter: brightness(1.6); }
+  55% { transform: translate(3px, 0) rotate(2deg); filter: brightness(1.2); }
+  75% { transform: translate(-1px, 0) rotate(-1deg); }
+}
+@keyframes hitShakeR {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); filter: none; }
+  15% { transform: translate(-8px, -3px) rotate(-6deg); filter: brightness(2.4) saturate(0.4); }
+  35% { transform: translate(4px, 1px) rotate(4deg); filter: brightness(1.6); }
+  55% { transform: translate(-3px, 0) rotate(-2deg); filter: brightness(1.2); }
+  75% { transform: translate(1px, 0) rotate(1deg); }
+}
+/* fx-hit汎用フォールバック(既存互換) */
 @keyframes hitShake {
-  0%, 100% { transform: translateX(0); filter: none; }
-  20% { transform: translateX(-5px); filter: brightness(2.4) saturate(0.4); }
-  45% { transform: translateX(4px); filter: brightness(1.7); }
-  70% { transform: translateX(-2px); }
+  0%, 100% { transform: translate(0, 0) rotate(0deg); filter: none; }
+  20% { transform: translate(-6px, -2px) rotate(-4deg); filter: brightness(2.4) saturate(0.4); }
+  45% { transform: translate(4px, 1px) rotate(3deg); filter: brightness(1.5); }
+  70% { transform: translate(-2px, 0) rotate(-1deg); }
 }
 .fx-ko .combatant-body { animation: koFade 0.8s ease both; }
 @keyframes koFade {

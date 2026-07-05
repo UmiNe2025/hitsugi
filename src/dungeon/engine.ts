@@ -465,8 +465,12 @@ export class DungeonEngine {
         this.arrive(this.px, this.py)
       }
     } else if (this.playerSprite) {
-      this.applyFacing(1)
-      // 停止時の待機モーション(呼吸bob) — 見た目に「生きている」印象を足す
+      // 停止時にも歩行3コマを緩やかに循環し「キャラが息づいてる」印象に。
+      // 歩行時は 130ms/frame の速いパターン、待機時は 720ms/frame の緩やかなパターンで frame 0→1→2→1 を巡回。
+      this.animT += dms
+      const idleFrame = [1, 0, 1, 2][Math.floor(this.animT / 720) % 4]
+      this.applyFacing(idleFrame)
+      // 呼吸bob(縦揺れ+scaleY)
       this.playerSprite.y = Math.sin(this.time / 380) * 1.4
       this.playerSprite.scale.y = this.baseScale * (1 + Math.sin(this.time / 620) * 0.02)
     }

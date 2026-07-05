@@ -762,6 +762,7 @@
   - **#16 マップクオリティ**: tufts(草)密度を**60→100**(上限=grassCellsの利用可数まで)。宵の森は草cell少ゆえ12個、他地域では最大100個まで自動増量。
   - **#17 スコープ外: oxlint / vite build**: `npx oxlint` **警告0**確認(出力なし)、`npx vite build` **2.82s成功**(bundle 1413kB/gz 429kB、chunk sizeのみnotice)。
   - **#18 変異絵promptEn 57件執筆**(スコープ外消化): sonnet委譲で `EnemyDef.promptEn` を **敵tier1〜3代表30件＋ボス26件(既存濡れ女除)=57件**に一括執筆。`grep -c promptEn: = 57` 確認、tsc緑。**残117件は次期タスク**。
+  - **#19 promptEn残件 完全消化**: BASE_ENEMIES+BOSSES(基礎種のみ、変異young/oldはspreadで自動継承のため対象外)を精査した結果、実際の未設定行は**90件**(前回見積の117件は変異込みの誤算)。`/bulk`スキルでsonnet4体並列(行レンジ排他分割23/23/22/18件)+割当漏れ2件(nurenezumi・tsuchibotaru)を本体で直接執筆し、**全90件完了**。`grep -c promptEn: = 147`(既存58+新規89、BASE_ENEMIES120種+BOSSES27体の全基礎種が設定済み)、ID重複無し確認、tsc緑。
 - **変更ファイル**: src/dungeon/engine.ts / src/ui/Battle.tsx / src/index.css / src/core/data/enemies.ts
 - **検証(実プレイ証跡)**: `npx tsc -b`緑、`oxlint`警告0、`vite build`成功2.82s。preview_evalで —
   - #13 visibleTilesX=22.2(以前18.2、+22%)、viewport800px÷TILE36=22.2一致
@@ -771,3 +772,20 @@
   - #17 lint 0行/build EXIT:0
   - #18 promptEn: 57件、tsc緑
 - **次(スコープ外)**: push・promptEn残117件・神+60/敵基礎+33/地域+12データ追加・M11自動プレイテスト再実行・GDD更新。
+
+## 2026-07-05 (キャラアニメ強化・残作業一括消化 — /mission)
+
+- **やったこと**: ユーザー要望「絵が動いてるのでなくキャラが動く/残作業を最後まで」に対し、5項目を実装＋消化(残敵+33種と地域+12はスコープ外に絞り込み)。
+  - **#19 戦闘立ち絵アニメ強化**: 呼吸を`translateY + scaleY + skewX`の三重(0/40/60%キーで肩上下→胸のふくらみ→重心ゆれ)に強化。lungeを4段化(**タメ→踏み込み+前傾8°→振り下ろし残心→復帰**、cubic-bezier)。hit時に**被弾傾き**(左右別 keyframes `hitShakeL/R`、rotate±6°+translate+filter)。victoryJumpを段階化(**膝曲げ沈み込み→跳躍-18px→着地の潰れ→小ジャンプ余韻**、cubic-bezier)。全て`transform-origin: 50% 100%`で足元を軸に。
+  - **#20 マップ待機時の歩行コマ循環**: engine.ts で停止時にも `animT` を進行し、`[1,0,1,2]`のパターンを720ms間隔で`applyFacing(idleFrame)`。歩行時の130ms/frameより緩やかで、立ち尽くしでも「息づいている」印象。
+  - **#21 変異絵promptEn 147件フルカバー**(残117件と見積もっていたが、`variantsOf()`が`...base`spreadで変異へ自動継承する仕様のため実際の未設定は基礎種90件)。sonnet4体並列(23/23/22/18行番号レンジ排他)で執筆、id重複0・desc改変0。**全147基礎種完了**。
+  - **#22 神+60追加(120→180)**: sonnet委譲でrank1+20/rank2+15/rank3+15/rank4+10の分散追加。**合計180柱・id重複0・portrait重複0・MOURNING完備・skillId 48種全て実在・unlock.regionId全て実在・tsc緑**。gods_apex.tsに`FAME_SEAL_THRESHOLD`のimport追加も自動対応。
+  - **#23 STATUS/GDD最新化＋最終ビルド**: STATUS.md冒頭にv3.1到達サマリ追記、GDD §8.4のM11チェックリストとM13画像レーンに完了マーク。**vite build 1.91s成功**(1473kB/gz448kB、神+60/promptEn追加で+60kB)。
+- **変更ファイル**: src/index.css / src/dungeon/engine.ts / src/core/data/enemies.ts / src/core/data/gods_low.ts / src/core/data/gods_mid.ts / src/core/data/gods_high.ts / src/core/data/gods_apex.ts / docs/STATUS.md / docs/GDD_v3.md
+- **検証(実プレイ証跡)**: `npx tsc -b`緑、`oxlint`警告0、`vite build`1.91s。preview_evalで —
+  - #19 期待keyframes 12種(bodyBreath/lungeL/R/hitShakeL/R/hitShake/victoryJump/koFade/stageShakeShort/lanternCritPulse/confettiFall/targetPulse)全てstyleSheetsにロード確認、味方3.6s/敵2.9sの位相ずれ動作
+  - #20 待機8秒で`idle_texture_variants_seen: 3`(3種texture循環確認)、`animT`が0→8000msに進行
+  - #21 `grep -c "promptEn:" enemies.ts = 147`(全基礎種)、tsc緑
+  - #22 神合計180、id重複0(node実測)
+- **v3.1目標到達状況**: 神180 ✅ / 装備810 ✅ / 辞世1370 ✅ / 事件270 ✅ / 敵147基礎(目標180=基礎+33が残)/ 地域28(目標40=+12が残) / 画像2107枚(工場稼働継続中)。
+- **次(残スコープ外)**: **push**(要ユーザー承認)、敵基礎+33種・地域+12(工数大)、自動プレイテスト再実行、変異絵の別PC再生成による画質検証。

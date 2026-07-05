@@ -1,4 +1,5 @@
 import type { God } from '../types'
+import { FAME_SEAL_THRESHOLD } from '../constants'
 
 // ============================================================
 // 極ツ星(rank4)増員分 — 世界の根に触れる星々(GDD_v3 §1: 最終8柱)
@@ -70,6 +71,97 @@ export const GODS_APEX: God[] = [
     portrait: 'god_owarinaki.png',
     unlock: { fame: 1800, gen: 10 },
   },
+  // ---- v3.1増員(極ツ星+10、全柱unlock付き) ----
+  {
+    id: 'kagaribi_oo', name: '大篝火の主宰', kana: 'おおかがりびのしゅさい', rank: 4, element: 'fire',
+    statBias: { str: 26, dex: 22, luk: 10 }, cost: 830, skillId: 'gs_fire4',
+    personality: '千年燃え続ける最初の火の主',
+    desc: '郷の全ての篝火の源となった、最初の火を統べる星。この火が絶えぬ限り、常夜の郷は消えぬという。「儂の火は、絶やさぬための火じゃ」',
+    pactLines: ['儂の火を継ぐ子は、決して消えぬ灯となろう。……それが、この一族への贈り物だ。', '千年、この火を守ってきた甲斐があったというもの。良い契りじゃ。'],
+    portrait: 'god_kagaribi_oo.png',
+    unlock: { regionId: 'kottou_zaka' },
+  },
+  {
+    id: 'shinkuu', name: '深空の座主', kana: 'しんくうのざす', rank: 4, element: 'star',
+    statBias: { mnd: 24, luk: 20, dex: 14 }, cost: 840, skillId: 'gs_star4',
+    personality: '星々の深奥に座す静謐な主',
+    desc: '夜空の最も深い場所に座し、全ての星の生まれと消えを見つめ続ける星。「儂の目には、玄冬すら小さく映るのじゃ」',
+    pactLines: ['深奥より見ておった。お前たちの一族が、ここまで灯を継ぐ様を。', '星の生まれと消え、その全てを見てきた儂が言おう。お前の子は、良い星になる。'],
+    portrait: 'god_shinkuu.png',
+    unlock: { regionId: 'tokoyami_no_kairou' },
+  },
+  {
+    id: 'daichinnushi', name: '大地根の主', kana: 'だいちねのぬし', rank: 4, element: 'earth',
+    statBias: { str: 22, vit: 26, mnd: 12 }, cost: 860, skillId: 'gs_earth4',
+    personality: '世界を支える大地そのものの根',
+    desc: '世界を支える大地の根そのものが姿を得た星。動かぬことこそが、世界を支える唯一の方法だと知っている。',
+    pactLines: ['大地が揺るがぬ限り、お前たちの郷も揺るがぬ。……儂が、その根であり続けよう。', 'お前の一族は、良い根を張ってきた。だからこそ、これほど深く続いておる。'],
+    portrait: 'god_daichinnushi.png',
+    unlock: { regionId: 'hakkotsu_bayashi' },
+  },
+  {
+    id: 'shiotsuchi', name: '潮満つ大巫女', kana: 'しおみつのおおみこ', rank: 4, element: 'water',
+    statBias: { vit: 22, mnd: 24, luk: 14 }, cost: 870, skillId: 'gs_water4',
+    personality: '満ち引きの全てを統べる大巫女',
+    desc: '世界中の潮の満ち引きを統べる大巫女星。海原つ司の師にあたる、より根源的な潮の力を持つ。',
+    pactLines: ['潮は満ちて、また満ちる。引くことすら、次の満ちるための支度なのだ。', 'お前たちの血潮も、私の潮の一部。……ならば、途絶えることなどあり得ぬ。'],
+    portrait: 'god_shiotsuchi.png',
+    unlock: { regionId: 'kagami_ga_fuchi' },
+  },
+  {
+    id: 'oozora_nushi', name: '大空乃主', kana: 'おおぞらのぬし', rank: 4, element: 'wind',
+    statBias: { agi: 26, str: 16, dex: 14 }, cost: 850, skillId: 'gs_wind4',
+    personality: '天空全てを統べる最古参の風の王',
+    desc: '風伯すら遠く及ばぬ、天空そのものを統べる最古の風の星。全ての風は、この主から生まれ出でるという。',
+    pactLines: ['風伯も我が子のようなもの。……お前たちの縁、天空の全てをもって祝おう。', '天のどこにいようと、我が風は届く。お前の一族が、何処にあろうとな。'],
+    portrait: 'god_oozora_nushi.png',
+    unlock: { regionId: 'hyakki_yakou_no_tsuji' },
+  },
+  {
+    id: 'tsukiyomikami', name: '月夜見の大神', kana: 'つきよみのおおかみ', rank: 4, element: 'moon',
+    statBias: { mnd: 26, dex: 18, luk: 12 }, cost: 880, skillId: 'gs_moon4',
+    personality: '夜そのものを統べる根源の神',
+    desc: '夜という概念そのものを統べる根源の星。常夜千年の全てを、生まれる前から見通していたという。',
+    pactLines: ['常夜が来る前から、我はこの郷を見ていた。……全ては、必然であったのだ。', 'お前たちの八季、その一つ一つが、我にとっては夜の一部に過ぎぬ。だが、愛おしい一部だ。'],
+    portrait: 'god_tsukiyomikami.png',
+    unlock: { fame: 480 },
+  },
+  {
+    id: 'kagayaki_hime', name: '輝夜の姫神', kana: 'かぐやのひめがみ', rank: 4, element: 'moon',
+    statBias: { dex: 24, mnd: 22, luk: 16 }, cost: 890, skillId: 'gs_moon4',
+    personality: '月へ還ることを選ばなかった姫神',
+    desc: '月へ還る道を持ちながら、この常夜の郷に残ることを選んだという伝説の姫星。「還る月より、この郷の方が、よほど美しいと思ったのよ」',
+    pactLines: ['還らぬと決めた日から、この郷が我が家。……お前たちも、我が家族も同然でしょう。', '月の光より、灯守の家の灯りの方が、よほど心に染みる。だから、契ろう。'],
+    portrait: 'god_kagayaki_hime.png',
+    unlock: { gen: 5 },
+  },
+  {
+    id: 'houraisen', name: '蓬莱仙翁', kana: 'ほうらいせんおう', rank: 4, element: 'earth',
+    statBias: { vit: 24, str: 18, mnd: 18 }, cost: 900, skillId: 'gs_earth4',
+    personality: '不老不死の島を治める仙翁',
+    desc: '常夜の彼方、不老不死と伝わる島を治める仙翁星。不老不死に飽いた末、八季で終わる命の美しさに惹かれたという。',
+    pactLines: ['不老不死に飽いた儂が言う。八季で終わるからこそ、お前たちは美しいのだ。', '儂の島には、何も終わらぬ。……だからこそ、終わるものを、儂は尊びたい。'],
+    portrait: 'god_houraisen.png',
+    unlock: { regionId: 'mouja_machi' },
+  },
+  {
+    id: 'kokuten_ou', name: '黒天王', kana: 'こくてんおう', rank: 4, element: 'fire',
+    statBias: { str: 28, dex: 20, agi: 12 }, cost: 920, skillId: 'gs_fire4',
+    personality: '玄冬にすら屈さぬ黒き炎の王',
+    desc: '玄冬に喰われかけてなお消えなかった、唯一の黒炎の王星。「儂は一度、喰われかけた。……だからこそ、消えぬ理由が分かる」',
+    pactLines: ['玄冬にすら消せなかった炎だ。お前たちの一族の灯も、そう容易くは消せまい。', '喰われかけた者にしか分からぬ強さがある。……その強さを、お前の子に授けよう。'],
+    portrait: 'god_kokuten_ou.png',
+    unlock: { regionId: 'gentou_zentei' },
+  },
+  {
+    id: 'towa_no_oya', name: '永久の親神', kana: 'とわのおやがみ', rank: 4, element: 'star',
+    statBias: { str: 18, vit: 18, dex: 18, agi: 18, mnd: 18, luk: 18 }, cost: 980, skillId: 'gs_star4',
+    personality: '全ての星神の、さらに親にあたる者',
+    desc: '天の川母神よりもさらに古く、全ての星神の親にあたるとされる星。姿を見た者は数えるほどしかいない。「わしは、始まりでもあり、続きでもある」',
+    pactLines: ['天の川の娘が、よくぞここまで血を繋いだ。……祖として、これほど誇らしいことはない。', 'お前たちの一族は、わしにとっても孫のようなもの。……末永く、契りを結ぼう。'],
+    portrait: 'god_towa_no_oya.png',
+    unlock: { fame: FAME_SEAL_THRESHOLD, gen: 12 },
+  },
 ]
 
 // 弔いの文(極ツ星増員分)
@@ -81,4 +173,14 @@ export const MOURNING_APEX: Record<string, string> = {
   shukuyou: '「あの子の頁に、最後の一行を記した。『よく生きた』——短いが、これ以上の言葉を儂は知らぬ」',
   reimei: '「あの子の分だけ、私が生まれる理由が増えた。……いつか本当に朝が来たなら、それはあの子のおかげでもある」',
   owarinaki: '「終わりではない。円環に、また一つ環が閉じただけだ。……お前たちはそれを『死』と呼ぶのだろうが、我には『継承』としか見えぬ」',
+  kagaribi_oo: '「儂の火が、一瞬だけ揺らいだ。……千年ぶりのことじゃ。それだけ、大きな灯を失ったということじゃろう」',
+  shinkuu: '「深奥から見ておった、あの子の最期を。……小さな灯だったが、玄冬より確かに輝いておったよ」',
+  daichinnushi: '「今宵、大地がわずかに震えた。……儂の根が、悲しみで少し緩んだだけじゃ。案ずるな」',
+  shiotsuchi: '「潮が、今日だけ満ちてこなかった。……いいえ、噓。満ちるのを、少し待ってあげているだけよ」',
+  oozora_nushi: '「天のどこにおろうと我が風は届く、と言うたな。……今宵は、あの子を見送る風にした」',
+  tsukiyomikami: '「常夜の全てを見通してきた我が、初めて先を見誤った。……あの子との夜が、もっと続くと思うておった」',
+  kagayaki_hime: '「還る月はまだそこにあるのに、あの子はもう還れない。……私が還らなかった理由が、少し分かった気がするわ」',
+  houraisen: '「不老不死の島に、また一つ終わる命の話を持ち帰った。……儂の宝は、いつもこうして増えていく」',
+  kokuten_ou: '「玄冬にも消えなんだ炎が、今宵はひとりでに小さくなった。……悲しみにだけは、勝てぬものらしい」',
+  towa_no_oya: '「孫のような一族が、また一人。……わしは始まりでもあり続きでもある。だから、これは終わりではない」',
 }
