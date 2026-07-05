@@ -35,6 +35,25 @@ function stableDailyIndex(title: string, lines: { speaker: string; text: string 
   return sum % 20
 }
 
+// statBias上位2ステータス(灯型/家業カードの選択材料)
+function topStatBias(bias: Partial<Record<StatKey, number>>): [StatKey, number][] {
+  return (Object.entries(bias) as [StatKey, number][])
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+}
+function StatBiasChips({ bias }: { bias: Partial<Record<StatKey, number>> }) {
+  const top = topStatBias(bias)
+  if (top.length === 0) return null
+  return (
+    <span className="card-bias">
+      {top.map(([k, v]) => (
+        <span key={k} className="bias-chip">{STAT_LABELS[k]}+{v}</span>
+      ))}
+    </span>
+  )
+}
+
 // 誕生の兆し — 神の属性ごとに、生まれた刹那の星のしるしを彩る(bornSeasonで選ぶ)。
 const BIRTH_OMENS: Record<string, string[]> = {
   fire: [
@@ -347,6 +366,7 @@ export function CeremonyScene({ charId }: { charId: string }) {
                 {t.label}({t.kana}){t.id === rec ? ' ★血潮の勧め' : ''}
               </div>
               <div className="god-person">→ 灯座「{toza.name}」{toza.title}</div>
+              <StatBiasChips bias={t.statBias} />
               <div className="god-desc">{t.desc}</div>
             </div>
           )
@@ -419,6 +439,7 @@ export function JobRiteScene({ charId }: { charId: string }) {
                     {j.name}({j.kana}){role === rec ? ' ★' : ''}
                   </div>
                   <div className="god-person">{JOB_SCHOOL_LABELS[j.school]} / {JOB_ROLE_LABELS[j.role]}</div>
+                  <StatBiasChips bias={j.statBias} />
                   <div className="god-desc">{j.desc}</div>
                 </div>
               ))}

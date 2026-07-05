@@ -988,6 +988,9 @@ button {
   padding: 20px 24px;
   max-height: 60vh; overflow-y: auto;
 }
+/* 灯型/家業カードの得意ステータス */
+.card-bias { display: inline-flex; gap: 4px; margin: 4px 0; }
+
 /* 誕生の兆し */
 .birth-omen { color: var(--gold); font-size: 14px; font-style: italic; letter-spacing: 0.05em; margin: 2px 0 10px; opacity: 0.92; }
 
