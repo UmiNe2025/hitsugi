@@ -1016,6 +1016,20 @@ button {
 .toast-region { border-color: var(--flame); color: var(--gold); }
 @keyframes toastIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
 
+/* 務め(目標階層)モーダル */
+.obj-tier { margin-bottom: 14px; }
+.obj-tier-head { font-size: 14px; color: var(--gold); letter-spacing: 0.12em; margin-bottom: 6px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; }
+.obj-row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; font-size: 13px; flex-wrap: wrap; }
+.obj-row.done { opacity: 0.6; }
+.obj-row.done .obj-text { text-decoration: line-through; }
+.obj-mark { color: var(--amber); flex-shrink: 0; }
+.obj-row.done .obj-mark { color: var(--el-star); }
+.obj-text { flex: 1; min-width: 140px; }
+.obj-prog { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.obj-bar { display: inline-block; width: 56px; height: 6px; background: rgba(11,15,30,0.8); border-radius: 3px; overflow: hidden; }
+.obj-bar-fill { display: block; height: 100%; background: var(--flame); }
+.obj-go { font-size: 12px; padding: 2px 10px; border-color: var(--flame); color: var(--gold); }
+
 /* 綴ヒントの行動導線 */
 .tsuzuri-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tsuzuri-row .tsuzuri { flex: 1; min-width: 200px; }

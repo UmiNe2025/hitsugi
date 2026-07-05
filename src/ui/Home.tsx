@@ -5,6 +5,8 @@ import type { StatKey, MottoId, Element } from '../core/types'
 import { isAdult, seasonsLeft } from '../core/inheritance'
 import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
 import { GODS } from '../core/data/gods'
+import { ENEMIES } from '../core/data/enemies'
+import { REGIONS } from '../core/data/regions'
 import { FACILITIES, FACILITY_MAX_LV, facilityCost, facilityLevel } from '../core/data/facilities'
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { GOSSIP } from '../core/data/gossip'
@@ -28,6 +30,7 @@ export function HomeScreen() {
   const [showFacilities, setShowFacilities] = useState(false)
   const [showGossip, setShowGossip] = useState(false)
   const [showFamiliars, setShowFamiliars] = useState(false)
+  const [showObjectives, setShowObjectives] = useState(false)
 
   const alive = data.family.filter((c) => c.alive)
   const adults = alive.filter((c) => isAdult(c, data.seasonIndex))
@@ -110,6 +113,7 @@ export function HomeScreen() {
 
       <div className="home-links">
         <button className="btn btn-ghost" onClick={() => setShowForge(true)}><Ico name="ic_forge" fb="🔨" /> 鍛冶と蔵</button>
+        <button className="btn btn-ghost" onClick={() => setShowObjectives(true)}>🎯 務め</button>
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="📜" /> 家譜を繰る</button>
         <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="📚" /> 図鑑</button>
         <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="🌳" /> 家系図</button>
@@ -143,6 +147,7 @@ export function HomeScreen() {
       {showFacilities && <FacilitiesModal onClose={() => setShowFacilities(false)} />}
       {showGossip && <GossipModal onClose={() => setShowGossip(false)} />}
       {showFamiliars && <FamiliarsModal onClose={() => setShowFamiliars(false)} />}
+      {showObjectives && <ObjectivesModal onClose={() => setShowObjectives(false)} />}
     </div>
   )
 }
@@ -282,6 +287,91 @@ function HelpModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
+      </div>
+    </div>
+  )
+}
+
+// ---- 務め(目標階層) — 研究の density of goals / 短期・中期・長期の重ね合わせ ----
+// 全て現在の state から純粋導出(store非改変)。新規〜中盤の「次に何を目指すか」を常に明示する。
+type Obj = { text: string; go?: 'pact' | 'depart' | 'chronicle' | 'codex'; goLabel?: string; progress?: [number, number]; done?: boolean }
+function computeObjectives(data: ReturnType<typeof useGame.getState>['data'] & object, adultCount: number): { short: Obj[]; mid: Obj[]; long: Obj[] } {
+  const alive = data.family.filter((c) => c.alive)
+  const head = alive.find((c) => c.isHead)
+  const gens = data.family.length > 0 ? Math.max(...data.family.map((c) => c.gen)) : 0
+  const baseEnemies = ENEMIES.filter((e) => !/_[wo]$/.test(e.id))
+  const enemySeen = new Set((data.codex?.enemies ?? []).map((id) => id.replace(/_[wo]$/, ''))).size
+  const bossRegions = REGIONS.filter((r) => r.bossId && r.id !== 'tokoyo_tou')
+  const clearedSet = new Set(data.regionsCleared)
+
+  // 短期(今すぐ〜この代)
+  const short: Obj[] = []
+  if (head && seasonsLeft(head, data.seasonIndex) <= 3 && data.pendingBirths.length === 0) {
+    short.push({ text: `当主 ${head.name} の灯が細い。次代を残す`, go: 'pact', goLabel: '星契りへ' })
+  }
+  if (alive.length <= 2 && data.pendingBirths.length === 0 && adultCount > 0) {
+    short.push({ text: '血が細い。星と契り、子を授かる', go: 'pact', goLabel: '星契りへ' })
+  }
+  if (adultCount > 0) short.push({ text: '夜藪へ出立し、奉燈と血珠を持ち帰る', go: 'depart', goLabel: '出立へ' })
+  if (short.length === 0) short.push({ text: '子が育つのを待ち、次の一手を練る' })
+
+  // 中期(この周回)
+  const mid: Obj[] = []
+  const nextLocked = REGIONS.filter((r) => r.unlockFame > data.fame && r.id !== 'tokoyo_tou').sort((a, b) => a.unlockFame - b.unlockFame)[0]
+  if (nextLocked) mid.push({ text: `「${nextLocked.name}」への道を開く`, progress: [data.fame, nextLocked.unlockFame], go: 'depart', goLabel: '出立へ' })
+  const nextBoss = bossRegions.filter((r) => r.unlockFame <= data.fame && !clearedSet.has(r.id)).sort((a, b) => a.tier - b.tier)[0]
+  if (nextBoss) mid.push({ text: `「${nextBoss.name}」の主を鎮める`, go: 'depart', goLabel: '出立へ' })
+  mid.push({ text: '血を継ぎ、代を重ねる', progress: [gens, 10] })
+  mid.push({ text: '魔性を見聞し、図鑑を埋める', progress: [enemySeen, baseEnemies.length], go: 'codex', goLabel: '図鑑へ' })
+
+  // 長期(千年紀)
+  const long: Obj[] = []
+  long.push({ text: '玄冬を討ち、常夜に朝を還す', done: !!data.flags.cleared })
+  long.push({ text: '全ての地の主を鎮める', progress: [data.regionsCleared.filter((id) => bossRegions.some((r) => r.id === id)).length, bossRegions.length] })
+  if (data.flags.cleared) {
+    const tower = typeof data.flags.towerBest === 'number' ? data.flags.towerBest : 0
+    long.push({ text: '常夜百層を、深く制す', progress: [tower, 100] })
+  }
+  return { short, mid, long }
+}
+
+function ObjectivesModal({ onClose }: { onClose: () => void }) {
+  const data = useGame((s) => s.data)!
+  const setScreen = useGame((s) => s.setScreen)
+  const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).length
+  const { short, mid, long } = computeObjectives(data, adults)
+  const tiers: [string, string, Obj[]][] = [
+    ['🎯', '今すぐの務め', short],
+    ['🏹', 'この代の務め', mid],
+    ['🌌', '千年紀の務め', long],
+  ]
+  const go = (id: Obj['go']) => { if (id) { onClose(); setScreen({ id }) } }
+  return (
+    <div className="modal-back" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+        <h2 className="panel-title">務め — 一族の目標</h2>
+        <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
+          今すぐ・この代・千年紀 — 三つの時の尺で、進むべき道を映す。
+        </p>
+        {tiers.map(([icon, label, objs]) => (
+          <div key={label} className="obj-tier">
+            <div className="obj-tier-head">{icon} {label}</div>
+            {objs.map((o, i) => (
+              <div key={i} className={`obj-row ${o.done ? 'done' : ''}`}>
+                <span className="obj-mark">{o.done ? '✔' : '◇'}</span>
+                <span className="obj-text">{o.text}</span>
+                {o.progress && (
+                  <span className="obj-prog">
+                    <span className="obj-bar"><span className="obj-bar-fill" style={{ width: `${Math.min(100, Math.round((o.progress[0] / Math.max(1, o.progress[1])) * 100))}%` }} /></span>
+                    {o.progress[0]}/{o.progress[1]}
+                  </span>
+                )}
+                {o.go && !o.done && <button className="btn btn-ghost obj-go" onClick={() => go(o.go)}>→ {o.goLabel}</button>}
+              </div>
+            ))}
+          </div>
+        ))}
+        <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 8 }}>閉じる</button>
       </div>
     </div>
   )
