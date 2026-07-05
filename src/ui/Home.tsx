@@ -80,7 +80,7 @@ export function HomeScreen() {
             onClick={() => setScreen({ id: 'pact' })}
           />
           <ActionCard
-            iconName="ic_festival" iconFb="🎆" title="祭 — 郷を潤す"
+            iconName={`fes_${['haru', 'natsu', 'aki', 'fuyu'][Math.floor((data.seasonIndex % 12) / 3)]}`} iconFb="🎆" title="祭 — 郷を潤す"
             desc={isFestivalMonth(data.seasonIndex)
               ? '奉燈30を捧げ、一族の傷と心労を癒す。星との縁も深まる。'
               : '祭は季の変わり目(弥生・水無月・長月・師走)だけ開ける。'}

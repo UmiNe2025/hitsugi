@@ -318,6 +318,12 @@ button {
 .god-card:hover { border-color: var(--el-star); box-shadow: 0 0 14px rgba(217, 194, 106, 0.25); }
 .god-card.selected { border-color: var(--el-star); background: rgba(217, 194, 106, 0.08); }
 .god-card.locked { opacity: 0.45; cursor: not-allowed; }
+/* 灯型・家業カードの絵柄(emb_ / job_ 系) — あれば上部に、無ければ静かに消える */
+.god-card.recommended { border-color: var(--flame); box-shadow: 0 0 12px rgba(255, 122, 70, 0.3); }
+.card-emblem {
+  display: block; width: 64px; height: 64px; margin: 0 auto 8px; object-fit: cover;
+  border-radius: 50%; border: 1px solid rgba(217, 194, 106, 0.4); background: rgba(0, 0, 0, 0.4);
+}
 .god-name { font-size: 17px; font-weight: 700; }
 .god-portrait {
   width: 100%;
@@ -425,7 +431,19 @@ button {
   border-color: rgba(217, 194, 106, 0.4); border-style: dashed;
   animation: ritualSpin 1.1s ease both reverse;
 }
-.ritual-text { font-size: 16px; color: var(--gold); letter-spacing: 4px; animation: screenIn 0.6s ease 0.3s both; }
+/* 契りのカットイン — 神の立ち絵(縁MAXなら第二立ち絵)が炎環の奥に浮かび上がる */
+.ritual-cutin {
+  position: absolute; max-height: 62vh; max-width: 40vw; object-fit: contain;
+  border-radius: 8px; opacity: 0.9; z-index: -1;
+  filter: drop-shadow(0 0 30px rgba(232, 163, 61, 0.6));
+  animation: ritualCutin 1.4s ease 0.2s both;
+}
+@keyframes ritualCutin {
+  0% { transform: scale(1.15); opacity: 0; }
+  40% { opacity: 0.95; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+.ritual-text { font-size: 16px; color: var(--gold); letter-spacing: 4px; animation: screenIn 0.6s ease 0.3s both; z-index: 1; }
 @keyframes ritualSpin {
   0% { transform: scale(0.4) rotate(0deg); opacity: 0; }
   30% { opacity: 1; }
@@ -1105,9 +1123,11 @@ button {
   display: flex; flex-direction: column; gap: 4px;
 }
 .boon-chip {
+  display: inline-flex; align-items: center; gap: 4px;
   background: rgba(11, 15, 30, 0.72); border: 1px solid rgba(217, 194, 106, 0.5);
   color: var(--el-star); border-radius: 4px; padding: 2px 8px; font-size: 11px; letter-spacing: 1px;
 }
+.boon-chip-ico { width: 16px; height: 16px; object-fit: contain; border-radius: 3px; }
 
 /* 縦長(スマホ)ではHUDを二段組に */
 @media (max-width: 560px) {

@@ -325,6 +325,7 @@ function DungeonFloor() {
         <div className="boon-strip">
           {run.boons!.map((id) => (
             <span key={id} className="boon-chip" title={boonById(id)?.desc}>
+              <MaybeImg src={uiIcon(`boon_${id}`)} className="boon-chip-ico" />
               {boonById(id)?.name?.replace('の加護', '').replace('の心得', '')}
             </span>
           ))}

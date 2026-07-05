@@ -14,7 +14,8 @@ import { MALE_NAMES, FEMALE_NAMES } from '../core/data/names'
 import { ENDINGS, FINALE_CHOICES } from '../core/data/story'
 import { clearSave } from '../core/save'
 import { downloadChronicleCard } from './shareCard'
-import { SceneBg } from './components'
+import { MaybeImg, SceneBg } from './components'
+import { gameImg } from './img'
 import './m17_scenes.css'
 
 // 章タイトル→cg_ch{n}.png の対応(CHAPTERSのtitleは固定文字列 — data/story.tsのid順と一致)
@@ -301,7 +302,8 @@ export function CeremonyScene({ charId }: { charId: string }) {
         {TOMOSHIGATA.map((t) => {
           const toza = tozaOf(t.id, char.element)
           return (
-            <div key={t.id} className="god-card" onClick={() => setChosen(t.id)}>
+            <div key={t.id} className={`god-card ${t.id === rec ? 'recommended' : ''}`} onClick={() => setChosen(t.id)}>
+              <MaybeImg src={gameImg(`emb_${t.id}_${char.element}.png`)} className="card-emblem" />
               <div className="god-name">
                 {t.label}({t.kana}){t.id === rec ? ' ★血潮の勧め' : ''}
               </div>
@@ -372,7 +374,8 @@ export function JobRiteScene({ charId }: { charId: string }) {
             </div>
             <div className="god-grid">
               {JOB_CLASSES.filter((j) => j.role === role).map((j) => (
-                <div key={j.id} className="god-card" onClick={() => setChosen(j.id)}>
+                <div key={j.id} className={`god-card ${role === rec ? 'recommended' : ''}`} onClick={() => setChosen(j.id)}>
+                  <MaybeImg src={gameImg(`job_${j.id}.png`)} className="card-emblem" />
                   <div className="god-name">
                     {j.name}({j.kana}){role === rec ? ' ★' : ''}
                   </div>
@@ -407,6 +410,7 @@ export function DreamScene() {
   const done = beat >= DREAM_BEATS.length - 1
   return (
     <div className="scene-screen screen" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
+      <SceneBg file="cg_kiro.png" />
       <h1 className="scene-title">夢渡り</h1>
       <div className="scene-body">
         {DREAM_BEATS.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (

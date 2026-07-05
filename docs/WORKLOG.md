@@ -1,5 +1,23 @@
 # 作業ログ(WORKLOG) — 追記式
 
+## 2026-07-05 (中/小ROI画像活用 第二弾 — /mission, Opus 4.8)
+
+- **やったこと**: 前回discovery Top5後の中/小ROI画像未活用箇所を、**既存アセットの再利用**を軸に実装(工場依存ゼロ)。
+  - **① Home祭カード**: `iconName`を固定`ic_festival`から季節別`fes_haru/natsu/aki/fuyu`へ(seasonIndexから算出)。既存fes_×4活用。
+  - **② 灯型選択カード(CeremonyScene)**: 各god-cardに`emb_<gata>_<element>`(既存24枚=灯型4×属性6完全一致)を`card-emblem`(64px円形)で配置。血潮の勧めは`recommended`クラスで炎縁強調。
+  - **②b 家業選択カード(JobRiteScene)**: 各god-cardに`job_<jobid>`(既存24枚=JOB_CLASSES id完全一致)を配置。
+  - **③ Pact縁MAXカットイン**: ritual-overlayに神の立ち絵(縁MAX≥5なら`god_*_max`第二立ち絵→通常立ち絵)を`ritual-cutin`(炎環奥にscale-in)で追加。
+  - **④ Dungeon HUD boon帯**: `boon-strip`の各`boon-chip`に`boon_<id>`アイコン(既存12枚)をinline-flexで追加。
+  - **⑤ その他(DreamScene背景)**: 汐里初登場の夢渡りに`cg_kiro.png`(千年の岐路、実在)を`SceneBg`で追加。
+- **変更ファイル**: src/ui/Home.tsx / Scenes.tsx / Pact.tsx / Dungeon.tsx / index.css
+- **不具合と修正**: CSSコメント内の`emb_ 」の 」/」 job_` 表記に含まれる `*` + `/` 連続がコメントを早期終了しlightningcss build失敗 → コメント文言を`emb_ / job_ 系`に修正して解消(devサーバは通るがbuildで顕在化、要build検証の教訓)。
+- **検証(実プレイ証跡)**: `npx tsc -b`緑・`oxlint`警告0・`vite build`2.63s成功。preview_evalで —
+  - ① Home祭カードicon src = `/img/fes_haru.jpg`(春=seasonIndex0)
+  - ③ Pact契り発火→`ritual-cutin` src = `/img/god_ishiusu.jpg`実表示
+  - CSS: `.card-emblem`/`.ritual-cutin`/`.boon-chip-ico`/`.god-card.recommended`全ロード、`ritualCutin`keyframe存在
+  - アセット名照合: `job_<id>`×24=JOB_CLASSES id完全一致、`emb_<gata>_<element>`×24=灯型×属性完全一致(実画像表示を保証)
+- **次(残)**: push(要ユーザー確認)。中ROIの Chronicle年代記各行face/Codex鎮魂演出は任意。
+
 ## 2026-07-05 (画像未活用箇所の徹底実装＋アクセス解析導入 — /mission)
 
 - **やったこと**: ユーザーレビュー(添付screenshot: Expedition地域選択が文字だけ)を受け、画像未活用箇所を sonnet 調査(9画面精査)→Top5全部実装。

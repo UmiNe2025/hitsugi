@@ -7,7 +7,7 @@ import type { StatKey, GodRank, Element } from '../core/types'
 import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS } from '../core/types'
 import { GODS, godUnlocked } from '../core/data/gods'
 import { isAdult, predictChild, godStatValue, pactCost } from '../core/inheritance'
-import { CharCard, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { CharCard, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, godMaxImg, HOME_BG } from './img'
 
 // 封印中の神の解放条件を一言で(unlock条件から自動生成)
@@ -209,6 +209,10 @@ export function PactScreen() {
         <div className="ritual-overlay">
           <div className="ritual-ring" />
           <div className="ritual-ring ritual-ring2" />
+          <MaybeImg
+            src={(data.godAffinity[god.id] ?? 0) >= GOD_MAX_AFFINITY ? godMaxImg(god.portrait) : gameImg(god.portrait)}
+            className="ritual-cutin"
+          />
           <p className="ritual-text">{god.name}との契り、結ばれる——</p>
         </div>
       )}
