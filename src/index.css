@@ -972,6 +972,19 @@ button {
   padding: 20px 24px;
   max-height: 60vh; overflow-y: auto;
 }
+/* 称号 — 実績バッジ */
+.titles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.title-badge {
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 10px;
+  border: 1px solid var(--panel-border); border-radius: 6px; background: rgba(11, 15, 30, 0.5);
+}
+.title-badge.earned { border-color: var(--gold); background: rgba(217, 194, 106, 0.08); }
+.title-badge.locked { opacity: 0.5; }
+.title-badge-mark { font-size: 13px; color: var(--gold); }
+.title-badge.locked .title-badge-mark { color: var(--text-dim); }
+.title-badge-name { font-size: 14px; font-weight: 700; letter-spacing: 0.05em; }
+.title-badge-hint { font-size: 10px; color: var(--text-dim); }
+
 /* 一族の記録 — 統計グリッド */
 .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .rec-cell {

@@ -43,6 +43,26 @@ function computeRecords(data: GameData) {
   }
 }
 
+// 称号 — 記録から純粋に導出(読み取り専用・コアループ非改変)。達成/未達を一覧表示。
+type RecordSummary = ReturnType<typeof computeRecords>
+const ACHIEVEMENTS: { name: string; hint: string; test: (r: RecordSummary) => boolean }[] = [
+  { name: '初めての看取り', hint: '一族の誰かを看取る', test: (r) => r.fallenN >= 1 },
+  { name: '五代の家', hint: '五代まで血を継ぐ', test: (r) => r.gens >= 5 },
+  { name: '十代の家', hint: '十代まで血を継ぐ', test: (r) => r.gens >= 10 },
+  { name: '長寿の一族', hint: '二十年を生き延びる', test: (r) => r.years >= 20 },
+  { name: '大家族', hint: '一族の総数が三十に至る', test: (r) => r.alive + r.fallenN >= 30 },
+  { name: '百の魔性を討つ', hint: '討伐数100', test: (r) => r.kills >= 100 },
+  { name: '千の魔性を討つ', hint: '討伐数1000', test: (r) => r.kills >= 1000 },
+  { name: '千年の武', hint: '武功500', test: (r) => r.fame >= 500 },
+  { name: '眷属を率いる者', hint: '眷属を六体懐かせる', test: (r) => r.familiars >= 6 },
+  { name: '常夜百層・踏破', hint: '常夜百層を制す', test: (r) => r.towerBest >= 100 },
+  { name: '常夜を鎮む', hint: '全ての地の主を鎮める', test: (r) => r.regionsCleared >= r.regionsTotal && r.regionsTotal > 0 },
+  { name: '魔性図鑑・完', hint: '全ての魔性を見る', test: (r) => r.enemySeen >= r.enemyTotal && r.enemyTotal > 0 },
+  { name: '星神図鑑・完', hint: '全ての星神を識る', test: (r) => r.godSeen >= r.godTotal && r.godTotal > 0 },
+  { name: '土地の記・完', hint: '全ての土地の記を綴る', test: (r) => r.loreDone >= r.loreTotal && r.loreTotal > 0 },
+  { name: '総べてを蒐む', hint: '総合収集率100%', test: (r) => r.collPct >= 100 },
+]
+
 export function ChronicleScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
@@ -50,6 +70,7 @@ export function ChronicleScreen() {
   const [showTree, setShowTree] = useState(false)
   const fallen = data.family.filter((c) => !c.alive)
   const rec = computeRecords(data)
+  const achieved = ACHIEVEMENTS.filter((a) => a.test(rec))
 
   return (
     <div className="screen">
@@ -70,6 +91,21 @@ export function ChronicleScreen() {
           <div className="rec-cell"><span className="rec-num">{rec.enemySeen}<small>/{rec.enemyTotal}</small></span><span className="rec-lbl">見た魔性</span></div>
           <div className="rec-cell"><span className="rec-num">{rec.godSeen}<small>/{rec.godTotal}</small></span><span className="rec-lbl">識る星神</span></div>
           <div className="rec-cell"><span className="rec-num">{rec.loreDone}<small>/{rec.loreTotal}</small></span><span className="rec-lbl">土地の記</span></div>
+        </div>
+      </Panel>
+
+      <Panel title={`称号 — ${achieved.length}/${ACHIEVEMENTS.length}`}>
+        <div className="titles-grid">
+          {ACHIEVEMENTS.map((a) => {
+            const got = a.test(rec)
+            return (
+              <div key={a.name} className={`title-badge ${got ? 'earned' : 'locked'}`} title={a.hint}>
+                <span className="title-badge-mark">{got ? '◉' : '○'}</span>
+                <span className="title-badge-name">{got ? a.name : '？？？'}</span>
+                <span className="title-badge-hint">{a.hint}</span>
+              </div>
+            )
+          })}
         </div>
       </Panel>
 
