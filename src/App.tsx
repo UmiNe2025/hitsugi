@@ -12,6 +12,7 @@ import { ChronicleScreen } from './ui/Chronicle'
 import { CodexScreen } from './ui/Codex'
 import { BirthScene, CeremonyScene, DeathScene, DreamScene, EndingScene, FinaleScene, JobRiteScene, LifeScene } from './ui/Scenes'
 import { SettingsModal } from './ui/Settings'
+import { setToastSink, emitToast, type ToastKind } from './ui/toast'
 
 // 全画面共通の設定ボタン(⚙)。音量/ミュート/演出軽減/オート既定へアクセス。
 function SettingsButton() {
@@ -24,10 +25,54 @@ function SettingsButton() {
   )
 }
 
+// トースト表示器 — emitToast()で飛んできた通知を数秒だけ積んで見せる
+let toastSeq = 1
+function Toaster() {
+  const [toasts, setToasts] = useState<{ id: number; msg: string; kind: ToastKind }[]>([])
+  useEffect(() => {
+    setToastSink((msg, kind) => {
+      const id = toastSeq++
+      setToasts((t) => [...t, { id, msg, kind }].slice(-4))
+      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200)
+    })
+    return () => setToastSink(null)
+  }, [])
+  if (toasts.length === 0) return null
+  return (
+    <div className="toast-stack">
+      {toasts.map((t) => (
+        <div key={t.id} className={`toast toast-${t.kind}`}>{t.msg}</div>
+      ))}
+    </div>
+  )
+}
+
+// 図鑑/地域の伸びを検知して獲得トーストを飛ばす(storeは触らずdataの差分のみ見る)。
+// モジュールレベルで前回値を保持しStrictModeの二重実行に強くする。
+let lastCodexEnemies = -1
+let lastCodexGods = -1
+let lastRegions = -1
+function useCollectionToasts(data: ReturnType<typeof useGame.getState>['data']) {
+  useEffect(() => {
+    if (!data) return
+    const en = data.codex?.enemies?.length ?? 0
+    const gd = data.codex?.gods?.length ?? 0
+    const rg = data.regionsCleared.length
+    if (lastCodexEnemies >= 0 && en > lastCodexEnemies) emitToast(`魔性図鑑 +${en - lastCodexEnemies}`, 'codex')
+    if (lastCodexGods >= 0 && gd > lastCodexGods) emitToast(`星神図鑑 +${gd - lastCodexGods}`, 'codex')
+    if (lastRegions >= 0 && rg > lastRegions) emitToast('新たな地の主を鎮めた', 'region')
+    lastCodexEnemies = en
+    lastCodexGods = gd
+    lastRegions = rg
+  }, [data])
+}
+
 function App() {
   const screen = useGame((s) => s.screen)
   const battleNodeId = useGame((s) => s.battleNodeId)
   const data = useGame((s) => s.data)
+
+  useCollectionToasts(data)
 
   // ボタン操作音(委譲リスナー1本)
   useEffect(() => {
@@ -121,6 +166,7 @@ function App() {
     <>
       {view}
       <SettingsButton />
+      <Toaster />
     </>
   )
 }

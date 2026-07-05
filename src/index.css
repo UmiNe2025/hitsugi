@@ -986,6 +986,20 @@ button {
   padding: 20px 24px;
   max-height: 60vh; overflow-y: auto;
 }
+/* 獲得トースト — 画面下中央に数秒 */
+.toast-stack {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 95;
+  display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none;
+}
+.toast {
+  background: rgba(11, 15, 30, 0.92); border: 1px solid var(--gold); color: var(--text);
+  border-radius: 6px; padding: 8px 18px; font-size: 13px; letter-spacing: 0.08em;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6); animation: toastIn 0.3s ease both;
+}
+.toast-codex { border-color: var(--el-star); color: var(--el-star); }
+.toast-region { border-color: var(--flame); color: var(--gold); }
+@keyframes toastIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+
 /* 綴ヒントの行動導線 */
 .tsuzuri-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tsuzuri-row .tsuzuri { flex: 1; min-width: 200px; }
