@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import { hasSave } from '../core/save'
+import { hasSave, downloadSave, importSaveString, clearSave } from '../core/save'
 import { SceneBg } from './components'
 
 // タイトル背景 — 常夜の御山と大燈籠(SVG一枚絵)
@@ -78,8 +78,20 @@ function TitleArt() {
 export function TitleScreen() {
   const newGame = useGame((s) => s.newGame)
   const continueGame = useGame((s) => s.continueGame)
-  const [mode, setMode] = useState<'normal' | 'narrative' | null>(null)
+  const [mode, setMode] = useState<'normal' | 'narrative' | 'data' | null>(null)
+  const [confirmNew, setConfirmNew] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const saveExists = hasSave()
+
+  const flash = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(null), 2600) }
+  // 「はじめから」— 既存セーブがあれば上書き確認を挟む
+  const onNewGame = () => { if (saveExists) setConfirmNew(true); else setMode('normal') }
+  const onImportFile = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = () => { flash(importSaveString(String(reader.result)) ? 'セーブを読み込んだ。「つづきから」で再開できる。' : '読み込めなかった(壊れたファイル)。') }
+    reader.readAsText(file)
+  }
 
   return (
     <div className="screen title-screen">
@@ -104,9 +116,37 @@ export function TitleScreen() {
         <p className="title-copy">八季の命を、継いでゆけ。</p>
       </div>
 
-      {mode === null ? (
+      {confirmNew ? (
         <div className="title-menu">
-          <button className="btn btn-main" onClick={() => setMode('normal')}>
+          <p className="mode-ask">既に一族の記がある。新たに始めれば、それは失われる。よいか?</p>
+          <button className="btn btn-main" onClick={() => { setConfirmNew(false); setMode('normal') }}>
+            承知の上で、始める
+          </button>
+          <button className="btn btn-ghost" onClick={() => setConfirmNew(false)}>
+            やめておく
+          </button>
+        </div>
+      ) : mode === 'data' ? (
+        <div className="title-menu">
+          <p className="mode-ask">セーブの管理</p>
+          <button className="btn" disabled={!saveExists} onClick={() => { if (!downloadSave()) flash('書き出すセーブが無い。') }}>
+            セーブを書き出す(バックアップ)
+          </button>
+          <button className="btn" onClick={() => fileRef.current?.click()}>
+            セーブを読み込む(ファイルから)
+          </button>
+          <button className="btn btn-ghost" disabled={!saveExists} onClick={() => { if (confirm('この端末のセーブを完全に消す。取り消せない。よいか?')) { clearSave(); flash('セーブを消した。'); setMode(null) } }}>
+            セーブを消す
+          </button>
+          <button className="btn btn-ghost" onClick={() => setMode(null)}>
+            戻る
+          </button>
+          <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: 'none' }}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) onImportFile(f); e.target.value = '' }} />
+        </div>
+      ) : mode === null ? (
+        <div className="title-menu">
+          <button className="btn btn-main" onClick={onNewGame}>
             はじめから
           </button>
           {saveExists && (
@@ -114,6 +154,9 @@ export function TitleScreen() {
               つづきから
             </button>
           )}
+          <button className="btn btn-ghost" onClick={() => setMode('data')}>
+            セーブの管理
+          </button>
         </div>
       ) : (
         <div className="title-menu">
@@ -129,6 +172,7 @@ export function TitleScreen() {
           </button>
         </div>
       )}
+      {notice && <p className="title-notice">{notice}</p>}
       <p className="title-ver">ver 0.1 — 燈ノ郷にて</p>
     </div>
   )

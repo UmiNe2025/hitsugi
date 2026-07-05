@@ -76,3 +76,38 @@ export function clearSave(): void {
   localStorage.removeItem(KEY_V3)
   localStorage.removeItem(KEY_V1)
 }
+
+// ---- セーブのエクスポート/インポート(データ移行・バックアップ用) ----
+
+// 現行セーブをJSONファイルとしてダウンロード。セーブが無ければfalse。
+export function downloadSave(): boolean {
+  const raw = localStorage.getItem(KEY)
+  if (!raw) return false
+  try {
+    const stamp = new Date().toISOString().slice(0, 10)
+    const blob = new Blob([raw], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `hitsugi_save_${stamp}.json`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// JSON文字列を検証してセーブへ書き込む。最低限の妥当性(family配列+seasonIndex)を確認。成功時true。
+export function importSaveString(json: string): boolean {
+  try {
+    const parsed = JSON.parse(json) as Partial<GameData>
+    if (!parsed || !Array.isArray(parsed.family) || typeof parsed.seasonIndex !== 'number') return false
+    localStorage.setItem(KEY, JSON.stringify({ ...parsed, lastPlayedAt: Date.now() }))
+    return true
+  } catch {
+    return false
+  }
+}
