@@ -460,6 +460,13 @@ button {
 .region-card:hover:not(.locked) { border-color: var(--amber); }
 .region-card.selected { border-color: var(--flame); background: rgba(232, 163, 61, 0.08); }
 .region-card.locked { opacity: 0.4; cursor: not-allowed; }
+/* 地域サムネイル(bg_r_<id>) — 各行の左端に。ロック時はやや暗く */
+.region-thumb {
+  flex-shrink: 0; width: 76px; height: 44px; border-radius: 4px; object-fit: cover;
+  border: 1px solid var(--panel-border); background: rgba(0,0,0,0.35);
+}
+.region-card.locked .region-thumb { filter: brightness(0.35) grayscale(0.6); }
+.region-body { flex: 1; min-width: 0; }
 .region-name { font-size: 17px; font-weight: 700; letter-spacing: 0.15em; }
 .region-desc { font-size: 12px; color: var(--text-dim); }
 .region-tier { color: var(--ember); font-size: 13px; flex-shrink: 0; }
@@ -951,7 +958,13 @@ button {
 .fallen-card {
   border-bottom: 1px dashed var(--panel-border);
   padding: 10px 4px;
+  display: flex; align-items: flex-start; gap: 10px;
 }
+.fallen-face {
+  flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--panel-border); background: rgba(0,0,0,0.4); filter: grayscale(0.35) brightness(0.85);
+}
+.fallen-body { flex: 1; min-width: 0; }
 .fallen-name { font-weight: 700; font-size: 16px; }
 .fallen-cause { font-size: 12px; color: var(--text-dim); margin-left: 10px; }
 .fallen-epitaph { font-size: 14px; color: var(--gold); margin-top: 4px; font-style: italic; }
@@ -1118,6 +1131,13 @@ button {
 
 /* ---- 立ち絵(ポートレート) ---- */
 .char-card-row { display: flex; gap: 12px; align-items: flex-start; }
+/* 灯座紋章(emb_<gata>_<element>) — Portrait右下に小さく重ねる */
+.char-portrait-wrap { position: relative; flex-shrink: 0; }
+.char-emb {
+  position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px;
+  border-radius: 50%; border: 1px solid var(--amber); background: rgba(0,0,0,0.7);
+  object-fit: cover; box-shadow: 0 0 4px rgba(232,163,61,0.5);
+}
 .char-card-body { flex: 1; min-width: 0; }
 .portrait {
   --pel: var(--gold);

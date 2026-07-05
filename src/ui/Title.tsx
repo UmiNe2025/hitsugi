@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGame } from '../core/store'
 import { hasSave } from '../core/save'
+import { SceneBg } from './components'
 
 // タイトル背景 — 常夜の御山と大燈籠(SVG一枚絵)
 function TitleArt() {
@@ -163,6 +164,7 @@ export function IntroScreen() {
 
   return (
     <div className="screen intro-screen" onClick={advance}>
+      <SceneBg file="cg_prologue.png" />
       <div className="intro-text">
         {INTRO_BEATS.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (
           <p key={beat - arr.length + i + 1} className={i === arr.length - 1 ? 'intro-current' : 'intro-past'}>

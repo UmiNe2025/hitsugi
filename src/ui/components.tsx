@@ -100,14 +100,14 @@ export function Ico({ name, fb, size = 20 }: { name: string; fb: string; size?: 
 }
 
 // あれば表示・なければ静かに消える汎用画像(M17)
-export function MaybeImg({ src, className, alt = '' }: { src: string; className?: string; alt?: string }) {
+export function MaybeImg({ src, className, alt = '' }: { src: string | null; className?: string; alt?: string }) {
   const [ok, setOk] = useState(true)
   const [lastSrc, setLastSrc] = useState(src)
   if (src !== lastSrc) {
     setLastSrc(src)
     setOk(true)
   }
-  if (!ok) return null
+  if (!ok || !src) return null
   return <img className={className} src={src} alt={alt} aria-hidden={alt === ''} onError={() => setOk(false)} />
 }
 
@@ -130,7 +130,15 @@ export function CharCard({
       onClick={onClick}
     >
       <div className="char-card-row">
-        <Portrait char={char} seasonIndex={seasonIndex} size={compact ? 'sm' : undefined} />
+        <div className="char-portrait-wrap">
+          <Portrait char={char} seasonIndex={seasonIndex} size={compact ? 'sm' : undefined} />
+          {char.tomoshigata && (
+            <MaybeImg
+              src={gameImg(`emb_${char.tomoshigata}_${char.element}.png`)}
+              className="char-emb"
+            />
+          )}
+        </div>
         <div className="char-card-body">
           <div className="char-head">
             <span className={`element-badge el-${char.element}`}>{ELEMENT_LABELS[char.element]}</span>

@@ -10,7 +10,7 @@ import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { GOSSIP } from '../core/data/gossip'
 import { FAMILIAR_KINDS } from '../core/data/familiars'
 import { CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
-import { gameImg, HOME_BG, itemIcon, villagerImg } from './img'
+import { gameImg, HOME_BG, HOME_BG_SEASONS, itemIcon, villagerImg } from './img'
 import { FamilyTree } from './FamilyTree'
 import './m17_home.css'
 
@@ -37,7 +37,7 @@ export function HomeScreen() {
 
   return (
     <div className="screen home-screen">
-      <NightBackdrop bg={gameImg(HOME_BG)} />
+      <NightBackdrop bg={gameImg(HOME_BG_SEASONS[Math.floor((data.seasonIndex % 12) / 3)] ?? HOME_BG)} />
 
       <header className="home-header">
         <span className="season-label">{seasonLabel(data.seasonIndex)}</span>

@@ -3,7 +3,8 @@ import { useGame } from '../core/store'
 import { seasonLabel } from '../core/types'
 import { godById } from '../core/data/gods'
 import { downloadChronicleCard, copyShareText } from './shareCard'
-import { Panel } from './components'
+import { MaybeImg, Panel } from './components'
+import { faceImg } from './img'
 import { FamilyTree } from './FamilyTree'
 
 export function ChronicleScreen() {
@@ -22,18 +23,21 @@ export function ChronicleScreen() {
           {fallen.length === 0 && <p>まだ誰も欠けていない。……それがどれほど稀有なことか。</p>}
           {fallen.map((c) => (
             <div key={c.id} className="fallen-card">
-              <span className="fallen-name">
-                {c.name}(第{c.gen}代)
-              </span>
-              <span className="fallen-cause">
-                {c.deathCause} — {godById(c.godParentId).name}の子
-              </span>
-              {c.deeds.length > 0 && (
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
-                  {c.deeds.join('。')}。討った魔性{c.kills}、夜藪行{c.expeditions}度。
-                </div>
-              )}
-              {c.epitaph && <div className="fallen-epitaph">「{c.epitaph}」</div>}
+              <MaybeImg src={faceImg(c)} className="fallen-face" />
+              <div className="fallen-body">
+                <span className="fallen-name">
+                  {c.name}(第{c.gen}代)
+                </span>
+                <span className="fallen-cause">
+                  {c.deathCause} — {godById(c.godParentId).name}の子
+                </span>
+                {c.deeds.length > 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
+                    {c.deeds.join('。')}。討った魔性{c.kills}、夜藪行{c.expeditions}度。
+                  </div>
+                )}
+                {c.epitaph && <div className="fallen-epitaph">「{c.epitaph}」</div>}
+              </div>
             </div>
           ))}
         </div>

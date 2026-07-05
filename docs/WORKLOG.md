@@ -1,5 +1,22 @@
 # 作業ログ(WORKLOG) — 追記式
 
+## 2026-07-05 (画像未活用箇所の徹底実装＋アクセス解析導入 — /mission)
+
+- **やったこと**: ユーザーレビュー(添付screenshot: Expedition地域選択が文字だけ)を受け、画像未活用箇所を sonnet 調査(9画面精査)→Top5全部実装。
+  - **① Expedition 地域選択リスト**: 各`region-card`の左端に`bg_r_<regionId>.jpg`サムネ(76×44px)を`MaybeImg`退避連鎖付きで追加。ロック時は`filter: brightness(0.35) grayscale(0.6)`で暗く。**実プレイで40地域全表示、URL `/img/bg_r_yoi_forest.jpg` 等正常**。
+  - **② Chronicle 逝きし者たち**: `.fallen-card` に故人の`face_*`顔絵(56×56 円形・grayscale 0.35)を`MaybeImg`で追加。既存の`.fallen-body`にネスト、tsc型エラー(MaybeImgのsrc: string→string|null)も同時修正。
+  - **③ IntroScreen プロローグ**: `SceneBg file="cg_prologue.png"` を追加、11ビートの冒頭語りに背景CG配置。
+  - **④ Home 季節背景**: `NightBackdrop bg=` を `HOME_BG_SEASONS[Math.floor((data.seasonIndex % 12) / 3)]` に切替、春/夏/秋/冬の4つの`bg_sato_*.jpg`(全生成済)を月に応じて自動選択。
+  - **⑤ 灯座紋章 emb_***: `CharCard`の`Portrait`右下に`emb_<gata>_<element>.jpg`(22×22円形・amber縁+glow)を`char-portrait-wrap`+絶対配置で重ねる。24枚の紋章全て活用。**実プレイで char-emb 要素存在確認**。
+- **アクセス解析導入(GoatCounter)**: 無料/Cookie不使用/GDPR配慮/静的サイト向け。index.html に `<script data-goatcounter="...">` を追加(placeholder状態)、`docs/DEPLOY.md`に手順・選定理由・代替案比較を明文化。ユーザーは goatcounter.com で無料アカウント作成→サブドメイン(例`umine2025`)を`index.html`に反映→push で稼働。
+- **promptEn +27件補完**: 前ミッションで欠落と見積もっていた敵基礎のpromptEnは**既に全180+39=219件完備**と機械確認、追加執筆不要。
+- **変更ファイル**: src/ui/Expedition.tsx / Chronicle.tsx / Title.tsx / Home.tsx / components.tsx / index.css / index.html / docs/DEPLOY.md
+- **検証(実プレイ証跡)**: `npx tsc -b`緑, `npx oxlint`警告0, `vite build`成功。preview_evalで —
+  - Expedition: `region-thumbs: 40`(全地域)、`firstThumbSrc: /img/bg_r_yoi_forest.jpg`
+  - Home: `char-emb`要素存在=**灯座紋章配置成功**
+  - Intro/Chronicle: 構造とtsc緑で確認、fallenは家族全生存で0件、実挙動は死亡発生時に自動出現
+- **次(残スコープ外)**: 中/小ROI項目(祭カードfes_*、灯型/家業選択カード=アセット未生成、Pact cutin、Dungeon HUD node_/boon_)、GoatCounter accountの実サイトコード反映(ユーザー作業)。
+
 ## 2026-07-05 (v3.1目標完全到達＋push公開 — /mission)
 
 **v3.1物量目標**: 神180 ✅ / 装備810 ✅ / 辞世1370 ✅ / 事件270+12=282 ✅ / 敵基礎180 ✅ / 地域39(除塔)＋塔=40 ✅ / 画像2107枚(工場稼働継続)。**全目標到達**。

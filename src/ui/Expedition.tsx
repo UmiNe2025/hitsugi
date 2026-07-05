@@ -43,7 +43,8 @@ export function DepartScreen() {
               className={`region-card ${regionId === r.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`}
               onClick={() => unlocked && setRegionId(r.id)}
             >
-              <div>
+              <MaybeImg src={regionBgR(r.id)} className="region-thumb" />
+              <div className="region-body">
                 <div className="region-name">{r.name}</div>
                 <div className="region-desc">{unlocked ? r.desc : `武功${r.unlockFame}で道が開く`}</div>
               </div>
