@@ -341,11 +341,22 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
   const trainStat = useGame((s) => s.trainStat)
   const forgeUpgrade = useGame((s) => s.forgeUpgrade)
   const [charId, setCharId] = useState<string | null>(null)
+  const [invSort, setInvSort] = useState<'slot' | 'atk' | 'def' | 'gen'>('slot')
 
   const alive = data.family.filter((c) => c.alive)
   const shopTier = data.regionsCleared.length
   const stock = ITEM_BASES.filter((b) => b.shopTier <= shopTier)
   const selChar = alive.find((c) => c.id === charId)
+
+  // 蔵の並べ替え(表示のみ・データ非改変)
+  const SLOT_ORDER: Record<string, number> = { weapon: 0, armor: 1, charm: 2 }
+  const sortedInv = [...data.inventory].sort((a, b) => {
+    if (invSort === 'atk') return (b.atk ?? 0) - (a.atk ?? 0)
+    if (invSort === 'def') return (b.def ?? 0) - (a.def ?? 0)
+    if (invSort === 'gen') return b.generation - a.generation
+    return (SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]) || (b.atk ?? 0) - (a.atk ?? 0)
+  })
+  const INV_SORTS: [typeof invSort, string][] = [['slot', '種別'], ['atk', '攻'], ['def', '防'], ['gen', '継承']]
 
   // 打ち直し対象(v3.1 M12-1): 蔵の品+全員の装備
   const forgeables = [
@@ -403,7 +414,17 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
           {selChar && (
             <div style={{ marginTop: 10 }}>
               {data.inventory.length === 0 && <p style={{ fontSize: 13 }}>蔵は空だ。</p>}
-              {data.inventory.map((it) => (
+              {data.inventory.length > 1 && (
+                <div className="inv-sort-row">
+                  <span className="inv-sort-lbl">並べ替え</span>
+                  {INV_SORTS.map(([key, label]) => (
+                    <button key={key} className={`btn btn-ghost inv-sort-btn ${invSort === key ? 'active' : ''}`} onClick={() => setInvSort(key)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {sortedInv.map((it) => (
                 <button key={it.id} className="btn" onClick={() => equipItem(selChar.id, it.id)}>
                   <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
                   {it.name}

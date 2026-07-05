@@ -136,7 +136,10 @@ export function BattleScreen() {
       const seMap: Partial<Record<BattleLogEntry['kind'], Parameters<typeof audio.se>[0]>> = {
         dmg: 'hit', heal: 'heal', ko: 'ko', chain: 'chain', win: 'win', lose: 'death',
       }
-      const se = seMap[entry.kind]
+      // ダメージは会心/弱点で打撃音を差別化(手応え)
+      const se = entry.kind === 'dmg'
+        ? (entry.crit ? 'critHit' : entry.weak ? 'weakHit' : 'hit')
+        : seMap[entry.kind]
       if (se) audio.se(se)
       applyFx(entry)
       setDisplayed((d) => [...d, entry])

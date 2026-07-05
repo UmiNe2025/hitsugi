@@ -707,6 +707,13 @@ button {
 .fx-hit .combatant-body { animation: hitShake 0.46s ease both; }
 .is-ally.fx-hit .combatant-body { animation: hitShakeL 0.46s ease both; }
 .is-enemy.fx-hit .combatant-body { animation: hitShakeR 0.46s ease both; }
+/* 味方が被弾した時だけ、朱の痛みフラッシュを重ねる(攻守の手応えを対称に) */
+.combatant.is-ally.fx-hit::after {
+  content: ''; position: absolute; inset: -6px; pointer-events: none; z-index: 3; border-radius: 8px;
+  background: radial-gradient(circle, rgba(199, 62, 58, 0.5), transparent 72%);
+  animation: allyHurtFlash 0.5s ease both;
+}
+@keyframes allyHurtFlash { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes hitShakeL {
   0%, 100% { transform: translate(0, 0) rotate(0deg); filter: none; }
   15% { transform: translate(8px, -3px) rotate(6deg); filter: brightness(2.4) saturate(0.4); }
@@ -972,6 +979,12 @@ button {
   padding: 20px 24px;
   max-height: 60vh; overflow-y: auto;
 }
+/* 蔵の並べ替え */
+.inv-sort-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+.inv-sort-lbl { font-size: 11px; color: var(--text-dim); }
+.inv-sort-btn { font-size: 12px; padding: 3px 10px; }
+.inv-sort-btn.active { border-color: var(--flame); color: var(--gold); }
+
 /* 称号 — 実績バッジ */
 .titles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .title-badge {

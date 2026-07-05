@@ -364,13 +364,24 @@ class AudioEngine {
   // ---- 効果音 ----
   se(kind: 'hit' | 'heal' | 'ko' | 'chain' | 'win' | 'click' | 'treasure' | 'birth' | 'death'
     | 'footstep' | 'encounter' | 'slot' | 'forge' | 'lore'
-    | 'page' | 'confirm' | 'cancel' | 'error' | 'tab'): void {
+    | 'page' | 'confirm' | 'cancel' | 'error' | 'tab'
+    | 'critHit' | 'weakHit'): void {
     if (this._muted) return
     const ctx = this.ensure()
     const at = ctx.currentTime
     switch (kind) {
       case 'hit':
         this.taikoHit(at, false)
+        break
+      case 'critHit':
+        // 会心 — 太鼓の強打＋高い箏の一撃で「効いた」感
+        this.taikoHit(at, true, 0.9)
+        this.pluck(deg(9), at + 0.02, 0.12, 0.5)
+        break
+      case 'weakHit':
+        // 弱点 — 太鼓＋澄んだ鈴で「刺さった」感
+        this.taikoHit(at, false)
+        this.bellTone(deg(11), at + 0.02, 0.14)
         break
       case 'chain':
         this.pluck(deg(5), at, 0.2, 0.5)
