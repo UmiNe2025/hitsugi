@@ -40,3 +40,26 @@
   border-radius: 6px;
   margin-bottom: 8px;
 }
+
+/* 鍛冶と蔵(ForgeModal) — 購う/装備を授ける/打ち直しの一覧をグリッド化 */
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.item-cell { display: flex; align-items: center; gap: 6px; margin: 0; padding: 8px 10px; font-size: 13px; text-align: left; justify-content: flex-start; white-space: normal; line-height: 1.4; }
+.item-price { margin-left: auto; color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
+.item-stat { color: var(--text-dim); font-size: 11px; white-space: nowrap; }
+
+/* 郷を歩く(VillageModal) — 郷人を顔カードのグリッドで並べる */
+.vil-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.vil-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 10px 8px; }
+.vil-card .vil-thumb { width: 48px; height: 48px; margin: 0 0 4px; }
+.vil-name { font-size: 13px; }
+.vil-role { font-size: 11px; color: var(--text-dim); }
+
+/* ホーム下部ナビ(home-links) — 3群(営み/記録/心得)にまとめる */
+.home-links { flex-direction: column; gap: 4px; align-items: stretch; }
+.nav-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.nav-group-label { font-size: 11px; color: var(--gold); letter-spacing: 0.3em; width: 52px; flex-shrink: 0; text-align: right; opacity: 0.8; border-right: 1px solid var(--panel-border); padding-right: 8px; margin-right: 2px; }
+.nav-group .btn { flex: 0 1 auto; min-width: 0; font-size: 13px; padding: 7px 14px; }
+
+@media (max-width: 560px) {
+  .nav-group-label { width: 100%; text-align: left; border-right: none; border-bottom: 1px solid var(--panel-border); padding: 0 0 2px; margin-bottom: 2px; }
+}

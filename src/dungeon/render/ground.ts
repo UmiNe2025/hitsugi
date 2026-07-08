@@ -44,11 +44,34 @@ export function buildGround(
   const waterPools: { x: number; y: number }[] = []
   const grassCells: { x: number; y: number }[] = []
 
-  // 1) 全面を地色で(壁はこのまま=闇に沈む)
+  // 1) 全面を地色で(奥の壁は闇に沈む)
   ground.rect(0, 0, w * tile, h * tile).fill(theme.groundBase)
 
+  const walkableAt = (x: number, y: number) => {
+    const k = grid[y]?.[x]
+    return k !== undefined && k !== 'wall' && k !== 'water'
+  }
+
+  // 1.5) 壁の立体化 — 歩行域に接する壁セルだけ薄く起こし、境界に縁光(墨絵の輪郭)。
+  // 奥(非隣接)の壁は闇のまま = 部屋の形が読めるのに空間の底は見えない、の両立。
+  const wallBody = lift(theme.groundBase, 9)
+  const wallRim = lift(theme.groundBase, 44)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y][x] !== 'wall') continue
+      const nb = [walkableAt(x, y - 1), walkableAt(x, y + 1), walkableAt(x - 1, y), walkableAt(x + 1, y)]
+      if (!nb.some(Boolean)) continue
+      ground.rect(x * tile, y * tile, tile, tile).fill(jitterColor(wallBody, theme.groundJitter, rng))
+      // 床に面した辺へ縁光(上=nb[0]…の順で 上/下/左/右)
+      if (nb[0]) ground.rect(x * tile, y * tile, tile, 2).fill({ color: wallRim, alpha: 0.42 })
+      if (nb[1]) ground.rect(x * tile, y * tile + tile - 2, tile, 2).fill({ color: wallRim, alpha: 0.5 })
+      if (nb[2]) ground.rect(x * tile, y * tile, 2, tile).fill({ color: wallRim, alpha: 0.38 })
+      if (nb[3]) ground.rect(x * tile + tile - 2, y * tile, 2, tile).fill({ color: wallRim, alpha: 0.38 })
+    }
+  }
+
   // 2) 歩行セルのトーンジッタ+小石スペックル
-  const floorTone = lift(theme.groundBase, 14)
+  const floorTone = lift(theme.groundBase, 24)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const kind = grid[y][x]
@@ -60,6 +83,8 @@ export function buildGround(
       }
       const base = kind === 'grass' ? theme.grass : floorTone
       ground.rect(x * tile, y * tile, tile, tile).fill(jitterColor(base, theme.groundJitter, rng))
+      // 目地 — セル下端に極薄の陰。ベイク一回きりなので描画コストは増えない
+      ground.rect(x * tile, y * tile + tile - 1, tile, 1).fill({ color: theme.groundBase, alpha: 0.28 })
       if (kind === 'grass') grassCells.push({ x, y })
       // 小石・土の斑(矩形=頂点4つで軽い)
       const speckles = rng.int(0, 2)

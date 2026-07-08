@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import type { NodeType } from '../core/types'
+import type { NodeType, Region } from '../core/types'
 import { REGIONS, regionById } from '../core/data/regions'
 import { eventById } from '../core/expedition'
 import { facilityLevel } from '../core/data/facilities'
@@ -10,6 +10,138 @@ import { PARTY_SIZE } from '../core/constants'
 import { Bar, CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { eventImg, gameImg, HOME_BG, regionBgR } from './img'
 import './m17_home.css'
+
+// ---- 夜行の絵巻 — 麓(燈ノ郷)から頂(玄冬の座)へ登る一本道の絵地図 ----
+// 40地域を tier 順の登り道として縦絵巻に配置する。位置は index から決定的に算出(データ非依存)。
+const MAP_W = 440
+const STEP_Y = 56
+const TIER_NAMES: Record<number, string> = { 1: '山麓', 2: '中腹', 3: '奥山', 4: '山頂' }
+
+function nodePos(i: number): { x: number; y: number } {
+  // 麓が下・頂が上。x は正弦の蛇行+小さな揺らぎ(決定的)
+  const x = 220 + Math.round(Math.sin(i * 1.9) * 84) + ((i * 37) % 24) - 12
+  return { x, y: 150 + i * STEP_Y }
+}
+
+function AscentMap({
+  regions, fame, cleared, selected, onSelect,
+}: {
+  regions: Region[]
+  fame: number
+  cleared: string[]
+  selected: string | null
+  onSelect: (id: string) => void
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const H = 150 + regions.length * STEP_Y + 130
+  // y は上下反転(配列先頭=麓=下端)
+  const posOf = (i: number) => { const p = nodePos(i); return { x: p.x, y: H - p.y } }
+
+  // 初回表示: 最前線(解禁済みの最上段)を視界の中央へ
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    let frontier = 0
+    regions.forEach((r, i) => { if (fame >= r.unlockFame) frontier = i })
+    const scale = el.clientWidth / MAP_W
+    el.scrollTop = Math.max(0, posOf(frontier).y * scale - el.clientHeight / 2)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 道: 隣接ノードを結ぶ点線(中点を制御点にした滑らかな曲線)
+  const pts = regions.map((_, i) => posOf(i))
+  const path = pts.map((p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`
+    const prev = pts[i - 1]
+    const mx = (prev.x + p.x) / 2
+    return `Q ${prev.x} ${(prev.y + p.y) / 2} ${mx} ${(prev.y + p.y) / 2} T ${p.x} ${p.y}`
+  }).join(' ')
+
+  // 帯(tier)の境界線
+  const tierBounds: { y: number; label: string }[] = []
+  regions.forEach((r, i) => {
+    if (i === 0 || r.tier !== regions[i - 1].tier) {
+      tierBounds.push({ y: posOf(i).y + STEP_Y * 0.7, label: `${TIER_NAMES[r.tier] ?? ''} ${'★'.repeat(r.tier)}` })
+    }
+  })
+
+  return (
+    <div className="ascent-wrap" ref={wrapRef}>
+      <svg className="ascent-svg" viewBox={`0 0 ${MAP_W} ${H}`} role="list" aria-label="行き先の絵地図">
+        {/* 空〜山肌のグラデ地 */}
+        <defs>
+          <linearGradient id="ascSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0a0a1c" />
+            <stop offset="45%" stopColor="#0f1630" />
+            <stop offset="100%" stopColor="#182242" />
+          </linearGradient>
+          <radialGradient id="ascLamp" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffd98a" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#e8a33d" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <rect width={MAP_W} height={H} fill="url(#ascSky)" />
+        {/* 星(高所ほど濃く) */}
+        {Array.from({ length: 70 }, (_, i) => (
+          <circle key={i} cx={(i * 167.3) % MAP_W} cy={(i * 97.7) % (H * 0.75)} r={0.5 + (i % 3) * 0.4} fill="#e9debe" opacity={0.14 + (i % 5) * 0.07} />
+        ))}
+        {/* 帯境界 */}
+        {tierBounds.map((b, i) => (
+          <g key={i}>
+            <line x1={16} x2={MAP_W - 16} y1={b.y} y2={b.y} stroke="rgba(201,168,106,0.22)" strokeDasharray="2 6" />
+            <text x={MAP_W - 20} y={b.y - 6} textAnchor="end" fontSize={11} fill="rgba(201,168,106,0.55)" letterSpacing={2}>{b.label}</text>
+          </g>
+        ))}
+        {/* 頂 — 玄冬の座 */}
+        <circle cx={220} cy={46} r={30} fill="#0d0a18" stroke="#4a3d6b" strokeWidth={1.4} opacity={0.95} />
+        <circle cx={220} cy={46} r={37} fill="none" stroke="#6b5a96" strokeWidth={0.7} opacity={0.5} />
+        <text x={220} y={100} textAnchor="middle" fontSize={11} fill="#9b8fc0" letterSpacing={4}>玄冬の座</text>
+        {/* 道 */}
+        <path d={path} fill="none" stroke="rgba(233,222,190,0.35)" strokeWidth={2} strokeDasharray="1 7" strokeLinecap="round" />
+        {/* 麓 — 燈ノ郷 */}
+        <ellipse cx={pts[0].x} cy={H - 44} rx={70} ry={26} fill="url(#ascLamp)" opacity={0.5} />
+        <text x={pts[0].x} y={H - 26} textAnchor="middle" fontSize={12} fill="var(--gold)" letterSpacing={4}>燈ノ郷</text>
+        {/* 地域ノード */}
+        {regions.map((r, i) => {
+          const p = posOf(i)
+          const unlocked = fame >= r.unlockFame
+          const isCleared = cleared.includes(r.id)
+          const isSel = selected === r.id
+          const left = p.x > 220 // ラベルは山道の外側へ
+          const tx = left ? p.x + 15 : p.x - 15
+          return (
+            <g
+              key={r.id}
+              className={`asc-node ${unlocked ? 'is-open' : 'is-locked'} ${isSel ? 'is-sel' : ''}`}
+              onClick={() => unlocked && onSelect(r.id)}
+              onKeyDown={(e) => { if (unlocked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(r.id) } }}
+              tabIndex={unlocked ? 0 : -1}
+              role="listitem"
+              aria-label={`${r.name}${unlocked ? '' : `(武功${r.unlockFame}で開通)`}${isCleared ? '・主討伐済' : ''}`}
+            >
+              {isSel && <circle cx={p.x} cy={p.y} r={15} fill="none" stroke="var(--sel)" strokeWidth={2} />}
+              {unlocked && !isCleared && <circle cx={p.x} cy={p.y} r={13} fill="url(#ascLamp)" opacity={0.55} />}
+              <circle
+                cx={p.x} cy={p.y} r={7.5}
+                fill={isCleared ? '#c9a86a' : unlocked ? '#e8a33d' : '#2a3252'}
+                stroke={unlocked ? '#efe6d4' : '#4a5378'} strokeWidth={1.2}
+              />
+              {isCleared && <text x={p.x} y={p.y + 3.4} textAnchor="middle" fontSize={9} fill="#101830" fontWeight={700}>鎮</text>}
+              <text x={tx} y={p.y + 1} textAnchor={left ? 'start' : 'end'} fontSize={12.5} letterSpacing={1}
+                fill={isSel ? 'var(--sel)' : unlocked ? '#efe6d4' : '#5d668c'} fontWeight={isSel ? 700 : 500}>
+                {r.name}
+              </text>
+              <text x={tx} y={p.y + 15} textAnchor={left ? 'start' : 'end'} fontSize={9.5}
+                fill={unlocked ? (isCleared ? 'rgba(201,168,106,0.8)' : 'var(--ember-text)') : '#5d668c'}>
+                {unlocked ? (isCleared ? '主討伐済' : r.bossId ? '★主あり' : '') : `武功${r.unlockFame}`}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
 
 export function DepartScreen() {
   const data = useGame((s) => s.data)!
@@ -29,32 +161,52 @@ export function DepartScreen() {
       <h1 className="season-label" style={{ marginBottom: 14 }}>出立 — 夜藪行</h1>
       <TsuzuriLine text="行き先と、連れて行く者を選べ。四人まで。深く潜るほど実りは多いが、灯が尽きれば常夜はお前らを喰いに来る。" />
 
-      <Panel title="行き先">
-        {facilityLevel(data.facilities, 'monomi') >= 1 && (
-          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 8 }}>
-            物見櫓の見立て — 星の数は、その地に潜む魔性の強さの目安だ。
-          </p>
-        )}
-        {REGIONS.map((r) => {
-          const unlocked = data.fame >= r.unlockFame
-          return (
-            <div
-              key={r.id}
-              className={`region-card ${regionId === r.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`}
-              onClick={() => unlocked && setRegionId(r.id)}
-            >
-              <MaybeImg src={regionBgR(r.id)} className="region-thumb" />
-              <div className="region-body">
-                <div className="region-name">{r.name}</div>
-                <div className="region-desc">{unlocked ? r.desc : `武功${r.unlockFame}で道が開く`}</div>
-              </div>
-              <div className="region-tier">
-                {'★'.repeat(r.tier)}
-                {data.regionsCleared.includes(r.id) ? ' 主討伐済' : r.bossId ? ' 主あり' : ''}
-              </div>
-            </div>
-          )
-        })}
+      <Panel title="行き先 — 夜行の絵巻">
+        <div className="depart-cols">
+          <AscentMap
+            regions={REGIONS}
+            fame={data.fame}
+            cleared={data.regionsCleared}
+            selected={regionId}
+            onSelect={setRegionId}
+          />
+          <div className="depart-side">
+            {(() => {
+              const r = regionId ? regionById(regionId) : null
+              if (!r) {
+                return (
+                  <div className="region-detail region-detail-empty">
+                    <p>絵巻から行き先を選べ。灯った印が、いま踏み込める地だ。</p>
+                    <p className="asc-legend">
+                      <span className="asc-lg"><i className="asc-dot asc-dot-open" />行ける地</span>
+                      <span className="asc-lg"><i className="asc-dot asc-dot-clear" />主討伐済</span>
+                      <span className="asc-lg"><i className="asc-dot asc-dot-lock" />未開通</span>
+                    </p>
+                    {facilityLevel(data.facilities, 'monomi') >= 1 && (
+                      <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+                        物見櫓の見立て — ★の数は、その地に潜む魔性の強さの目安だ。
+                      </p>
+                    )}
+                  </div>
+                )
+              }
+              return (
+                <div className="region-detail">
+                  <MaybeImg src={regionBgR(r.id)} className="region-detail-img" />
+                  <div className="region-detail-head">
+                    <span className="region-name">{r.name}</span>
+                    <span className="region-tier">{'★'.repeat(r.tier)}</span>
+                  </div>
+                  <p className="region-desc">{r.desc}</p>
+                  <p className="region-detail-sub">
+                    深さ{r.depth}
+                    {data.regionsCleared.includes(r.id) ? ' ・ 主討伐済(鎮)' : r.bossId ? ' ・ 主あり(未討伐)' : ''}
+                  </p>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
       </Panel>
 
       <Panel title={`隊を組む(${party.length}/${PARTY_SIZE})`}>

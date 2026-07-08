@@ -935,3 +935,4 @@
 - **次(残スコープ外)**: **push**(要ユーザー承認)、敵基礎+33種・地域+12(工数大)、自動プレイテスト再実行、変異絵の別PC再生成による画質検証。
 - 2026-07-08 /designspec: A案「墨金の家譜」デザイン仕様策定(15次元スイープ+決定的3次元ゲート合格)→ docs/DESIGNSPEC.md
 - 2026-07-08 /mission(designspec実装): A案「墨金の家譜」実装 — 選択色flame統一(9セレクタ+◆色非依存)/ember文字AA修正(--ember-text)/:focus-visible全域/prefers-reduced-motion/タッチ44px/絵文字→漢字印(Home全chrome)/Title flash→toast統一/panel綴じ目罫。code-reviewer出荷可(CRIT0 HIGH0)。
+- 2026-07-08 /instruct(UI空間化): 出立=夜行の絵巻(40地域SVG絵地図・最前線自動スクロール)/鍛冶と蔵・打ち直し・郷人=グリッド化/homeナビ3群化(営み・記録・心得)。浮遊バグ根治: bobが基準y(TILE*0.9)を0に上書き→32px浮上していた。影も足元(TILE*1.24)へ+呼吸連動。壁の縁光+床目地で地面の構造可視化。

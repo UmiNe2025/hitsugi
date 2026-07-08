@@ -79,6 +79,7 @@ export class DungeonEngine {
   private animT = 0
   private leader: { gata: string; sex: string; stage?: 'child' | 'adult' | 'elder' } = { gata: 'homura', sex: 'm' }
   private baseScale = 1
+  private baseY = TILE * 0.9 // スプライトの接地基準y。bobはこの周りで振動する(0基準だと初回tickで32px浮く)
   private shades: Shade[] = []
   private px = 1
   private py = 1
@@ -258,11 +259,13 @@ export class DungeonEngine {
     // プレイヤー — 灯型×性別の切り絵シルエット歩行スプライト(読めなければ灯印で代替)
     this.player = new Container()
     const shadowTex = this.registry.make('pshadow', (g) => {
-      g.ellipse(0, 0, 11, 4.6).fill({ color: 0x000000, alpha: 0.45 })
+      g.ellipse(0, 0, 12.5, 5).fill({ color: 0x000000, alpha: 0.5 })
     })
     this.playerShadow = new Sprite(shadowTex)
     this.playerShadow.anchor.set(0.5)
-    this.playerShadow.position.set(TILE / 2, TILE * 0.88)
+    // 影は足元に敷く(sprite: anchor(0.5,0.78)/y=TILE*0.9/height=TILE*1.6 → 接地線≈TILE*1.25)。
+    // 旧値 TILE*0.88 は足から13px浮いており「宙に浮いて見える」原因だった。
+    this.playerShadow.position.set(TILE / 2, TILE * 1.24)
     this.player.addChild(this.playerShadow)
     try {
       const base = import.meta.env.BASE_URL
@@ -284,7 +287,7 @@ export class DungeonEngine {
       sp.scale.x = sp.scale.y
       this.baseScale = sp.scale.y
       sp.x = TILE / 2
-      sp.y = TILE * 0.9
+      sp.y = this.baseY
       this.playerSprite = sp
       this.player.addChild(sp)
     } catch {
@@ -456,8 +459,9 @@ export class DungeonEngine {
         const frame = [0, 1, 2, 1][Math.floor(this.animT / 130) % 4]
         this.applyFacing(frame)
         // 歩行中は微かな縦揺れ(足取り)+ 待機bobをリセット
-        this.playerSprite.y = Math.sin(this.animT / 65) * 0.9
+        this.playerSprite.y = this.baseY + Math.sin(this.animT / 65) * 0.9
         this.playerSprite.scale.y = this.baseScale
+        this.groundShadow()
       }
       if (t >= 1) {
         this.moving = false
@@ -471,8 +475,9 @@ export class DungeonEngine {
       const idleFrame = [1, 0, 1, 2][Math.floor(this.animT / 720) % 4]
       this.applyFacing(idleFrame)
       // 呼吸bob(縦揺れ+scaleY)
-      this.playerSprite.y = Math.sin(this.time / 380) * 1.4
+      this.playerSprite.y = this.baseY + Math.sin(this.time / 380) * 1.4
       this.playerSprite.scale.y = this.baseScale * (1 + Math.sin(this.time / 620) * 0.02)
+      this.groundShadow()
     }
     // プレイヤー移動開始
     if (!this.moving && this.held.size > 0) {
@@ -575,6 +580,15 @@ export class DungeonEngine {
   setNightVision(on: boolean): void {
     this.nightVision = on
     this.minimap?.setNightVision(on ? this.nightVisionTiles : 0)
+  }
+
+  // 接地影の呼吸連動 — 身体が浮いた分だけ影を締める(接地感)
+  private groundShadow(): void {
+    if (!this.playerShadow || !this.playerSprite) return
+    const liftAmt = Math.max(0, this.baseY - this.playerSprite.y) // 基準から上に浮いた px
+    const k = Math.max(0.82, 1 - liftAmt * 0.05)
+    this.playerShadow.scale.set(k)
+    this.playerShadow.alpha = 1 - liftAmt * 0.08
   }
 
   private applyFacing(frame: number): void {

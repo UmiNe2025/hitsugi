@@ -112,31 +112,40 @@ export function HomeScreen() {
       </Panel>
 
       <div className="home-links">
-        <button className="btn btn-ghost" onClick={() => setShowForge(true)}><Ico name="ic_forge" fb="鍛" /> 鍛冶と蔵</button>
-        <button className="btn btn-ghost" onClick={() => setShowObjectives(true)}><span className="btn-mark">務</span>務め</button>
-        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="譜" /> 家譜を繰る</button>
-        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="鑑" /> 図鑑</button>
-        <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="樹" /> 家系図</button>
-        <button className="btn btn-ghost" onClick={() => setShowGossip(true)}><span className="btn-mark">声</span>郷の声</button>
-        <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="郷" /> 郷を歩く</button>
-        <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="普" /> 郷普請</button>
-        <button className="btn btn-ghost" onClick={() => setShowFamiliars(true)}><span className="btn-mark">眷</span>眷属</button>
-        <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
-          <Ico name="ic_motto" fb="訓" /> 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
-        </button>
-        {!!data.flags.cleared && (
-          <button
-            className="btn btn-ghost"
-            title="千年紀を越えた一族の試練場 — 存命の大人(先頭4名)で挑む"
-            onClick={() => {
-              const party = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).slice(0, 4)
-              if (party.length > 0) departDungeon('tokoyo_tou', party.map((c) => c.id))
-            }}
-          >
-            <Ico name="ic_tower" fb="塔" /> 常夜百層
+        <div className="nav-group">
+          <span className="nav-group-label">営み</span>
+          <button className="btn btn-ghost" onClick={() => setShowForge(true)}><Ico name="ic_forge" fb="鍛" /> 鍛冶と蔵</button>
+          <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="普" /> 郷普請</button>
+          <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="郷" /> 郷を歩く</button>
+          <button className="btn btn-ghost" onClick={() => setShowFamiliars(true)}><span className="btn-mark">眷</span>眷属</button>
+          {!!data.flags.cleared && (
+            <button
+              className="btn btn-ghost"
+              title="千年紀を越えた一族の試練場 — 存命の大人(先頭4名)で挑む"
+              onClick={() => {
+                const party = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).slice(0, 4)
+                if (party.length > 0) departDungeon('tokoyo_tou', party.map((c) => c.id))
+              }}
+            >
+              <Ico name="ic_tower" fb="塔" /> 常夜百層
+            </button>
+          )}
+        </div>
+        <div className="nav-group">
+          <span className="nav-group-label">記録</span>
+          <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="譜" /> 家譜を繰る</button>
+          <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="鑑" /> 図鑑</button>
+          <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="樹" /> 家系図</button>
+          <button className="btn btn-ghost" onClick={() => setShowGossip(true)}><span className="btn-mark">声</span>郷の声</button>
+        </div>
+        <div className="nav-group">
+          <span className="nav-group-label">心得</span>
+          <button className="btn btn-ghost" onClick={() => setShowObjectives(true)}><span className="btn-mark">務</span>務め</button>
+          <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
+            <Ico name="ic_motto" fb="訓" /> 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
           </button>
-        )}
-        <button className="btn btn-ghost" onClick={() => setShowHelp(true)}><Ico name="ic_help" fb="引" /> 手引き</button>
+          <button className="btn btn-ghost" onClick={() => setShowHelp(true)}><Ico name="ic_help" fb="引" /> 手引き</button>
+        </div>
       </div>
 
       {showMotto && <MottoModal onClose={() => setShowMotto(false)} />}
@@ -202,11 +211,12 @@ function VillageModal({ onClose }: { onClose: () => void }) {
         <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
           郷人たちは、ふつうの寿命を生きる。あなたの一族だけが、はやい。
         </p>
-        <div className="home-actions">
+        <div className="vil-grid">
           {VILLAGERS.map((v) => (
-            <button key={v.id} className="btn" onClick={() => setTalk({ id: v.id, ...villagerLine(v.id, data) })}>
+            <button key={v.id} className="btn vil-card" onClick={() => setTalk({ id: v.id, ...villagerLine(v.id, data) })}>
               <MaybeImg src={villagerImg(v.id, band)} className="vil-thumb" />
-              {v.emoji} {v.name}({v.role})
+              <span className="vil-name">{v.name}</span>
+              <span className="vil-role">({v.role})</span>
             </button>
           ))}
         </div>
@@ -473,19 +483,22 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
         <h2 className="panel-title">鍛冶と蔵 — 奉燈 {data.hoto}</h2>
 
         <Panel title="購う(あがなう)">
-          {stock.map((b) => (
-            <button
-              key={b.baseId}
-              className="btn"
-              disabled={data.hoto < b.price}
-              onClick={() => buyItem(b.baseId)}
-            >
-              <MaybeImg src={itemIcon(b.baseId)} className="it-ico" />
-              {b.name}
-              {b.atk ? ` 攻${b.atk}` : ''}
-              {b.def ? ` 防${b.def}` : ''} — {b.price}燈
-            </button>
-          ))}
+          <div className="item-grid">
+            {stock.map((b) => (
+              <button
+                key={b.baseId}
+                className="btn item-cell"
+                disabled={data.hoto < b.price}
+                onClick={() => buyItem(b.baseId)}
+              >
+                <MaybeImg src={itemIcon(b.baseId)} className="it-ico" />
+                {b.name}
+                {b.atk ? <span className="item-stat"> 攻{b.atk}</span> : ''}
+                {b.def ? <span className="item-stat"> 防{b.def}</span> : ''}
+                <span className="item-price"> — {b.price}燈</span>
+              </button>
+            ))}
+          </div>
         </Panel>
 
         <Panel title="装備を授ける">
@@ -522,15 +535,17 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
                   ))}
                 </div>
               )}
-              {sortedInv.map((it) => (
-                <button key={it.id} className="btn" onClick={() => equipItem(selChar.id, it.id)}>
-                  <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
-                  {it.name}
-                  {it.atk ? ` 攻${it.atk}` : ''}
-                  {it.def ? ` 防${it.def}` : ''}
-                  {it.legacyOf ? ` — ${it.legacyOf}の形見` : ''}
-                </button>
-              ))}
+              <div className="item-grid">
+                {sortedInv.map((it) => (
+                  <button key={it.id} className="btn item-cell" onClick={() => equipItem(selChar.id, it.id)}>
+                    <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
+                    {it.name}
+                    {it.atk ? <span className="item-stat"> 攻{it.atk}</span> : ''}
+                    {it.def ? <span className="item-stat"> 防{it.def}</span> : ''}
+                    {it.legacyOf ? ` — ${it.legacyOf}の形見` : ''}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </Panel>
@@ -540,26 +555,28 @@ function ForgeModal({ onClose }: { onClose: () => void }) {
             持てる血珠: {data.ketsu} — 打つほど強く(1代ごと基礎+12%)。遺品は銘を保ったまま深まる。上限{REFORGE_MAX}代。
           </p>
           {forgeables.length === 0 && <p style={{ fontSize: 13 }}>打てる品がない。</p>}
-          {forgeables.map(({ it, where }) => {
-            const cost = reforgeCost(it)
-            const maxed = it.generation >= REFORGE_MAX
-            return (
-              <button
-                key={it.id}
-                className="btn"
-                disabled={maxed || data.hoto < cost.hoto || data.ketsu < cost.ketsu}
-                onClick={() => forgeUpgrade(it.id)}
-                title={it.legacyOf ? `${it.legacyOf}の形見` : undefined}
-              >
-                <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
-                {it.name}
-                {it.atk ? ` 攻${it.atk}` : ''}
-                {it.def ? ` 防${it.def}` : ''}
-                <span style={{ fontSize: 11, color: 'var(--text-dim)' }}> ({where})</span>
-                {maxed ? ' — 打ち止め' : ` — ${cost.hoto}燈+珠${cost.ketsu}`}
-              </button>
-            )
-          })}
+          <div className="item-grid">
+            {forgeables.map(({ it, where }) => {
+              const cost = reforgeCost(it)
+              const maxed = it.generation >= REFORGE_MAX
+              return (
+                <button
+                  key={it.id}
+                  className="btn item-cell"
+                  disabled={maxed || data.hoto < cost.hoto || data.ketsu < cost.ketsu}
+                  onClick={() => forgeUpgrade(it.id)}
+                  title={it.legacyOf ? `${it.legacyOf}の形見` : undefined}
+                >
+                  <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
+                  {it.name}
+                  {it.atk ? <span className="item-stat"> 攻{it.atk}</span> : ''}
+                  {it.def ? <span className="item-stat"> 防{it.def}</span> : ''}
+                  <span style={{ fontSize: 11, color: 'var(--text-dim)' }}> ({where})</span>
+                  <span className="item-price">{maxed ? ' — 打ち止め' : ` — ${cost.hoto}燈+珠${cost.ketsu}`}</span>
+                </button>
+              )
+            })}
+          </div>
         </Panel>
 
         {selChar && (
