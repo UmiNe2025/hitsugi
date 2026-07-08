@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../core/store'
 import { seasonLabel, isFestivalMonth, STAT_LABELS, MOTTOS } from '../core/types'
 import type { StatKey, MottoId, Element } from '../core/types'
@@ -11,6 +11,7 @@ import { FACILITIES, FACILITY_MAX_LV, facilityCost, facilityLevel } from '../cor
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { GOSSIP } from '../core/data/gossip'
 import { FAMILIAR_KINDS } from '../core/data/familiars'
+import { todaysOdai } from '../core/data/dailyOdai'
 import { CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, HOME_BG, HOME_BG_SEASONS, itemIcon, villagerImg } from './img'
 import { FamilyTree } from './FamilyTree'
@@ -22,6 +23,8 @@ export function HomeScreen() {
   const departDungeon = useGame((s) => s.departDungeon)
   const doFestival = useGame((s) => s.doFestival)
   const doRest = useGame((s) => s.doRest)
+  const dailyVisit = useGame((s) => s.dailyVisit)
+  const [visitGift, setVisitGift] = useState<{ text: string; hoto: number; ketsu: number } | null>(null)
   const [showForge, setShowForge] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showMotto, setShowMotto] = useState(false)
@@ -38,6 +41,15 @@ export function HomeScreen() {
   const canPact = adults.length > 0 && data.hoto >= cheapestPact
   const hint = useMemo(() => tsuzuriHint(data, adults.length), [data, adults.length])
 
+  // 日参り — 郷に戻った初回(実日付が変わっていれば)綴が控えめに迎える。streakなし・煽らない。
+  // StrictModeの二重effectで2回目がnullを返しバナーを打ち消すのを、ref一度きりガードで防ぐ。
+  const visitCheckedRef = useRef(false)
+  useEffect(() => {
+    if (visitCheckedRef.current) return
+    visitCheckedRef.current = true
+    setVisitGift(dailyVisit())
+  }, [dailyVisit])
+
   return (
     <div className="screen home-screen">
       <NightBackdrop bg={gameImg(HOME_BG_SEASONS[Math.floor((data.seasonIndex % 12) / 3)] ?? HOME_BG)} />
@@ -50,6 +62,19 @@ export function HomeScreen() {
           <span className="resource"><Ico name="ic_buko" fb="功" size={18} /><span className="res-label">武功</span><b>{data.fame}</b></span>
         </div>
       </header>
+
+      {visitGift && (
+        <div className="daily-visit" onClick={() => setVisitGift(null)}>
+          <span className="daily-visit-mark">参</span>
+          <span className="daily-visit-body">
+            <b>綴</b>「{visitGift.text}」
+            <span className="daily-visit-reward">
+              日参りの授かり — 奉燈 {visitGift.hoto}{visitGift.ketsu ? ` ・ 血珠 ${visitGift.ketsu}` : ''}
+            </span>
+          </span>
+          <span className="daily-visit-close">閉じる</span>
+        </div>
+      )}
 
       <div className="tsuzuri-row">
         <TsuzuriLine text={hint.text} />
@@ -348,8 +373,18 @@ function computeObjectives(data: ReturnType<typeof useGame.getState>['data'] & o
 function ObjectivesModal({ onClose }: { onClose: () => void }) {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
+  const claimOdai = useGame((s) => s.claimOdai)
+  const [odaiDone, setOdaiDone] = useState(false)
   const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).length
   const { short, mid, long } = computeObjectives(data, adults)
+
+  // 今日の御題 — 実日付でローテ。達成済みかつ本日未受領なら褒賞を受けられる(務めの一枠)。
+  const now = new Date()
+  const odaiKey = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
+  const odai = todaysOdai(odaiKey)
+  const odaiMet = odai.check(data)
+  const odaiClaimed = data.flags.odaiClaimedDay === odaiKey || odaiDone
+  const odaiReward = [odai.reward.hoto ? `奉燈${odai.reward.hoto}` : '', odai.reward.ketsu ? `血珠${odai.reward.ketsu}` : ''].filter(Boolean).join('・')
   const tiers: [string, string, Obj[]][] = [
     ['今', '今すぐの務め', short],
     ['代', 'この代の務め', mid],
@@ -363,6 +398,21 @@ function ObjectivesModal({ onClose }: { onClose: () => void }) {
         <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
           今すぐ・この代・千年紀 — 三つの時の尺で、進むべき道を映す。
         </p>
+
+        <div className={`odai-card ${odaiMet ? 'met' : ''} ${odaiClaimed ? 'claimed' : ''}`}>
+          <div className="odai-head"><span className="odai-mark">題</span>今日の御題</div>
+          <div className="odai-text">{odai.text}</div>
+          <div className="odai-foot">
+            <span className="odai-state">
+              {odaiClaimed ? '受領済み — また明日' : odaiMet ? `達成 — 褒賞 ${odaiReward}` : `未達 — ${odai.hint}`}
+            </span>
+            {odaiMet && !odaiClaimed && (
+              <button className="btn btn-main odai-claim" onClick={() => { if (claimOdai()) setOdaiDone(true) }}>
+                褒賞を受ける
+              </button>
+            )}
+          </div>
+        </div>
         {tiers.map(([icon, label, objs]) => (
           <div key={label} className="obj-tier">
             <div className="obj-tier-head">{icon} {label}</div>

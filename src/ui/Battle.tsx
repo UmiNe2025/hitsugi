@@ -494,7 +494,10 @@ function CombatantNode({
       <div className="combatant-body">{children}</div>
       {hit && (
         <>
-          <span className={`dmg-pop ${hit.crit ? 'crit' : ''} ${hit.weak ? 'weak' : ''}`}>
+          <span
+            className={`dmg-pop ${hit.crit ? 'crit' : ''} ${hit.weak ? 'weak' : ''}`}
+            style={{ ['--dx' as string]: `${((hit.id % 7) - 3) * 8}px` }} /* 多段ヒットの数字を扇状に散らす */
+          >
             {hit.amount}
             {hit.crit ? '!' : ''}
           </span>

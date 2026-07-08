@@ -5,6 +5,7 @@ import type {
 import type { BattleAction } from './battle'
 import { LIFESPAN_MONTHS, seasonLabel, isFestivalMonth } from './types'
 import { Rng } from './rng'
+import { todaysOdai } from './data/dailyOdai'
 import { GODS, godById } from './data/gods'
 import { regionById } from './data/regions'
 import { enemyById } from './data/enemies'
@@ -65,6 +66,10 @@ interface GameStore {
   newGame: (narrativeMode: boolean) => void
   newLegacyGame: () => void // 継承新周回 — 形見一つと血の濃さを持ち越す
   continueGame: () => boolean
+  // 日参り(ひまいり) — 実日付が変われば、綴が控えめな授かりで迎える。streakなし・途切れる概念なし。
+  dailyVisit: () => { text: string; hoto: number; ketsu: number } | null
+  // 今日の御題 — 達成済みなら一日一度、褒賞を受ける(「務め」の一枠)。付与できたら報酬を返す。
+  claimOdai: () => { hoto: number; ketsu: number } | null
   setScreen: (s: Screen) => void
   processNextScene: () => void
 
@@ -580,6 +585,52 @@ export const useGame = create<GameStore>((set, get) => {
       return true
     },
 
+    // 日参り — 実日付が前回と変われば一度だけ授かる。経過時間でなく「日が変わったか」だけを見る(streakなし)。
+    // 端末時計を巻き戻せば再付与されうるが、単機ゆえ実害なし(留守番内職と同じ割り切り)。
+    dailyVisit: () => {
+      const d = get().data
+      if (!d) return null
+      const now = new Date()
+      const key = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
+      if (d.flags.dailyVisitDay === key) return null // 同日は再付与しない
+      const hoto = 12 + (key % 9) // 12〜20(日替わりで少しだけ変わる)
+      const ketsu = key % 3 === 0 ? 1 : 0 // 三日に一度ほど血珠も添える
+      const lines = [
+        'よう戻られた。夜は変わらず、家は息災だ。',
+        '久しいな。灯は絶やしておらん。……ほれ、今日の分だ。',
+        'おかえり。焦ることはない。家譜は、あんたの歩幅で綴る。',
+        'また会えたな。郷の者が、留守を守っておったよ。',
+      ]
+      const text = lines[key % lines.length]
+      let nd: GameData = { ...d, hoto: d.hoto + hoto, ketsu: d.ketsu + ketsu, flags: { ...d.flags, dailyVisitDay: key } }
+      nd = chronicle(nd, 'event', `綴、筆を置いて迎える。「${text}」——日参りの授かり、奉燈${hoto}${ketsu ? `・血珠${ketsu}` : ''}。`)
+      set({ data: nd })
+      saveGame(nd)
+      return { text, hoto, ketsu }
+    },
+
+    // 今日の御題の褒賞を受ける。達成済み(check真)かつ本日未受領のときだけ付与する。
+    claimOdai: () => {
+      const d = get().data
+      if (!d) return null
+      const now = new Date()
+      const key = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
+      if (d.flags.odaiClaimedDay === key) return null // 本日受領済み
+      const odai = todaysOdai(key)
+      if (!odai.check(d)) return null // 未達
+      let nd: GameData = {
+        ...d,
+        hoto: d.hoto + odai.reward.hoto,
+        ketsu: d.ketsu + odai.reward.ketsu,
+        flags: { ...d.flags, odaiClaimedDay: key },
+      }
+      const reward = [odai.reward.hoto ? `奉燈${odai.reward.hoto}` : '', odai.reward.ketsu ? `血珠${odai.reward.ketsu}` : ''].filter(Boolean).join('・')
+      nd = chronicle(nd, 'event', `今日の御題「${odai.text}」を果たし、褒賞を受けた——${reward}。`)
+      set({ data: nd })
+      saveGame(nd)
+      return { hoto: odai.reward.hoto, ketsu: odai.reward.ketsu }
+    },
+
     setScreen: (s) => set({ screen: s }),
 
     processNextScene: () => {
@@ -626,6 +677,20 @@ export const useGame = create<GameStore>((set, get) => {
         }
         const parent = d.family.find((c) => c.id === parentId)
         nd = chronicle(nd, 'pact', `${parent?.name}、${god.name}と星契りを結ぶ。`)
+        // 御籤 — 星契りの折、稀に神託の籤が下る。独立ガチャにはせず、契りの副産物に留める(A案)。
+        const rng = get().rng
+        if (rng.chance(0.18)) {
+          const roll = rng.next()
+          let omHoto = 0
+          let omKetsu = 0
+          let kuji = ''
+          if (roll < 0.5) { omHoto = 8 + rng.int(0, 8); kuji = '小吉 — 奉燈の授かり' }
+          else if (roll < 0.85) { omKetsu = 1 + rng.int(0, 1); kuji = '中吉 — 血珠の授かり' }
+          else { omHoto = 20 + rng.int(0, 12); omKetsu = 1; kuji = '大吉 — 星の恵み篤し' }
+          const reward = [omHoto ? `奉燈${omHoto}` : '', omKetsu ? `血珠${omKetsu}` : ''].filter(Boolean).join('・')
+          nd = { ...nd, hoto: nd.hoto + omHoto, ketsu: nd.ketsu + omKetsu }
+          nd = chronicle(nd, 'event', `星契りの折、神託の籤が下った。【${kuji}】——${reward}。`)
+        }
         return nd
       })
       advanceSeason()
