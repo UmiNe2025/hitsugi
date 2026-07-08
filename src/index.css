@@ -20,6 +20,15 @@
   --el-earth: #b08d57;
   --el-moon: #9b7fc2;
   --el-star: #d9c26a;
+  /* A案「墨金の家譜」トークン(designspec 2026-07-08) */
+  --ember-text: #e0655c; /* --ember(#c73e3a)は文字だと3.50でAA未達。文字色専用に格上げ(5.17) */
+  --sel: var(--flame); /* 選択・アクティブの統一色(旧: 画面ごとにgold/amber/el-starが混在) */
+  --sel-bg: rgba(255, 157, 69, 0.12);
+  --sel-glow: rgba(255, 157, 69, 0.3);
+  /* 明朝3段階(remトークン。本文サイズは実機検証を確定条件=[仮説]) */
+  --fs-title: 1.3125rem; /* 21px */
+  --fs-sub: 1rem;        /* 16px */
+  --fs-body: 0.90625rem; /* 14.5px */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,16 +72,17 @@ button {
 .panel {
   background: var(--panel);
   border: 1px solid var(--panel-border);
+  border-left: 3px solid rgba(201, 168, 106, 0.5); /* 綴じ目 — 一冊の書物の背 */
   border-radius: 6px;
   padding: 14px 16px;
   margin-bottom: 14px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 .panel-title {
-  font-size: 15px;
+  font-size: var(--fs-sub);
   letter-spacing: 0.35em;
-  color: var(--gold);
-  border-bottom: 1px solid var(--panel-border);
+  color: var(--gold); /* 金は見出し・当主・確定に限定(A案) */
+  border-bottom: 1px solid rgba(201, 168, 106, 0.4); /* 見出しの一本罫 */
   padding-bottom: 6px;
   margin-bottom: 10px;
   font-weight: 600;
@@ -155,11 +165,6 @@ button {
 .title-menu { margin-top: 44px; display: flex; flex-direction: column; gap: 6px; min-width: 300px; z-index: 2; }
 .mode-ask { color: var(--gold); letter-spacing: 0.2em; margin-bottom: 8px; }
 .title-ver { position: absolute; bottom: 14px; color: var(--text-dim); font-size: 12px; letter-spacing: 0.2em; }
-.title-notice {
-  position: relative; z-index: 2; margin-top: 14px; color: var(--gold); font-size: 13px;
-  letter-spacing: 0.1em; background: rgba(11, 15, 30, 0.8); border: 1px solid rgba(217, 194, 106, 0.4);
-  border-radius: 4px; padding: 7px 14px; animation: screenIn 0.3s ease both;
-}
 
 .embers { position: absolute; inset: 0; pointer-events: none; }
 .ember {
@@ -225,7 +230,7 @@ button {
 }
 .char-card.clickable { cursor: pointer; }
 .char-card.clickable:hover { border-color: var(--amber); box-shadow: 0 0 12px rgba(232, 163, 61, 0.2); }
-.char-card.selected { border-color: var(--flame); background: rgba(232, 163, 61, 0.1); box-shadow: 0 0 16px rgba(232, 163, 61, 0.3); }
+.char-card.selected { border-color: var(--sel); border-width: 2px; background: var(--sel-bg); box-shadow: 0 0 16px var(--sel-glow); }
 .char-card.child { opacity: 0.8; }
 .char-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .char-name { font-size: 17px; font-weight: 700; letter-spacing: 0.1em; }
@@ -310,7 +315,7 @@ button {
 .god-filter { margin-bottom: 12px; }
 .god-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
 .filter-tab { padding: 5px 14px; font-size: 13px; }
-.filter-tab.active { border-color: var(--amber); color: var(--amber); background: rgba(232, 163, 61, 0.12); }
+.filter-tab.active { border-color: var(--sel); border-width: 2px; color: var(--sel); background: var(--sel-bg); }
 .elem-chip { cursor: pointer; opacity: 0.5; transition: all 0.15s; border: 1px solid transparent; }
 .elem-chip:hover { opacity: 0.85; }
 .elem-chip.active { opacity: 1; border-color: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.35); }
@@ -321,7 +326,7 @@ button {
   background: rgba(10, 14, 30, 0.7);
 }
 .god-card:hover { border-color: var(--el-star); box-shadow: 0 0 14px rgba(217, 194, 106, 0.25); }
-.god-card.selected { border-color: var(--el-star); background: rgba(217, 194, 106, 0.08); }
+.god-card.selected { border-color: var(--sel); border-width: 2px; background: var(--sel-bg); }
 .god-card.locked { opacity: 0.45; cursor: not-allowed; }
 /* 灯型・家業カードの絵柄(emb_ / job_ 系) — あれば上部に、無ければ静かに消える */
 .god-card.recommended { border-color: var(--flame); box-shadow: 0 0 12px rgba(255, 122, 70, 0.3); }
@@ -370,7 +375,7 @@ button {
   font-size: 14px; transition: background 0.12s;
 }
 .god-row:hover { background: rgba(232, 163, 61, 0.08); }
-.god-row.selected { background: rgba(232, 163, 61, 0.16); box-shadow: inset 3px 0 0 var(--amber); }
+.god-row.selected { background: var(--sel-bg); box-shadow: inset 3px 0 0 var(--sel); }
 .god-row.locked { opacity: 0.4; cursor: not-allowed; }
 .god-row-el { width: 34px; flex-shrink: 0; text-align: center; }
 .god-row-name { flex: 1; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -384,7 +389,11 @@ button {
   font-size: 10px; padding: 0 4px; border-radius: 3px; letter-spacing: 0;
   background: rgba(120, 150, 90, 0.22); color: #cfe0a8; border: 1px solid rgba(160, 200, 120, 0.3);
 }
-@media (max-width: 560px) { .god-row-bias { display: none; } }
+/* モバイルでも神の得意ステータス(比較材料)は消さず、略記で残す */
+@media (max-width: 560px) {
+  .god-row-bias { gap: 2px; flex-wrap: wrap; max-width: 88px; }
+  .bias-chip { font-size: 9px; padding: 0 2px; }
+}
 
 .god-stage { min-height: 320px; }
 .god-stage-empty {
@@ -472,7 +481,7 @@ button {
 }
 .naming-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 12px rgba(232, 163, 61, 0.35); }
 .naming-candidates { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
-.naming-pick.active { color: var(--amber); border-color: var(--amber); }
+.naming-pick.active { color: var(--sel); border-color: var(--sel); border-width: 2px; }
 
 @media (max-width: 640px) {
   .pact-main { grid-template-columns: 1fr; }
@@ -488,7 +497,7 @@ button {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
 }
 .region-card:hover:not(.locked) { border-color: var(--amber); }
-.region-card.selected { border-color: var(--flame); background: rgba(232, 163, 61, 0.08); }
+.region-card.selected { border-color: var(--sel); border-width: 2px; background: var(--sel-bg); }
 .region-card.locked { opacity: 0.4; cursor: not-allowed; }
 /* 地域サムネイル(bg_r_<id>) — 各行の左端に。ロック時はやや暗く */
 .region-thumb {
@@ -499,7 +508,7 @@ button {
 .region-body { flex: 1; min-width: 0; }
 .region-name { font-size: 17px; font-weight: 700; letter-spacing: 0.15em; }
 .region-desc { font-size: 12px; color: var(--text-dim); }
-.region-tier { color: var(--ember); font-size: 13px; flex-shrink: 0; }
+.region-tier { color: var(--ember-text); font-size: 13px; flex-shrink: 0; }
 
 .exp-screen { position: relative; }
 .exp-bg {
@@ -571,10 +580,10 @@ button {
 .battle-log p { margin-bottom: 2px; animation: screenIn 0.3s ease both; }
 .log-dmg { color: #ffb9a3; }
 .log-heal { color: #9fd8b0; }
-.log-ko { color: var(--ember); font-weight: 700; }
+.log-ko { color: var(--ember-text); font-weight: 700; }
 .log-chain { color: var(--amber); font-weight: 700; }
 .log-win { color: var(--el-star); font-weight: 700; }
-.log-lose { color: var(--ember); font-weight: 700; }
+.log-lose { color: var(--ember-text); font-weight: 700; }
 .cmd-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 .cmd-hint { text-align: center; font-size: 13px; color: var(--gold); letter-spacing: 0.2em; min-height: 22px; }
 .chain-badge {
@@ -832,7 +841,7 @@ button {
   background: radial-gradient(ellipse at center, rgba(20, 4, 8, 0.82), rgba(10, 4, 8, 0.4));
   animation: bossBanner 2s ease both;
 }
-.boss-banner-sub { font-size: 13px; color: var(--ember); letter-spacing: 8px; }
+.boss-banner-sub { font-size: 13px; color: var(--ember-text); letter-spacing: 8px; }
 .boss-banner-name {
   font-size: 42px; font-weight: 800; letter-spacing: 14px; color: var(--text);
   text-shadow: 0 0 24px rgba(199, 62, 58, 0.9), 0 4px 10px rgba(0,0,0,0.9);
@@ -1014,6 +1023,7 @@ button {
 }
 .toast-codex { border-color: var(--el-star); color: var(--el-star); }
 .toast-region { border-color: var(--flame); color: var(--gold); }
+.toast-error { border-color: var(--ember); color: var(--ember-text); }
 @keyframes toastIn { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
 
 /* 務め(目標階層)モーダル */
@@ -1054,7 +1064,7 @@ button {
 .inv-sort-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
 .inv-sort-lbl { font-size: 11px; color: var(--text-dim); }
 .inv-sort-btn { font-size: 12px; padding: 3px 10px; }
-.inv-sort-btn.active { border-color: var(--flame); color: var(--gold); }
+.inv-sort-btn.active { border-color: var(--sel); border-width: 2px; color: var(--sel); }
 
 /* 称号 — 実績バッジ */
 .titles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
@@ -1446,7 +1456,7 @@ button {
   padding: 5px 12px 5px 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
 .familytree-node:hover { border-color: var(--amber); box-shadow: 0 0 10px rgba(232, 163, 61, 0.25); }
-.familytree-node.selected { border-color: var(--flame); background: rgba(232, 163, 61, 0.12); }
+.familytree-node.selected { border-color: var(--sel); border-width: 2px; background: var(--sel-bg); }
 .familytree-node.dead { opacity: 0.5; filter: grayscale(0.6); }
 .familytree-badge { width: 20px; height: 20px; font-size: 10px; }
 .familytree-name { font-size: 13px; }
@@ -1464,5 +1474,71 @@ button {
   .portrait { width: 52px; height: 72px; }
   .action-cards { grid-template-columns: 1fr 1fr; }
   .action-card { flex-direction: column; text-align: center; gap: 6px; padding: 12px 8px; }
+  /* 通常の説明文はモバイルで畳むが、無効理由(is-note)は「なぜ選べないか」なので必ず残す */
   .action-card-desc { display: none; }
+  .action-card-desc.is-note { display: block; color: var(--ember-text); font-size: 11px; }
+}
+
+/* ============================================================
+   A案「墨金の家譜」— アクセシビリティ & トーン(designspec 2026-07-08)
+   追記のみ・既存カスケードを崩さない。ビルドは vite build で必ず検証。
+   ============================================================ */
+
+/* ナビ釦の漢字印 — 家譜の欄外に振る索引字。金は使わない(A案: 金は見出し・当主・確定に限定) */
+.btn-mark {
+  display: inline-block;
+  margin-right: 5px;
+  color: var(--text-dim);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* フォーカス可視化 — キーボード操作の現在地を全操作要素で明示(旧: :focus-visible 皆無) */
+.btn:focus-visible,
+.cmd-btn:focus-visible,
+.action-card:focus-visible,
+.node-btn:focus-visible,
+.god-row:focus-visible,
+.char-card.clickable:focus-visible,
+.filter-tab:focus-visible,
+.elem-chip:focus-visible,
+.mute-btn:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* タッチ目標 — 単独アイコン釦は44px(WCAG 2.5.5 AAA)。小チップは高さのみ底上げ(視覚は維持) */
+.mute-btn { width: 44px; height: 44px; font-size: 20px; }
+.cmd-btn { min-height: 44px; }
+.filter-tab { min-height: 40px; }
+
+/* 選択の色非依存化 — 色を失っても「太枠+◆印」で判別できる(色覚多様性配慮)。
+   カード系は右上に◆、god-row は既存の左inset罫が非色シグナルを兼ねる。 */
+.char-card.selected,
+.god-card.selected,
+.region-card.selected,
+.familytree-node.selected { position: relative; }
+.char-card.selected::after,
+.god-card.selected::after,
+.region-card.selected::after,
+.familytree-node.selected::after {
+  content: '◆';
+  position: absolute; top: 4px; right: 6px;
+  font-size: 10px; color: var(--sel);
+  pointer-events: none;
+}
+
+/* 演出低減 — OS設定を既定尊重。主題(灯・危険)は静止表現として残り、装飾のみ止める。
+   iteration-count:1 で明滅は最終フレームに静止(=消灯しない灯)。危険状態はバー数値/色でも
+   冗長に伝わるため、明滅停止で情報は失われない。
+   OS未指定でも手動で減らしたい人向けに、既存の .reduce-motion クラス(設定モーダル)が
+   同方向の抑制を担う — 両者は併存する減算機構で、OS reduce を戻す経路は用意しない。 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

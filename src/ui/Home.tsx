@@ -45,9 +45,9 @@ export function HomeScreen() {
       <header className="home-header">
         <span className="season-label">{seasonLabel(data.seasonIndex)}</span>
         <div className="resource-strip">
-          <span className="resource"><Ico name="ic_hoto" fb="🏮" size={18} /><span className="res-label">奉燈</span><b>{data.hoto}</b></span>
-          <span className="resource"><Ico name="ic_ketsu" fb="💠" size={18} /><span className="res-label">血珠</span><b>{data.ketsu}</b></span>
-          <span className="resource"><Ico name="ic_buko" fb="🏅" size={18} /><span className="res-label">武功</span><b>{data.fame}</b></span>
+          <span className="resource"><Ico name="ic_hoto" fb="燈" size={18} /><span className="res-label">奉燈</span><b>{data.hoto}</b></span>
+          <span className="resource"><Ico name="ic_ketsu" fb="珠" size={18} /><span className="res-label">血珠</span><b>{data.ketsu}</b></span>
+          <span className="resource"><Ico name="ic_buko" fb="功" size={18} /><span className="res-label">武功</span><b>{data.fame}</b></span>
         </div>
       </header>
 
@@ -72,14 +72,14 @@ export function HomeScreen() {
       <Panel title="今月の行い — 一つ選べば月が替わる">
         <div className="action-cards">
           <ActionCard
-            primary iconName="ic_expedition" iconFb="⚔️" title="出立 — 夜藪へ"
+            primary iconName="ic_expedition" iconFb="出" title="出立 — 夜藪へ"
             desc="夜藪へ潜り、奉燈と血珠を得る。深いほど実り多い。"
             disabled={adults.length === 0}
             note={adults.length === 0 ? '出立できる大人がいない' : undefined}
             onClick={() => setScreen({ id: 'depart' })}
           />
           <ActionCard
-            iconName="ic_pact" iconFb="⭐" title="星契り — 次代を授かる"
+            iconName="ic_pact" iconFb="契" title="星契り — 次代を授かる"
             desc="星神と契り、翌月に子を授かる。血を絶やすな。"
             disabled={!canPact}
             note={
@@ -90,7 +90,7 @@ export function HomeScreen() {
             onClick={() => setScreen({ id: 'pact' })}
           />
           <ActionCard
-            iconName={`fes_${['haru', 'natsu', 'aki', 'fuyu'][Math.floor((data.seasonIndex % 12) / 3)]}`} iconFb="🎆" title="祭 — 郷を潤す"
+            iconName={`fes_${['haru', 'natsu', 'aki', 'fuyu'][Math.floor((data.seasonIndex % 12) / 3)]}`} iconFb="祭" title="祭 — 郷を潤す"
             desc={isFestivalMonth(data.seasonIndex)
               ? '奉燈30を捧げ、一族の傷と心労を癒す。星との縁も深まる。'
               : '祭は季の変わり目(弥生・水無月・長月・師走)だけ開ける。'}
@@ -103,7 +103,7 @@ export function HomeScreen() {
             onClick={doFestival}
           />
           <ActionCard
-            iconName="ic_rest" iconFb="♨️" title="静養 — 傷を癒す"
+            iconName="ic_rest" iconFb="憩" title="静養 — 傷を癒す"
             desc="隊の傷と心労を癒す。何もない月も、月は替わる。"
             onClick={doRest}
           />
@@ -112,17 +112,17 @@ export function HomeScreen() {
       </Panel>
 
       <div className="home-links">
-        <button className="btn btn-ghost" onClick={() => setShowForge(true)}><Ico name="ic_forge" fb="🔨" /> 鍛冶と蔵</button>
-        <button className="btn btn-ghost" onClick={() => setShowObjectives(true)}>🎯 務め</button>
-        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="📜" /> 家譜を繰る</button>
-        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="📚" /> 図鑑</button>
-        <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="🌳" /> 家系図</button>
-        <button className="btn btn-ghost" onClick={() => setShowGossip(true)}>🕯️ 郷の声</button>
-        <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="🏘️" /> 郷を歩く</button>
-        <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="🏗️" /> 郷普請</button>
-        <button className="btn btn-ghost" onClick={() => setShowFamiliars(true)}>🦊 眷属</button>
+        <button className="btn btn-ghost" onClick={() => setShowForge(true)}><Ico name="ic_forge" fb="鍛" /> 鍛冶と蔵</button>
+        <button className="btn btn-ghost" onClick={() => setShowObjectives(true)}><span className="btn-mark">務</span>務め</button>
+        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="譜" /> 家譜を繰る</button>
+        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="鑑" /> 図鑑</button>
+        <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="樹" /> 家系図</button>
+        <button className="btn btn-ghost" onClick={() => setShowGossip(true)}><span className="btn-mark">声</span>郷の声</button>
+        <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="郷" /> 郷を歩く</button>
+        <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="普" /> 郷普請</button>
+        <button className="btn btn-ghost" onClick={() => setShowFamiliars(true)}><span className="btn-mark">眷</span>眷属</button>
         <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
-          <Ico name="ic_motto" fb="🏮" /> 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
+          <Ico name="ic_motto" fb="訓" /> 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
         </button>
         {!!data.flags.cleared && (
           <button
@@ -133,10 +133,10 @@ export function HomeScreen() {
               if (party.length > 0) departDungeon('tokoyo_tou', party.map((c) => c.id))
             }}
           >
-            <Ico name="ic_tower" fb="🗼" /> 常夜百層
+            <Ico name="ic_tower" fb="塔" /> 常夜百層
           </button>
         )}
-        <button className="btn btn-ghost" onClick={() => setShowHelp(true)}><Ico name="ic_help" fb="📖" /> 手引き</button>
+        <button className="btn btn-ghost" onClick={() => setShowHelp(true)}><Ico name="ic_help" fb="引" /> 手引き</button>
       </div>
 
       {showMotto && <MottoModal onClose={() => setShowMotto(false)} />}
@@ -175,7 +175,7 @@ function ActionCard({
       <span className="action-card-icon"><Ico name={iconName} fb={iconFb} size={32} /></span>
       <span className="action-card-text">
         <span className="action-card-title">{title}</span>
-        <span className="action-card-desc">{disabled && note ? note : desc}</span>
+        <span className={`action-card-desc ${disabled && note ? 'is-note' : ''}`}>{disabled && note ? note : desc}</span>
       </span>
     </button>
   )
@@ -341,9 +341,9 @@ function ObjectivesModal({ onClose }: { onClose: () => void }) {
   const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).length
   const { short, mid, long } = computeObjectives(data, adults)
   const tiers: [string, string, Obj[]][] = [
-    ['🎯', '今すぐの務め', short],
-    ['🏹', 'この代の務め', mid],
-    ['🌌', '千年紀の務め', long],
+    ['今', '今すぐの務め', short],
+    ['代', 'この代の務め', mid],
+    ['紀', '千年紀の務め', long],
   ]
   const go = (id: Obj['go']) => { if (id) { onClose(); setScreen({ id }) } }
   return (
@@ -595,7 +595,7 @@ function GossipModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-back" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="panel-title">🕯️ 郷の声 — 聞こえてきた話</h2>
+        <h2 className="panel-title">郷の声 — 聞こえてきた話</h2>
         <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
           死や代替わり、夜藪からの帰還のたび、郷の誰かの一言がひとつずつ届く。
         </p>
@@ -674,7 +674,7 @@ function FamiliarsModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-back" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="panel-title">🦊 眷属 — 懐いた魔性たち</h2>
+        <h2 className="panel-title">眷属 — 懐いた魔性たち</h2>
         <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
           討った魔性は、ごく稀に懐いて眷属となる。一体だけを随行させられる — 夜藪で小さな助けになる。
         </p>

@@ -934,3 +934,4 @@
 - **v3.1目標到達状況**: 神180 ✅ / 装備810 ✅ / 辞世1370 ✅ / 事件270 ✅ / 敵147基礎(目標180=基礎+33が残)/ 地域28(目標40=+12が残) / 画像2107枚(工場稼働継続中)。
 - **次(残スコープ外)**: **push**(要ユーザー承認)、敵基礎+33種・地域+12(工数大)、自動プレイテスト再実行、変異絵の別PC再生成による画質検証。
 - 2026-07-08 /designspec: A案「墨金の家譜」デザイン仕様策定(15次元スイープ+決定的3次元ゲート合格)→ docs/DESIGNSPEC.md
+- 2026-07-08 /mission(designspec実装): A案「墨金の家譜」実装 — 選択色flame統一(9セレクタ+◆色非依存)/ember文字AA修正(--ember-text)/:focus-visible全域/prefers-reduced-motion/タッチ44px/絵文字→漢字印(Home全chrome)/Title flash→toast統一/panel綴じ目罫。code-reviewer出荷可(CRIT0 HIGH0)。

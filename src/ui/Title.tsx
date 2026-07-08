@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useGame } from '../core/store'
 import { hasSave, downloadSave, importSaveString, clearSave } from '../core/save'
 import { SceneBg } from './components'
+import { emitToast } from './toast'
 
 // タイトル背景 — 常夜の御山と大燈籠(SVG一枚絵)
 function TitleArt() {
@@ -80,16 +81,17 @@ export function TitleScreen() {
   const continueGame = useGame((s) => s.continueGame)
   const [mode, setMode] = useState<'normal' | 'narrative' | 'data' | null>(null)
   const [confirmNew, setConfirmNew] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const saveExists = hasSave()
 
-  const flash = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(null), 2600) }
   // 「はじめから」— 既存セーブがあれば上書き確認を挟む
   const onNewGame = () => { if (saveExists) setConfirmNew(true); else setMode('normal') }
   const onImportFile = (file: File) => {
     const reader = new FileReader()
-    reader.onload = () => { flash(importSaveString(String(reader.result)) ? 'セーブを読み込んだ。「つづきから」で再開できる。' : '読み込めなかった(壊れたファイル)。') }
+    reader.onload = () => {
+      const ok = importSaveString(String(reader.result))
+      emitToast(ok ? 'セーブを読み込んだ。「つづきから」で再開できる。' : '読み込めなかった(壊れたファイル)。', ok ? 'info' : 'error')
+    }
     reader.readAsText(file)
   }
 
@@ -129,13 +131,13 @@ export function TitleScreen() {
       ) : mode === 'data' ? (
         <div className="title-menu">
           <p className="mode-ask">セーブの管理</p>
-          <button className="btn" disabled={!saveExists} onClick={() => { if (!downloadSave()) flash('書き出すセーブが無い。') }}>
+          <button className="btn" disabled={!saveExists} onClick={() => { if (!downloadSave()) emitToast('書き出すセーブが無い。', 'error') }}>
             セーブを書き出す(バックアップ)
           </button>
           <button className="btn" onClick={() => fileRef.current?.click()}>
             セーブを読み込む(ファイルから)
           </button>
-          <button className="btn btn-ghost" disabled={!saveExists} onClick={() => { if (confirm('この端末のセーブを完全に消す。取り消せない。よいか?')) { clearSave(); flash('セーブを消した。'); setMode(null) } }}>
+          <button className="btn btn-ghost" disabled={!saveExists} onClick={() => { if (confirm('この端末のセーブを完全に消す。取り消せない。よいか?')) { clearSave(); emitToast('セーブを消した。', 'info'); setMode(null) } }}>
             セーブを消す
           </button>
           <button className="btn btn-ghost" onClick={() => setMode(null)}>
@@ -172,7 +174,6 @@ export function TitleScreen() {
           </button>
         </div>
       )}
-      {notice && <p className="title-notice">{notice}</p>}
       <p className="title-ver">ver 0.1 — 燈ノ郷にて</p>
     </div>
   )
