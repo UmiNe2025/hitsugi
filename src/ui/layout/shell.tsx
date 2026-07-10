@@ -16,7 +16,9 @@ function useSheetBehavior(onClose: () => void) {
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     // 初期フォーカスは小窓内の最初の操作要素へ
-    const first = ref.current?.querySelector<HTMLElement>(FOCUSABLE)
+    const first = ref.current
+      ? [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)].find((el) => !el.hasAttribute('disabled'))
+      : undefined
     first?.focus()
 
     const onKey = (e: KeyboardEvent) => {

@@ -7,6 +7,7 @@ import { GODS } from '../core/data/gods'
 import { ENEMIES } from '../core/data/enemies'
 import { FACILITIES, FACILITY_MAX_LV, facilityCost, facilityLevel } from '../core/data/facilities'
 import { GOSSIP } from '../core/data/gossip'
+import { VILLAGERS } from '../core/data/villagers'
 
 // ---- 血脈診断(§4.2) ----
 export interface Census {
@@ -128,7 +129,7 @@ export function ledgerStats(d: GameData, odaiClaimable: boolean): { work: Ledger
   const work: LedgerEntry[] = [
     { key: 'forge', label: '鍛冶と蔵', value: `蔵に${d.inventory.length}品` },
     { key: 'facilities', label: '郷普請', value: cheapest ? `次の普請 ${cheapest.cost}燈` : '全て完成' },
-    { key: 'village', label: '郷を歩く', value: '郷人4' },
+    { key: 'village', label: '郷を歩く', value: `郷人${VILLAGERS.length}` },
     { key: 'familiars', label: '眷属', value: activeFam ? `随行: ${activeFam.name}` : fam.length > 0 ? `懐き${fam.length}・随行なし` : 'まだいない' },
   ]
   const record: LedgerEntry[] = [

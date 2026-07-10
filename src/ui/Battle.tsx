@@ -328,7 +328,7 @@ export function BattleScreen() {
           )
         })()}
 
-        <div className="enemy-side" style={{ ['--n' as string]: battle.enemies.filter((e) => e.hp > 0).length || 1 }}>
+        <div className="enemy-side" style={{ ['--n' as string]: battle.enemies.length || 1 }}>
           {battle.enemies.map((e, i) => (
             <CombatantNode
               key={e.key}
@@ -348,7 +348,7 @@ export function BattleScreen() {
           ))}
         </div>
 
-        <div className="ally-side" style={{ ['--n' as string]: battle.allies.filter((a) => a.hp > 0).length || 1 }}>
+        <div className="ally-side" style={{ ['--n' as string]: battle.allies.length || 1 }}>
           {battle.allies.map((a, i) => {
             const ch = charOf(a)
             return (

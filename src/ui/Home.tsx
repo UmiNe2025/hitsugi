@@ -421,7 +421,7 @@ function VillageModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
         <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 10 }}>
-          家に戻る
+          閉じる
         </button>
       </div>
     </div>
@@ -685,7 +685,7 @@ function GossipModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 10 }}>
-          家に戻る
+          閉じる
         </button>
       </div>
     </div>
