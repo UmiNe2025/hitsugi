@@ -104,3 +104,81 @@
 .odai-state { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .odai-card.met .odai-state { color: var(--sel); }
 .odai-claim { padding: 5px 14px; font-size: 13px; margin: 0; }
+
+/* ==== M18 P2: 郷ホーム再設計(血脈診断/推奨/帳/アンカー/月送り確認) ==== */
+
+/* 一族欄二面化 — 左=大札+小札 / 右=血脈診断 */
+.family-board { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr); gap: 14px; align-items: start; }
+.family-smalls { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; }
+.family-smalls .char-card { flex: 0 0 auto; min-width: 168px; }
+@media (max-width: 640px) { .family-board { grid-template-columns: 1fr; } }
+
+/* 血脈診断 — 状態を説明できる空白 */
+.blood-diag {
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  background: rgba(10, 14, 30, 0.72); padding: 10px 12px;
+  font-size: 13px;
+}
+.blood-diag-title { font-size: 12px; color: var(--gold); letter-spacing: 0.3em; border-bottom: 1px solid rgba(201,168,106,0.3); padding-bottom: 4px; margin-bottom: 8px; }
+.blood-diag-counts { margin-bottom: 8px; letter-spacing: 0.04em; }
+.blood-diag-counts b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; margin: 0 1px; }
+.blood-diag-list { list-style: none; padding: 0; margin: 0 0 10px; display: flex; flex-direction: column; gap: 4px; }
+.blood-diag-list li { color: var(--text-dim); font-size: 12.5px; }
+.blood-diag-list li.is-bad { color: var(--ember-text); font-weight: 700; }
+.blood-diag-next { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px dashed rgba(201,168,106,0.25); padding-top: 8px; }
+.blood-diag-next-label { font-size: 11.5px; color: var(--gold); letter-spacing: 0.2em; }
+.blood-diag-next .btn { margin: 0; padding: 6px 14px; font-size: 13px; }
+
+/* 推奨(綴の見立て)行+カードの薦印 */
+.rec-reason { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin-bottom: 10px; letter-spacing: 0.03em; }
+.rec-mark {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--sel); color: var(--sel); font-size: 12px; background: var(--sel-bg);
+}
+.action-card { position: relative; }
+.action-card.rec { border-color: var(--sel); border-width: 2px; box-shadow: 0 0 14px rgba(255, 157, 69, 0.22); }
+.action-card.rec .action-card-title { color: var(--sel); }
+.rec-tag {
+  position: absolute; top: -9px; right: 8px;
+  font-size: 11px; padding: 1px 8px; border-radius: 9px;
+  background: var(--night); border: 1px solid var(--sel); color: var(--sel); letter-spacing: 0.1em;
+}
+
+/* 郷の帳 — 3冊の帳面(入口=名前+現在値+badge) */
+.ledger { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ledger-book { display: flex; flex-direction: column; gap: 4px; }
+.ledger-book-title { font-size: 12px; color: var(--gold); letter-spacing: 0.3em; border-bottom: 1px solid rgba(201,168,106,0.3); padding-bottom: 3px; margin-bottom: 4px; }
+.ledger-entry {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin: 0; padding: 8px 10px; font-size: 13.5px; text-align: left; letter-spacing: 0.04em;
+}
+.ledger-label { flex-shrink: 0; }
+.ledger-value { font-size: 12px; color: var(--text-dim); text-align: right; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .ledger { grid-template-columns: 1fr; } }
+
+/* ホーム内アンカー(モバイルのみ) */
+.home-anchors {
+  display: none;
+}
+@media (max-width: 560px) {
+  .home-anchors {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    background: linear-gradient(180deg, rgba(11,15,30,0.92), rgba(11,15,30,0.98));
+    border-top: 1px solid var(--panel-border);
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+  }
+  .home-anchors .btn { flex: 1; margin: 0 2px; padding: 8px 4px; font-size: 13px; min-height: 44px; }
+  .home-screen { padding-bottom: 76px; }
+}
+
+/* 月送り確認Sheetの中身 */
+.confirm-lead { font-size: 13.5px; line-height: 1.7; margin-bottom: 10px; }
+.confirm-list { list-style: none; padding: 8px 10px; margin: 0 0 8px; border: 1px solid var(--panel-border); border-radius: 6px; background: rgba(10,14,30,0.6); display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.confirm-list-empty { font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px; }
+.confirm-age { font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px; }
+.confirm-notes { border-left: 3px solid var(--gold); padding: 4px 10px; margin-bottom: 12px; }
+.confirm-notes p { font-size: 12.5px; color: var(--gold); margin: 2px 0; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.confirm-actions .btn { margin: 0; }

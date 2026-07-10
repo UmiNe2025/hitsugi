@@ -5,11 +5,13 @@ import { REGIONS, regionById } from '../core/data/regions'
 import { eventById } from '../core/expedition'
 import { facilityLevel } from '../core/data/facilities'
 import { dungeonByRegion } from '../dungeon/maps'
-import { isAdult } from '../core/inheritance'
+import { isAdult, seasonsLeft } from '../core/inheritance'
 import { PARTY_SIZE } from '../core/constants'
+import { ActionDock } from './layout/shell'
 import { Bar, CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { eventImg, gameImg, HOME_BG, regionBgR } from './img'
 import './m17_home.css'
+import './depart_m18.css'
 
 // ---- 夜行の絵巻 — 麓(燈ノ郷)から頂(玄冬の座)へ登る一本道の絵地図 ----
 // 40地域を tier 順の登り道として縦絵巻に配置する。位置は index から決定的に算出(データ非依存)。
@@ -155,9 +157,21 @@ export function DepartScreen() {
   const toggle = (id: string) =>
     setParty((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < PARTY_SIZE ? [...p, id] : p))
 
+  const selectedRegion = regionId ? regionById(regionId) : null
+  const dockNote = !selectedRegion
+    ? '行き先を選べ'
+    : party.length === 0
+      ? `隊を組め(${party.length}/${PARTY_SIZE})`
+      : undefined
+
   return (
-    <div className="screen">
+    <div className="screen depart-m18-root">
       <NightBackdrop bg={gameImg(HOME_BG)} />
+      <div className="depart-readybar">
+        行き先 <b>{selectedRegion ? selectedRegion.name : '未選択'}</b>
+        {' ／ '}隊 <b>{party.length}/{PARTY_SIZE}</b>
+        {' ／ '}灯100で発つ
+      </div>
       <h1 className="season-label" style={{ marginBottom: 14 }}>出立 — 夜藪行</h1>
       <TsuzuriLine text="行き先と、連れて行く者を選べ。四人まで。深く潜るほど実りは多いが、灯が尽きれば常夜はお前らを喰いに来る。" />
 
@@ -171,40 +185,37 @@ export function DepartScreen() {
             onSelect={setRegionId}
           />
           <div className="depart-side">
-            {(() => {
-              const r = regionId ? regionById(regionId) : null
-              if (!r) {
-                return (
-                  <div className="region-detail region-detail-empty">
-                    <p>絵巻から行き先を選べ。灯った印が、いま踏み込める地だ。</p>
-                    <p className="asc-legend">
-                      <span className="asc-lg"><i className="asc-dot asc-dot-open" />行ける地</span>
-                      <span className="asc-lg"><i className="asc-dot asc-dot-clear" />主討伐済</span>
-                      <span className="asc-lg"><i className="asc-dot asc-dot-lock" />未開通</span>
-                    </p>
-                    {facilityLevel(data.facilities, 'monomi') >= 1 && (
-                      <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>
-                        物見櫓の見立て — ★の数は、その地に潜む魔性の強さの目安だ。
-                      </p>
-                    )}
-                  </div>
-                )
-              }
-              return (
-                <div className="region-detail">
-                  <MaybeImg src={regionBgR(r.id)} className="region-detail-img" />
-                  <div className="region-detail-head">
-                    <span className="region-name">{r.name}</span>
-                    <span className="region-tier">{'★'.repeat(r.tier)}</span>
-                  </div>
-                  <p className="region-desc">{r.desc}</p>
-                  <p className="region-detail-sub">
-                    深さ{r.depth}
-                    {data.regionsCleared.includes(r.id) ? ' ・ 主討伐済(鎮)' : r.bossId ? ' ・ 主あり(未討伐)' : ''}
+            {!selectedRegion ? (
+              <div className="region-detail region-detail-empty">
+                <p>絵巻から行き先を選べ。灯った印が、いま踏み込める地だ。</p>
+                <p className="asc-legend">
+                  <span className="asc-lg"><i className="asc-dot asc-dot-open" />行ける地</span>
+                  <span className="asc-lg"><i className="asc-dot asc-dot-clear" />主討伐済</span>
+                  <span className="asc-lg"><i className="asc-dot asc-dot-lock" />未開通</span>
+                </p>
+                {facilityLevel(data.facilities, 'monomi') >= 1 && (
+                  <p style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+                    物見櫓の見立て — ★の数は、その地に潜む魔性の強さの目安だ。
                   </p>
+                )}
+              </div>
+            ) : (
+              <div className="region-detail">
+                <MaybeImg src={regionBgR(selectedRegion.id)} className="region-detail-img" />
+                <div className="region-detail-head">
+                  <span className="region-name">{selectedRegion.name}</span>
+                  <span className="region-tier">{'★'.repeat(selectedRegion.tier)}</span>
                 </div>
-              )
-            })()}
+                <p className="region-desc">{selectedRegion.desc}</p>
+                <p className="region-detail-sub">
+                  深さ{selectedRegion.depth}
+                  {data.regionsCleared.includes(selectedRegion.id) ? ' ・ 主討伐済(鎮)' : selectedRegion.bossId ? ' ・ 主あり(未討伐)' : ''}
+                </p>
+                <p className="region-detail-risk">
+                  見立て★{selectedRegion.tier} ／ 推奨武功 {selectedRegion.unlockFame}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </Panel>
@@ -218,26 +229,32 @@ export function DepartScreen() {
               seasonIndex={data.seasonIndex}
               selected={party.includes(c.id)}
               onClick={() => toggle(c.id)}
-            />
+            >
+              <p className="depart-char-extra">
+                体{c.hp}/{c.maxHp}・残{seasonsLeft(c, data.seasonIndex)}季
+              </p>
+            </CharCard>
           ))}
         </div>
       </Panel>
 
-      <button
-        className="btn btn-main"
-        disabled={!regionId || party.length === 0}
-        onClick={() => {
-          if (!regionId) return
-          // 歩行ダンジョン化済みの地域は新エンジンへ(段階移行)
-          if (dungeonByRegion(regionId)) departDungeon(regionId, party)
-          else depart(regionId, party)
-        }}
-      >
-        出立する(今月を使う)
-      </button>
-      <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
-        郷へ戻る
-      </button>
+      <ActionDock note={dockNote}>
+        <button
+          className="btn btn-main"
+          disabled={!regionId || party.length === 0}
+          onClick={() => {
+            if (!regionId) return
+            // 歩行ダンジョン化済みの地域は新エンジンへ(段階移行)
+            if (dungeonByRegion(regionId)) departDungeon(regionId, party)
+            else depart(regionId, party)
+          }}
+        >
+          {selectedRegion ? `${selectedRegion.name}へ` : '行き先未選択'} ／ {party.length}人 ／ 今月を使う
+        </button>
+        <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
+          郷へ戻る
+        </button>
+      </ActionDock>
     </div>
   )
 }

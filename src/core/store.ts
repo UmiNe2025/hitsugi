@@ -70,6 +70,8 @@ interface GameStore {
   dailyVisit: () => { text: string; hoto: number; ketsu: number } | null
   // 今日の御題 — 達成済みなら一日一度、褒賞を受ける(「務め」の一枠)。付与できたら報酬を返す。
   claimOdai: () => { hoto: number; ketsu: number } | null
+  // 郷の声の既読カーソル(M18 P2: 帳の新着badge用。ゲームロジックには影響しない)
+  markGossipSeen: () => void
   setScreen: (s: Screen) => void
   processNextScene: () => void
 
@@ -629,6 +631,17 @@ export const useGame = create<GameStore>((set, get) => {
       set({ data: nd })
       saveGame(nd)
       return { hoto: odai.reward.hoto, ketsu: odai.reward.ketsu }
+    },
+
+    markGossipSeen: () => {
+      const d = get().data
+      if (!d) return
+      const cur = typeof d.flags.gossipSeen === 'number' ? d.flags.gossipSeen : 0
+      const unlocked = d.gossipIndex ?? 0
+      if (unlocked <= cur) return
+      const nd: GameData = { ...d, flags: { ...d.flags, gossipSeen: unlocked } }
+      set({ data: nd })
+      saveGame(nd)
     },
 
     setScreen: (s) => set({ screen: s }),

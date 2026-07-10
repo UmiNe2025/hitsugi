@@ -9,6 +9,8 @@ import { GODS, godUnlocked } from '../core/data/gods'
 import { isAdult, predictChild, godStatValue, pactCost } from '../core/inheritance'
 import { CharCard, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { gameImg, godMaxImg, HOME_BG } from './img'
+import { ActionDock, StatusCallout } from './layout/shell'
+import './pact_m18.css'
 
 // 封印中の神の解放条件を一言で(unlock条件から自動生成)
 function sealHint(g: (typeof GODS)[number]): string {
@@ -27,6 +29,43 @@ const GOD_EMOJI: Record<string, string> = {
   narukami: '🥁', hokushin: '🌟',
 }
 
+// 実ステップ表示(壱親/弐星/参見立て) — 表示専用。色+「▼現在」印の二重で伝える(M18 §5.1)
+const PACT_STEPS: { numeral: string; label: string; step: 1 | 2 | 3 }[] = [
+  { numeral: '壱', label: '親', step: 1 },
+  { numeral: '弐', label: '星', step: 2 },
+  { numeral: '参', label: '見立て', step: 3 },
+]
+
+function PactSteps({ step }: { step: 1 | 2 | 3 }) {
+  return (
+    <div className="pact-steps" role="list" aria-label="交神の儀の進み">
+      {PACT_STEPS.map((s, i) => {
+        const state = s.step < step ? 'done' : s.step === step ? 'current' : 'future'
+        return (
+          <div key={s.numeral} className="pact-step-wrap" role="listitem">
+            <span className={`pact-step pact-step-${state}`}>
+              <span className="pact-step-numeral">{s.numeral}</span>
+              <span className="pact-step-label">{s.label}</span>
+              {state === 'current' && <span className="pact-step-mark">▼現在</span>}
+            </span>
+            {i < PACT_STEPS.length - 1 && <span className="pact-step-sep">/</span>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// 子の見立てレンジ(中央値)から「伸びる2能力・弱い1能力」を一言に(表示専用・予測ロジック不変)
+function predictionSummary(prediction: Record<StatKey, [number, number]>): string {
+  const mids = (Object.keys(STAT_LABELS) as StatKey[])
+    .map((k) => [k, (prediction[k][0] + prediction[k][1]) / 2] as [StatKey, number])
+    .sort((a, b) => b[1] - a[1])
+  const rising = mids.slice(0, 2).map(([k]) => STAT_LABELS[k]).join('・')
+  const weak = STAT_LABELS[mids[mids.length - 1][0]]
+  return `伸びるは${rising}、弱いは${weak}となりそうだ。`
+}
+
 export function PactScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
@@ -35,21 +74,31 @@ export function PactScreen() {
   const [godId, setGodId] = useState<string | null>(null)
   const [rankTab, setRankTab] = useState<GodRank | 0>(0) // 0=全て
   const [elemChip, setElemChip] = useState<Element | null>(null)
+  const [onlyAffordable, setOnlyAffordable] = useState(false) // 絞り込み: 費用内(M18)
+  const [onlyUncontracted, setOnlyUncontracted] = useState(false) // 絞り込み: 未契約(M18)
   const [ritual, setRitual] = useState(false) // 炎輪カットイン中
 
   const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const parent = adults.find((c) => c.id === parentId) ?? null
   const god = GODS.find((g) => g.id === godId) ?? null
+  const contractedGodIds = data.codex?.gods ?? []
 
-  // 奉納点(cost)昇順 — 俺屍の神名リスト様式
-  const shownGods = GODS.filter(
-    (g) => (rankTab === 0 || g.rank === rankTab) && (elemChip === null || g.element === elemChip),
-  ).sort((a, b) => a.cost - b.cost)
+  // 奉納点(cost)昇順 — 俺屍の神名リスト様式。費用内/未契約は表示の絞り込みのみ(選択可否には無関係)
+  const shownGods = GODS.filter((g) => {
+    if (rankTab !== 0 && g.rank !== rankTab) return false
+    if (elemChip !== null && g.element !== elemChip) return false
+    if (onlyAffordable && data.hoto < pactCost(g, data.godAffinity[g.id] ?? 0)) return false
+    if (onlyUncontracted && contractedGodIds.includes(g.id)) return false
+    return true
+  }).sort((a, b) => a.cost - b.cost)
 
   const prediction = useMemo(
     () => (parent && god ? predictChild(parent, god) : null),
     [parent, god],
   )
+
+  // 実ステップ(壱親/弐星/参見立て) — 選択状態から導出。ロジック非依存の表示専用(M18)
+  const pactStep: 1 | 2 | 3 = !parent ? 1 : !god ? 2 : 3
 
   const beginRitual = () => {
     if (!parent || !god || ritual) return
@@ -60,11 +109,28 @@ export function PactScreen() {
     }, 1100)
   }
 
+  // 画面下固定CTA(ActionDock)の状態 — 未達理由は1行のみ、優先順位: 親→星→奉燈(M18)
+  const dockCost = god ? pactCost(god, data.godAffinity[god.id] ?? 0) : 0
+  const dockShortfall = god ? Math.max(0, dockCost - data.hoto) : 0
+  const dockNote = !parent
+    ? '親を選べ'
+    : !god
+      ? '星神を選べ'
+      : dockShortfall > 0
+        ? `奉燈があと${dockShortfall}足りない`
+        : undefined
+  const dockReady = Boolean(parent && god && dockShortfall === 0 && !ritual)
+  const dockLabel = parent && god && dockShortfall === 0
+    ? `${parent.name} × ${god.name} ／ 奉燈${dockCost} ／ 契る`
+    : '契る'
+
   return (
-    <div className="screen pact-screen">
+    <div className="screen pact-screen pact-has-dock">
       <NightBackdrop bg={gameImg(HOME_BG)} />
       <h1 className="season-label" style={{ marginBottom: 14 }}>交神の儀</h1>
       <TsuzuriLine text="星神と契れば、翌季に子が生まれる。血潮は親と神から流れ込む — 誰の血を、どの星に継がせる?" />
+
+      <PactSteps step={pactStep} />
 
       <Panel title="契る者を選ぶ">
         <div className="exp-party">
@@ -105,6 +171,20 @@ export function PactScreen() {
                 {ELEMENT_LABELS[el]}
               </button>
             ))}
+          </div>
+          <div className="god-filter-row">
+            <button
+              className={`btn btn-ghost filter-tab ${onlyAffordable ? 'active' : ''}`}
+              onClick={() => setOnlyAffordable((v) => !v)}
+            >
+              費用内
+            </button>
+            <button
+              className={`btn btn-ghost filter-tab ${onlyUncontracted ? 'active' : ''}`}
+              onClick={() => setOnlyUncontracted((v) => !v)}
+            >
+              未契約
+            </button>
           </div>
         </div>
 
@@ -197,20 +277,29 @@ export function PactScreen() {
                 期待値: 親の脈×0.48+星の脈×0.55(上限120)。星脈は{ELEMENT_LABELS[god.element]}(七割)/
                 {ELEMENT_LABELS[parent.element]}(三割)で子の灯座の軸となる。
               </p>
+              <p className="gene-predict-summary">{predictionSummary(prediction)}</p>
             </div>
           </div>
+          {Math.floor(data.godAffinity[god.id] ?? 0) >= GOD_MAX_AFFINITY && (
+            <StatusCallout kind="boon" title="縁が極まった">
+              この星とはもはや相思相愛。契りは彩りを増すだろう。
+            </StatusCallout>
+          )}
           <div className="pact-quote">
             「{god.pactLines[Math.min(Math.floor(data.godAffinity[god.id] ?? 0), god.pactLines.length - 1)]}」
           </div>
-          <button className="btn btn-main" onClick={beginRitual} disabled={ritual}>
-            契りを結ぶ(奉燈{pactCost(god, data.godAffinity[god.id] ?? 0)}・今月を使う)
-          </button>
         </Panel>
       )}
 
       <button className="btn btn-ghost" onClick={() => setScreen({ id: 'home' })}>
         郷へ戻る
       </button>
+
+      <ActionDock note={dockNote}>
+        <button className="btn btn-main" onClick={beginRitual} disabled={!dockReady}>
+          {dockLabel}
+        </button>
+      </ActionDock>
 
       {ritual && god && (
         <div className="ritual-overlay">

@@ -603,7 +603,7 @@ button {
 .stage-tani   { background: linear-gradient(180deg, #0a0d16 0%, #0a0c14 55%, #131a2a 100%); }
 .stage-miyama { background: linear-gradient(180deg, #100a16 0%, #0d0a12 55%, #1c1226 100%); }
 
-.battle-stage { position: relative; flex: 1; min-height: 0; }
+.battle-stage { position: relative; flex: 1; min-height: 60vh; } /* 戦場60%+(§5.4) */
 /* ヒット時の戦場全体の一瞬揺れ(体感の重み) — data-shake が変わるたびに再start */
 .battle-stage.stage-shake { animation: stageShakeShort 0.24s ease-out; }
 @keyframes stageShakeShort {
@@ -660,7 +660,7 @@ button {
   animation: screenIn 0.25s ease both;
 }
 
-/* 雁行配置 — CSS変数slot/depthで階段状に置く */
+/* 雁行配置 — CSS変数slot/depth/n(陣営人数)で中央へ寄せ、人数が少ないほど縦に間引かず中央に集める(§5.4) */
 .enemy-side, .ally-side { position: absolute; inset: 0; pointer-events: none; }
 .combatant {
   position: absolute; pointer-events: auto; cursor: default;
@@ -668,12 +668,16 @@ button {
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.4s ease;
 }
 .is-enemy {
-  left: calc(6% + var(--depth) * 8%);
-  top: calc(12% + var(--slot) * 15%);
+  left: calc(24% - var(--depth) * 8%);
+  top: calc(46% + (var(--slot) - (var(--n, 1) - 1) / 2) * 17% - 60px);
 }
 .is-ally {
-  right: calc(7% + (1 - var(--depth)) * 9%);
-  top: calc(16% + var(--slot) * 16%);
+  right: calc(24% - (1 - var(--depth)) * 8%);
+  top: calc(50% + (var(--slot) - (var(--n, 1) - 1) / 2) * 17% - 60px);
+}
+/* 人数連動サイズ(--sz は CombatantNode がインライン付与: 1人=1.36〜4人=1.0) */
+.combatant .enemy-img {
+  width: calc(112px * var(--sz, 1)); height: calc(112px * var(--sz, 1)); max-height: none;
 }
 .combatant .combatant-body { position: relative; transform-origin: 50% 100%; animation: bodyBreath 3.4s ease-in-out infinite; }
 /* 味方と敵で位相をずらして群れ感を消す */
@@ -1663,4 +1667,231 @@ input:focus-visible {
   .depart-cols { grid-template-columns: 1fr; }
   .ascent-wrap { max-height: 46vh; }
   .depart-side { position: static; }
+}
+
+/* ============================================================
+   M18 共通殻(UI_UX_REDESIGN_PLAN §6) — ScreenShell/ActionDock/Sheet/
+   WorkspaceTabs/StatusCallout/LiveBadge/EmptyGuide/CompareRow/LifeThread
+   追記のみ・既存カスケード不変。文言/クラス契約は docs/UI_SHELL_API.md。
+   ============================================================ */
+
+/* ScreenShell — 独立作業画面の殻 */
+.shell { display: flex; flex-direction: column; }
+.shell.has-dock { padding-bottom: 96px; } /* ActionDockぶんの逃げ */
+.shell-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  position: sticky; top: 0; z-index: 30;
+  background: linear-gradient(180deg, rgba(11, 15, 30, 0.96), rgba(11, 15, 30, 0.88));
+  border-bottom: 1px solid var(--panel-border);
+  margin: -20px -16px 14px; padding: 12px 16px 10px;
+}
+.shell-back { flex-shrink: 0; font-size: 13px; padding: 7px 12px; margin: 0; }
+.shell-title {
+  font-size: var(--fs-title); font-weight: 700; letter-spacing: 0.12em; color: var(--gold);
+  margin: 0; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.shell-res { display: flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.shell-body { flex: 1; min-width: 0; }
+
+/* ActionDock — 下部固定CTA。note=未達条件/費用(CTA直上・通常コントラスト) */
+.action-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: linear-gradient(180deg, rgba(11, 15, 30, 0.92), rgba(11, 15, 30, 0.98));
+  border-top: 1px solid var(--panel-border);
+  padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+}
+.action-dock .dock-note { font-size: 12.5px; color: var(--text); text-align: center; margin-bottom: 6px; letter-spacing: 0.04em; }
+.action-dock .dock-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; max-width: 1080px; margin: 0 auto; }
+.action-dock .dock-row .btn { margin: 0; }
+
+/* Sheet — 小窓。PC=中央小窓 / モバイル=下からの面 */
+.sheet-back {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(4, 6, 14, 0.72);
+  display: flex; align-items: center; justify-content: center;
+  animation: screenIn 0.18s ease both;
+}
+.sheet {
+  background: var(--night); border: 1px solid var(--panel-border);
+  border-left: 3px solid rgba(201, 168, 106, 0.5); /* 家譜の綴じ目を継承 */
+  border-radius: 8px; width: min(440px, calc(100vw - 32px));
+  max-height: 80vh; display: flex; flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+}
+.sheet-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px 8px; border-bottom: 1px solid rgba(201, 168, 106, 0.25);
+}
+.sheet-title { font-size: var(--fs-sub); font-weight: 600; letter-spacing: 0.16em; color: var(--gold); margin: 0; }
+.sheet-close { font-size: 12.5px; padding: 5px 10px; margin: 0; flex-shrink: 0; }
+.sheet-body { padding: 12px 14px 14px; overflow-y: auto; font-size: var(--fs-body); }
+@media (max-width: 560px) {
+  .sheet-back { align-items: flex-end; }
+  .sheet {
+    width: 100vw; max-height: 76vh; border-radius: 12px 12px 0 0;
+    border-left: 1px solid var(--panel-border);
+    animation: sheetUp 0.22s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+}
+@keyframes sheetUp { 0% { transform: translateY(24px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+/* WorkspaceTabs — 題の直下に固定 */
+.ws-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  position: sticky; top: 54px; z-index: 25;
+  background: rgba(11, 15, 30, 0.94); padding: 6px 0 8px; margin-bottom: 10px;
+}
+
+/* StatusCallout — 危機/好機/情報(色+印+文言) */
+.callout {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  padding: 9px 12px; margin-bottom: 10px;
+  background: rgba(10, 14, 30, 0.72);
+}
+.callout-mark {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+}
+.callout-crisis { border-left: 3px solid var(--ember); }
+.callout-crisis .callout-mark { border: 1px solid var(--ember); color: var(--ember-text); background: rgba(199, 62, 58, 0.1); }
+.callout-crisis .callout-title { color: var(--ember-text); }
+.callout-boon { border-left: 3px solid var(--sel); }
+.callout-boon .callout-mark { border: 1px solid var(--sel); color: var(--sel); background: var(--sel-bg); }
+.callout-boon .callout-title { color: var(--sel); }
+.callout-info { border-left: 3px solid var(--gold); }
+.callout-info .callout-mark { border: 1px solid var(--gold); color: var(--gold); background: rgba(201, 168, 106, 0.08); }
+.callout-info .callout-title { color: var(--gold); }
+.callout-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.callout-title { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; }
+.callout-text { font-size: 12.5px; color: var(--text); line-height: 1.55; }
+.callout-action { flex-shrink: 0; }
+.callout-action .btn { margin: 0; padding: 6px 14px; font-size: 13px; }
+
+/* LiveBadge — 新着/達成。0なら描画自体しない(shell.tsx) */
+.live-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px;
+  border-radius: 9px; font-size: 11px; font-weight: 700; letter-spacing: 0;
+  background: rgba(255, 157, 69, 0.16); color: var(--sel);
+  border: 1px solid rgba(255, 157, 69, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* EmptyGuide — 空状態+次の行動 */
+.empty-guide { text-align: center; padding: 22px 12px; }
+.empty-guide p { font-size: var(--fs-body); color: var(--text-dim); margin-bottom: 10px; }
+
+/* CompareRow — 変更前→後(増減は記号+色) */
+.cmp-row {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 14px; font-variant-numeric: tabular-nums; padding: 2px 0;
+}
+.cmp-label { min-width: 3.5em; color: var(--text-dim); font-size: 12.5px; }
+.cmp-val { font-weight: 700; }
+.cmp-arrow { color: var(--text-dim); font-size: 12px; }
+.cmp-after { color: var(--text); }
+.cmp-delta.up { color: var(--sel); font-weight: 700; }
+.cmp-delta.down { color: var(--ember-text); font-weight: 700; }
+
+/* LifeThread — 命脈 */
+.lifethread { display: block; }
+.lifethread.lt-h { width: 100%; height: 16px; }
+.lifethread.lt-v { width: 16px; height: 100%; }
+.lifethread.is-dim { opacity: 0.45; }
+
+/* ============================================================
+   M18 P4: 戦闘「火脈の戦場」(UI_UX_REDESIGN_PLAN §5.4)
+   ============================================================ */
+
+/* 上段行動順 — 第N巡+現在から最大6手 */
+.turn-order {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 14px 6px; z-index: 5;
+  background: linear-gradient(180deg, rgba(6, 8, 16, 0.85), rgba(6, 8, 16, 0.4));
+}
+.turn-order-turn { font-size: 12.5px; color: var(--gold); letter-spacing: 0.2em; margin-right: 6px; flex-shrink: 0; }
+.turn-chip {
+  font-size: 12.5px; padding: 3px 10px; border-radius: 12px;
+  border: 1px solid var(--panel-border); color: var(--text-dim);
+  white-space: nowrap; letter-spacing: 0.04em;
+}
+.turn-chip.is-enemy { border-color: rgba(199, 62, 58, 0.5); }
+.turn-chip.is-now { border-color: var(--sel); border-width: 2px; color: var(--sel); background: var(--sel-bg); font-weight: 700; }
+.turn-chip em { font-style: normal; font-size: 10.5px; color: var(--sel); margin-right: 4px; letter-spacing: 0; }
+
+/* 火脈 — 継足対象・連数・次撃倍率(戦場中央) */
+.chain-vein {
+  position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  pointer-events: none; z-index: 6;
+  animation: screenIn 0.25s ease both;
+}
+.chain-vein-mark {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: var(--sel);
+  border: 2px solid var(--sel); background: rgba(11, 15, 30, 0.82);
+  box-shadow: 0 0 16px rgba(255, 157, 69, 0.45);
+}
+.chain-vein-text { font-size: 12.5px; color: var(--sel); font-weight: 700; letter-spacing: 0.06em; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+.chain-vein-mult { font-size: 12.5px; color: var(--text); font-variant-numeric: tabular-nums; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
+
+/* 戦況ログ帯 — 戦場下端に直近3行+「記」で全履歴 */
+.battle-log-strip {
+  position: absolute; left: 10px; right: 10px; bottom: 6px; z-index: 6;
+  font-size: 13px; line-height: 1.55; pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+.battle-log-strip p { margin: 0; animation: screenIn 0.3s ease both; }
+.battle-log-strip .log-expand {
+  position: absolute; right: 0; bottom: 0; pointer-events: auto;
+  margin: 0; padding: 4px 12px; font-size: 12.5px; min-height: 32px;
+  background: rgba(11, 15, 30, 0.8); border: 1px solid var(--panel-border);
+}
+.log-full-back {
+  position: fixed; inset: 0; z-index: 110; background: rgba(4, 6, 14, 0.75);
+  display: flex; align-items: center; justify-content: center;
+}
+.log-full {
+  width: min(560px, calc(100vw - 32px)); max-height: 74vh;
+  background: var(--night); border: 1px solid var(--panel-border); border-radius: 8px;
+  display: flex; flex-direction: column;
+}
+.log-full-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px 8px; border-bottom: 1px solid rgba(201, 168, 106, 0.25);
+  color: var(--gold); letter-spacing: 0.2em; font-size: 14px;
+}
+.log-full-head .btn { margin: 0; padding: 5px 12px; font-size: 12.5px; }
+.log-full-body { overflow-y: auto; padding: 10px 14px; font-size: 13.5px; }
+.log-full-body p { margin-bottom: 3px; }
+
+/* 技一覧 — 戻るをスクロール外に固定 */
+.skill-panel { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.skill-panel .skill-list { max-height: 128px; }
+.skill-back { flex-shrink: 0; }
+
+/* 隊員札の幅制限(1人でも横いっぱいに伸ばさない) */
+.member-cards { justify-content: flex-start; }
+.member-card { max-width: 250px; }
+
+/* 味方立ち姿も人数連動サイズ */
+.combatant .ally-stand { height: calc(80px * var(--sz, 1)); }
+
+/* モバイル: 敵=上・味方=中央下、人数連動の横並び中央寄せ */
+@media (max-width: 560px) {
+  .is-enemy {
+    left: calc(50% + (var(--slot) - (var(--n, 1) - 1) / 2) * 25% - 40px);
+    top: calc(9% + var(--depth) * 11%);
+  }
+  .is-ally {
+    right: auto;
+    left: calc(50% + (var(--slot) - (var(--n, 1) - 1) / 2) * 25% - 40px);
+    top: auto; bottom: calc(7% + var(--depth) * 9%);
+  }
+  .turn-order { padding: 6px 10px 4px; }
+  .turn-chip:nth-child(n+6) { display: none; } /* モバイルは現在+次3手まで(先頭は巡表示) */
+  .battle-log-strip { font-size: 12.5px; bottom: 4px; }
+  .member-card { max-width: none; }
 }

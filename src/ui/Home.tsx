@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import { seasonLabel, isFestivalMonth, STAT_LABELS, MOTTOS } from '../core/types'
-import type { StatKey, MottoId, Element } from '../core/types'
+import { seasonLabel, isFestivalMonth, MOTTOS } from '../core/types'
+import type { MottoId, Element } from '../core/types'
 import { isAdult, seasonsLeft } from '../core/inheritance'
-import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
 import { GODS } from '../core/data/gods'
 import { ENEMIES } from '../core/data/enemies'
 import { REGIONS } from '../core/data/regions'
-import { FACILITIES, FACILITY_MAX_LV, facilityCost, facilityLevel } from '../core/data/facilities'
 import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { GOSSIP } from '../core/data/gossip'
 import { FAMILIAR_KINDS } from '../core/data/familiars'
 import { todaysOdai } from '../core/data/dailyOdai'
+import type { GameData } from '../core/types'
+import { census, recommendAction, nextMonthNotes, ledgerStats, type ActionKind } from './homeInsight'
+import { Sheet, StatusCallout, LiveBadge } from './layout/shell'
 import { CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
-import { gameImg, HOME_BG, HOME_BG_SEASONS, itemIcon, villagerImg } from './img'
+import { gameImg, HOME_BG, HOME_BG_SEASONS, villagerImg } from './img'
 import { FamilyTree } from './FamilyTree'
 import './m17_home.css'
 
@@ -23,14 +24,13 @@ export function HomeScreen() {
   const departDungeon = useGame((s) => s.departDungeon)
   const doFestival = useGame((s) => s.doFestival)
   const doRest = useGame((s) => s.doRest)
+  const markGossipSeen = useGame((s) => s.markGossipSeen)
   const dailyVisit = useGame((s) => s.dailyVisit)
   const [visitGift, setVisitGift] = useState<{ text: string; hoto: number; ketsu: number } | null>(null)
-  const [showForge, setShowForge] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showMotto, setShowMotto] = useState(false)
   const [showVillage, setShowVillage] = useState(false)
   const [showTree, setShowTree] = useState(false)
-  const [showFacilities, setShowFacilities] = useState(false)
   const [showGossip, setShowGossip] = useState(false)
   const [showFamiliars, setShowFamiliars] = useState(false)
   const [showObjectives, setShowObjectives] = useState(false)
@@ -40,6 +40,26 @@ export function HomeScreen() {
   const cheapestPact = Math.min(...GODS.map((g) => g.cost))
   const canPact = adults.length > 0 && data.hoto >= cheapestPact
   const hint = useMemo(() => tsuzuriHint(data, adults.length), [data, adults.length])
+
+  // M18 P2: 血脈診断・状況別推奨・月送り確認・郷の帳
+  const cen = useMemo(() => census(data), [data])
+  const rec = useMemo(() => recommendAction(data), [data])
+  const [confirm, setConfirm] = useState<'festival' | 'rest' | null>(null)
+  const famRef = useRef<HTMLDivElement>(null)
+  const actRef = useRef<HTMLDivElement>(null)
+  const ledRef = useRef<HTMLDivElement>(null)
+  const head = cen.alive.find((c) => c.isHead) ?? cen.alive[0]
+  const headDying = !!head && head.hp / head.maxHp < 0.3
+  const crisis = (cen.alive.length <= 1 && !cen.hasHeir) || headDying
+  const crisisTitle = [
+    cen.alive.length <= 1 && !cen.hasHeir ? '後継なし' : '',
+    headDying ? '当主 瀕死' : '',
+  ].filter(Boolean).join(' / ')
+  const goAction = (a: ActionKind) => {
+    if (a === 'depart') setScreen({ id: 'depart' })
+    else if (a === 'pact') setScreen({ id: 'pact' })
+    else setConfirm(a)
+  }
 
   // 日参り — 郷に戻った初回(実日付が変わっていれば)綴が控えめに迎える。streakなし・煽らない。
   // StrictModeの二重effectで2回目がnullを返しバナーを打ち消すのを、ref一度きりガードで防ぐ。
@@ -76,6 +96,16 @@ export function HomeScreen() {
         </div>
       )}
 
+      {crisis && (
+        <StatusCallout
+          kind="crisis"
+          title={`血脈危機 — ${crisisTitle}`}
+          action={<button className="btn" onClick={() => goAction(rec.action)}>{ACTION_LABEL[rec.action]}へ</button>}
+        >
+          {rec.reason}
+        </StatusCallout>
+      )}
+
       <div className="tsuzuri-row">
         <TsuzuriLine text={hint.text} />
         {hint.go && (
@@ -85,25 +115,26 @@ export function HomeScreen() {
         )}
       </div>
 
-      <Panel title="燈守家の一族">
-        <div className="family-grid">
-          {alive.map((c) => (
-            <CharCard key={c.id} char={c} seasonIndex={data.seasonIndex} />
-          ))}
-          {alive.length === 0 && <p>いま生きている者はいない。次の子の誕生を待つ……</p>}
-        </div>
-      </Panel>
+      <div ref={famRef}>
+        <Panel title="燈守家の一族">
+          <FamilyBoard data={data} onGo={goAction} />
+        </Panel>
+      </div>
 
-      <Panel title="今月の行い — 一つ選べば月が替わる">
+      <div ref={actRef}>
+      <Panel title="今月の決断 — 一つ選べば月が替わる">
+        <p className="rec-reason"><span className="rec-mark">薦</span>綴の見立て — {rec.reason}</p>
         <div className="action-cards">
           <ActionCard
-            primary iconName="ic_expedition" iconFb="出" title="出立 — 夜藪へ"
+            primary={rec.action === 'depart'} rec={rec.action === 'depart'}
+            iconName="ic_expedition" iconFb="出" title="出立 — 夜藪へ"
             desc="夜藪へ潜り、奉燈と血珠を得る。深いほど実り多い。"
             disabled={adults.length === 0}
             note={adults.length === 0 ? '出立できる大人がいない' : undefined}
             onClick={() => setScreen({ id: 'depart' })}
           />
           <ActionCard
+            rec={rec.action === 'pact'}
             iconName="ic_pact" iconFb="契" title="星契り — 次代を授かる"
             desc="星神と契り、翌月に子を授かる。血を絶やすな。"
             disabled={!canPact}
@@ -115,6 +146,7 @@ export function HomeScreen() {
             onClick={() => setScreen({ id: 'pact' })}
           />
           <ActionCard
+            rec={rec.action === 'festival'}
             iconName={`fes_${['haru', 'natsu', 'aki', 'fuyu'][Math.floor((data.seasonIndex % 12) / 3)]}`} iconFb="祭" title="祭 — 郷を潤す"
             desc={isFestivalMonth(data.seasonIndex)
               ? '奉燈30を捧げ、一族の傷と心労を癒す。星との縁も深まる。'
@@ -125,60 +157,60 @@ export function HomeScreen() {
                 : data.hoto < 30 ? '奉燈が足りない'
                   : undefined
             }
-            onClick={doFestival}
+            onClick={() => setConfirm('festival')}
           />
           <ActionCard
+            rec={rec.action === 'rest'}
             iconName="ic_rest" iconFb="憩" title="静養 — 傷を癒す"
             desc="隊の傷と心労を癒す。何もない月も、月は替わる。"
-            onClick={doRest}
+            onClick={() => setConfirm('rest')}
           />
         </div>
         <p className="action-note">月が替わるたび、一族は歳を取る。八季(廿四月)で灯は尽きる — 時を無駄にするな。</p>
       </Panel>
-
-      <div className="home-links">
-        <div className="nav-group">
-          <span className="nav-group-label">営み</span>
-          <button className="btn btn-ghost" onClick={() => setShowForge(true)}><Ico name="ic_forge" fb="鍛" /> 鍛冶と蔵</button>
-          <button className="btn btn-ghost" onClick={() => setShowFacilities(true)}><Ico name="ic_facility" fb="普" /> 郷普請</button>
-          <button className="btn btn-ghost" onClick={() => setShowVillage(true)}><Ico name="ic_village" fb="郷" /> 郷を歩く</button>
-          <button className="btn btn-ghost" onClick={() => setShowFamiliars(true)}><span className="btn-mark">眷</span>眷属</button>
-          {!!data.flags.cleared && (
-            <button
-              className="btn btn-ghost"
-              title="千年紀を越えた一族の試練場 — 存命の大人(先頭4名)で挑む"
-              onClick={() => {
-                const party = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).slice(0, 4)
-                if (party.length > 0) departDungeon('tokoyo_tou', party.map((c) => c.id))
-              }}
-            >
-              <Ico name="ic_tower" fb="塔" /> 常夜百層
-            </button>
-          )}
-        </div>
-        <div className="nav-group">
-          <span className="nav-group-label">記録</span>
-          <button className="btn btn-ghost" onClick={() => setScreen({ id: 'chronicle' })}><Ico name="ic_chronicle" fb="譜" /> 家譜を繰る</button>
-          <button className="btn btn-ghost" onClick={() => setScreen({ id: 'codex' })}><Ico name="ic_codex" fb="鑑" /> 図鑑</button>
-          <button className="btn btn-ghost" onClick={() => setShowTree(true)}><Ico name="ic_tree" fb="樹" /> 家系図</button>
-          <button className="btn btn-ghost" onClick={() => setShowGossip(true)}><span className="btn-mark">声</span>郷の声</button>
-        </div>
-        <div className="nav-group">
-          <span className="nav-group-label">心得</span>
-          <button className="btn btn-ghost" onClick={() => setShowObjectives(true)}><span className="btn-mark">務</span>務め</button>
-          <button className="btn btn-ghost" onClick={() => setShowMotto(true)}>
-            <Ico name="ic_motto" fb="訓" /> 家訓{data.motto ? `「${MOTTOS[data.motto].name}」` : 'を定める'}
-          </button>
-          <button className="btn btn-ghost" onClick={() => setShowHelp(true)}><Ico name="ic_help" fb="引" /> 手引き</button>
-        </div>
       </div>
 
+      {confirm && (
+        <MonthConfirmSheet kind={confirm} data={data} onClose={() => setConfirm(null)}
+          onDo={() => { const k = confirm; setConfirm(null); if (k === 'festival') doFestival(); else doRest() }} />
+      )}
+
+      <div ref={ledRef}>
+        <Panel title="郷の帳">
+          <HomeLedger
+            data={data}
+            onOpen={(key) => {
+              if (key === 'forge') setScreen({ id: 'forge' })
+              else if (key === 'facilities') setScreen({ id: 'facilities' })
+              else if (key === 'village') setShowVillage(true)
+              else if (key === 'familiars') setShowFamiliars(true)
+              else if (key === 'chronicle') setScreen({ id: 'chronicle' })
+              else if (key === 'codex') setScreen({ id: 'codex' })
+              else if (key === 'tree') setShowTree(true)
+              else if (key === 'gossip') { markGossipSeen(); setShowGossip(true) }
+              else if (key === 'objectives') setShowObjectives(true)
+              else if (key === 'motto') setShowMotto(true)
+              else if (key === 'help') setShowHelp(true)
+              else if (key === 'tower') {
+                const party = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex)).slice(0, 4)
+                if (party.length > 0) departDungeon('tokoyo_tou', party.map((c) => c.id))
+              }
+            }}
+          />
+        </Panel>
+      </div>
+
+      <nav className="home-anchors" aria-label="ホーム内の節へ移動">
+        <button className="btn btn-ghost" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>郷</button>
+        <button className="btn btn-ghost" onClick={() => famRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>一族</button>
+        <button className="btn btn-ghost" onClick={() => actRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>今月</button>
+        <button className="btn btn-ghost" onClick={() => ledRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>帳</button>
+      </nav>
+
       {showMotto && <MottoModal onClose={() => setShowMotto(false)} />}
-      {showForge && <ForgeModal onClose={() => setShowForge(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showVillage && <VillageModal onClose={() => setShowVillage(false)} />}
       {showTree && <FamilyTree onClose={() => setShowTree(false)} />}
-      {showFacilities && <FacilitiesModal onClose={() => setShowFacilities(false)} />}
       {showGossip && <GossipModal onClose={() => setShowGossip(false)} />}
       {showFamiliars && <FamiliarsModal onClose={() => setShowFamiliars(false)} />}
       {showObjectives && <ObjectivesModal onClose={() => setShowObjectives(false)} />}
@@ -186,9 +218,11 @@ export function HomeScreen() {
   )
 }
 
-// 郷の行動カード — 図像・見出し・一言でわかりやすく。無効時は理由を添える。
+const ACTION_LABEL: Record<ActionKind, string> = { depart: '出立', pact: '星契り', festival: '祭', rest: '静養' }
+
+// 郷の行動カード — 図像・見出し・一言でわかりやすく。無効時は理由を添える。rec=綴の推奨(命火の縁+「薦」印)。
 function ActionCard({
-  iconName, iconFb, title, desc, note, disabled, primary, onClick,
+  iconName, iconFb, title, desc, note, disabled, primary, rec, onClick,
 }: {
   iconName: string
   iconFb: string
@@ -197,21 +231,153 @@ function ActionCard({
   note?: string
   disabled?: boolean
   primary?: boolean
+  rec?: boolean
   onClick: () => void
 }) {
   return (
     <button
-      className={`action-card ${primary ? 'primary' : ''}`}
+      className={`action-card ${primary ? 'primary' : ''} ${rec ? 'rec' : ''}`}
       disabled={disabled}
       onClick={onClick}
       title={note ?? ''}
     >
+      {rec && <span className="rec-tag">薦</span>}
       <span className="action-card-icon"><Ico name={iconName} fb={iconFb} size={32} /></span>
       <span className="action-card-text">
         <span className="action-card-title">{title}</span>
         <span className={`action-card-desc ${disabled && note ? 'is-note' : ''}`}>{disabled && note ? note : desc}</span>
       </span>
     </button>
+  )
+}
+
+// ---- M18 P2: 一族欄の二面化 — 大札(選択人物)+小札+血脈診断 ----
+function FamilyBoard({ data, onGo }: { data: GameData; onGo: (a: ActionKind) => void }) {
+  const [selId, setSelId] = useState<string | null>(null)
+  const c = census(data)
+  if (c.alive.length === 0) {
+    return <p>いま生きている者はいない。{c.pregnant > 0 ? '腹の子の誕生を待つ……' : '一族の灯は、ここで潰えた。'}</p>
+  }
+  const head = c.alive.find((x) => x.isHead) ?? c.alive[0]
+  const sel = c.alive.find((x) => x.id === selId) ?? head
+  const smalls = c.alive.filter((x) => x.id !== sel.id)
+  return (
+    <div className="family-board">
+      <div className="family-main">
+        <CharCard char={sel} seasonIndex={data.seasonIndex} />
+        {smalls.length > 0 && (
+          <div className="family-smalls">
+            {smalls.map((ch) => (
+              <CharCard key={ch.id} char={ch} seasonIndex={data.seasonIndex} compact onClick={() => setSelId(ch.id)} />
+            ))}
+          </div>
+        )}
+      </div>
+      <BloodlineDiagnosis data={data} onGo={onGo} />
+    </div>
+  )
+}
+
+// 血脈診断 — 1人でも空疎に見えない「状態を説明できる空白」(設計 §3.3/§4.2)
+function BloodlineDiagnosis({ data, onGo }: { data: GameData; onGo: (a: ActionKind) => void }) {
+  const c = census(data)
+  const rec = recommendAction(data)
+  const lifeCrisis = c.minLife && c.minLife.months <= 3
+  return (
+    <div className="blood-diag">
+      <div className="blood-diag-title">血脈診断</div>
+      <div className="blood-diag-counts">
+        存命<b>{c.alive.length}</b> ／ 成人<b>{c.adults.length}</b> ／ 幼子<b>{c.children.length}</b>
+        {c.pregnant > 0 && <> ／ 懐妊<b>{c.pregnant}</b></>}
+      </div>
+      <ul className="blood-diag-list">
+        <li className={c.hasHeir ? '' : 'is-bad'}>後継 — {c.hasHeir ? 'あり' : 'なし'}</li>
+        {c.minLife && (
+          <li className={lifeCrisis ? 'is-bad' : ''}>
+            最短の灯 — {c.minLife.ch.name} あと{c.minLife.months}月
+          </li>
+        )}
+        {c.dying.length > 0 && (
+          <li className="is-bad">瀕死 — {c.dying.map((x) => `${x.name}(${x.hp}/${x.maxHp})`).join('・')}</li>
+        )}
+        {c.mpDry.length > 0 && <li>技力枯渇 — {c.mpDry.map((x) => x.name).join('・')}</li>}
+        {c.adults.length === 0 && c.monthsToAdult !== null && (
+          <li>成人待ち — あと{c.monthsToAdult}月</li>
+        )}
+      </ul>
+      <div className="blood-diag-next">
+        <span className="blood-diag-next-label">次の一手</span>
+        <button className="btn" onClick={() => onGo(rec.action)}>{ACTION_LABEL[rec.action]}へ</button>
+      </div>
+    </div>
+  )
+}
+
+// 郷の帳 — 名前+現在値+新着badgeの帳面(設計 §4.5)
+function HomeLedger({ data, onOpen }: { data: GameData; onOpen: (key: string) => void }) {
+  const now = new Date()
+  const odaiKey = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
+  const odaiClaimable = data.flags.odaiClaimedDay !== odaiKey && todaysOdai(odaiKey).check(data)
+  const { work, record, mind } = ledgerStats(data, odaiClaimable)
+  if (data.flags.cleared) work.push({ key: 'tower', label: '常夜百層', value: `深さ${typeof data.flags.towerBest === 'number' ? data.flags.towerBest : 0}` })
+  const books: [string, typeof work][] = [['営み', work], ['記録', record], ['心得', mind]]
+  return (
+    <div className="ledger">
+      {books.map(([name, entries]) => (
+        <div key={name} className="ledger-book">
+          <div className="ledger-book-title">{name}</div>
+          {entries.map((e) => (
+            <button key={e.key} className="btn ledger-entry" onClick={() => onOpen(e.key)}>
+              <span className="ledger-label">{e.label}</span>
+              <span className="ledger-value">{e.value}<LiveBadge count={e.badge} /></span>
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// 月送り確認 — 祭/静養は効果と次月を見てから実行(設計 §4.4)
+function MonthConfirmSheet({ kind, data, onClose, onDo }: {
+  kind: 'festival' | 'rest'
+  data: GameData
+  onClose: () => void
+  onDo: () => void
+}) {
+  const alive = data.family.filter((c) => c.alive)
+  const notes = nextMonthNotes(data)
+  const healed = alive.filter((c) => c.hp < c.maxHp || c.mp < c.maxMp)
+  return (
+    <Sheet title={kind === 'festival' ? '祭を開く' : '静養する'} onClose={onClose} closeLabel="やめる">
+      <p className="confirm-lead">
+        {kind === 'festival'
+          ? '奉燈30を捧げて郷に祭を開き、月を一つ進める。一族の傷と心労が癒え、星との縁が深まる。'
+          : '家で傷と心労を癒し、月を一つ進める。'}
+      </p>
+      {healed.length > 0 ? (
+        <ul className="confirm-list">
+          {healed.slice(0, 6).map((c) => (
+            <li key={c.id}>{c.name} — 体 {c.hp}/{c.maxHp} → {c.maxHp}/{c.maxHp}</li>
+          ))}
+          {healed.length > 6 && <li>ほか{healed.length - 6}名も癒える</li>}
+        </ul>
+      ) : (
+        <p className="confirm-list-empty">いま傷んでいる者はいない。</p>
+      )}
+      <p className="confirm-age">月が替わり、一族は皆ひと月ぶん歳を取る。</p>
+      {notes.length > 0 && (
+        <div className="confirm-notes">
+          {notes.map((n, i) => <p key={i}>◆ {n}</p>)}
+        </div>
+      )}
+      <div className="confirm-actions">
+        <button className="btn btn-ghost" onClick={onClose}>やめる</button>
+        <button className="btn btn-main" onClick={onDo}>
+          {kind === 'festival' ? '祭を開いて月を進める' : '静養して月を進める'}
+        </button>
+      </div>
+    </Sheet>
   )
 }
 
@@ -492,168 +658,6 @@ function MottoModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function ForgeModal({ onClose }: { onClose: () => void }) {
-  const data = useGame((s) => s.data)!
-  const buyItem = useGame((s) => s.buyItem)
-  const equipItem = useGame((s) => s.equipItem)
-  const trainStat = useGame((s) => s.trainStat)
-  const forgeUpgrade = useGame((s) => s.forgeUpgrade)
-  const [charId, setCharId] = useState<string | null>(null)
-  const [invSort, setInvSort] = useState<'slot' | 'atk' | 'def' | 'gen'>('slot')
-
-  const alive = data.family.filter((c) => c.alive)
-  const shopTier = data.regionsCleared.length
-  const stock = ITEM_BASES.filter((b) => b.shopTier <= shopTier)
-  const selChar = alive.find((c) => c.id === charId)
-
-  // 蔵の並べ替え(表示のみ・データ非改変)
-  const SLOT_ORDER: Record<string, number> = { weapon: 0, armor: 1, charm: 2 }
-  const sortedInv = [...data.inventory].sort((a, b) => {
-    if (invSort === 'atk') return (b.atk ?? 0) - (a.atk ?? 0)
-    if (invSort === 'def') return (b.def ?? 0) - (a.def ?? 0)
-    if (invSort === 'gen') return b.generation - a.generation
-    return (SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]) || (b.atk ?? 0) - (a.atk ?? 0)
-  })
-  const INV_SORTS: [typeof invSort, string][] = [['slot', '種別'], ['atk', '攻'], ['def', '防'], ['gen', '継承']]
-
-  // 打ち直し対象(v3.1 M12-1): 蔵の品+全員の装備
-  const forgeables = [
-    ...data.inventory.map((it) => ({ it, where: '蔵' })),
-    ...alive.flatMap((c) =>
-      (['weapon', 'armor', 'charm'] as const)
-        .map((s) => c.equipment[s])
-        .filter((x): x is NonNullable<typeof x> => !!x)
-        .map((it) => ({ it, where: c.name })),
-    ),
-  ]
-
-  return (
-    <div className="modal-back" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="panel-title">鍛冶と蔵 — 奉燈 {data.hoto}</h2>
-
-        <Panel title="購う(あがなう)">
-          <div className="item-grid">
-            {stock.map((b) => (
-              <button
-                key={b.baseId}
-                className="btn item-cell"
-                disabled={data.hoto < b.price}
-                onClick={() => buyItem(b.baseId)}
-              >
-                <MaybeImg src={itemIcon(b.baseId)} className="it-ico" />
-                {b.name}
-                {b.atk ? <span className="item-stat"> 攻{b.atk}</span> : ''}
-                {b.def ? <span className="item-stat"> 防{b.def}</span> : ''}
-                <span className="item-price"> — {b.price}燈</span>
-              </button>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel title="装備を授ける">
-          <p style={{ fontSize: 13, marginBottom: 8 }}>まず人を選び、次に蔵の品を選ぶ。</p>
-          <div className="exp-party">
-            {alive.map((c) => (
-              <CharCard
-                key={c.id}
-                char={c}
-                seasonIndex={data.seasonIndex}
-                compact
-                selected={charId === c.id}
-                onClick={() => setCharId(c.id)}
-              >
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
-                  {(['weapon', 'armor', 'charm'] as const)
-                    .map((s) => c.equipment[s]?.name)
-                    .filter(Boolean)
-                    .join(' / ') || '装備なし'}
-                </div>
-              </CharCard>
-            ))}
-          </div>
-          {selChar && (
-            <div style={{ marginTop: 10 }}>
-              {data.inventory.length === 0 && <p style={{ fontSize: 13 }}>蔵は空だ。</p>}
-              {data.inventory.length > 1 && (
-                <div className="inv-sort-row">
-                  <span className="inv-sort-lbl">並べ替え</span>
-                  {INV_SORTS.map(([key, label]) => (
-                    <button key={key} className={`btn btn-ghost inv-sort-btn ${invSort === key ? 'active' : ''}`} onClick={() => setInvSort(key)}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="item-grid">
-                {sortedInv.map((it) => (
-                  <button key={it.id} className="btn item-cell" onClick={() => equipItem(selChar.id, it.id)}>
-                    <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
-                    {it.name}
-                    {it.atk ? <span className="item-stat"> 攻{it.atk}</span> : ''}
-                    {it.def ? <span className="item-stat"> 防{it.def}</span> : ''}
-                    {it.legacyOf ? ` — ${it.legacyOf}の形見` : ''}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </Panel>
-
-        <Panel title="打ち直し — 槌を入れ、代を深める">
-          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 6 }}>
-            持てる血珠: {data.ketsu} — 打つほど強く(1代ごと基礎+12%)。遺品は銘を保ったまま深まる。上限{REFORGE_MAX}代。
-          </p>
-          {forgeables.length === 0 && <p style={{ fontSize: 13 }}>打てる品がない。</p>}
-          <div className="item-grid">
-            {forgeables.map(({ it, where }) => {
-              const cost = reforgeCost(it)
-              const maxed = it.generation >= REFORGE_MAX
-              return (
-                <button
-                  key={it.id}
-                  className="btn item-cell"
-                  disabled={maxed || data.hoto < cost.hoto || data.ketsu < cost.ketsu}
-                  onClick={() => forgeUpgrade(it.id)}
-                  title={it.legacyOf ? `${it.legacyOf}の形見` : undefined}
-                >
-                  <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
-                  {it.name}
-                  {it.atk ? <span className="item-stat"> 攻{it.atk}</span> : ''}
-                  {it.def ? <span className="item-stat"> 防{it.def}</span> : ''}
-                  <span style={{ fontSize: 11, color: 'var(--text-dim)' }}> ({where})</span>
-                  <span className="item-price">{maxed ? ' — 打ち止め' : ` — ${cost.hoto}燈+珠${cost.ketsu}`}</span>
-                </button>
-              )
-            })}
-          </div>
-        </Panel>
-
-        {selChar && (
-          <Panel title={`修練 — ${selChar.name}の血潮を磨く(血珠5で+3)`}>
-            <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 6 }}>
-              持てる血珠: {data.ketsu} — 磨いた血潮は子へも受け継がれる。
-            </p>
-            {(Object.keys(STAT_LABELS) as StatKey[]).map((k) => (
-              <button
-                key={k}
-                className="btn"
-                disabled={data.ketsu < 5 || selChar.potential[k] >= 120}
-                onClick={() => trainStat(selChar.id, k)}
-              >
-                {STAT_LABELS[k]} {selChar.potential[k]}→{Math.min(120, selChar.potential[k] + 3)}
-              </button>
-            ))}
-          </Panel>
-        )}
-        <button className="btn btn-ghost" onClick={onClose}>
-          閉じる
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // 郷の声(v3.1 M16-3) — 解禁済みの会話キューを読み返す。未解禁は「？？？」で伏せる
 function GossipModal({ onClose }: { onClose: () => void }) {
   const data = useGame((s) => s.data)!
@@ -682,50 +686,6 @@ function GossipModal({ onClose }: { onClose: () => void }) {
         </div>
         <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 10 }}>
           家に戻る
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// 郷普請(v3.1 M16-6) — 奉燈を注ぎ、代を跨いで効く4つの施設を建てる/普請する
-function FacilitiesModal({ onClose }: { onClose: () => void }) {
-  const data = useGame((s) => s.data)!
-  const buildFacility = useGame((s) => s.buildFacility)
-
-  return (
-    <div className="modal-back" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="panel-title">郷普請 — 奉燈 {data.hoto}</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
-          施設は建てるほど郷を潤す。効果は代を跨いで一族全体に及ぶ。各施設Lv{FACILITY_MAX_LV}まで普請できる。
-        </p>
-        {FACILITIES.map((f) => {
-          const lv = facilityLevel(data.facilities, f.id)
-          const maxed = lv >= FACILITY_MAX_LV
-          const cost = maxed ? 0 : facilityCost(f.id, lv)
-          return (
-            <Panel key={f.id} title={`${f.name} — Lv${lv}/${FACILITY_MAX_LV}`}>
-              <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 6 }}>{f.desc}</p>
-              <ul style={{ fontSize: 12, margin: '0 0 8px', paddingLeft: 18 }}>
-                {f.effects.map((e, i) => (
-                  <li key={i} style={{ color: i < lv ? 'var(--amber)' : 'var(--text-dim)' }}>
-                    Lv{i + 1}: {e}
-                  </li>
-                ))}
-              </ul>
-              <button
-                className="btn"
-                disabled={maxed || data.hoto < cost}
-                onClick={() => buildFacility(f.id)}
-              >
-                {maxed ? '普請済み(最大)' : lv === 0 ? `建てる — ${cost}燈` : `Lv${lv + 1}へ普請 — ${cost}燈`}
-              </button>
-            </Panel>
-          )
-        })}
-        <button className="btn btn-ghost" onClick={onClose}>
-          閉じる
         </button>
       </div>
     </div>

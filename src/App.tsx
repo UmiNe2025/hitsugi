@@ -10,6 +10,8 @@ import { DungeonScreen } from './ui/Dungeon'
 import { BattleScreen } from './ui/Battle'
 import { ChronicleScreen } from './ui/Chronicle'
 import { CodexScreen } from './ui/Codex'
+import { ForgeScreen } from './ui/Forge'
+import { FacilitiesScreen } from './ui/Facilities'
 import { BirthScene, CeremonyScene, DeathScene, DreamScene, DreamEpScene, EndingScene, FinaleScene, JobRiteScene, LifeScene } from './ui/Scenes'
 import { SettingsModal } from './ui/Settings'
 import { setToastSink, emitToast, type ToastKind } from './ui/toast'
@@ -96,6 +98,8 @@ function App() {
         case 'pact':
         case 'depart':
         case 'chronicle':
+        case 'forge': // M18: 新Screen idは必ずtrack mapへ追加(defaultは'none'=無音事故)
+        case 'facilities':
           return 'home'
         case 'expedition':
         case 'dungeon':
@@ -142,6 +146,10 @@ function App() {
         return <ChronicleScreen />
       case 'codex':
         return <CodexScreen />
+      case 'forge':
+        return <ForgeScreen />
+      case 'facilities':
+        return <FacilitiesScreen />
       case 'finale':
         return <FinaleScene />
       case 'birth':

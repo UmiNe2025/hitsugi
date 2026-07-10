@@ -10,7 +10,7 @@
 }
 
 /* 味方立ち姿(pose_*)— 既存walk_*と同じ表示サイズを維持 */
-.ally-pose { height: 74px; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.65)); }
+.ally-pose { height: calc(88px * var(--sz, 1)); filter: drop-shadow(0 6px 8px rgba(0,0,0,0.65)); }
 
 /* ボス登場カットイン / 灯座奥義カットイン(共通オーバーレイ機構) */
 .cutin-ovl {

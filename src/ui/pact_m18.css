@@ -1,0 +1,32 @@
+/* Pact.tsx 専用 M18 P3 追加分 — 契約: docs/UI_SHELL_API.md
+   既存 index.css の行は編集しない(このファイルのみで完結)。
+   .pact-screen 側のクラスは既存(index.css)を再利用し、ここでは新規要素のみ定義する。 */
+
+/* ActionDock ぶんの逃げ — shell.has-dock 相当(UI_SHELL_API §契約) */
+.pact-has-dock { padding-bottom: 96px; }
+
+/* 実ステップ表示(壱親/弐星/参見立て) — 現在=--sel、完了=金、未来=text-dim。色だけに頼らず▼現在印を併記 */
+.pact-steps {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin: 4px 0 14px; padding: 8px 12px;
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  background: rgba(10, 14, 30, 0.55);
+}
+.pact-step-wrap { display: flex; align-items: center; gap: 6px; }
+.pact-step { display: inline-flex; align-items: baseline; gap: 6px; font-size: 13px; letter-spacing: 0.04em; }
+.pact-step-numeral { font-weight: 700; }
+.pact-step-label { }
+.pact-step-mark { font-size: 11px; color: var(--sel); font-weight: 700; }
+.pact-step-sep { color: var(--text-dim); opacity: 0.5; margin: 0 2px; }
+
+.pact-step-done { color: var(--gold); }
+.pact-step-current { color: var(--sel); font-weight: 700; }
+.pact-step-future { color: var(--text-dim); }
+
+/* 子の見立て — 伸びる2能力・弱い1能力の一言(表示専用) */
+.gene-predict-summary { font-size: 12.5px; color: var(--text); margin-top: 6px; line-height: 1.6; }
+
+@media (max-width: 640px) {
+  .pact-steps { gap: 4px; padding: 6px 10px; }
+  .pact-step { font-size: 12px; }
+}

@@ -1,0 +1,40 @@
+/* M18 P3 — 出立(DepartScreen)専用スタイル。
+   対象は Expedition.tsx の DepartScreen のみ。index.css/m17_home.css は変更しない(追記のみ・別ファイル)。
+   契約: docs/UI_SHELL_API.md / docs/UI_UX_REDESIGN_PLAN.md §5.2 */
+
+/* 準備状況バー(§5.2-1): sticky top、既存 .shell-head と同じ帯様式(.screen の padding を打ち消して縁まで敷く) */
+.depart-readybar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: -20px -16px 14px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-border);
+  border-left: 3px solid rgba(201, 168, 106, 0.5);
+  text-align: center;
+  font-size: var(--fs-body);
+  letter-spacing: 0.04em;
+}
+.depart-readybar b { color: var(--gold); font-variant-numeric: tabular-nums; }
+
+/* 地域詳細カードの追加行(§5.2-2): 見立て★tier / 推奨武功。12.5px以上・通常コントラスト */
+.region-detail-risk {
+  font-size: 12.5px;
+  color: var(--text);
+  margin-top: 6px;
+  letter-spacing: 0.03em;
+}
+
+/* 隊員札の追加行(§5.2-3): 体hp/maxHp・残season季。12.5px以上・通常コントラスト */
+.depart-char-extra {
+  font-size: 12.5px;
+  color: var(--text);
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ActionDockぶんの逃げ(§5.2-5): 96px。2クラス指定で .screen 単体より詳細度を上げ確実に上書きする */
+.depart-m18-root.screen {
+  padding-bottom: 96px;
+}

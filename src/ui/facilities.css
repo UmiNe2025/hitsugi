@@ -1,0 +1,104 @@
+/* ============================================================
+   郷普請(Facilities) — M18 P3 独立画面
+   契約: docs/UI_SHELL_API.md。既存クラス(.btn/.callout等)を継承し、
+   ここでは施設カードグリッドに必要な新規クラスのみを定義する。
+   ============================================================ */
+
+.facility-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.facility-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  background: var(--panel);
+}
+
+/* 状態3種を色+文言の二重で区別(色だけに依存しない) */
+.facility-card--buildable { border-left: 3px solid var(--sel); }
+.facility-card--insufficient { border-left: 3px solid var(--panel-border); }
+.facility-card--maxed { border-left: 3px solid var(--gold); background: rgba(201, 168, 106, 0.06); }
+
+.facility-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.facility-name {
+  font-size: var(--fs-sub);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gold); /* 金は見出しのみ(契約) */
+}
+
+.facility-lv {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.facility-desc {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.facility-next {
+  font-size: 12.5px;
+  color: var(--text);
+  margin: 0;
+}
+
+.facility-effects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.facility-effects li {
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.facility-effects li.is-achieved { color: var(--sel); } /* 達成済みLv=命火色 */
+.facility-effects li.is-pending { color: var(--text-dim); } /* 未達Lv */
+
+.facility-foot {
+  margin-top: auto;
+  padding-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 奉燈不足の理由は通常コントラストで表示(契約: 無効理由は薄めない) */
+.facility-shortfall {
+  font-size: 12.5px;
+  color: var(--text);
+  margin: 0;
+}
+
+.facility-maxed-note {
+  font-size: 12.5px;
+  color: var(--gold);
+  margin: 0;
+}
+
+.facility-build-btn {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}

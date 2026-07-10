@@ -1,0 +1,52 @@
+/* M18 P3: 鍛冶と蔵(独立画面)専用スタイル。トークン/契約は docs/UI_SHELL_API.md */
+
+/* 選択人物の固定表示レール */
+.forge-char-rail {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  position: sticky; top: 96px; z-index: 20;
+  background: rgba(11, 15, 30, 0.94); padding: 6px 0 8px; margin-bottom: 8px;
+}
+.forge-char { margin: 0; padding: 8px 14px; font-size: 13.5px; }
+.forge-char.is-sel { border-color: var(--sel); border-width: 2px; color: var(--sel); background: var(--sel-bg); }
+.forge-char-head {
+  font-size: 10px; color: var(--gold); border: 1px solid var(--gold);
+  border-radius: 3px; padding: 0 4px; margin-right: 5px; vertical-align: 1px;
+}
+.forge-char-note { font-size: 11px; color: var(--text-dim); margin-left: 5px; }
+
+/* 絞り込み行 */
+.forge-filter-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.forge-sort-lbl { font-size: 11.5px; color: var(--text-dim); margin-left: 8px; }
+
+/* 品セル内の追加要素 */
+.item-name { flex: 1; min-width: 0; }
+.item-reco {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; margin-left: 5px;
+  font-size: 11px; color: var(--sel); border: 1px solid var(--sel); background: var(--sel-bg);
+}
+.item-where { font-size: 11px; color: var(--text-dim); margin-left: 4px; }
+.item-legacy { display: block; font-size: 11px; color: var(--gold); width: 100%; }
+.item-stat em { font-style: normal; }
+.item-stat em.up { color: var(--sel); font-weight: 700; }
+.item-stat em.down { color: var(--ember-text); font-weight: 700; }
+
+/* 装備タブ2カラム(装い固定+蔵一覧) */
+.equip-cols { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.6fr); gap: 14px; align-items: start; }
+.equip-cols .equip-now { position: sticky; top: 150px; }
+.equip-slot-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(201, 168, 106, 0.2); font-size: 13px; }
+.equip-slot-name { color: var(--gold); flex-shrink: 0; }
+.equip-slot-item { text-align: right; min-width: 0; }
+@media (max-width: 640px) {
+  .equip-cols { grid-template-columns: 1fr; }
+  .equip-cols .equip-now { position: static; }
+}
+
+/* 鍛錬 */
+.train-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.train-cell { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 10px; text-align: center; }
+.train-stat { font-size: 15px; color: var(--gold); }
+.train-val { font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.forge-note { font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px; line-height: 1.6; }
+.forge-more { display: block; margin: 10px auto 0; }

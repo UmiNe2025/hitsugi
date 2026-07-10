@@ -55,6 +55,7 @@ export function BattleScreen() {
   const [displayed, setDisplayed] = useState<BattleLogEntry[]>([])
   const [pending, setPending] = useState<BattleLogEntry[]>([])
   const [menu, setMenu] = useState<Menu>({ kind: 'root' })
+  const [showFullLog, setShowFullLog] = useState(false)
   const [shakeKey, setShakeKey] = useState(0) // ヒット時のstage-shake発火用
   const shakeTimerRef = useRef<number | null>(null)
   const [auto, setAutoRaw] = useState(initialAuto)
@@ -307,24 +308,36 @@ export function BattleScreen() {
 
       {slotPhase === 'spin' && <LootSlot />}
 
+      <TurnOrderBar battle={battle} />
+
       <div className={`battle-stage${shakeKey ? ' stage-shake' : ''}${battle.phase === 'won' ? ' stage-won' : ''}`} data-shake={shakeKey}>
         {stageBgCss && <div className="battle-stage-bg" style={{ backgroundImage: stageBgCss }} />}
         <div className="stage-ground" />
 
-        {isPlayerTurn && actor && (
-          <div className="turn-banner" key={actor.key}>
-            {actor.name}
-          </div>
-        )}
+        {/* 火脈 — 継足対象・連数・次撃倍率を戦場中央に示す(§5.4) */}
+        {battle.chainTarget && battle.chain > 0 && (() => {
+          const t = battle.enemies.find((e) => e.key === battle.chainTarget && e.hp > 0)
+          if (!t) return null
+          const nextMult = 1 + Math.min(battle.chain + 1, 4) * 0.15
+          return (
+            <div className="chain-vein" key={`${battle.chainTarget}:${battle.chain}`}>
+              <span className="chain-vein-mark">継</span>
+              <span className="chain-vein-text">火脈 — {t.name}へ{battle.chain + 1}連</span>
+              <span className="chain-vein-mult">次撃 ×{nextMult.toFixed(2)}</span>
+            </div>
+          )
+        })()}
 
-        <div className="enemy-side">
+        <div className="enemy-side" style={{ ['--n' as string]: battle.enemies.filter((e) => e.hp > 0).length || 1 }}>
           {battle.enemies.map((e, i) => (
             <CombatantNode
               key={e.key}
               c={e}
               index={i}
+              count={battle.enemies.length}
               fx={fx[e.key] ?? []}
               targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
+              clickable={isPlayerTurn && menu.kind === 'root' && e.hp > 0}
               chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
               leader={battle.leaderKey === e.key}
               elementBadge={{ el: e.element, adv: isPlayerTurn && actor?.isAlly ? matchup(actor.element, e.element) : 'even' }}
@@ -335,7 +348,7 @@ export function BattleScreen() {
           ))}
         </div>
 
-        <div className="ally-side">
+        <div className="ally-side" style={{ ['--n' as string]: battle.allies.filter((a) => a.hp > 0).length || 1 }}>
           {battle.allies.map((a, i) => {
             const ch = charOf(a)
             return (
@@ -343,6 +356,7 @@ export function BattleScreen() {
                 key={a.key}
                 c={a}
                 index={i}
+                count={battle.allies.length}
                 fx={fx[a.key] ?? []}
                 targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' && a.hp > 0}
                 acting={actor?.key === a.key && battle.phase === 'input'}
@@ -354,13 +368,33 @@ export function BattleScreen() {
             )
           })}
         </div>
+
+        {/* 戦況ログ — 直近3行を戦場下端に重ね、全履歴は「記」で展開(§5.4) */}
+        <div className="battle-log-strip">
+          {displayed.slice(-3).map((l, i) => (
+            <p key={`${displayed.length}-${i}`} className={`log-${l.kind}`}>{l.text}</p>
+          ))}
+          {displayed.length > 3 && (
+            <button className="btn btn-ghost log-expand" onClick={() => setShowFullLog(true)}>記</button>
+          )}
+        </div>
       </div>
 
-      <div className="battle-log" ref={logRef}>
-        {displayed.slice(-24).map((l, i) => (
-          <p key={i} className={`log-${l.kind}`}>{l.text}</p>
-        ))}
-      </div>
+      {showFullLog && (
+        <div className="log-full-back" onClick={() => setShowFullLog(false)}>
+          <div className="log-full" onClick={(e) => e.stopPropagation()}>
+            <div className="log-full-head">
+              <span>戦況の記</span>
+              <button className="btn btn-ghost" onClick={() => setShowFullLog(false)}>閉じる</button>
+            </div>
+            <div className="log-full-body" ref={logRef}>
+              {displayed.map((l, i) => (
+                <p key={i} className={`log-${l.kind}`}>{l.text}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="battle-bottom">
         {over ? (
@@ -393,26 +427,29 @@ export function BattleScreen() {
                 </>
               )}
               {isPlayerTurn && menu.kind === 'skill' && actor && (
-                <div className="skill-list">
-                  {actor.skills.map((id) => {
-                    const sk = skillById(id)
-                    return (
-                      <button key={id} className="cmd-btn" disabled={actor.mp < sk.mpCost} onClick={() => castSkill(id)}>
-                        <MaybeImg src={skillIcon(sk.id)} className="sk-ico" />
-                        {sk.element && <span className={`el-chip el-${sk.element}`}>{ELEMENT_LABELS[sk.element]}</span>}
-                        {sk.name}
-                        {(sk.type === 'attack' || sk.type === 'heal') && <span className="sk-info">威{sk.power}</span>}
-                        {(sk.target === 'enemies' || sk.target === 'allies') && <span className="sk-info sk-aoe">全</span>}
-                        <span className="mp-cost">{sk.mpCost}</span>
-                      </button>
-                    )
-                  })}
-                  <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>戻る</button>
+                <div className="skill-panel">
+                  <div className="skill-list">
+                    {actor.skills.map((id) => {
+                      const sk = skillById(id)
+                      return (
+                        <button key={id} className="cmd-btn" disabled={actor.mp < sk.mpCost} onClick={() => castSkill(id)}>
+                          <MaybeImg src={skillIcon(sk.id)} className="sk-ico" />
+                          {sk.element && <span className={`el-chip el-${sk.element}`}>{ELEMENT_LABELS[sk.element]}</span>}
+                          {sk.name}
+                          {(sk.type === 'attack' || sk.type === 'heal') && <span className="sk-info">威{sk.power}</span>}
+                          {(sk.target === 'enemies' || sk.target === 'allies') && <span className="sk-info sk-aoe">全</span>}
+                          <span className="mp-cost">{sk.mpCost}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {/* 戻るはスクロール外に固定(§5.4) */}
+                  <button className="cmd-btn cmd-ghost skill-back" onClick={() => setMenu({ kind: 'root' })}>選ばず戻る</button>
                 </div>
               )}
               {isPlayerTurn && menu.kind === 'target' && (
                 <>
-                  <p className="cmd-hint-line">的を選べ</p>
+                  <p className="cmd-hint-line">{menu.side === 'enemy' ? '狙う魔性を選べ' : '授ける相手を選べ'}</p>
                   <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>やめる</button>
                 </>
               )}
@@ -454,14 +491,36 @@ export function BattleScreen() {
   )
 }
 
+// 第N巡と、現在から最大6手の行動順(§5.4「上段行動順」)
+function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGame.getState>['battle']> }) {
+  const byKey = new Map([...battle.allies, ...battle.enemies].map((c) => [c.key, c]))
+  const seq = [...battle.order.slice(battle.orderIndex), ...battle.order.slice(0, battle.orderIndex)]
+    .map((k) => byKey.get(k))
+    .filter((c): c is Combatant => !!c && c.hp > 0)
+    .slice(0, 6)
+  if (seq.length === 0) return null
+  return (
+    <div className="turn-order" aria-label="行動順">
+      <span className="turn-order-turn">第{battle.turn}巡</span>
+      {seq.map((c, i) => (
+        <span key={`${c.key}-${i}`} className={`turn-chip ${c.isAlly ? 'is-ally' : 'is-enemy'} ${i === 0 ? 'is-now' : ''}`}>
+          {i === 0 && <em>今</em>}{c.name}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 // 配置スロット+演出クラスを与える共通ラッパ
 function CombatantNode({
-  c, index, fx, targetable, acting, chainBadge, leader, elementBadge, onClick, children,
+  c, index, count, fx, targetable, clickable, acting, chainBadge, leader, elementBadge, onClick, children,
 }: {
   c: Combatant
   index: number
+  count: number // 同陣営の総数(中央寄せ+人数連動サイズ用)
   fx: FxEvent[]
   targetable: boolean
+  clickable?: boolean
   acting?: boolean
   chainBadge: number
   leader?: boolean
@@ -475,6 +534,7 @@ function CombatantNode({
   const ko = fx.some((f) => f.kind === 'ko')
   const voice = fx.find((f) => f.voice)
   const depth = index % 2 // 雁行の前後
+  const interactive = targetable || !!clickable
   return (
     <div
       className={[
@@ -487,8 +547,18 @@ function CombatantNode({
         hit ? 'fx-hit' : '',
         ko ? 'fx-ko' : '',
       ].join(' ')}
-      style={{ ['--slot' as string]: index, ['--depth' as string]: depth }}
+      style={{
+        ['--slot' as string]: index,
+        ['--depth' as string]: depth,
+        ['--sz' as string]: 1 + Math.max(0, 4 - count) * 0.12, // 人数が少ないほど大きく
+      }}
       onClick={onClick}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : -1}
+      aria-label={`${c.name} 体力${c.hp}/${c.maxHp}`}
+      onKeyDown={(e) => {
+        if (interactive && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick() }
+      }}
     >
       {voice && <div className="voice-bubble">{voice.voice}</div>}
       <div className="combatant-body">{children}</div>
