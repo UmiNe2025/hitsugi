@@ -4,6 +4,8 @@ import { regionById } from '../core/data/regions'
 import { MONTH_NAMES } from '../core/types'
 import { dungeonByRegion } from '../dungeon/maps'
 import { DungeonEngine } from '../dungeon/engine'
+import { TILE_CHARS } from '../dungeon/types'
+import type { DungeonRun } from '../dungeon/types'
 import { boonById } from '../core/data/boons'
 import { Bar, MaybeImg } from './components'
 import { Sheet } from './layout/shell'
@@ -14,24 +16,85 @@ import { ageOf } from '../core/inheritance'
 import { EventModal } from './Expedition'
 import { audio } from '../core/audio'
 import './dungeon_m23.css'
+import './dungeon_m24.css'
 
 // 地域背景 → 環境音レイヤーの対応(M10)
 const AMBIENCE_BY_BG: Record<string, 'forest' | 'zaka' | 'tani' | 'miyama'> = {
   'bg_forest.png': 'forest', 'bg_zaka.png': 'zaka', 'bg_tani.png': 'tani', 'bg_miyama.png': 'miyama',
 }
 
+// M24 §4.5: 短期目的の算出(石碑の残数はfloorDef.ascii+run.usedから導出、階段発見/灯不足はengine/runから)
+function monumentProgress(ascii: string[], floorIndex: number, used: string[]): { found: number; total: number } {
+  const usedSet = new Set(used)
+  let total = 0
+  let found = 0
+  for (let y = 0; y < ascii.length; y++) {
+    const row = ascii[y]
+    for (let x = 0; x < row.length; x++) {
+      if (TILE_CHARS[row[x]] !== 'monument') continue
+      total++
+      if (usedSet.has(`${floorIndex}:${x}:${y}`)) found++
+    }
+  }
+  return { found, total }
+}
+
+function shortTermGoal(light: number, stairsFound: boolean, m: { found: number; total: number }): string {
+  if (light < 15) return '帰り火を考えよ'
+  if (stairsFound) return '下り階段を見つけた'
+  if (m.total > 0 && m.found < m.total) return `石碑を探す ${m.found}/${m.total}`
+  return '下り階段を探す'
+}
+
 // 灯籠の炎リング — 灯ゲージの視覚化(俺屍の月齢リング様式)
-// フロア探索進度を1秒に1度だけ更新して表示(engineをpollingするが軽負荷)
-function ExploreBadge({ engineRef }: { engineRef: React.MutableRefObject<{ exploreRatio(): number } | null> }) {
+// 踏査%+短期目的を1つの帯として表示(M24 §4.5/§4.6)。engineをpollingするが500ms間隔で軽負荷。
+function ObjectivePlate({
+  engineRef, run, floorAscii,
+}: {
+  engineRef: React.MutableRefObject<{ exploreRatio(): number; stairsFound(): boolean } | null>
+  run: DungeonRun
+  floorAscii: string[]
+}) {
   const [pct, setPct] = useState(0)
+  const [stairs, setStairs] = useState(false)
   useEffect(() => {
     const t = setInterval(() => {
-      const r = engineRef.current?.exploreRatio() ?? 0
-      setPct(Math.round(r * 100))
+      setPct(Math.round((engineRef.current?.exploreRatio() ?? 0) * 100))
+      setStairs(engineRef.current?.stairsFound() ?? false)
     }, 500)
     return () => clearInterval(t)
   }, [engineRef])
-  return <span className="explore-badge" style={{ marginLeft: 8, fontSize: 11, opacity: 0.75 }}>踏査 {pct}%</span>
+  const monuments = monumentProgress(floorAscii, run.floor, run.used)
+  const goal = shortTermGoal(run.light, stairs, monuments)
+  return (
+    <div className="objective-plate">
+      <span className="objective-goal">{goal}</span>
+      <span className="objective-explore">踏査 {pct}%</span>
+    </div>
+  )
+}
+
+// M24 §4.6: 直近一文だけを画面下中央へ3〜5秒(3行常設をやめる)。履歴は小休止から読む。
+function RecentLog({ log }: { log: string[] }) {
+  const last = log[log.length - 1]
+  const [visible, setVisible] = useState(false)
+  const timerRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (!last) return
+    setVisible(true)
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    const life = getReduceMotion() ? 5000 : 3800
+    timerRef.current = window.setTimeout(() => setVisible(false), life)
+    return () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    }
+  }, [last])
+  if (!last || !visible) return null
+  return (
+    <div className="dungeon-log-line" role="status" aria-live="polite">
+      {last}
+    </div>
+  )
 }
 
 function LanternRing({ pct }: { pct: number }) {
@@ -229,23 +292,21 @@ function DungeonFloor() {
     <div className="dungeon-screen">
       <div className="dungeon-canvas" ref={hostRef} />
 
-      <div className="dungeon-hud-left">
+      {/* M24 §4.6: 灯・地名・階層・短期目的を左上〜上中央の一帯へ統合。資源/暦は右寄せの小型表示。 */}
+      <div className="dungeon-hud-band" key={run.floor}>
         <LanternRing pct={run.light} />
-        <div className="month-plate">
-          <span className="month-name">{MONTH_NAMES[data.seasonIndex % 12]}</span>
-          <span className="month-year">{Math.floor(data.seasonIndex / 12) + 1}年目</span>
+        <div className="hud-band-text">
+          <div className="hud-band-title">
+            <span className="hud-region-name">{region.name}</span>
+            <span className="hud-floor-num">地下{run.floor + 1}層</span>
+          </div>
+          <ObjectivePlate engineRef={engineRef} run={run} floorAscii={floorDef.ascii} />
         </div>
-      </div>
-
-      <FirstActIntro />
-
-      <div className="dungeon-title-plate" key={run.floor}>
-        {region.name} 地下{run.floor + 1}層
-        <ExploreBadge engineRef={engineRef} />
-      </div>
-
-      <div className="dungeon-hud-top">
-        <span className="resource">
+        <div className="hud-band-spacer" />
+        <span className="hud-calendar">
+          {MONTH_NAMES[data.seasonIndex % 12]}・{Math.floor(data.seasonIndex / 12) + 1}年目
+        </span>
+        <span className="hud-resource-chip">
           奉燈<b>{run.loot.hoto}</b> 血珠<b>{run.loot.ketsu}</b>
         </span>
         <button className="btn" onClick={() => setConfirm({ kind: 'pause' })} title="小休止(ESC)">☰ 小休止</button>
@@ -253,6 +314,15 @@ function DungeonFloor() {
           帰り火
         </button>
       </div>
+
+      {/* M24 §4.6: ミニマップ(Pixi描画)の上に重ねる不可視タップ域 — 拡大トグル */}
+      <button
+        className="minimap-tap-zone"
+        aria-label="地図の拡大表示を切り替える"
+        onClick={() => engineRef.current?.toggleMinimapZoom()}
+      />
+
+      <FirstActIntro />
 
       <div className="dungeon-hud-party">
         {party.map((c) => (
@@ -263,11 +333,7 @@ function DungeonFloor() {
         ))}
       </div>
 
-      <div className="dungeon-log">
-        {run.log.slice(-3).map((l, i) => (
-          <p key={i}>{l}</p>
-        ))}
-      </div>
+      <RecentLog log={run.log} />
 
       <div className="dpad">
         <div />

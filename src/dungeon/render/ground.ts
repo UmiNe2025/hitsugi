@@ -54,8 +54,10 @@ export function buildGround(
 
   // 1.5) 壁の立体化 — 歩行域に接する壁セルだけ薄く起こし、境界に縁光(墨絵の輪郭)。
   // 奥(非隣接)の壁は闇のまま = 部屋の形が読めるのに空間の底は見えない、の両立。
+  // M24 §4.2: 縁光を2px→3pxへ強め、床との境界をより明瞭にする(奥壁の暗さは不変)。
+  const RIM_PX = 3
   const wallBody = lift(theme.groundBase, 9)
-  const wallRim = lift(theme.groundBase, 44)
+  const wallRim = lift(theme.groundBase, 52)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (grid[y][x] !== 'wall') continue
@@ -63,15 +65,16 @@ export function buildGround(
       if (!nb.some(Boolean)) continue
       ground.rect(x * tile, y * tile, tile, tile).fill(jitterColor(wallBody, theme.groundJitter, rng))
       // 床に面した辺へ縁光(上=nb[0]…の順で 上/下/左/右)
-      if (nb[0]) ground.rect(x * tile, y * tile, tile, 2).fill({ color: wallRim, alpha: 0.42 })
-      if (nb[1]) ground.rect(x * tile, y * tile + tile - 2, tile, 2).fill({ color: wallRim, alpha: 0.5 })
-      if (nb[2]) ground.rect(x * tile, y * tile, 2, tile).fill({ color: wallRim, alpha: 0.38 })
-      if (nb[3]) ground.rect(x * tile + tile - 2, y * tile, 2, tile).fill({ color: wallRim, alpha: 0.38 })
+      if (nb[0]) ground.rect(x * tile, y * tile, tile, RIM_PX).fill({ color: wallRim, alpha: 0.5 })
+      if (nb[1]) ground.rect(x * tile, y * tile + tile - RIM_PX, tile, RIM_PX).fill({ color: wallRim, alpha: 0.58 })
+      if (nb[2]) ground.rect(x * tile, y * tile, RIM_PX, tile).fill({ color: wallRim, alpha: 0.46 })
+      if (nb[3]) ground.rect(x * tile + tile - RIM_PX, y * tile, RIM_PX, tile).fill({ color: wallRim, alpha: 0.46 })
     }
   }
 
   // 2) 歩行セルのトーンジッタ+小石スペックル
-  const floorTone = lift(theme.groundBase, 24)
+  // M24 §4.2: 歩行床の明度を+24→+38(概ね+14)へ引き上げ、壁との明度差で境界を明瞭化する。
+  const floorTone = lift(theme.groundBase, 38)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const kind = grid[y][x]

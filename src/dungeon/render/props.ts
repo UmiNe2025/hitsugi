@@ -30,6 +30,11 @@ export interface PropsResult {
 const DARK = 0x04060c // シルエットの基調(地色より一段沈める)
 const RIM = 0x2e3a52 // 月明かり側の縁光
 
+// M24 §4.5: 宝箱/焚火/祠/石碑/階段の視認性向上 — 標識を1.25〜1.6倍(採用値1.4)へ拡大。
+// entrance/bossは対象外(entranceは地味な帰還点、bossは専用光源で既に強調済み)。
+const MARKER_SCALE = 1.4
+const ENLARGED_MARKERS: readonly TileKind[] = ['chest', 'camp', 'shrine', 'stairs', 'monument']
+
 // ---- プロップ描画(全て手続き生成・小さなシルエット+わずかな縁明かり) ----
 function drawProp(g: Graphics, kind: PropKind, v: number, theme: DungeonTheme): void {
   const edge = theme.lanternTint
@@ -270,19 +275,20 @@ export function buildProps(
   ) => {
     const wx = tx * tile + tile / 2 + (opts?.jx ?? 0)
     const wy = (ty + 1) * tile - 3 + (opts?.jy ?? 0)
+    const sc = opts?.scale ?? 1
     if (opts?.shadow !== false) {
       const sh = new Sprite(shadowTex)
       sh.anchor.set(0.5)
       sh.position.set(wx, wy - 1)
       sh.zIndex = wy - 0.5
       sh.alpha = 0.55
+      sh.scale.set(sc) // マーカー拡大(§4.5)に合わせ影も比例させ、接地感を保つ
       sprites.push(sh)
     }
     const sp = new Sprite(tex)
     sp.anchor.set(0.5, 1)
     sp.position.set(wx, wy)
     sp.zIndex = wy
-    const sc = opts?.scale ?? 1
     sp.scale.set(opts?.flip ? -sc : sc, sc)
     sprites.push(sp)
     return sp
@@ -421,7 +427,10 @@ export function buildProps(
       if (!['chest', 'camp', 'shrine', 'stairs', 'entrance', 'monument'].includes(kind)) continue
       const isUsed =
         usedKeys.has(`${floorIndex}:${x}:${y}`) && (kind === 'chest' || kind === 'shrine' || kind === 'camp')
-      const sp = addSprite(markerTex(kind, isUsed), x, y, { shadow: kind !== 'entrance' })
+      const sp = addSprite(markerTex(kind, isUsed), x, y, {
+        shadow: kind !== 'entrance',
+        scale: ENLARGED_MARKERS.includes(kind) ? MARKER_SCALE : 1,
+      })
       markers.set(`${x}:${y}`, sp)
       if (kind === 'camp') {
         lights.push({ id: `camp:${x}:${y}`, tx: x, ty: y, radiusTiles: isUsed ? 1.1 : 2.6, flicker: 1 })

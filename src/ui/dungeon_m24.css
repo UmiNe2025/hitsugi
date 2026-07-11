@@ -1,0 +1,196 @@
+/* M24: ダンジョンHUD再配置(docs/BATTLE_DUNGEON_OVERHAUL_M24.md §4.6)。
+   src/index.css は編集しない方針のため、既存クラスの上書きも含め全てこのファイルへ書く。
+   Dungeon.tsx で dungeon_m23.css の後にimportすることで、同名セレクタはこちらを後勝ちにしている。 */
+
+/* ---- 上部帯: 灯・地名・階層・短期目的を左〜中央、資源/暦/操作を右へ(§4.6) ---- */
+.dungeon-hud-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) 8px
+    calc(10px + env(safe-area-inset-left, 0px));
+  animation: hudBandIn 0.35s ease both;
+}
+@keyframes hudBandIn {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.reduce-motion .dungeon-hud-band { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .dungeon-hud-band { animation: none; }
+}
+
+.dungeon-hud-band .lantern-ring { width: 46px; height: 46px; flex-shrink: 0; }
+.dungeon-hud-band .lantern-ring .ring-label { bottom: -12px; font-size: 9px; }
+
+.hud-band-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.hud-band-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+.hud-region-name {
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  font-weight: 700;
+}
+.hud-floor-num {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+
+.objective-plate {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+.objective-goal {
+  font-size: 12.5px;
+  color: var(--flame);
+  letter-spacing: 0.04em;
+}
+.objective-explore {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  opacity: 0.8;
+}
+
+.hud-band-spacer { flex: 1 1 auto; min-width: 4px; }
+
+.hud-calendar {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  opacity: 0.75;
+  white-space: nowrap;
+}
+.hud-resource-chip {
+  background: rgba(11, 15, 30, 0.72);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.hud-resource-chip b { color: var(--text); font-weight: 700; }
+
+.dungeon-hud-band .btn { font-size: 12.5px; padding: 6px 12px; flex-shrink: 0; }
+
+@media (max-width: 560px) {
+  .dungeon-hud-band { gap: 6px; padding-right: calc(8px + env(safe-area-inset-right, 0px)); }
+  .hud-region-name { font-size: 13.5px; }
+  .hud-floor-num, .objective-goal { font-size: 11px; }
+  .hud-calendar { display: none; } /* 狭幅では最優先の4項目のみ残す(§4.6) */
+  .dungeon-hud-band .lantern-ring { width: 38px; height: 38px; }
+}
+
+/* ---- ミニマップ拡大トグル(§4.6) — Pixi描画の上に重ねる不可視タップ域 ----
+   minimap.ts は非所有のため位置/寸法はおおよその重なりを狙った近似値(実機未検証)。 */
+.minimap-tap-zone {
+  position: absolute;
+  top: 50px;
+  right: 4px;
+  width: 145px;
+  height: 100px;
+  z-index: 6;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.minimap-tap-zone:hover,
+.minimap-tap-zone:focus-visible {
+  border-color: rgba(201, 168, 106, 0.4);
+  outline: none;
+}
+@media (max-width: 560px) {
+  .minimap-tap-zone { width: 100px; height: 78px; top: 44px; }
+}
+
+/* ---- 隊員HP: 左下の短い横札。1人でも横に伸ばさない(§4.6) ---- */
+.dungeon-hud-party {
+  position: absolute;
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
+  width: auto;
+  max-width: min(70vw, 420px);
+}
+.dungeon-hud-party .ally-cell {
+  padding: 4px 8px;
+  width: auto;
+  min-width: 88px;
+  flex: 0 0 auto;
+}
+@media (max-width: 560px) {
+  .dungeon-hud-party { max-width: 62vw; }
+  .dungeon-hud-party .ally-cell { min-width: 74px; }
+  .dungeon-hud-party .ally-name { font-size: 11px; }
+}
+
+/* ---- 直近ログ一文: 画面下中央へ3〜5秒(§4.6) ---- */
+.dungeon-log-line {
+  position: absolute;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: min(72vw, 480px);
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text);
+  background: rgba(5, 8, 18, 0.7);
+  border-radius: 6px;
+  padding: 6px 14px;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: logLineIn 0.2s ease both;
+}
+@keyframes logLineIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.reduce-motion .dungeon-log-line { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .dungeon-log-line { animation: none; }
+}
+@media (max-width: 560px) {
+  .dungeon-log-line { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-width: 84vw; }
+}
+
+/* ---- D-pad: タッチ環境だけ強調し、マウス/キーボード環境では控えめに(§4.6) ----
+   index.cssの `@media(min-width:900px){.dpad{opacity:.35}}` は画面幅基準で誤判定しうるため、
+   pointer種別基準の本ルールで実質的に上書きする(後勝ち)。 */
+.dpad {
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
+@media (pointer: coarse) {
+  .dpad { opacity: 0.9; }
+}
+@media (pointer: fine) {
+  .dpad { opacity: 0.28; }
+  .dpad:hover, .dpad:focus-within { opacity: 0.7; }
+}

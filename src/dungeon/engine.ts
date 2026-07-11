@@ -15,8 +15,9 @@ import { buildProps, type PropsResult } from './render/props'
 import { LightingSystem } from './render/lighting'
 import { shadeArchetypes, createShadeVisual, type ShadeVisual } from './render/shades'
 import { Minimap } from './render/minimap'
-import { computeZoom, cameraTarget, lookAheadOffset } from './camera'
+import { computeZoom, cameraTarget, lookAheadOffset, screenToTile } from './camera'
 import { Rng } from '../core/rng'
+import { getReduceMotion } from '../core/settings'
 
 const TILE = 36 // px(44→36 に縮小: 同画面内タイル数を約1.22倍に広げつつ、プロップ/スプライトの視認性を維持)
 const MOVE_MS = 130
@@ -122,11 +123,23 @@ export class DungeonEngine {
   private laY = 0
   private backdrop: Graphics | null = null // マップ外の純黒を埋めるscreen固定層
 
+  // M24 §4.3: タップ移動(灯路) — 村エンジン(village/engine.ts)のBFS/path構造を移植
+  private path: { x: number; y: number }[] = []
+  private visited = new Set<string>() // 発見済み床(Minimap.revealと同半径の簡易複製 — minimap.tsは非所有のため独立管理)
+  private tapTargetG: Graphics | null = null
+  private tapTargetT = 0 // 目的印のpop-inタイマ(ms)
+  private tapTargetLife = 0 // 目的印の残り表示時間(ms)。path追従中は常時表示に保たれる
+  private unreachableG: Graphics | null = null
+  private unreachableT = 0
+  private lightPathG: Graphics | null = null
+  private minimapZoomed = false
+
   private keydown = (e: KeyboardEvent) => {
     const k = keyDir(e.key)
     if (k) {
       e.preventDefault()
       this.held.add(k)
+      this.clearPath() // M24 §4.3: 手動移動へ切り替えた瞬間に灯路を消す
     }
   }
   private keyup = (e: KeyboardEvent) => {
@@ -204,6 +217,7 @@ export class DungeonEngine {
         this.py = e.y
       }
     }
+    this.markVisited(this.px, this.py) // M24 §4.3: 開始地点も発見済みにしておく
   }
 
   private parse(): void {
@@ -417,9 +431,20 @@ export class DungeonEngine {
     this.app.stage.addChild(this.screenFx)
     this.app.stage.addChild(this.vignette)
 
+    // M24 §4.3: 灯路(タップ移動の可視化)の描画先。以後は毎tick再描画する。
+    this.lightPathG = new Graphics()
+    this.layerGlow.addChild(this.lightPathG)
+
     this.app.ticker.add((t) => this.tick(t.deltaMS))
     window.addEventListener('keydown', this.keydown)
     window.addEventListener('keyup', this.keyup)
+    // M24 §4.3: タップ移動 — 村エンジン(village/engine.ts)のBFS/pathを移植し、screenToTile(camera.ts)でタイル化する。
+    this.app.stage.eventMode = 'static'
+    this.app.stage.hitArea = { contains: () => true }
+    this.app.stage.on('pointertap', (e) => {
+      const { tx, ty } = screenToTile(e.global.x, e.global.y, this.world.x, this.world.y, this.zoom, TILE)
+      this.tapMove(tx, ty)
+    })
     this.app.renderer.on('resize', this.onResize)
     this.applyZoom()
     this.centerCamera(true)
@@ -470,8 +495,10 @@ export class DungeonEngine {
   }
 
   pressDir(dir: string, down: boolean): void {
-    if (down) this.held.add(dir)
-    else this.held.delete(dir)
+    if (down) {
+      this.held.add(dir)
+      this.clearPath() // M24 §4.3: 手動移動(D-pad)へ切り替えた瞬間に灯路を消す
+    } else this.held.delete(dir)
   }
 
   private tick(dms: number): void {
@@ -570,12 +597,18 @@ export class DungeonEngine {
       this.playerSprite.scale.y = this.baseScale * (1 + Math.sin(this.time / 620) * 0.02)
       this.groundShadow()
     }
-    // プレイヤー移動開始
+    // プレイヤー移動開始(手動優先。手動が無ければタップ経路[灯路]を追従 — M24 §4.3)
     if (!this.moving && this.held.size > 0) {
       const dir = [...this.held][this.held.size - 1]
       const [dx, dy] = DIRS[dir]
       this.tryMove(dx, dy)
+    } else if (!this.moving && this.path.length > 0) {
+      const next = this.path[0]
+      this.tryMove(Math.sign(next.x - this.px), Math.sign(next.y - this.py))
+      this.path.shift() // 歩くたび後ろから消す(§4.3) — 描画はrenderLightPathが毎tick再構築する
     }
+    this.renderLightPath()
+    this.renderTapMarkers(dms)
     // プレイヤー光源の追従
     this.lighting?.setPlayerPos(this.player.x + TILE / 2, this.player.y + TILE * 0.62)
 
@@ -652,6 +685,7 @@ export class DungeonEngine {
       this.screenFx.addChild(this.flashG)
     }
     this.held.clear()
+    this.clearPath() // M24 §4.3: エンカウントfx中はpathを保持しない
     this.shake = 9
     this.fx = { t: 0, kind, after, irisStarted: false }
   }
@@ -717,6 +751,7 @@ export class DungeonEngine {
   private arrive(x: number, y: number): void {
     this.events.onStep(x, y)
     this.minimap?.reveal(x, y)
+    this.markVisited(x, y) // M24 §4.3: 灯路表示用の発見済み床
     // 敵影との接触
     const hit = this.shades.find((s) => s.x === x && s.y === y)
     if (hit) {
@@ -745,6 +780,185 @@ export class DungeonEngine {
     if (marker && tex) marker.texture = tex
     if (kind === 'camp') this.lighting?.dim(`camp:${x}:${y}`)
     if (kind === 'shrine') this.lighting?.dim(`shrine:${x}:${y}`)
+  }
+
+  /** 下り階段が発見済みか(短期目的表示用 — M24 §4.5)。Dungeon.tsx側から500ms間隔でpollされる想定。 */
+  stairsFound(): boolean {
+    const s = this.findTile('stairs')
+    return !!s && this.visited.has(`${s.x}:${s.y}`)
+  }
+
+  /** ミニマップの拡大表示を切り替える(M24 §4.6)。Minimap.containerは公開フィールドのため、
+   *  minimap.ts自体は編集せず外側からscale/位置だけ操作する(右上端を基準に保つ)。 */
+  toggleMinimapZoom(): void {
+    const c = this.minimap?.container
+    if (!c) return
+    const beforeW = c.width
+    const rightEdge = c.x + beforeW
+    this.minimapZoomed = !this.minimapZoomed
+    c.scale.set(this.minimapZoomed ? 2.2 : 1)
+    c.x = rightEdge - c.width
+  }
+
+  // ---- M24 §4.3: タップ移動(灯路)。村エンジン(village/engine.ts)のBFS/pathを移植 ----
+
+  // 発見済み床の記録(Minimap.revealと同半径の簡易複製)。minimap.tsは非所有のため独立して持つ。
+  private markVisited(x: number, y: number): void {
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const nx = x + dx
+        const ny = y + dy
+        if (isWalkable(this.tileAt(nx, ny))) this.visited.add(`${nx}:${ny}`)
+      }
+    }
+  }
+
+  private clearPath(): void {
+    this.path = []
+    this.lightPathG?.clear()
+    if (this.tapTargetG) this.tapTargetG.visible = false
+  }
+
+  private tapMove(tx: number, ty: number): void {
+    if (this.fx) return // エンカウントfx中はタップ無視(§4.3)
+    const w = this.grid[0]?.length ?? 0
+    const h = this.grid.length
+    if (tx < 0 || ty < 0 || tx >= w || ty >= h) {
+      this.showUnreachable(tx, ty)
+      return
+    }
+
+    // 目標が塞がっていれば隣接歩行タイルへ(村エンジンと同型)
+    const targets: { x: number; y: number }[] = []
+    if (isWalkable(this.tileAt(tx, ty))) targets.push({ x: tx, y: ty })
+    else {
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        if (isWalkable(this.tileAt(tx + dx, ty + dy))) targets.push({ x: tx + dx, y: ty + dy })
+      }
+    }
+    if (targets.length === 0) {
+      this.showUnreachable(tx, ty)
+      return
+    }
+
+    // BFS(村エンジンのtapMoveと同構造)
+    const key = (x: number, y: number) => y * w + x
+    const startKey = key(this.px, this.py)
+    const goal = new Set(targets.map((t) => key(t.x, t.y)))
+    const prev = new Map<number, number>()
+    const queue: [number, number][] = [[this.px, this.py]]
+    prev.set(startKey, -1)
+    let found = -1
+    while (queue.length > 0) {
+      const [cx, cy] = queue.shift()!
+      if (goal.has(key(cx, cy))) {
+        found = key(cx, cy)
+        break
+      }
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const nx = cx + dx
+        const ny = cy + dy
+        if (!isWalkable(this.tileAt(nx, ny)) || prev.has(key(nx, ny))) continue
+        prev.set(key(nx, ny), key(cx, cy))
+        queue.push([nx, ny])
+      }
+    }
+    if (found < 0) {
+      this.showUnreachable(tx, ty)
+      return
+    }
+
+    const rev: { x: number; y: number }[] = []
+    let cur = found
+    while (cur !== startKey) {
+      rev.push({ x: cur % w, y: Math.floor(cur / w) })
+      cur = prev.get(cur)!
+    }
+    this.path = rev.reverse()
+    this.held.clear() // タップ優先 — 手動キーの押しっぱなしを解除する
+    this.showTapTarget(tx, ty) // 到達可能と確定してから目的印を出す(100ms以内)
+  }
+
+  // タップ地点へ命火色の目的印(§4.3)。到達可能と分かった時のみ呼ばれる。
+  private showTapTarget(tx: number, ty: number): void {
+    if (!this.tapTargetG) {
+      this.tapTargetG = new Graphics()
+      this.layerGlow.addChild(this.tapTargetG)
+    }
+    const g = this.tapTargetG
+    g.clear()
+    g.circle(0, 0, 7).stroke({ color: 0xff9d45, width: 2, alpha: 0.95 })
+    g.circle(0, 0, 2.4).fill({ color: 0xff9d45, alpha: 0.95 })
+    g.position.set(tx * TILE + TILE / 2, ty * TILE + TILE * 0.62)
+    g.visible = true
+    this.tapTargetT = 0
+    this.tapTargetLife = 700
+  }
+
+  // 到達不能タップ→傷朱の割れ印(§4.3)。無反応にしないためのフィードバック。
+  private showUnreachable(tx: number, ty: number): void {
+    if (!this.unreachableG) {
+      this.unreachableG = new Graphics()
+      this.layerGlow.addChild(this.unreachableG)
+    }
+    const g = this.unreachableG
+    g.clear()
+    g.moveTo(-6, -9).lineTo(2, -2).lineTo(-3, 1).lineTo(3, 9).stroke({ color: 0xc73e3a, width: 2, alpha: 0.95 })
+    g.circle(0, 0, 9).stroke({ color: 0xc73e3a, alpha: 0.5, width: 1.4 })
+    g.position.set(tx * TILE + TILE / 2, ty * TILE + TILE * 0.62)
+    g.visible = true
+    g.alpha = 0.95
+    this.unreachableT = 0
+  }
+
+  // 灯路本体 — 発見済み(visited)の連続区間だけを先頭から最大7マス描く。歩くたび後ろから消える。
+  private renderLightPath(): void {
+    if (!this.lightPathG) return
+    const g = this.lightPathG
+    g.clear()
+    if (this.path.length === 0) return
+    const segment: { x: number; y: number }[] = []
+    for (const p of this.path) {
+      if (segment.length >= 7 || !this.visited.has(`${p.x}:${p.y}`)) break
+      segment.push(p)
+    }
+    const rm = getReduceMotion()
+    segment.forEach((p, i) => {
+      const cx = p.x * TILE + TILE / 2
+      const cy = p.y * TILE + TILE * 0.75
+      const fade = 1 - i / Math.max(4, segment.length)
+      if (rm) {
+        // reduced-motion: 点線を静的表示(脈動なし)
+        g.circle(cx, cy, 2.6).fill({ color: 0xff9d45, alpha: 0.35 + 0.35 * fade })
+      } else {
+        const pulse = 0.5 + 0.5 * Math.sin(this.time / 260 - i * 0.9)
+        g.circle(cx, cy, 2.2 + pulse * 1.3).fill({ color: 0xff9d45, alpha: (0.3 + 0.4 * fade) * (0.6 + 0.4 * pulse) })
+      }
+    })
+  }
+
+  // 目的印のpop-in/生存時間、割れ印のフェードを進める(§4.3)
+  private renderTapMarkers(dms: number): void {
+    const rm = getReduceMotion()
+    if (this.tapTargetG) {
+      this.tapTargetT += dms
+      if (this.tapTargetLife > 0) this.tapTargetLife -= dms
+      const alive = this.path.length > 0 || this.tapTargetLife > 0
+      this.tapTargetG.visible = alive
+      if (alive) {
+        const k = rm ? 1 : Math.min(1, this.tapTargetT / 100) // 100ms以内にpop-in(§4.3)
+        this.tapTargetG.scale.set(k)
+        this.tapTargetG.alpha = rm ? 0.9 : 0.8 + Math.sin(this.time / 140) * 0.2
+      }
+    }
+    if (this.unreachableG?.visible) {
+      this.unreachableT += dms
+      const life = 650
+      this.unreachableG.alpha = rm
+        ? (this.unreachableT >= life ? 0 : 0.95)
+        : Math.max(0, 0.95 * (1 - this.unreachableT / life))
+      if (this.unreachableT >= life) this.unreachableG.visible = false
+    }
   }
 
   // world.scaleをレスポンシブzoomへ設定(PC横22-26/モバイル横10-12タイル)。camera.tsで検証済み。
