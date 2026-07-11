@@ -6,6 +6,9 @@ import { Application, Container, Graphics, Sprite, Texture, Assets } from 'pixi.
 import type { FloorDef, TileKind } from './types'
 import { TILE_CHARS, isWalkable } from './types'
 import { themeForBg, type DungeonTheme } from './render/theme'
+import { resolveRegionVisual, type DungeonAct } from './render/region_theme'
+import { buildLandmark } from './render/landmarks'
+import type { LandmarkKind } from '../core/data/region_visuals'
 import { TextureRegistry, vignetteTexture } from './render/textures'
 import { buildGround, updateWater, type GroundResult } from './render/ground'
 import { buildProps, type PropsResult } from './render/props'
@@ -30,6 +33,11 @@ export interface EngineOpts {
   seed?: number // FloorDef.seed(プロップ散布の決定論)
   isBossFloor?: boolean
   familiarReveal?: boolean // v3.1 M16-5: 眷属「宝目」(土)在中 — 開幕にミニマップへ宝箱/石碑を表示
+  // M23(指示7): 地域別ビジュアル+四幕+討伐後
+  regionId?: string // RegionVisualProfileの解決キー
+  act?: DungeonAct // 'norm' | 'dread'(最終前) | 'seat'(ボス階)
+  cleared?: boolean // 主討伐済みの再訪(鎮) — 色が緩み敵影も減る
+  showLandmark?: boolean // 署名ランドマークを置く(入口フロアのみtrue)
 }
 
 interface Shade {
@@ -133,6 +141,9 @@ export class DungeonEngine {
   private floorIndex: number
   private events: EngineEvents
   private opts: EngineOpts
+  private moteColor = 0xffe79e
+  private moteCount = 22
+  private landmarkKind: LandmarkKind | null = null
 
   constructor(
     host: HTMLElement,
@@ -150,7 +161,17 @@ export class DungeonEngine {
     this.events = events
     this.leader = leader ?? { gata: 'homura', sex: 'm' }
     this.opts = opts ?? {}
-    this.theme = themeForBg(this.opts.bg ?? 'bg_forest')
+    // M23: 基盤テーマ(4系統)の上へ地域プロファイル+幕(畏/座)+鎮(討伐後)を一度だけ被せる
+    const rv = resolveRegionVisual(
+      themeForBg(this.opts.bg ?? 'bg_forest'),
+      this.opts.regionId,
+      this.opts.act ?? 'norm',
+      !!this.opts.cleared,
+    )
+    this.theme = rv.theme
+    this.moteColor = rv.mote
+    this.moteCount = rv.moteCount
+    this.landmarkKind = rv.landmark
     this.used = new Set(usedKeys)
     this.parse()
     if (start) {
@@ -179,6 +200,36 @@ export class DungeonEngine {
     this.grid = rows.map((r) =>
       Array.from({ length: w }, (_, i) => TILE_CHARS[r[i] ?? '#'] ?? 'wall'),
     )
+  }
+
+  // 署名ランドマークの置き場: 入口の周囲(距離2〜4)の壁セルで、歩行可の隣を2つ以上持つ場所。
+  // プロップと同じ「壁沿いの飾り」文法に従い、通路は塞がない。
+  private findLandmarkSpot(): { x: number; y: number } | null {
+    const e = this.findTile('entrance')
+    if (!e) return null
+    let best: { x: number; y: number } | null = null
+    let bestScore = -1
+    for (let dy = -4; dy <= 4; dy++) {
+      for (let dx = -4; dx <= 4; dx++) {
+        const d = Math.max(Math.abs(dx), Math.abs(dy))
+        if (d < 2) continue
+        const x = e.x + dx
+        const y = e.y + dy
+        if (isWalkable(this.tileAt(x, y))) continue
+        if (this.tileAt(x, y) !== 'wall') continue
+        let open = 0
+        for (const [ox, oy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+          if (isWalkable(this.tileAt(x + ox, y + oy))) open += 1
+        }
+        if (open < 2) continue
+        const score = open * 10 - d // 開けた壁際を優先し、入口に近いほどよい
+        if (score > bestScore) {
+          bestScore = score
+          best = { x, y }
+        }
+      }
+    }
+    return best
   }
 
   private findTile(kind: TileKind): { x: number; y: number } | null {
@@ -220,6 +271,17 @@ export class DungeonEngine {
     )
     for (const sp of this.propsData.sprites) this.layerMid.addChild(sp)
 
+    // M23: 署名ランドマーク — 入口フロアの入口近くに一度だけ置く(VISUAL §7.1)
+    if (this.landmarkKind && this.opts.showLandmark) {
+      const spot = this.findLandmarkSpot()
+      if (spot) {
+        const lm = buildLandmark(this.landmarkKind, this.theme, TILE)
+        lm.position.set(spot.x * TILE + TILE / 2, spot.y * TILE + TILE * 0.92)
+        lm.zIndex = lm.position.y
+        this.layerMid.addChild(lm)
+      }
+    }
+
     // 揺れる草(decal層・上限60)
     const tuftTex = this.registry.make('tuft', (g) => {
       g.moveTo(0, 0).lineTo(-2, -9).lineTo(-0.6, -1).closePath().fill({ color: this.theme.grass, alpha: 0.95 })
@@ -244,10 +306,10 @@ export class DungeonEngine {
         if (isWalkable(this.grid[y][x])) walkableCells.push({ x, y })
       }
     }
-    const moteCells = tuftRng.shuffle(walkableCells).slice(0, Math.min(22, walkableCells.length))
+    const moteCells = tuftRng.shuffle(walkableCells).slice(0, Math.min(this.moteCount, walkableCells.length))
     for (const { x, y } of moteCells) {
       const g = new Graphics()
-      g.circle(0, 0, 2.5).fill({ color: 0xffe79e, alpha: 0.9 })
+      g.circle(0, 0, 2.5).fill({ color: this.moteColor, alpha: 0.9 })
       g.blendMode = 'add'
       const cx = x * TILE + TILE / 2 + tuftRng.int(-6, 6)
       const cy = y * TILE + TILE / 2 - tuftRng.int(0, 10)
@@ -304,7 +366,9 @@ export class DungeonEngine {
     // 敵影(妖怪シルエット: 地域tierの主属性2種+稀に金の変種)
     // UX調整: フロア定義よりも実生成数を2減、下限2で快適な密度に(データは不変・要再バランス時のみ調整)
     this.archetypes = shadeArchetypes(this.opts.tier ?? 1)
-    const shadeCount = Math.max(2, this.floor.shades - 2)
+    // 討伐後(鎮)の再訪は魔性が薄れる(M23 指示7 V3 — 光と密度の変化。採取物は未実装)
+    const shadeBase = Math.max(2, this.floor.shades - 2)
+    const shadeCount = this.opts.cleared ? Math.max(1, shadeBase - 2) : shadeBase
     const goldenIdx = Math.random() < 0.18 ? Math.floor(Math.random() * shadeCount) : -1
     for (let i = 0; i < shadeCount; i++) this.spawnShade(i === goldenIdx)
 

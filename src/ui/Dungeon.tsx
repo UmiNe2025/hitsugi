@@ -7,10 +7,13 @@ import { DungeonEngine } from '../dungeon/engine'
 import { boonById } from '../core/data/boons'
 import { Bar, MaybeImg } from './components'
 import { Sheet } from './layout/shell'
-import { stageOf, uiIcon } from './img'
+import { regionSignOf } from '../core/data/region_visuals'
+import { getReduceMotion } from '../core/settings'
+import { regionBgR, stageOf, uiIcon } from './img'
 import { ageOf } from '../core/inheritance'
 import { EventModal } from './Expedition'
 import { audio } from '../core/audio'
+import './dungeon_m23.css'
 
 // 地域背景 → 環境音レイヤーの対応(M10)
 const AMBIENCE_BY_BG: Record<string, 'forest' | 'zaka' | 'tani' | 'miyama'> = {
@@ -137,6 +140,16 @@ function DungeonFloor() {
         seed: floorDef.seed,
         isBossFloor: run.floor === dungeon.floors.length - 1,
         familiarReveal: familiarElement === 'earth', // 眷属「宝目」(M16-5): 開幕に宝箱/石碑を表示
+        // M23(指示7): 地域プロファイル+四幕(畏=最終前/座=ボス階)+鎮(討伐後)
+        regionId: run.regionId,
+        act:
+          run.floor === dungeon.floors.length - 1
+            ? 'seat'
+            : run.floor === dungeon.floors.length - 2
+              ? 'dread'
+              : 'norm',
+        cleared: data.regionsCleared.includes(run.regionId),
+        showLandmark: run.floor === 0,
       },
     )
     engineRef.current = engine
@@ -223,6 +236,8 @@ function DungeonFloor() {
           <span className="month-year">{Math.floor(data.seasonIndex / 12) + 1}年目</span>
         </div>
       </div>
+
+      <FirstActIntro />
 
       <div className="dungeon-title-plate" key={run.floor}>
         {region.name} 地下{run.floor + 1}層
@@ -339,6 +354,46 @@ function DungeonFloor() {
       )}
 
       <EventModal />
+    </div>
+  )
+}
+
+
+// M23(指示7 V3): 第一幕「閾」 — 入場時に地名と署名を一度だけ見せる導入。
+// 操作は止めない(pointer-events: none)。初入力または2秒の早い方で消える。
+// run単位のintroSeenで戦闘往復・再マウントでの再表示を防ぐ。reduce-motion時はフェード無し。
+function FirstActIntro() {
+  const run = useGame((s) => s.dungeonRun)!
+  const dungeonIntroSeen = useGame((s) => s.dungeonIntroSeen)
+  const [visible, setVisible] = useState(run.floor === 0 && !run.introSeen)
+  useEffect(() => {
+    if (!visible) return
+    const done = () => {
+      setVisible(false)
+      dungeonIntroSeen()
+    }
+    const timer = window.setTimeout(done, 2000)
+    const onInput = () => done()
+    window.addEventListener('keydown', onInput)
+    window.addEventListener('pointerdown', onInput)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('keydown', onInput)
+      window.removeEventListener('pointerdown', onInput)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible])
+  if (!visible) return null
+  const region = regionById(run.regionId)
+  const sign = regionSignOf(run.regionId)
+  return (
+    <div className={`act-intro ${getReduceMotion() ? 'act-intro-static' : ''}`} role="status" aria-live="polite">
+      <MaybeImg src={regionBgR(region.id)} className="act-intro-bg" />
+      <div className="act-intro-body">
+        <span className="act-intro-tier">{'★'.repeat(region.tier)}</span>
+        <h2 className="act-intro-name">{region.name}</h2>
+        {sign && <p className="act-intro-sign">{sign.landmark} ・ {sign.particle}</p>}
+      </div>
     </div>
   )
 }

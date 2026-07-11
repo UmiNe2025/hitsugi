@@ -1,0 +1,57 @@
+/* M23(指示7 V3): 第一幕「閾」 — 入場導入。操作を止めない(pointer-events: none)。
+   消滅はDungeon.tsx側(初入力or2秒の早い方)。reduce-motionはフェード無しの静的表示 */
+.act-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: rgba(4, 6, 14, 0.55);
+  animation: actIntroFade 2s ease both;
+}
+.act-intro-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  filter: brightness(0.7);
+}
+.act-intro-body {
+  position: relative;
+  text-align: center;
+}
+.act-intro-tier {
+  color: var(--ember-text);
+  letter-spacing: 0.3em;
+  font-size: 14px;
+}
+.act-intro-name {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  color: var(--gold);
+  margin: 6px 0;
+  text-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+}
+.act-intro-sign {
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.2em;
+  margin: 0;
+}
+@keyframes actIntroFade {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.act-intro-static { animation: none; }
+.reduce-motion .act-intro { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .act-intro { animation: none; }
+}
