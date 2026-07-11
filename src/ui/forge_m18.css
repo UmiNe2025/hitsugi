@@ -105,13 +105,18 @@
 .r-chip.r-epic { color: #d18ac9; border: 1px solid #d18ac9; }
 .r-chip.r-legendary { color: #f0e2b6; border: 1px solid #f0e2b6; box-shadow: 0 0 6px rgba(240, 226, 182, 0.4); }
 
-/* 条件不足の明示(奉燈不足) — disabledの理由を文字で出す */
+/* 条件不足の明示(奉燈不足) — disabledの理由を文字で出す。
+   .btn:disabled{opacity:.35}の一括減光では理由文まで読めなくなるため、
+   item-cellは子ごとに減光し、価格+理由の行だけ判読可能に保つ(M22レビュー反映) */
 .item-lack {
   display: inline-block;
   margin-left: 5px;
   font-size: 11px;
   color: var(--ember-text);
 }
+.item-cell:disabled { opacity: 1; }
+.item-cell:disabled > * { opacity: 0.45; }
+.item-cell:disabled > .item-price { opacity: 1; color: var(--text-dim); }
 
 /* 入手由来+継承の行 */
 .item-origin {

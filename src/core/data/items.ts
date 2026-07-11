@@ -353,4 +353,20 @@ export function reforgeCost(item: Item): { hoto: number; ketsu: number } {
   return { hoto: 45 + item.generation * 40, ketsu: 2 + item.generation * 2 }
 }
 
+// 打ち直し後の見込み値(確認画面用) — applyGenerationと同じ「base×(1+世代×0.12)」から引く。
+// 現在値×1.12の近似では世代1以降に丸め誤差が複利で乗り、確認画面と実結果がズレる(M22レビュー反映)。
+export function previewReforge(item: Item): { atk?: number; def?: number; statBonus?: Partial<Stats> } {
+  const base = itemBaseById(item.baseId)
+  const mult = 1 + (item.generation + 1) * 0.12
+  return {
+    atk: base.atk ? Math.round(base.atk * mult) : undefined,
+    def: base.def ? Math.round(base.def * mult) : undefined,
+    statBonus: base.statBonus
+      ? Object.fromEntries(
+          Object.entries(base.statBonus).map(([k, v]) => [k, Math.round((v as number) * mult)]),
+        )
+      : undefined,
+  }
+}
+
 export const REFORGE_MAX = 5 // 打ち直し・継承を合わせた世代上限

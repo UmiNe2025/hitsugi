@@ -5,7 +5,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { useGame } from '../core/store'
 import type { GameData, Item, ItemSlot, StatKey, Stats } from '../core/types'
 import { STAT_LABELS } from '../core/types'
-import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
+import { ITEM_BASES, previewReforge, reforgeCost, REFORGE_MAX } from '../core/data/items'
 import {
   diffItems, qualityOf, rarityOf, sourceLabelOf,
   RARITY_LABELS, SLOT_MARKS, type ItemDiff, type RarityKey,
@@ -411,16 +411,16 @@ function ReforgeConfirm({ target, data, onClose, onDo }: {
 }) {
   const { it, where } = target
   const cost = reforgeCost(it)
-  const nextAtk = it.atk ? Math.round(it.atk * 1.12) : 0
-  const nextDef = it.def ? Math.round(it.def * 1.12) : 0
+  // 見込み値は実処理(applyGeneration)と同じ式から引く — 確認画面と結果をズレさせない
+  const next = previewReforge(it)
   return (
     <Sheet title={`打ち直し — ${it.name}`} onClose={onClose} closeLabel="やめる">
       <p className="confirm-lead">{where}にある{it.name}(第{it.generation}代)へ槌を入れ、第{it.generation + 1}代へ深める。</p>
-      {it.atk ? <CompareRow label="攻" before={it.atk} after={nextAtk} /> : null}
-      {it.def ? <CompareRow label="防" before={it.def} after={nextDef} /> : null}
+      {it.atk ? <CompareRow label="攻" before={it.atk} after={next.atk ?? it.atk} /> : null}
+      {it.def ? <CompareRow label="防" before={it.def} after={next.def ?? it.def} /> : null}
       {it.statBonus &&
         (Object.entries(it.statBonus) as [StatKey, number][]).map(([k, v]) => (
-          <CompareRow key={k} label={STAT_LABELS[k]} before={v} after={Math.round(v * 1.12)} />
+          <CompareRow key={k} label={STAT_LABELS[k]} before={v} after={next.statBonus?.[k] ?? v} />
         ))}
       <CompareRow label="奉燈" before={data.hoto} after={data.hoto - cost.hoto} />
       <CompareRow label="血珠" before={data.ketsu} after={data.ketsu - cost.ketsu} />
