@@ -8,7 +8,7 @@ import { TILE_CHARS, isWalkable } from './types'
 import { themeForBg, type DungeonTheme } from './render/theme'
 import { resolveRegionVisual, type DungeonAct } from './render/region_theme'
 import { buildLandmark } from './render/landmarks'
-import type { LandmarkKind } from '../core/data/region_visuals'
+import type { GroundKind, LandmarkKind, ParticleKind } from '../core/data/region_visuals'
 import { TextureRegistry, vignetteTexture } from './render/textures'
 import { buildGround, updateWater, type GroundResult } from './render/ground'
 import { buildProps, type PropsResult } from './render/props'
@@ -22,6 +22,15 @@ import { getReduceMotion } from '../core/settings'
 const TILE = 36 // px(44→36 に縮小: 同画面内タイル数を約1.22倍に広げつつ、プロップ/スプライトの視認性を維持)
 const MOVE_MS = 130
 const SHADE_BASE_MS = 620
+// M24 §4.7: 粒子挙動(particleKind)ごとの降下/上昇スパン(px) — rain/ash/pollenが1周期で移動しきる距離。
+// 局所ループ(元位置cx,cyを中心に往復)で表現するため、TILE比の小さな範囲に収める。
+const MOTE_RAIN_SPAN = TILE * 1.5
+const MOTE_ASH_SPAN = TILE * 1.15
+const MOTE_POLLEN_SPAN = TILE * 0.95
+// M24 §4.7: 同じくkind別の1周期の長さ(ms)。rainは速い直線、ash/pollenはゆっくり/ゆるい。
+const MOTE_RAIN_PERIOD_MS = 560
+const MOTE_ASH_PERIOD_MS = 3400
+const MOTE_POLLEN_PERIOD_MS = 4200
 
 export interface EngineEvents {
   onStep: (x: number, y: number) => void
@@ -107,7 +116,16 @@ export class DungeonEngine {
   private shake = 0
   private tufts: { sp: Sprite; phase: number }[] = []
   // 浮遊する光の粒(蛍/精霊のような淡い光)。夜藪の空気感を出す環境要素。
-  private motes: { g: Graphics; cx: number; cy: number; phase: number; ampX: number; ampY: number }[] = []
+  // M24 §4.7: fallSpanは降下/上昇系(rain/ash/pollen)が1周期で動く距離(px)。他kindは未使用。
+  private motes: {
+    g: Graphics
+    cx: number
+    cy: number
+    phase: number
+    ampX: number
+    ampY: number
+    fallSpan: number
+  }[] = []
   private minimap: Minimap | null = null
   private nightVision = false // 眷属「夜目」(月): 敵影をミニマップに点す
   private readonly nightVisionTiles = 5 // 夜目の敵影検知半径(マス)
@@ -169,6 +187,8 @@ export class DungeonEngine {
   private moteColor = 0xffe79e
   private moteCount = 22
   private landmarkKind: LandmarkKind | null = null
+  private groundKind: GroundKind = 'soil' // M24 §4.7: buildGroundへ渡す地面材質
+  private particleKind: ParticleKind = 'firefly' // M24 §4.7: motesの挙動分岐キー
 
   constructor(
     host: HTMLElement,
@@ -197,6 +217,8 @@ export class DungeonEngine {
     this.moteColor = rv.mote
     this.moteCount = rv.moteCount
     this.landmarkKind = rv.landmark
+    this.groundKind = rv.groundKind
+    this.particleKind = rv.particleKind
     this.used = new Set(usedKeys)
     this.parse()
     if (start) {
@@ -294,8 +316,8 @@ export class DungeonEngine {
     this.registry = new TextureRegistry(this.app.renderer)
     const seed = this.opts.seed ?? (this.floorIndex + 1) * 7919
 
-    // 地面(一括ベイク)+水面
-    this.groundData = buildGround(this.grid, TILE, this.theme, seed)
+    // 地面(一括ベイク)+水面。M24 §4.7: 地域のgroundKindで局所模様を分岐
+    this.groundData = buildGround(this.grid, TILE, this.theme, seed, this.groundKind)
     this.layerGround.addChild(this.groundData.ground)
     if (this.groundData.water) this.layerWater.addChild(this.groundData.water)
 
@@ -341,6 +363,10 @@ export class DungeonEngine {
       }
     }
     const moteCells = tuftRng.shuffle(walkableCells).slice(0, Math.min(this.moteCount, walkableCells.length))
+    // M24 §4.7: kindごとの降下/上昇スパン(rain/ash/pollen以外は未使用の0のまま)
+    const fallSpanByKind: Record<ParticleKind, number> =
+      { firefly: 0, rain: MOTE_RAIN_SPAN, ash: MOTE_ASH_SPAN, fog: 0, pollen: MOTE_POLLEN_SPAN, stardust: 0 }
+    const fallSpan = fallSpanByKind[this.particleKind]
     for (const { x, y } of moteCells) {
       const g = new Graphics()
       g.circle(0, 0, 2.5).fill({ color: this.moteColor, alpha: 0.9 })
@@ -349,7 +375,10 @@ export class DungeonEngine {
       const cy = y * TILE + TILE / 2 - tuftRng.int(0, 10)
       g.position.set(cx, cy)
       this.layerGlow.addChild(g)
-      this.motes.push({ g, cx, cy, phase: tuftRng.next() * Math.PI * 2, ampX: 4 + tuftRng.next() * 6, ampY: 3 + tuftRng.next() * 5 })
+      this.motes.push({
+        g, cx, cy, phase: tuftRng.next() * Math.PI * 2,
+        ampX: 4 + tuftRng.next() * 6, ampY: 3 + tuftRng.next() * 5, fallSpan,
+      })
     }
 
     // プレイヤー — 灯型×性別の切り絵シルエット歩行スプライト(読めなければ灯印で代替)
@@ -511,11 +540,68 @@ export class DungeonEngine {
       for (const t of this.tufts) {
         t.sp.rotation = Math.sin(this.time / 1100 + t.phase) * 0.07
       }
-      // 浮遊光粒: 位置と透明度を呼吸させ、生きている印象を出す
+      // 浮遊光粒: kind(particleKind)ごとに位置/透明度の式を切り替える(M24 §4.7)。
+      // reduced-motion時は挙動を問わず静止表示(位置固定・alpha一定)に落とす。
+      const moteRm = getReduceMotion()
       for (const m of this.motes) {
-        const t = this.time / 900 + m.phase
-        m.g.position.set(m.cx + Math.sin(t) * m.ampX, m.cy + Math.cos(t * 0.7) * m.ampY)
-        m.g.alpha = 0.55 + 0.4 * Math.sin(this.time / 600 + m.phase)
+        if (moteRm) {
+          m.g.position.set(m.cx, m.cy)
+          m.g.alpha = 0.75
+          continue
+        }
+        switch (this.particleKind) {
+          case 'rain': {
+            // 雨: 上→下の速い直線移動。1周期で下端に達したら上へ再生(cycが0に戻る)
+            const cyc = ((this.time + m.phase * 300) % MOTE_RAIN_PERIOD_MS) / MOTE_RAIN_PERIOD_MS
+            m.g.position.set(m.cx, m.cy - m.fallSpan / 2 + cyc * m.fallSpan)
+            m.g.alpha = 0.6 + 0.2 * Math.sin(this.time / 500 + m.phase)
+            break
+          }
+          case 'ash': {
+            // 灰: ゆっくり下降(rainと同じ往復だが周期が長い)+横流れ
+            const cyc = ((this.time + m.phase * 300) % MOTE_ASH_PERIOD_MS) / MOTE_ASH_PERIOD_MS
+            m.g.position.set(
+              m.cx + Math.sin(this.time / 1400 + m.phase) * m.ampX,
+              m.cy - m.fallSpan / 2 + cyc * m.fallSpan,
+            )
+            m.g.alpha = 0.45 + 0.25 * Math.sin(this.time / 700 + m.phase)
+            break
+          }
+          case 'fog': {
+            // 霧: 大きく薄い横移動。縦はごくわずかに留め「漂い」を強調
+            m.g.position.set(
+              m.cx + Math.sin(this.time / 2400 + m.phase) * m.ampX * 2.4,
+              m.cy + Math.sin(this.time / 3100 + m.phase) * m.ampY * 0.4,
+            )
+            m.g.alpha = 0.2 + 0.14 * Math.sin(this.time / 1800 + m.phase)
+            break
+          }
+          case 'pollen': {
+            // 花粉: ゆるい上昇漂い(fallSpan分を上へ往復)+ 弱い横ブレ
+            const cyc = ((this.time + m.phase * 300) % MOTE_POLLEN_PERIOD_MS) / MOTE_POLLEN_PERIOD_MS
+            m.g.position.set(
+              m.cx + Math.sin(this.time / 1300 + m.phase) * m.ampX * 0.7,
+              m.cy + m.fallSpan / 2 - cyc * m.fallSpan,
+            )
+            m.g.alpha = 0.5 + 0.3 * Math.sin(this.time / 900 + m.phase)
+            break
+          }
+          case 'stardust': {
+            // 星屑: 位置はほぼ固定(小さな揺れ)、alphaを鋭くパルスさせ「瞬き」を表現
+            const t = this.time / 900 + m.phase
+            m.g.position.set(m.cx + Math.sin(t) * m.ampX * 0.5, m.cy + Math.cos(t * 0.7) * m.ampY * 0.5)
+            m.g.alpha = 0.1 + 0.85 * Math.max(0, Math.sin(this.time / 260 + m.phase * 3)) ** 3
+            break
+          }
+          case 'firefly':
+          default: {
+            // 蛍(既定): 現状のまま — 呼吸するような浮遊
+            const t = this.time / 900 + m.phase
+            m.g.position.set(m.cx + Math.sin(t) * m.ampX, m.cy + Math.cos(t * 0.7) * m.ampY)
+            m.g.alpha = 0.55 + 0.4 * Math.sin(this.time / 600 + m.phase)
+            break
+          }
+        }
       }
     }
     if (this.groundData?.water) {

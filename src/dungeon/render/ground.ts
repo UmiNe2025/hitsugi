@@ -5,6 +5,7 @@ import { Graphics } from 'pixi.js'
 import { Rng } from '../../core/rng'
 import type { TileKind } from '../types'
 import type { DungeonTheme } from './theme'
+import type { GroundKind } from '../../core/data/region_visuals'
 
 export interface GroundResult {
   ground: Graphics
@@ -23,19 +24,93 @@ function jitterColor(color: number, delta: number, rng: Rng): number {
 }
 
 function lift(color: number, amount: number): number {
-  const r = Math.min(255, ((color >> 16) & 0xff) + amount)
-  const g = Math.min(255, ((color >> 8) & 0xff) + amount)
-  const b = Math.min(255, (color & 0xff) + amount)
+  // M24 §4.7: 材質模様で「暗くする」負amountも使うため下限0もクランプする(従来は正専用で下限なし)。
+  // 正amountの挙動(既存呼び出し)は不変 — 上限クランプのみだったところに下限を足しただけ。
+  const r = Math.max(0, Math.min(255, ((color >> 16) & 0xff) + amount))
+  const g = Math.max(0, Math.min(255, ((color >> 8) & 0xff) + amount))
+  const b = Math.max(0, Math.min(255, (color & 0xff) + amount))
   return (r << 16) | (g << 8) | b
 }
 
 const SPECIAL_DISC: TileKind[] = ['chest', 'camp', 'shrine', 'stairs', 'entrance', 'boss', 'monument']
+
+// M24 Phase D(§4.7): 地面材質固有の局所模様。既存の床明度(floorTone)は変えず、形状だけで
+// 材質を伝える — 色を落とした静止画でも地域の違いが読めるようにする受入(§4.7末尾)の担保。
+// 'soil'(既定)は何も足さない=現状維持。1セルにつき軽量な図形1〜数個(ベイク一回きりなのでコスト無視できる)。
+function paintGroundKind(
+  g: Graphics,
+  cellX: number,
+  cellY: number,
+  tile: number,
+  kind: GroundKind,
+  base: number,
+  rng: Rng,
+): void {
+  switch (kind) {
+    case 'soil':
+      break // 既定 — jitter+小石speckleのみ(現状維持)
+    case 'moss': {
+      // 苔: 柔らかい丸斑点を2〜3個
+      const spots = rng.int(2, 3)
+      for (let i = 0; i < spots; i++) {
+        const sx = cellX + rng.int(4, tile - 6)
+        const sy = cellY + rng.int(4, tile - 6)
+        g.circle(sx, sy, 2 + rng.next() * 2.4).fill({ color: lift(base, -10), alpha: 0.14 + rng.next() * 0.1 })
+      }
+      break
+    }
+    case 'plank': {
+      // 板: 横板の継ぎ目線(セル中央付近に1本、幅いっぱい)
+      const ly = cellY + tile * (0.42 + rng.next() * 0.16)
+      g.rect(cellX, ly, tile, 1).fill({ color: lift(base, -16), alpha: 0.32 })
+      break
+    }
+    case 'stone': {
+      // 石畳: 多角形の割れ線(2区間の折れ線)
+      const x0 = cellX + rng.int(2, tile - 2)
+      const xm = cellX + rng.int(2, tile - 2)
+      const x1 = cellX + rng.int(2, tile - 2)
+      g.moveTo(x0, cellY).lineTo(xm, cellY + tile * 0.5).lineTo(x1, cellY + tile)
+        .stroke({ color: lift(base, -18), alpha: 0.26, width: 1 })
+      break
+    }
+    case 'bone': {
+      // 骨: 白い破片散り(細い短線を1〜2本)
+      const shards = rng.int(1, 2)
+      for (let i = 0; i < shards; i++) {
+        const sx = cellX + rng.int(4, tile - 6)
+        const sy = cellY + rng.int(4, tile - 6)
+        const a = rng.next() * Math.PI
+        g.moveTo(sx, sy).lineTo(sx + Math.cos(a) * 4.5, sy + Math.sin(a) * 4.5)
+          .stroke({ color: lift(base, 60), alpha: 0.28 + rng.next() * 0.14, width: 1.3 })
+      }
+      break
+    }
+    case 'ash': {
+      // 灰: 既存小石speckleよりさらに細かいドットを密に(3〜5個)
+      const specks = rng.int(3, 5)
+      for (let i = 0; i < specks; i++) {
+        const sx = cellX + rng.int(2, tile - 3)
+        const sy = cellY + rng.int(2, tile - 3)
+        g.rect(sx, sy, 1, 1).fill({ color: lift(base, 34), alpha: 0.16 + rng.next() * 0.12 })
+      }
+      break
+    }
+    case 'water_film': {
+      // 水膜: セル上部に薄い横長ハイライト帯
+      const ly = cellY + tile * 0.22
+      g.rect(cellX + 2, ly, tile - 4, 1.4).fill({ color: lift(base, 46), alpha: 0.15 })
+      break
+    }
+  }
+}
 
 export function buildGround(
   grid: TileKind[][],
   tile: number,
   theme: DungeonTheme,
   seed: number,
+  groundKind: GroundKind = 'soil', // M24 §4.7: 地面材質(未指定=既定soil→現状と完全一致)
 ): GroundResult {
   const rng = new Rng(seed || 1)
   const h = grid.length
@@ -100,6 +175,8 @@ export function buildGround(
           .rect(sx, sy, s, s)
           .fill({ color: up ? lift(base, 18) : theme.groundBase, alpha: 0.1 + rng.next() * 0.1 })
       }
+      // M24 §4.7: 材質固有の形状差(草セルは草ストロークが主役なので対象外)
+      if (kind !== 'grass') paintGroundKind(ground, x * tile, y * tile, tile, groundKind, base, rng)
     }
   }
 

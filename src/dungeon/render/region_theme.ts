@@ -3,7 +3,7 @@
 // 適用範囲の正直な限定(devil反映): props内蔵色は基盤テーマの同一性として維持し、
 // 差別化は ground/stain/grass/water/光tint/mote/landmark で行う。
 import type { DungeonTheme } from './theme'
-import { regionVisualOf, type LandmarkKind } from '../../core/data/region_visuals'
+import { regionVisualOf, type GroundKind, type LandmarkKind, type ParticleKind } from '../../core/data/region_visuals'
 
 export type DungeonAct = 'norm' | 'dread' | 'seat' // 幕: 通常 / 畏(最終前) / 座(ボス階)
 
@@ -12,6 +12,8 @@ export interface ResolvedVisual {
   mote: number // 浮遊光粒の色
   moteCount: number
   landmark: LandmarkKind | null
+  groundKind: GroundKind // M24 §4.7: 地面材質(未指定地域は'soil'=現状維持)
+  particleKind: ParticleKind // M24 §4.7: 空気粒子の挙動(未指定地域は'firefly'=現状維持)
 }
 
 // 0xRRGGBB同士のチャンネル線形補間
@@ -67,5 +69,13 @@ export function resolveRegionVisual(
     mote = 0xd9c26a
     moteCount = Math.min(moteCount, 14)
   }
-  return { theme, mote, moteCount, landmark: p?.landmark ?? null }
+  return {
+    theme,
+    mote,
+    moteCount,
+    landmark: p?.landmark ?? null,
+    // M24 §4.7: 材質/粒子は幕(act)や鎮(cleared)で変調しない — 色のみが四幕の担当(既存契約を壊さない)
+    groundKind: p?.groundKind ?? 'soil',
+    particleKind: p?.particleKind ?? 'firefly',
+  }
 }
