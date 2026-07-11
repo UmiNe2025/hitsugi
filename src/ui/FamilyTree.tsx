@@ -4,7 +4,7 @@ import { godById } from '../core/data/gods'
 import { useGame } from '../core/store'
 import { downloadFamilyTreeCard } from './shareCard'
 import { MaybeImg } from './components'
-import { useSheetBehavior } from './layout/shell'
+import { useSheetBehavior } from './layout/dialogs'
 import { faceImg } from './img'
 import './familytree_m18.css'
 
