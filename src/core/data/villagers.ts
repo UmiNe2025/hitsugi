@@ -134,6 +134,16 @@ const GENERIC_LINES: [string, string] = [
   '大燈籠の火が今夜も灯っとる。それだけで、わしらは眠れるんだ。',
 ]
 
+// 郷の経過年バンド(0-2/3-5/6-9/10年〜)を季節indexから直接引く(M23: 郷マップの肖像/新着印用)
+export function villagerBandOf(seasonIndex: number): 0 | 1 | 2 | 3 {
+  return band(Math.floor(seasonIndex / 12))
+}
+
+// 現在の台詞を一意に示すキー(band×2+季節偶奇)。会話済みキーと比べて「新しい話」印を出す(M23)
+export function villagerLineKey(seasonIndex: number): number {
+  return villagerBandOf(seasonIndex) * 2 + (seasonIndex % 2)
+}
+
 export function villagerLine(vid: string, data: GameData): { name: string; text: string } {
   const years = Math.floor(data.seasonIndex / 12)
   const b = band(years)

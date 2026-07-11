@@ -74,6 +74,8 @@ interface GameStore {
   markGossipSeen: () => void
   // 図鑑の既読カーソル(M19 A1: 新着フィルタ/帳badge用。ゲームロジックには影響しない)
   markCodexSeen: () => void
+  // 郷人と話した台詞キーの記録(M23: 郷マップの「新しい話」印用。ゲームロジックには影響しない)
+  markVillagerTalked: (id: string, lineKey: number) => void
   setScreen: (s: Screen) => void
   processNextScene: () => void
 
@@ -644,6 +646,16 @@ export const useGame = create<GameStore>((set, get) => {
       const curGd = typeof d.flags.codexSeenGods === 'number' ? d.flags.codexSeenGods : 0
       if (en <= curEn && gd <= curGd) return
       const nd: GameData = { ...d, flags: { ...d.flags, codexSeenEn: en, codexSeenGods: gd } }
+      set({ data: nd })
+      saveGame(nd)
+    },
+
+    markVillagerTalked: (id, lineKey) => {
+      const d = get().data
+      if (!d) return
+      const cur = d.flags[`vilTalk_${id}`]
+      if (cur === lineKey) return
+      const nd: GameData = { ...d, flags: { ...d.flags, [`vilTalk_${id}`]: lineKey } }
       set({ data: nd })
       saveGame(nd)
     },

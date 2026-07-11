@@ -278,6 +278,7 @@ export type Screen =
   | { id: 'ceremony'; charId: string } // 成人の儀 — 灯型を授ける(月齢6)
   | { id: 'jobrite'; charId: string } // 生業の儀 — 家業を選ぶ(月齢12)
   | { id: 'life'; title: string; lines: { speaker: string; text: string }[]; bg?: string } // ライフイベント
+  | { id: 'village' } // 燈ノ郷を歩く(M23: 月不消費の郷内マップ)
   | { id: 'depart' } // 出立準備
   | { id: 'expedition' }
   | { id: 'dungeon' } // 歩行ダンジョン(v2)

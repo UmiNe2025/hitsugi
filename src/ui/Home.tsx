@@ -6,15 +6,14 @@ import { isAdult, seasonsLeft } from '../core/inheritance'
 import { GODS } from '../core/data/gods'
 import { ENEMIES } from '../core/data/enemies'
 import { REGIONS } from '../core/data/regions'
-import { VILLAGERS, villagerLine } from '../core/data/villagers'
 import { GOSSIP } from '../core/data/gossip'
 import { FAMILIAR_KINDS } from '../core/data/familiars'
 import { todaysOdai } from '../core/data/dailyOdai'
 import type { GameData } from '../core/types'
 import { census, recommendAction, nextMonthNotes, ledgerStats, type ActionKind } from './homeInsight'
 import { Sheet, StatusCallout, LiveBadge, LifeThread } from './layout/shell'
-import { CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
-import { gameImg, HOME_BG, HOME_BG_SEASONS, villagerImg } from './img'
+import { CharCard, Ico, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { gameImg, HOME_BG, HOME_BG_SEASONS } from './img'
 import { FamilyTree } from './FamilyTree'
 import './m17_home.css'
 
@@ -29,7 +28,6 @@ export function HomeScreen() {
   const [visitGift, setVisitGift] = useState<{ text: string; hoto: number; ketsu: number } | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [showMotto, setShowMotto] = useState(false)
-  const [showVillage, setShowVillage] = useState(false)
   const [showTree, setShowTree] = useState(false)
   const [showGossip, setShowGossip] = useState(false)
   const [showFamiliars, setShowFamiliars] = useState(false)
@@ -182,7 +180,7 @@ export function HomeScreen() {
             onOpen={(key) => {
               if (key === 'forge') setScreen({ id: 'forge' })
               else if (key === 'facilities') setScreen({ id: 'facilities' })
-              else if (key === 'village') setShowVillage(true)
+              else if (key === 'village') setScreen({ id: 'village' })
               else if (key === 'familiars') setShowFamiliars(true)
               else if (key === 'chronicle') setScreen({ id: 'chronicle' })
               else if (key === 'codex') setScreen({ id: 'codex' })
@@ -209,7 +207,6 @@ export function HomeScreen() {
 
       {showMotto && <MottoModal onClose={() => setShowMotto(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
-      {showVillage && <VillageModal onClose={() => setShowVillage(false)} />}
       {showTree && <FamilyTree onClose={() => setShowTree(false)} />}
       {showGossip && <GossipModal onClose={() => setShowGossip(false)} />}
       {showFamiliars && <FamiliarsModal onClose={() => setShowFamiliars(false)} />}
@@ -388,53 +385,6 @@ function MonthConfirmSheet({ kind, data, onClose, onDo }: {
         </button>
       </div>
     </Sheet>
-  )
-}
-
-// 郷人の帯(0-3)。villagers.ts内部のband()と同じ閾値(0-2年/3-5年/6-9年/10年〜)。
-function villagerBand(seasonIndex: number): 0 | 1 | 2 | 3 {
-  const years = Math.floor(seasonIndex / 12)
-  if (years < 3) return 0
-  if (years < 6) return 1
-  if (years < 10) return 2
-  return 3
-}
-
-// 郷を歩く — 普通の寿命を生きる郷人たちと言葉を交わす
-function VillageModal({ onClose }: { onClose: () => void }) {
-  const data = useGame((s) => s.data)!
-  const [talk, setTalk] = useState<{ id: string; name: string; text: string } | null>(null)
-  const band = villagerBand(data.seasonIndex)
-  return (
-    <div className="modal-back" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="panel-title">燈ノ郷 — 大燈籠のふもと</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 10 }}>
-          郷人たちは、ふつうの寿命を生きる。あなたの一族だけが、はやい。
-        </p>
-        <div className="vil-grid">
-          {VILLAGERS.map((v) => (
-            <button key={v.id} className="btn vil-card" onClick={() => setTalk({ id: v.id, ...villagerLine(v.id, data) })}>
-              <MaybeImg src={villagerImg(v.id, band)} className="vil-thumb" />
-              <span className="vil-name">{v.name}</span>
-              <span className="vil-role">({v.role})</span>
-            </button>
-          ))}
-        </div>
-        {talk && (
-          <div className="tsuzuri" style={{ marginTop: 14 }}>
-            <MaybeImg src={villagerImg(talk.id, band)} className="vil-portrait" />
-            <span className="tsuzuri-name" style={{ fontSize: 10 }}>{talk.name.slice(0, 2)}</span>
-            <span className="tsuzuri-text">
-              <b style={{ color: 'var(--amber)' }}>{talk.name}</b> —「{talk.text}」
-            </span>
-          </div>
-        )}
-        <button className="btn btn-ghost" onClick={onClose} style={{ marginTop: 10 }}>
-          閉じる
-        </button>
-      </div>
-    </div>
   )
 }
 

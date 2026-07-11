@@ -27,7 +27,12 @@ export function charSprite(char: Pick<Character, 'tomoshigata' | 'sex'>, stage: 
 }
 
 export function spriteUrl(gata: Tomoshigata, sex: 'm' | 'f', stage: AgeStage = 'adult'): string {
-  return `${import.meta.env.BASE_URL}img/sprites/${stagePrefix(stage)}_${gata}_${sex}_down_1.png`
+  return `${walkBasePath(gata, sex, stage)}_down_1.png`
+}
+
+// 歩行フレームの共通接頭辞(方向・コマ番号を除く) — village/engineが3方向×3コマを組み立てる(M23)
+export function walkBasePath(gata: Tomoshigata, sex: 'm' | 'f', stage: AgeStage = 'adult'): string {
+  return `${import.meta.env.BASE_URL}img/sprites/${stagePrefix(stage)}_${gata}_${sex}`
 }
 
 // 任意の歩行スプライトファイル名を解決(v3.1 M8: 戦闘の立ち姿などに使用)

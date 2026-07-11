@@ -4,6 +4,7 @@ import { audio } from './core/audio'
 import type { TrackName } from './core/audio'
 import { TitleScreen, IntroScreen } from './ui/Title'
 import { HomeScreen } from './ui/Home'
+import { VillageScreen } from './ui/Village'
 import { PactScreen } from './ui/Pact'
 import { DepartScreen, ExpeditionScreen } from './ui/Expedition'
 import { DungeonScreen } from './ui/Dungeon'
@@ -98,6 +99,7 @@ function App() {
         case 'intro':
           return 'title'
         case 'home':
+        case 'village': // M23: 郷歩行マップは郷の音を継ぐ
         case 'pact':
         case 'depart':
         case 'chronicle':
@@ -137,6 +139,8 @@ function App() {
         return <HomeScreen />
       case 'pact':
         return <PactScreen />
+      case 'village':
+        return <VillageScreen />
       case 'depart':
         return <DepartScreen />
       case 'expedition':
