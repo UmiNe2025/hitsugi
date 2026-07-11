@@ -7,6 +7,7 @@ import { Container, Graphics, RenderTexture, Sprite } from 'pixi.js'
 import type { Renderer } from 'pixi.js'
 import { lightTexture } from './textures'
 import type { DungeonTheme } from './theme'
+import { holeHalfResPos } from '../camera'
 
 export type LightMode = 'rt' | 'simple'
 
@@ -155,7 +156,7 @@ export class LightingSystem {
     this.irisDone = onDone ?? null
   }
 
-  update(dms: number, worldX: number, worldY: number): void {
+  update(dms: number, worldX: number, worldY: number, zoom = 1): void {
     this.time += dms
 
     // 虹彩の進行
@@ -191,12 +192,12 @@ export class LightingSystem {
       const pulseK = s.pulse > 0 ? 1 + s.pulse * Math.sin(this.time / 700 + s.wx) : 1
       const k = (1 + s.f * 0.05) * pulseK * s.dimFactor
       const r = s.radius * k
-      // erase穴(半解像度スクリーン空間)
-      const sx = (s.wx + worldX) * 0.5
-      const sy = (s.wy + worldY) * 0.5
-      s.hole.position.set(sx, sy)
-      s.hole.width = r // 半解像度なので直径(2r)の半分=r
-      s.hole.height = r
+      // erase穴(半解像度スクリーン空間)。M24: zoom込みでworld変換と整合させる(camera.tsと同式)。
+      const hp = holeHalfResPos(s.wx, s.wy, worldX, worldY, zoom)
+      s.hole.position.set(hp.x, hp.y)
+      // 半解像度(0.5)× 表示zoom。radiusはtileベースなので表示スケールを掛ける。
+      s.hole.width = r * zoom
+      s.hole.height = r * zoom
       s.hole.alpha = Math.min(1, 0.92 + s.f * 0.08)
       s.hole.visible = this.mode === 'rt' && r > 1
       // 加算グロー(ワールド空間)

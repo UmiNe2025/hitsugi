@@ -15,6 +15,7 @@ import { buildProps, type PropsResult } from './render/props'
 import { LightingSystem } from './render/lighting'
 import { shadeArchetypes, createShadeVisual, type ShadeVisual } from './render/shades'
 import { Minimap } from './render/minimap'
+import { computeZoom, cameraTarget, lookAheadOffset } from './camera'
 import { Rng } from '../core/rng'
 
 const TILE = 36 // px(44→36 に縮小: 同画面内タイル数を約1.22倍に広げつつ、プロップ/スプライトの視認性を維持)
@@ -115,6 +116,12 @@ export class DungeonEngine {
   private frantic = false // 熱狂の赤い火(M12で発火条件をstore側に実装)
   private stealth = false // 闇夜の目(M16-4: 追跡半径-2)
 
+  // M24: レスポンシブカメラ(world.scaleでズーム。計算はcamera.tsの純粋関数へ集約しテスト済み)
+  private zoom = 1
+  private laX = 0 // look-ahead(world px): 進行方向へ滑らかに寄せて先を見せる
+  private laY = 0
+  private backdrop: Graphics | null = null // マップ外の純黒を埋めるscreen固定層
+
   private keydown = (e: KeyboardEvent) => {
     const k = keyDir(e.key)
     if (k) {
@@ -127,11 +134,16 @@ export class DungeonEngine {
     if (k) this.held.delete(k)
   }
   private onResize = () => {
+    this.applyZoom()
     this.lighting?.resize()
     this.minimap?.reposition(this.app.renderer.width)
     if (this.vignette) {
       this.vignette.width = this.app.renderer.width
       this.vignette.height = this.app.renderer.height
+    }
+    if (this.backdrop) {
+      this.backdrop.width = this.app.renderer.width
+      this.backdrop.height = this.app.renderer.height
     }
     this.centerCamera(true)
   }
@@ -251,6 +263,14 @@ export class DungeonEngine {
     })
     if (this.destroyed) return
     this.host.appendChild(this.app.canvas)
+
+    // M24: 地域別backdrop — マップ外の純黒を埋めるscreen固定層(worldより背面)。
+    // groundBaseより明度を+12した藍で、暗さは保ちつつ「説明のない純黒面」を消す(§4.1)。
+    const bd = new Graphics().rect(0, 0, 1, 1).fill(lift(this.theme.groundBase, 12))
+    bd.width = this.app.renderer.width
+    bd.height = this.app.renderer.height
+    this.backdrop = bd
+    this.app.stage.addChild(bd)
 
     // レイヤー構成
     this.world.addChild(this.layerGround, this.layerWater, this.layerDecal, this.layerMid, this.layerGlow)
@@ -401,6 +421,7 @@ export class DungeonEngine {
     window.addEventListener('keydown', this.keydown)
     window.addEventListener('keyup', this.keyup)
     this.app.renderer.on('resize', this.onResize)
+    this.applyZoom()
     this.centerCamera(true)
   }
 
@@ -477,7 +498,13 @@ export class DungeonEngine {
         updateWater(this.groundData.water, this.groundData.waterPools, TILE, this.theme, this.time)
       }
     }
-    this.lighting?.update(dms, this.world.x, this.world.y)
+    // look-ahead: 移動中は進行方向へ1.2タイル先を滑らかに見せ、停止で0へ戻す(§4.1)
+    const laDir = this.moving ? DIRS[this.facing] : null
+    const laTarget = laDir ? lookAheadOffset(laDir[0], laDir[1], TILE, 1.2) : { x: 0, y: 0 }
+    this.laX += (laTarget.x - this.laX) * 0.06
+    this.laY += (laTarget.y - this.laY) * 0.06
+
+    this.lighting?.update(dms, this.world.x, this.world.y, this.zoom)
     this.minimap?.setFacing(this.facing as 'up' | 'down' | 'left' | 'right')
     this.minimap?.update(this.time, this.nightVision ? this.shades : undefined)
 
@@ -720,13 +747,21 @@ export class DungeonEngine {
     if (kind === 'shrine') this.lighting?.dim(`shrine:${x}:${y}`)
   }
 
+  // world.scaleをレスポンシブzoomへ設定(PC横22-26/モバイル横10-12タイル)。camera.tsで検証済み。
+  private applyZoom(): void {
+    this.zoom = computeZoom(this.app.renderer.width, TILE)
+    this.world.scale.set(this.zoom)
+  }
+
   private centerCamera(snap = false): void {
     const vw = this.app.renderer.width
     const vh = this.app.renderer.height
     const jx = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
     const jy = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
-    const tx = vw / 2 - this.player.x - TILE / 2 + jx
-    const ty = vh / 2 - this.player.y - TILE / 2 + jy
+    // zoom込みのカメラ目標(cameraTarget)。lighting穴のholeHalfResPosと同じ式で整合する。
+    const t = cameraTarget(this.player.x + TILE / 2, this.player.y + TILE / 2, vw, vh, this.zoom, this.laX, this.laY)
+    const tx = t.x + jx
+    const ty = t.y + jy
     if (snap) {
       this.world.x = tx
       this.world.y = ty
@@ -779,6 +814,14 @@ function keyDir(key: string): string | null {
     default:
       return null
   }
+}
+
+// M24: 色を明度側へ持ち上げる(0-255各チャンネル)。backdropを純黒より明るい藍にする。
+function lift(color: number, amt: number): number {
+  const r = Math.min(255, ((color >> 16) & 0xff) + amt)
+  const g = Math.min(255, ((color >> 8) & 0xff) + amt)
+  const b = Math.min(255, (color & 0xff) + amt)
+  return (r << 16) | (g << 8) | b
 }
 
 function dist(x1: number, y1: number, x2: number, y2: number): number {
