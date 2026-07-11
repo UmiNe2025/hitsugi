@@ -958,7 +958,7 @@ export const useGame = create<GameStore>((set, get) => {
         }
         if (effect.itemTier) {
           const pool = ITEM_BASES.filter((b) => b.shopTier <= region.tier)
-          const item = makeItem(rng.pick(pool).baseId)
+          const item = makeItem(rng.pick(pool).baseId, 'chest')
           nd = { ...nd, inventory: [...nd.inventory, item] }
           log = [...log, `「${item.name}」を手に入れた。`]
         }
@@ -1000,7 +1000,7 @@ export const useGame = create<GameStore>((set, get) => {
       }
       if (effect.itemTier) {
         const pool = ITEM_BASES.filter((b) => b.shopTier <= region.tier)
-        const item = makeItem(rng.pick(pool).baseId)
+        const item = makeItem(rng.pick(pool).baseId, 'chest')
         nd = { ...nd, inventory: [...nd.inventory, item] }
         log = [...log, `「${item.name}」を手に入れた。`]
       }
@@ -1059,7 +1059,7 @@ export const useGame = create<GameStore>((set, get) => {
       mutate((d) => {
         const base = itemBaseById(baseId)
         if (d.hoto < base.price) return d
-        return { ...d, hoto: d.hoto - base.price, inventory: [...d.inventory, makeItem(baseId)] }
+        return { ...d, hoto: d.hoto - base.price, inventory: [...d.inventory, makeItem(baseId, 'shop')] }
       })
     },
 
@@ -1692,7 +1692,7 @@ export const useGame = create<GameStore>((set, get) => {
             const nem = (nd.nemeses ?? []).find((n) => n.id === nemId)
             if (nem) {
               const weaponBases = ITEM_BASES_ALL.filter((b) => b.slot === 'weapon' && b.shopTier <= 6)
-              const memorial = inheritItem(makeItem(rng.pick(weaponBases).baseId), nem.victim, nem.level * 60)
+              const memorial = inheritItem(makeItem(rng.pick(weaponBases).baseId, 'boss'), nem.victim, nem.level * 60)
               nd = {
                 ...nd,
                 nemeses: (nd.nemeses ?? []).filter((n) => n.id !== nemId),

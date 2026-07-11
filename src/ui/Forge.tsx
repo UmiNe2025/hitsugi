@@ -1,11 +1,15 @@
 // M18 P3: 鍛冶と蔵 — 独立作業画面(UI_UX_REDESIGN_PLAN §5.5)
 // 購う/装備/打ち直し/鍛錬の4タブ。選択人物は画面上部に固定し、タブを跨いで保持する(§6.3)。
 // 契約: docs/UI_SHELL_API.md(SFX=.btn系クラス/文言/12.5px下限/大量一覧は50件刻み)。
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useGame } from '../core/store'
-import type { GameData, Item, ItemSlot, StatKey } from '../core/types'
+import type { GameData, Item, ItemSlot, StatKey, Stats } from '../core/types'
 import { STAT_LABELS } from '../core/types'
 import { ITEM_BASES, reforgeCost, REFORGE_MAX } from '../core/data/items'
+import {
+  diffItems, qualityOf, rarityOf, sourceLabelOf,
+  RARITY_LABELS, SLOT_MARKS, type ItemDiff, type RarityKey,
+} from '../core/item_axes'
 import { isAdult } from '../core/inheritance'
 import { MaybeImg, NightBackdrop, Panel } from './components'
 import { itemIcon } from './img'
@@ -16,14 +20,52 @@ import './forge_m18.css'
 type Tab = 'buy' | 'equip' | 'reforge' | 'train'
 type SlotFilter = 'all' | 'weapon' | 'armor' | 'charm'
 const SLOT_LABEL: Record<string, string> = { weapon: '武具', armor: '防具', charm: '御守' }
+const SLOT_ORDER: Record<string, number> = { weapon: 0, armor: 1, charm: 2 }
 const PAGE = 50 // 大量一覧は50件刻み(§7契約)
 
-// 装備差分: 同スロットの現装備と比べた攻/防の増減
-function diffAgainst(ch: { equipment: Partial<Record<ItemSlot, Item>> } | undefined, it: { slot: ItemSlot; atk?: number; def?: number }) {
-  const cur = ch?.equipment[it.slot]
-  const dAtk = (it.atk ?? 0) - (cur?.atk ?? 0)
-  const dDef = (it.def ?? 0) - (cur?.def ?? 0)
-  return { dAtk, dDef, total: dAtk + dDef }
+// 装備差分(M22): 同スロットの現装備と比べ、攻/防+六能力を軸別に返す(core/item_axes)
+function diffAgainst(
+  ch: { equipment: Partial<Record<ItemSlot, Item>> } | undefined,
+  it: { slot: ItemSlot; atk?: number; def?: number; statBonus?: Partial<Stats> },
+) {
+  return diffItems(ch?.equipment[it.slot], it)
+}
+
+// 差分の軸別表示 — スカラー合算で「同等」と誤らせない(M22 §2.2)
+function DiffText({ d }: { d: ItemDiff }) {
+  return (
+    <span className="item-stat">
+      {d.dAtk !== 0 && <em className={d.dAtk > 0 ? 'up' : 'down'}>攻{d.dAtk > 0 ? '+' : ''}{d.dAtk}</em>}
+      {d.dDef !== 0 && <em className={d.dDef > 0 ? 'up' : 'down'}> 防{d.dDef > 0 ? '+' : ''}{d.dDef}</em>}
+      {(Object.entries(d.dStats) as [StatKey, number][]).map(([k, v]) => (
+        <em key={k} className={v > 0 ? 'up' : 'down'}> {STAT_LABELS[k]}{v > 0 ? '+' : ''}{v}</em>
+      ))}
+      {d.same && '同等'}
+    </span>
+  )
+}
+
+// 品質(基礎の格)+希少度(来歴)のチップ — 色+枠+文字で示す(M22 §2.2)
+function AxisChips({ baseId, it }: { baseId: string; it?: Pick<Item, 'source' | 'generation' | 'legacyOf'> }) {
+  const q = qualityOf(baseId)
+  const r = it ? rarityOf(it) : null
+  return (
+    <span className="item-axes">
+      {q && <span className={`q-chip ${q.key}`}>{q.name}</span>}
+      {r && r.key !== 'common' && <span className={`r-chip r-${r.key}`}>◆{r.name}</span>}
+    </span>
+  )
+}
+
+// 基礎の能力表記(攻/防+六能力)
+function baseStatText(b: { atk?: number; def?: number; statBonus?: Partial<Stats> }): string {
+  const parts: string[] = []
+  if (b.atk) parts.push(`攻${b.atk}`)
+  if (b.def) parts.push(`防${b.def}`)
+  if (b.statBonus) {
+    for (const [k, v] of Object.entries(b.statBonus) as [StatKey, number][]) parts.push(`${STAT_LABELS[k]}+${v}`)
+  }
+  return parts.join(' ')
 }
 
 export function ForgeScreen() {
@@ -39,40 +81,50 @@ export function ForgeScreen() {
   const [slotF, setSlotF] = useState<SlotFilter>('all')
   const [invSort, setInvSort] = useState<'slot' | 'atk' | 'def' | 'gen'>('slot')
   const [shown, setShown] = useState(PAGE)
+  const [search, setSearch] = useState('') // 名前検索(M22 §2.2)
+  const [rarF, setRarF] = useState<'all' | RarityKey>('all') // 希少度絞り込み(装備タブ)
+  const [affordOnly, setAffordOnly] = useState(false) // 今買える物のみ(購うタブ)
   const [reforgeTarget, setReforgeTarget] = useState<{ it: Item; where: string } | null>(null)
 
   const alive = data.family.filter((c) => c.alive)
   const selChar = alive.find((c) => c.id === charId) ?? alive.find((c) => c.isHead) ?? alive[0]
 
   const shopTier = data.regionsCleared.length
-  const stock = useMemo(
-    () => ITEM_BASES.filter((b) => b.shopTier <= shopTier && (slotF === 'all' || b.slot === slotF)),
-    [shopTier, slotF],
-  )
+  const stock = useMemo(() => {
+    let list = ITEM_BASES.filter((b) => b.shopTier <= shopTier && (slotF === 'all' || b.slot === slotF))
+    if (search) list = list.filter((b) => b.name.includes(search))
+    if (affordOnly) list = list.filter((b) => b.price <= data.hoto)
+    // 初期状態(全て)はカテゴリ別に並べる(M22 §2.2)
+    if (slotF === 'all') list = [...list].sort((a, b) => (SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]) || a.shopTier - b.shopTier)
+    return list
+  }, [shopTier, slotF, search, affordOnly, data.hoto])
 
-  const SLOT_ORDER: Record<string, number> = { weapon: 0, armor: 1, charm: 2 }
   const inv = useMemo(() => {
-    const filtered = data.inventory.filter((it) => slotF === 'all' || it.slot === slotF)
+    let filtered = data.inventory.filter((it) => slotF === 'all' || it.slot === slotF)
+    if (search) filtered = filtered.filter((it) => it.name.includes(search))
+    if (rarF !== 'all') filtered = filtered.filter((it) => rarityOf(it).key === rarF)
     return [...filtered].sort((a, b) => {
       if (invSort === 'atk') return (b.atk ?? 0) - (a.atk ?? 0)
       if (invSort === 'def') return (b.def ?? 0) - (a.def ?? 0)
       if (invSort === 'gen') return b.generation - a.generation
       return (SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]) || (b.atk ?? 0) - (a.atk ?? 0)
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.inventory, invSort, slotF])
+  }, [data.inventory, invSort, slotF, search, rarF])
 
   // 打ち直し対象: 蔵の品+全員の装備
-  const forgeables = useMemo(() => [
-    ...data.inventory.map((it) => ({ it, where: '蔵' })),
-    ...alive.flatMap((c) =>
-      (['weapon', 'armor', 'charm'] as const)
-        .map((s) => c.equipment[s])
-        .filter((x): x is NonNullable<typeof x> => !!x)
-        .map((it) => ({ it, where: c.name })),
-    ),
+  const forgeables = useMemo(() => {
+    const all = [
+      ...data.inventory.map((it) => ({ it, where: '蔵' })),
+      ...alive.flatMap((c) =>
+        (['weapon', 'armor', 'charm'] as const)
+          .map((s) => c.equipment[s])
+          .filter((x): x is NonNullable<typeof x> => !!x)
+          .map((it) => ({ it, where: c.name })),
+      ),
+    ]
+    return search ? all.filter((f) => f.it.name.includes(search)) : all
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [data.inventory, data.family])
+  }, [data.inventory, data.family, search])
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'buy', label: '購う' },
@@ -127,16 +179,44 @@ export function ForgeScreen() {
         </div>
       )}
 
-      {/* スロット絞り込み(購う/装備) */}
-      {(tab === 'buy' || tab === 'equip') && (
+      {/* 絞り込み(購う/装備/打ち直し): 検索+部位+希少度+買える物のみ(M22 §2.2) */}
+      {tab !== 'train' && (
         <div className="forge-filter-row">
-          {(['all', 'weapon', 'armor', 'charm'] as SlotFilter[]).map((s) => (
-            <button key={s} className={`btn btn-ghost filter-tab ${slotF === s ? 'active' : ''}`} onClick={() => { setSlotF(s); setShown(PAGE) }}>
-              {s === 'all' ? '全て' : SLOT_LABEL[s]}
+          <input
+            className="forge-search"
+            type="search"
+            placeholder="名で捜す"
+            aria-label="装備を名前で捜す"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setShown(PAGE) }}
+          />
+          {(tab === 'buy' || tab === 'equip') &&
+            (['all', 'weapon', 'armor', 'charm'] as SlotFilter[]).map((s) => (
+              <button key={s} className={`btn btn-ghost filter-tab ${slotF === s ? 'active' : ''}`} onClick={() => { setSlotF(s); setShown(PAGE) }}>
+                {s === 'all' ? '全て' : SLOT_LABEL[s]}
+              </button>
+            ))}
+          {tab === 'buy' && (
+            <button
+              className={`btn btn-ghost filter-tab ${affordOnly ? 'active' : ''}`}
+              aria-pressed={affordOnly}
+              onClick={() => { setAffordOnly((v) => !v); setShown(PAGE) }}
+            >
+              買える物のみ
             </button>
-          ))}
+          )}
           {tab === 'equip' && (
             <>
+              <span className="forge-sort-lbl">希少</span>
+              {(['all', 'common', 'uncommon', 'rare', 'epic', 'legendary'] as const).map((r) => (
+                <button
+                  key={r}
+                  className={`btn btn-ghost filter-tab ${rarF === r ? 'active' : ''}`}
+                  onClick={() => { setRarF(r); setShown(PAGE) }}
+                >
+                  {r === 'all' ? '全' : RARITY_LABELS[r]}
+                </button>
+              ))}
               <span className="forge-sort-lbl">並べ替え</span>
               {([['slot', '種別'], ['atk', '攻'], ['def', '防'], ['gen', '継承']] as const).map(([key, label]) => (
                 <button key={key} className={`btn btn-ghost inv-sort-btn ${invSort === key ? 'active' : ''}`} onClick={() => setInvSort(key)}>
@@ -152,18 +232,29 @@ export function ForgeScreen() {
         <Panel title={`購う(あがなう) — ${stock.length}品`}>
           {stock.length === 0 && <EmptyGuide text="この見世にはまだ何も並んでいない。地の主を鎮めるほど品が増える。" actionLabel="出立へ" onAction={() => setScreen({ id: 'depart' })} />}
           <div className="item-grid">
-            {stock.slice(0, shown).map((b) => {
+            {stock.slice(0, shown).map((b, i, arr) => {
               const d = selChar ? diffAgainst(selChar, b) : null
+              const lack = data.hoto < b.price
               return (
-                <button key={b.baseId} className="btn item-cell" disabled={data.hoto < b.price} onClick={() => doBuy(b.baseId)}>
-                  <MaybeImg src={itemIcon(b.baseId)} className="it-ico" />
-                  <span className="item-name">
-                    {b.name}
-                    {d && d.total > 0 && <span className="item-reco">薦</span>}
-                  </span>
-                  <span className="item-stat">{b.atk ? `攻${b.atk}` : ''}{b.def ? ` 防${b.def}` : ''}</span>
-                  <span className="item-price">{b.price}燈</span>
-                </button>
+                <Fragment key={b.baseId}>
+                  {slotF === 'all' && (i === 0 || arr[i - 1].slot !== b.slot) && (
+                    <h3 className="item-group-head">{SLOT_LABEL[b.slot]}</h3>
+                  )}
+                  <button className="btn item-cell" disabled={lack} onClick={() => doBuy(b.baseId)}>
+                    <MaybeImg src={itemIcon(b.baseId)} className="it-ico" />
+                    <span className="item-name">
+                      <span className={`slot-mark slot-${b.slot}`}>{SLOT_MARKS[b.slot]}</span>
+                      {b.name}
+                      {d && d.strictlyBetter && <span className="item-reco">薦</span>}
+                    </span>
+                    <AxisChips baseId={b.baseId} />
+                    <span className="item-stat">{baseStatText(b)}</span>
+                    <span className="item-price">
+                      {b.price}燈
+                      {lack && <span className="item-lack">奉燈不足</span>}
+                    </span>
+                  </button>
+                </Fragment>
               )
             })}
           </div>
@@ -182,8 +273,20 @@ export function ForgeScreen() {
               const cur = selChar.equipment[s]
               return (
                 <div key={s} className="equip-slot-row">
-                  <span className="equip-slot-name">{SLOT_LABEL[s]}</span>
-                  <span className="equip-slot-item">{cur ? `${cur.name}${cur.atk ? ` 攻${cur.atk}` : ''}${cur.def ? ` 防${cur.def}` : ''}` : '— なし'}</span>
+                  <span className="equip-slot-name">
+                    <span className={`slot-mark slot-${s}`}>{SLOT_MARKS[s]}</span>
+                    {SLOT_LABEL[s]}
+                  </span>
+                  <span className="equip-slot-item">
+                    {cur ? (
+                      <>
+                        {cur.name} {baseStatText(cur)}
+                        <AxisChips baseId={cur.baseId} it={cur} />
+                      </>
+                    ) : (
+                      '— なし'
+                    )}
+                  </span>
                 </div>
               )
             })}
@@ -191,22 +294,29 @@ export function ForgeScreen() {
           <Panel title={`蔵の品 — ${inv.length}品`} className="equip-list">
             {inv.length === 0 && <EmptyGuide text="蔵は空だ。見世で購うか、夜藪から持ち帰れ。" actionLabel="購うへ" onAction={() => changeTab('buy')} />}
             <div className="item-grid">
-              {inv.slice(0, shown).map((it) => {
+              {inv.slice(0, shown).map((it, i, arr) => {
                 const d = diffAgainst(selChar, it)
                 return (
-                  <button key={it.id} className="btn item-cell" onClick={() => doEquip(it)}>
-                    <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
-                    <span className="item-name">
-                      {it.name}
-                      {d.total > 0 && <span className="item-reco">薦</span>}
-                    </span>
-                    <span className="item-stat">
-                      {d.dAtk !== 0 && <em className={d.dAtk > 0 ? 'up' : 'down'}>攻{d.dAtk > 0 ? '+' : ''}{d.dAtk}</em>}
-                      {d.dDef !== 0 && <em className={d.dDef > 0 ? 'up' : 'down'}> 防{d.dDef > 0 ? '+' : ''}{d.dDef}</em>}
-                      {d.dAtk === 0 && d.dDef === 0 && '同等'}
-                    </span>
-                    {it.legacyOf && <span className="item-legacy">{it.legacyOf}の形見</span>}
-                  </button>
+                  <Fragment key={it.id}>
+                    {slotF === 'all' && invSort === 'slot' && (i === 0 || arr[i - 1].slot !== it.slot) && (
+                      <h3 className="item-group-head">{SLOT_LABEL[it.slot]}</h3>
+                    )}
+                    <button className="btn item-cell" onClick={() => doEquip(it)}>
+                      <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
+                      <span className="item-name">
+                        <span className={`slot-mark slot-${it.slot}`}>{SLOT_MARKS[it.slot]}</span>
+                        {it.name}
+                        {d.strictlyBetter && <span className="item-reco">薦</span>}
+                      </span>
+                      <AxisChips baseId={it.baseId} it={it} />
+                      <DiffText d={d} />
+                      <span className="item-origin">
+                        {sourceLabelOf(it)}
+                        {it.generation > 0 && ` ・ 継${it.generation}代`}
+                      </span>
+                      {it.legacyOf && <span className="item-legacy">{it.legacyOf}の形見</span>}
+                    </button>
+                  </Fragment>
                 )
               })}
             </div>
@@ -237,8 +347,12 @@ export function ForgeScreen() {
                   onClick={() => setReforgeTarget({ it, where })}
                 >
                   <MaybeImg src={itemIcon(it.baseId)} className="it-ico" />
-                  <span className="item-name">{it.name}<span className="item-where">({where})</span></span>
-                  <span className="item-stat">{it.atk ? `攻${it.atk}` : ''}{it.def ? ` 防${it.def}` : ''} 第{it.generation}代</span>
+                  <span className="item-name">
+                    <span className={`slot-mark slot-${it.slot}`}>{SLOT_MARKS[it.slot]}</span>
+                    {it.name}<span className="item-where">({where})</span>
+                  </span>
+                  <AxisChips baseId={it.baseId} it={it} />
+                  <span className="item-stat">{baseStatText(it)} 第{it.generation}代</span>
                   <span className="item-price">{maxed ? '打ち止め' : `${cost.hoto}燈+珠${cost.ketsu}`}</span>
                 </button>
               )
@@ -304,6 +418,10 @@ function ReforgeConfirm({ target, data, onClose, onDo }: {
       <p className="confirm-lead">{where}にある{it.name}(第{it.generation}代)へ槌を入れ、第{it.generation + 1}代へ深める。</p>
       {it.atk ? <CompareRow label="攻" before={it.atk} after={nextAtk} /> : null}
       {it.def ? <CompareRow label="防" before={it.def} after={nextDef} /> : null}
+      {it.statBonus &&
+        (Object.entries(it.statBonus) as [StatKey, number][]).map(([k, v]) => (
+          <CompareRow key={k} label={STAT_LABELS[k]} before={v} after={Math.round(v * 1.12)} />
+        ))}
       <CompareRow label="奉燈" before={data.hoto} after={data.hoto - cost.hoto} />
       <CompareRow label="血珠" before={data.ketsu} after={data.ketsu - cost.ketsu} />
       <div className="confirm-actions">

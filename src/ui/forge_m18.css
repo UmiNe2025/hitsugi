@@ -50,3 +50,74 @@
 
 .forge-note { font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px; line-height: 1.6; }
 .forge-more { display: block; margin: 10px auto 0; }
+
+/* ================================================================
+   M22 P0-2 — 装備の5軸表示(docs/POLISH_FIX_INSTRUCTIONS_CLAUDE.md §2)
+   部位字印/品質(基礎の格)/希少度(来歴)/入手由来/継承。色+枠+文字で示す。 */
+
+/* 検索 */
+.forge-search {
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: rgba(10, 14, 29, 0.7);
+  color: var(--text);
+  font-size: 13px;
+  width: 150px;
+}
+.forge-search:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+/* カテゴリ見出し(初期状態=カテゴリ別) */
+.item-group-head {
+  grid-column: 1 / -1;
+  margin: 8px 0 2px;
+  font-size: 12.5px;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  border-bottom: 1px solid rgba(201, 168, 106, 0.25);
+  padding-bottom: 3px;
+}
+
+/* セルは複数行を許す(由来・形見の行) */
+.item-cell { flex-wrap: wrap; }
+
+/* 品質チップ — 帯: 粗末/良品/名品/秘宝/神器。文字が主、色と枠は補助 */
+.q-chip, .r-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 16px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.q-chip.q0 { color: #98a0b3; border: 1px dashed #98a0b3; }
+.q-chip.q1 { color: #9fc98a; border: 1px solid #9fc98a; }
+.q-chip.q2 { color: var(--gold); border: 1px solid var(--gold); }
+.q-chip.q3 { color: #b694e8; border: 1px double #b694e8; border-width: 3px 1px 1px; }
+.q-chip.q4 { color: #8fd4e0; border: 1px double #8fd4e0; border-width: 3px 1px 1px; box-shadow: 0 0 6px rgba(143, 212, 224, 0.35); }
+
+/* 希少度チップ — 来歴(◆印+文字)。並は表示しない */
+.r-chip.r-uncommon { color: #c9d18a; border: 1px solid #c9d18a; }
+.r-chip.r-rare { color: var(--amber); border: 1px solid var(--amber); }
+.r-chip.r-epic { color: #d18ac9; border: 1px solid #d18ac9; }
+.r-chip.r-legendary { color: #f0e2b6; border: 1px solid #f0e2b6; box-shadow: 0 0 6px rgba(240, 226, 182, 0.4); }
+
+/* 条件不足の明示(奉燈不足) — disabledの理由を文字で出す */
+.item-lack {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 11px;
+  color: var(--ember-text);
+}
+
+/* 入手由来+継承の行 */
+.item-origin {
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.item-axes { display: inline-flex; align-items: center; }

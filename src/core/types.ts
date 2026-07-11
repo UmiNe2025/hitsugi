@@ -72,6 +72,8 @@ export interface God {
 
 // ---- 装備・形見 ----
 export type ItemSlot = 'weapon' | 'armor' | 'charm'
+// 入手由来(M22) — 表示専用の来歴。旧セーブの品はundefined=「古くから家にある品」
+export type ItemSource = 'shop' | 'chest' | 'boss' | 'divine'
 export interface Item {
   id: string
   baseId: string
@@ -83,6 +85,7 @@ export interface Item {
   generation: number // 継承回数(形見強化)
   legacyOf?: string // 元の持ち主名(「祖母の簪」演出)
   price?: number
+  source?: ItemSource // M22: optional追加(セーブ互換維持・戦闘計算に不使用)
 }
 
 // ---- 灯型(灯座システムの育成軸。定義本体は data/toza.ts) ----

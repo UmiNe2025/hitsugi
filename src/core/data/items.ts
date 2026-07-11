@@ -1,4 +1,4 @@
-import type { Item, ItemSlot, Stats } from '../types'
+import type { Item, ItemSlot, ItemSource, Stats } from '../types'
 import { uid } from '../rng'
 
 interface ItemBase {
@@ -291,7 +291,7 @@ export function itemBaseById(baseId: string): ItemBase {
   return b
 }
 
-export function makeItem(baseId: string): Item {
+export function makeItem(baseId: string, source?: ItemSource): Item {
   const b = itemBaseById(baseId)
   return {
     id: uid('item'),
@@ -303,6 +303,7 @@ export function makeItem(baseId: string): Item {
     statBonus: b.statBonus ? { ...b.statBonus } : undefined,
     generation: 0,
     price: b.price,
+    source,
   }
 }
 

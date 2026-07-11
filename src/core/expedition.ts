@@ -106,7 +106,7 @@ export function rollTreasure(region: Region, rng: Rng): { hoto: number; ketsu: n
     return { hoto: 0, ketsu, text: `魔性の骸から血珠${ketsu}を拾い上げた。` }
   }
   const pool = ITEM_BASES.filter((b) => b.shopTier <= region.tier)
-  const item = makeItem(rng.pick(pool).baseId)
+  const item = makeItem(rng.pick(pool).baseId, 'chest')
   return { hoto: 0, ketsu: 0, item, text: `行き倒れの荷から「${item.name}」を見つけた。供養を約束して受け取る。` }
 }
 
