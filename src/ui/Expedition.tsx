@@ -5,6 +5,7 @@ import { ELEMENT_LABELS } from '../core/types'
 import { REGIONS, regionById } from '../core/data/regions'
 import { ENEMIES } from '../core/data/enemies'
 import { regionSignOf } from '../core/data/region_visuals'
+import { traceIntelOf, bossDangerHint } from '../core/trace'
 import { eventById } from '../core/expedition'
 import { facilityLevel } from '../core/data/facilities'
 import { dungeonByRegion } from '../dungeon/maps'
@@ -279,6 +280,7 @@ export function DepartScreen() {
                 const boss = selectedRegion.bossId ? ENEMIES.find((e) => e.id === selectedRegion.bossId) : undefined
                 const sign = regionSignOf(selectedRegion.id)
                 const monomiLv = facilityLevel(data.facilities, 'monomi')
+                const intel = traceIntelOf(data, selectedRegion.id) // 痕跡=石碑の観察度(M23)
                 return (
                   // key=地域id: 選び直すたび灯写し(一度だけのreveal)をやり直す
                   <div className="region-detail" key={selectedRegion.id}>
@@ -314,9 +316,18 @@ export function DepartScreen() {
                         署名 {sign.landmark} ／ 兆し 「{sign.omen}」
                       </p>
                     )}
-                    {monomiLv >= 1 && boss && !isCleared && (
+                    {(monomiLv >= 1 || intel.attr) && boss && !isCleared && (
                       <p className="region-monomi-line">
-                        物見の見立て — 主は{ELEMENT_LABELS[boss.element]}の気配を帯びる。
+                        {intel.attr ? '痕跡の見立て' : '物見の見立て'} — 主は{ELEMENT_LABELS[boss.element]}の気配を帯びる。
+                      </p>
+                    )}
+                    {intel.danger && boss && !isCleared && (
+                      <p className="region-monomi-line">危険の見立て — {bossDangerHint(boss.id)}</p>
+                    )}
+                    {intel.max > 0 && (
+                      <p className="region-trace-line">
+                        土地の観察 {intel.level}/{intel.max}(石碑)
+                        {intel.mikiri && !isCleared ? ' — 見切りの構えあり' : ''}
                       </p>
                     )}
                   </div>

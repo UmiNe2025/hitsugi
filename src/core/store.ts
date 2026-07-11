@@ -33,6 +33,8 @@ import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
 import type { DungeonRun } from '../dungeon/types'
 import { dungeonByRegion } from '../dungeon/maps'
+import { traceIntelOf, bossMikiriLine } from './trace'
+import { regionSignOf } from './data/region_visuals'
 import type { Tomoshigata, JobClassId } from './types'
 import { tozaOf } from './data/toza'
 import { jobById, JOB_SKILL_UNLOCK_AGES } from './data/jobs'
@@ -76,6 +78,8 @@ interface GameStore {
   markCodexSeen: () => void
   // 郷人と話した台詞キーの記録(M23: 郷マップの「新しい話」印用。ゲームロジックには影響しない)
   markVillagerTalked: (id: string, lineKey: number) => void
+  // 第一幕(入場導入)の既視フラグ(M23: run単位・表示専用)
+  dungeonIntroSeen: () => void
   setScreen: (s: Screen) => void
   processNextScene: () => void
 
@@ -658,6 +662,12 @@ export const useGame = create<GameStore>((set, get) => {
       const nd: GameData = { ...d, flags: { ...d.flags, [`vilTalk_${id}`]: lineKey } }
       set({ data: nd })
       saveGame(nd)
+    },
+
+    dungeonIntroSeen: () => {
+      const run = get().dungeonRun
+      if (!run || run.introSeen) return
+      set({ dungeonRun: { ...run, introSeen: true } })
     },
 
     markGossipSeen: () => {
@@ -1389,6 +1399,20 @@ export const useGame = create<GameStore>((set, get) => {
         const bossDef = enemyById(enemyIds[0])
         // v3.1 M14: 対峙の言(縁起) → 主の説明 → 開戦
         const prelude = loreFor(run.regionId)?.bossPrelude ?? []
+        // M23(指示7 V3): 痕跡を読み切った初回のボス戦でだけ「見切り」を明示する。
+        // 「回避方法の明示」型 — 数値バフは付けない(バランス不変)。unshift順で導入文の末尾に出る。
+        {
+          const dd = get().data!
+          const intel = traceIntelOf(dd, run.regionId)
+          const mikiriFlag = `mikiri_${run.regionId}`
+          if (intel.mikiri && !dd.flags[mikiriFlag]) {
+            const line = bossMikiriLine(region.bossId)
+            if (line) {
+              battle.log.unshift({ text: line, kind: 'info' })
+              mutate((prev) => ({ ...prev, flags: { ...prev.flags, [mikiriFlag]: true } }))
+            }
+          }
+        }
         battle.log.unshift({ text: `この地の闇が、ひとつに凝った——${region.name}の主だ!`, kind: 'info' })
         battle.log.unshift({ text: bossDef.desc, kind: 'info' })
         for (let i = prelude.length - 1; i >= 0; i--) {
@@ -1451,6 +1475,14 @@ export const useGame = create<GameStore>((set, get) => {
         const lines = [`石碑の欠片(${now}/3) — ${frag}`]
         if (now === 3) lines.push(...lore.core, '(縁起の核心に触れた。奉燈25を授かる)')
         else if (now === 1) lines.push(...lore.stir)
+        // M23(指示7 V3): 観察が進むほど主の手がかりが読める(表示のみ)
+        if (region.bossId && !run.bossDown) {
+          const intel = traceIntelOf({ loreFrags: { [run.regionId]: now } }, run.regionId)
+          const sign = regionSignOf(run.regionId)
+          if (intel.mikiri) lines.push('主の手の内が見えた——次の対峙で、初太刀は見切れる。')
+          else if (intel.danger) lines.push(`主の痕跡${sign ? `「${sign.omen}」` : ''}を見た。危険の見立てが立った。`)
+          else if (intel.attr) lines.push('主の気配の色が、うっすらと読めた。')
+        }
         mark({ log: [...run.log, ...lines] })
         return
       }
