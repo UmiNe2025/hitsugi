@@ -222,7 +222,7 @@ export function DeathScene({ charId }: { charId: string }) {
             {digest.slice(0, Math.max(1, beat)).map((l, i) => (
               <p key={i} className="life-scroll-line">{l}</p>
             ))}
-            {!digestDone && <ScenePager page={Math.min(Math.max(1, beat) , digest.length)} total={digest.length} onNext={() => { audio.se('page'); setBeat(beat + 1) }} />}
+            {!digestDone && <ScenePager page={Math.min(beat + 1, digest.length)} total={digest.length} onNext={() => { audio.se('page'); setBeat(beat + 1) }} />}
           </div>
         )}
         {digestDone && (
