@@ -1026,3 +1026,25 @@
   - **残20枚(神MAX)完了**: レンダPCが119枚処理後に応答停止したがユーザーが復旧。IPは192.168.1.12→**192.168.1.11**へ変更(DHCP再割当)されており再スキャンで発見。同一Negative修正版で残20枚(shakujou/shinabi/tatsumaki/tsukuyomi/yuzukihime/kaiousei/meireisei/kokuen/kokuryuu/seimeikan/kagaribi_oo/shinkuu/daichinnushi/shiotsuchi/oozora_nushi/tsukiyomikami/kagayaki_hime/houraisen/kokuten_ou/towa_no_oya、各_max)を生成、全て良好(人物復帰または該当rank4は規格通り抽象表現、偽文字混入なし)。**139/139枚修正完了**。
   - **最終検証**: 611/611枚が実ファイルとして存在(欠落0・破損0、5バイト未満なし)。`node scripts/validate_data.mjs` errors0(既知warn1のみ)。
 - **preview実測**: opus不具合により本ミッション期間中は復旧見込みなしとユーザーより共有。M22/M23のブラウザ実測は別セッションへ持ち越し(再開手順は各MISSION_STATEファイル参照)。
+
+## 2026-07-12 (M24 戦闘表示・ダンジョンマップ全面改善指示 — 実装はClaude/Fable 5へ引継ぎ)
+
+- **依頼**: 戦闘シーンの表示とダンジョンマップを全体的に改善する。
+- **実機確認**: ローカルdev版を1280×720で新規開始し、出立から宵の森地下1層まで確認。探索HUD/加護/地域導入/M23地域色調は動作。36×22タイルに対して横約35タイル相当が表示され、主人公/特殊物が小さく、床/壁/敵影の暗色が近く、画面下部へ大きな暗色面が出ることを確認した。
+- **戦闘監査**: 行動順、火脈、ログ、コマンド盤、隊員札、人物名札が個別に主張。人物基準が味方約80px/敵約112px、踏み込み約30pxに対して陣営間距離が大きく、攻撃者と対象の接続が弱い。
+- **設計**: 共通署名を「灯路/灯脈」とした。戦闘は三段grid、人物拡大、接触点までの攻撃、情報統合。探索はレスポンシブzoom、look-ahead、床/壁/敵影階層、タップ経路可視化、HUD統合、地域5層差分。
+- **成果物**: `docs/BATTLE_DUNGEON_OVERHAUL_M24.md` / `docs/HANDOFF_UI_UX_CLAUDE.md` / `docs/GDD_v3.md` §8.9。
+- **コード変更**: なし。ゲームソース、画像素材、生成マップは変更していない。
+- **次**: ClaudeはPhase Aのダンジョンzoom/外側backdropと戦闘三段grid/人物拡大から着手し、1280×720・1440×900・390×844の修正前後比較を残す。
+
+## 2026-07-12 (M24 戦闘表示・ダンジョンマップ全面改善 — /mission)
+
+- **契約**: docs/BATTLE_DUNGEON_OVERHAUL_M24.md(GDD §8.9)のPhase A-D。共通署名=灯路(探索)/灯脈(戦闘)。devil攻撃(REWORK)→10緩和策を契約反映(正典虚偽訂正・scale本体実装+テスト・仕様矛盾S3解決・index.css非編集・ボス専用scale・接触点論理座標/既存lunge維持・HP情報非欠落・fps代替受入)。監査=自己監査+devil1回+独立review。preview/fps実測は障害継続で⚠️(計算+テスト代替)。
+- **M1a 難所(本体Opus)**: camera.ts新設 — computeZoom/cameraTarget/holeHalfResPos/screenToTile/lookAheadOffsetの純粋関数。tests/camera.test.ts **19本**で「主人公中心=画面中央=erase穴中央」を全zoom機械保証+タップ逆変換の往復整合。engine.ts=world.scale zoom(PC横22-26/モバイル横10-12タイル)+cameraTarget+look-ahead(1.2タイル先読み)+backdrop層(マップ外の純黒解消)。lighting.ts=穴のscale整合。[S3]主人公px天井48-64は現スプライトTILE*1.6では両立不能→タイル数優先(79-93px、48px以上担保)。
+- **M1b ダンジョン(sonnet)**: 床壁3段(床明度+38/壁縁光3px)、敵影の縁・足元・目だけ属性色+金個体の二重縁+金粒、特殊物1.4倍、タップBFS移植(村→ダンジョン、screenToTile使用)+灯路(目的印/先頭灯路/到達不能割れ印)、短期目的plate、HUD統合(dungeon_m24.css新規)。
+- **M2 戦闘(sonnet)**: 三段grid(52/1fr/152px)、人物150px×--sz+ボス.is-boss専用260px(画像/SVG両経路)、HP二重解消+隊MP1行常設、灯脈SVG線、コマンド盤3分割+1-9キー対象選択、報酬予告化、ボス上部専用HPゲージ、モバイルbottom sheet(battle_m24.css新規)。
+- **独立code-review(Opus・ビルド後CSS解析まで実施)**: 要修正(C0/H1/M2/L2)→**HIGH+MEDIUM全反映**: [H]勝敗画面のgrid潰れ→grid-column:1/-1 / [M]前後列表示の消失(後衛被ダメ-20%の戦術情報)→隊MPサマリに前/後印復元 / [M]ミニマップtap域とHUDボタンの競合→ボタンz-index:7。LOW2(灯脈pulse切断/shake中rectズレ)は演出のみ記録。
+- **変更ファイル**: camera.ts(新)/dungeon_m24.css(新)/battle_m24.css(新)/tests/camera.test.ts(新)/engine.ts/lighting.ts/render/{ground,props,shades}.ts/Dungeon.tsx/Battle.tsx
+- **機械検証**: tsc緑/oxlint0/vitest **201**/build成功/**index.css非編集(diff空)**/validate_data 0エラー/git diff --check クリーン。**実描画はpreview障害で目視未確認(⚠️)** — camera 19テスト+独立レビュー(ビルド後CSS解析)で代替検証。
+- **M3 地域5層** ✅: 材質7種+空気粒子6種をRegionVisualProfileへ追加、ground.ts材質形状+engine.ts粒子挙動分岐、40地域割当。vitest+10本で同系統内の色+材質+粒子の全ペア非重複を機械保証。全画面filter新規なし(fps制約)。
+- **終了判定=部分達成(terminal)**: 契約Phase A-Dの実装5項全✅(コード+機械検証**vitest 211**+独立レビュー+devil反映10緩和)。**実描画/fps実測のみpreview障害で⚠️**(再開手順=docs/MISSION_M24_BATTLE_DUNGEON.md④)。Phase E(敵の兆し/room archetype)は契約スコープ外=次期。push未実施(ユーザーゲート)。
