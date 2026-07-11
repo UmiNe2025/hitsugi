@@ -1001,3 +1001,16 @@
 - **未解決**: preview系(ブラウザ実測)が分類器障害で3回失敗 — PC1280×720/モバイル390×844のDOM実測・スクリーンショット・キーボード実走は保留(再開手順=MISSION_STATE.md④)。指示6/7本体は次期ミッション。
 - **最終独立code-review(opus独立コンテキスト)**: 要修正(C0/H2/M1/L2)→**全件即修正**: [H]隊編成カードの入れ子ボタン解消(選択トグルを実button化・詳細は兄弟配置) / [H]事件ダイアログのShift+Tab回避経路を遮断(useForcedDialogへTabトラップ共通化+chooseNode/useReturnFireにpendingEventガード) / [M]図鑑一覧サムネもGodImgOrFallback化 / [L]デッドCSS除去。修正後 tsc/lint/test/build/validate_data 全緑を再確認。
 - **監査**: docs/MISSION_M22_POLISH.md ⑧に最終監査表(自己監査+独立レビュー2回)。終了判定=**部分達成**(実装6/6✅・ブラウザ実測のみ分類器障害5連続で⚠️保留、再開手順は④)。
+
+## 2026-07-11 (M23 — M22保留の全消化: 資産/実測/指示6/指示7 — /mission)
+
+- **契約**: ユーザー指示「保留と次の判断のものは全て実行」→ MA資産コミット/MB preview実測/MC郷歩行マップ(指示6)/MD RegionVisualProfile(指示7V2)/ME四幕+痕跡(指示7V3)/MF統合。devil攻撃(2回目)=REWORK→必須緩和を契約反映(見切りゲートの石碑総数クランプ/loreFrags読み取り専用ADR/適用域の正直化/40vs27明文化/第一幕a11y/村の即時性)。
+- **MA 資産**: 先行素材7枚+候補PNG/歩行スプライト144枚(walkc幼子72+walke老年72 — 共にstagePrefix実装済みの欠落分)/factory manifest群/CLAUDE.md を4コミットで取り込み。
+- **MC 郷歩行マップ(指示6)**: village/engine.ts(軽量Pixi 530行)+Village.tsx+Screen'village'。大燈籠/祠(→pact)/鍛冶(→forge)/豆腐屋(タネ婆)/出立門(→depart)+池。WASD/矢印+D-pad(dungeon同型)+タップBFS。郷人4人=vil_*肖像札+「話」新着印(villagerLineKey vs flags.vilTalk_*)、存命家族=walk_*スプライト(幼子は灯影)。すぐ行くバー常設・会話は歩行を止めない帯・Esc帰還・月不消費。VillageModal廃止。
+- **MD RegionVisualProfile(指示7V2)**: REGION_VISUALS 40地域(sonnet量産・vitest129本の機械ゲート: 暗色帯/光り物輝度/同系統識別距離)。region_theme.tsで基盤4テーマへ一度だけ適用(ground/stain/grass/water/光tint/mote)。landmarks.ts=新12署名の手続き描画を入口フロアの壁際へ。**適用域の正直な限定**: props内蔵色は基盤の同一性として維持(受入=新12は静止画判別・既存15は色調+光粒の識別補助)。ダンジョン未実装13地域分は将来レーン用と明記。
+- **ME 四幕+痕跡(指示7V3)**: 痕跡=石碑(loreFrags)を「土地の観察度」として**読み取り専用**流用。ゲートは石碑総数でクランプ(烏の里=石碑1→1つで全開。固定3のままだと7/27地域で見切り永久不能 — devil CRITICAL)。開示1=属性(出立ペイン)/2=危険の見立て(数値傾向から生成)/3=初回ボス戦の見切りログ=弱点属性+構えの明示(**数値バフなし**)。第一幕「閾」=地名+署名の入場導入(introSeen run単位・初入力or2秒・aria-live・reduce-motion静的)。畏=最終前フロアの沈色/座=ボス階/鎮=討伐後(帳-0.08+金の光粒+敵影-2)。**未実装の明示**: 討伐後の採取物・住民の痕跡はスコープ外。
+- **変更ファイル**: village/engine.ts(新)/ui/Village.tsx(新)/ui/village.css(新)/dungeon/render/region_theme.ts(新)/landmarks.ts(新)/ui/dungeon_m23.css(新)/core/trace.ts(新)/core/data/region_visuals.ts/dungeon/engine.ts/dungeon/types.ts/core/store.ts/core/types.ts/ui/Dungeon.tsx/Expedition.tsx/Home.tsx/img.ts/App.tsx/villagers.ts/tests(+142本: region_visuals 129+trace 13)
+- **機械検証**: tsc緑/oxlint警告0/vitest **182/182**/vite build 2.29s/validate_data errors0/git diff --check クリーン。
+- **未解決**: preview実測 — 分類器障害が継続(通算8回失敗)。M22分+M23分の実測手順はMISSION_STATE④へ集約。
+- **最終独立code-review(独立コンテキスト)**: 出荷可(C0/H0/M1/L2)→**全件反映**: [M]第一幕introSeenを表示時点で即記録(戦闘往復の再表示防止) / [L]見切りフラグを図鑑mutateへ相乗り / [L]会話直後にNPC頭上「話」印を即消去。修正後 tsc/lint/182テスト/build 再確認緑。
+- **監査**: docs/MISSION_M23_BACKLOG.md ⑧。終了判定=**部分達成**(MA/MC/MD/ME/MF✅・MB実測のみ分類器障害9連続で⚠️、M22+M23統合の再開手順を④へ)。
