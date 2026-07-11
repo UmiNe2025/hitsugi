@@ -1,0 +1,153 @@
+// M23指示7 V2: 地域別ビジュアルプロファイル(region_visuals)の機械ゲート回帰テスト
+// 焦点: (1)40地域の過不足0 (2)暗色帯/光り物輝度の色制約 (3)moteCount範囲
+//       (4)署名12地域のみlandmarkを持つこと (5)同一bg系統内の識別性 (6)regionVisualOfの安全性
+import { describe, expect, it } from 'vitest'
+import { REGIONS } from '../src/core/data/regions'
+import { REGION_VISUALS, regionVisualOf, type LandmarkKind } from '../src/core/data/region_visuals'
+import { themeForBg } from '../src/dungeon/render/theme'
+
+const GROUND_CHANNEL_MAX = 0x33
+const MID_CHANNEL_MAX = 0x66
+const GLOW_LUMINANCE_MIN = 96
+const MOTE_COUNT_MIN = 6
+const MOTE_COUNT_MAX = 40
+const FAMILY_DISTANCE_MIN = 24
+const DEFAULT_MOTE = 0xffe79e
+
+// 署名12地域 → 対応landmark種(型コメントと同一の対応表)
+const EXPECTED_LANDMARKS: Record<string, LandmarkKind> = {
+  hotarubi_no_kubochi: 'sunken_lantern',
+  nemurijizou_no_michi: 'jizo_row',
+  kuchinawa_no_hotoke: 'great_shimenawa',
+  usugiri_no_watashiba: 'ghost_pier',
+  hisui_no_sawa: 'jade_pillar',
+  nakiotoko_no_hara: 'weeping_stones',
+  sabigatana_no_haka: 'sword_grove',
+  yumemaboroshi_no_yakata: 'nested_fusuma',
+  maboroshi_no_sandou: 'endless_torii',
+  nakiryuu_no_mine: 'dragon_spine',
+  todome_no_kaidan: 'counted_steps',
+  gentou_no_zenya: 'empty_banquet',
+}
+
+function channels(color: number): [number, number, number] {
+  return [(color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff]
+}
+
+function channelMax(color: number): number {
+  return Math.max(...channels(color))
+}
+
+function rgbDistance(a: number, b: number): number {
+  const [ar, ag, ab] = channels(a)
+  const [br, bg, bb] = channels(b)
+  return Math.abs(ar - br) + Math.abs(ag - bg) + Math.abs(ab - bb)
+}
+
+function luminance(color: number): number {
+  const [r, g, b] = channels(color)
+  return 0.299 * r + 0.587 * g + 0.114 * b
+}
+
+describe('REGION_VISUALS — 40地域の過不足0', () => {
+  it('REGIONSの全idがREGION_VISUALSに存在し、余剰キーもない', () => {
+    const regionIds = REGIONS.map((r) => r.id)
+    const visualIds = Object.keys(REGION_VISUALS)
+    const missing = regionIds.filter((id) => !visualIds.includes(id))
+    const extra = visualIds.filter((id) => !regionIds.includes(id))
+    expect(missing).toEqual([])
+    expect(extra).toEqual([])
+    expect(visualIds.length).toBe(40)
+  })
+})
+
+describe('REGION_VISUALS — 色制約(暗色帯を破らない/光り物は暗すぎない)', () => {
+  for (const region of REGIONS) {
+    const profile = REGION_VISUALS[region.id]
+    it(`${region.id}: ground/stain/grass/waterDeepが暗色帯を超えない`, () => {
+      if (profile.ground !== undefined) {
+        expect(channelMax(profile.ground)).toBeLessThanOrEqual(GROUND_CHANNEL_MAX)
+      }
+      for (const key of ['stain', 'grass', 'waterDeep'] as const) {
+        const v = profile[key]
+        if (v !== undefined) {
+          expect(channelMax(v)).toBeLessThanOrEqual(MID_CHANNEL_MAX)
+        }
+      }
+    })
+    it(`${region.id}: waterGlint/lantern/moteの輝度が96以上`, () => {
+      for (const key of ['waterGlint', 'lantern', 'mote'] as const) {
+        const v = profile[key]
+        if (v !== undefined) {
+          expect(luminance(v)).toBeGreaterThanOrEqual(GLOW_LUMINANCE_MIN)
+        }
+      }
+    })
+  }
+})
+
+describe('REGION_VISUALS — moteCountは6〜40の整数', () => {
+  for (const region of REGIONS) {
+    const profile = REGION_VISUALS[region.id]
+    it(`${region.id}`, () => {
+      if (profile.moteCount !== undefined) {
+        expect(Number.isInteger(profile.moteCount)).toBe(true)
+        expect(profile.moteCount).toBeGreaterThanOrEqual(MOTE_COUNT_MIN)
+        expect(profile.moteCount).toBeLessThanOrEqual(MOTE_COUNT_MAX)
+      }
+    })
+  }
+})
+
+describe('REGION_VISUALS — landmarkは署名12地域のみ、対応種も正しい', () => {
+  it('署名12地域は指定どおりのlandmarkを持つ', () => {
+    for (const [regionId, kind] of Object.entries(EXPECTED_LANDMARKS)) {
+      expect(REGION_VISUALS[regionId]?.landmark).toBe(kind)
+    }
+  })
+  it('署名12地域以外はlandmarkキーを持たない', () => {
+    for (const region of REGIONS) {
+      if (region.id in EXPECTED_LANDMARKS) continue
+      expect(REGION_VISUALS[region.id].landmark).toBeUndefined()
+    }
+  })
+})
+
+describe('REGION_VISUALS — 同一bg系統内の識別性(ground/grass/moteのいずれかがRGB距離≥24)', () => {
+  const familyOf = (regionId: string) => themeForBg(REGIONS.find((r) => r.id === regionId)!.bg).family
+
+  const families = new Map<string, string[]>()
+  for (const region of REGIONS) {
+    const fam = familyOf(region.id)
+    families.set(fam, [...(families.get(fam) ?? []), region.id])
+  }
+
+  for (const [fam, ids] of families) {
+    it(`${fam}系統: 全${ids.length}地域が互いに識別可能`, () => {
+      const failures: string[] = []
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          const a = REGION_VISUALS[ids[i]]
+          const b = REGION_VISUALS[ids[j]]
+          const dGround = rgbDistance(a.ground ?? 0, b.ground ?? 0)
+          const dGrass = rgbDistance(a.grass ?? 0, b.grass ?? 0)
+          const dMote = rgbDistance(a.mote ?? DEFAULT_MOTE, b.mote ?? DEFAULT_MOTE)
+          const best = Math.max(dGround, dGrass, dMote)
+          if (best < FAMILY_DISTANCE_MIN) {
+            failures.push(`${ids[i]} vs ${ids[j]}: max(${dGround},${dGrass},${dMote})=${best}`)
+          }
+        }
+      }
+      expect(failures).toEqual([])
+    })
+  }
+})
+
+describe('regionVisualOf', () => {
+  it('既知idは非null', () => {
+    expect(regionVisualOf('yoi_forest')).not.toBeNull()
+  })
+  it('未知idはnull', () => {
+    expect(regionVisualOf('no_such_region')).toBeNull()
+  })
+})
