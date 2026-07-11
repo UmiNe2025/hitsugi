@@ -1014,3 +1014,14 @@
 - **未解決**: preview実測 — 分類器障害が継続(通算8回失敗)。M22分+M23分の実測手順はMISSION_STATE④へ集約。
 - **最終独立code-review(独立コンテキスト)**: 出荷可(C0/H0/M1/L2)→**全件反映**: [M]第一幕introSeenを表示時点で即記録(戦闘往復の再表示防止) / [L]見切りフラグを図鑑mutateへ相乗り / [L]会話直後にNPC頭上「話」印を即消去。修正後 tsc/lint/182テスト/build 再確認緑。
 - **監査**: docs/MISSION_M23_BACKLOG.md ⑧。終了判定=**部分達成**(MA/MC/MD/ME/MF✅・MB実測のみ分類器障害9連続で⚠️、M22+M23統合の再開手順を④へ)。
+
+## 2026-07-11 (M22+M23 push + 工場稼働再開)
+
+- **push実行**(ユーザー承認): main→origin(6b4ab2f..b1d361f、27コミット=M18〜M23全実装)。GitHub Actions "Deploy to GitHub Pages" **成功**(run 29152150407)。公開URL: https://umine2025.github.io/hitsugi/
+- **工場再接続**: 既定IP(192.168.1.10)・localhost共に接続拒否のため192.168.1.0/24をスキャンし**192.168.1.12**でComfyUI稼働を発見(RTX3060 12GB、`--listen 0.0.0.0`、novaAnimeXL_ilV190.safetensors)。3枚疎通テスト(boss_jizouoi/kuchinawanushi/watashimori)で画風一致を目視確認。
+- **本番バッチ起動**: 残611枚(重要復旧341+装備270)を`run_batch_comfy.ps1 -ComfyUrl http://192.168.1.12:8188 -MaxImages 611`でバックグラウンド実行開始。20枚ごとにfactory_state.jsonを自動commit&push(スクリプト既定動作 — 事前把握不足で31回の増分デプロイが自動発生。以後は都度実行方針を確認する)。611/611件成功・欠落0(実ファイル突合)。
+- **品質不具合発見と修正**: 生成後の目視抜き取りで、神/ボス/カットイン系139枚に**GOD_ART_STYLE_GUIDE違反**を検出——(1)人型が消え抽象紋様化(`run_batch_comfy.ps1`既定Negativeの`human, person, figure`が神・ボスの人物描写を妨害)、(2)AI幻覚による偽漢字・マンガ効果音風テキストの画面内混入(規格書で明示的に禁止)。
+  - **原因**: god/boss/cutin/bg_r/bossbgは`Get-Cat`のdefault(='scene')経路に落ち、共通`$Negative`(human/person/figure blocklist)を使っていた。bg_r/bossbg(22枚)は人物不要のため無症状、god(58)+god_max(59)+boss(11)+cutin(11)=139枚が対象。
+  - **修正**: Negativeから`human, person, figure`を除去し、`kanji/glyphs/katakana/onomatopoeia/sound effect text`等の偽文字対策を追加。3枚→2枚の反復テストで有効性確認後、139枚中119枚を`-NoCommit`で再生成・目視レビュー(ボス/カットインは明確に改善、神は多くが人物描写に復帰。一部の低位階神(姫/童系)はプロンプトが日本語詩文主体のため依然として物象(灯籠・水面)化する構図バイアスが残る——ユーザー判断で「現状受容」)。
+  - **未完了**: レンダPC(192.168.1.12)が119枚処理後に応答停止し、神MAX20枚(shakujou/shinabi/tatsumaki/tsukuyomi/yuzukihime/kaiousei/meireisei/kokuen/kokuryuu/seimeikan/kagaribi_oo/shinkuu/daichinnushi/shiotsuchi/oozora_nushi/tsukiyomikami/kagayaki_hime/houraisen/kokuten_ou/towa_no_oya、各_max)が未生成のまま。ユーザーがPC復旧を確認中。
+- **preview実測**: opus不具合により本ミッション期間中は復旧見込みなしとユーザーより共有。M22/M23のブラウザ実測は別セッションへ持ち越し(再開手順は各MISSION_STATEファイル参照)。
