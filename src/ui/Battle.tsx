@@ -544,8 +544,12 @@ export function BattleScreen() {
               )}
               <div className="turnpanel-party-mp">
                 {battle.allies.map((a) => (
-                  <span key={a.key} className={`${actor?.key === a.key ? 'is-now' : ''} ${a.hp <= 0 ? 'is-dead' : ''}`}>
-                    {a.name.slice(0, 1)}{a.mp}/{a.maxMp}
+                  <span
+                    key={a.key}
+                    className={`${actor?.key === a.key ? 'is-now' : ''} ${a.hp <= 0 ? 'is-dead' : ''}`}
+                    title={`${a.name}(${a.row === 'back' ? '後衛・被弾軽' : '前衛'}) 灯力${a.mp}/${a.maxMp}`}
+                  >
+                    <i className="row-mark">{a.row === 'back' ? '後' : '前'}</i>{a.name.slice(0, 1)}{a.mp}/{a.maxMp}
                   </span>
                 ))}
               </div>

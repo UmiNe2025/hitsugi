@@ -89,7 +89,8 @@
 }
 .hud-resource-chip b { color: var(--text); font-weight: 700; }
 
-.dungeon-hud-band .btn { font-size: 12.5px; padding: 6px 12px; flex-shrink: 0; }
+/* HUDボタンはミニマップtap域(z-index:6)より前面に置き、折り返しで重なってもクリックを奪われない(レビューMEDIUM) */
+.dungeon-hud-band .btn { font-size: 12.5px; padding: 6px 12px; flex-shrink: 0; position: relative; z-index: 7; }
 
 @media (max-width: 560px) {
   .dungeon-hud-band { gap: 6px; padding-right: calc(8px + env(safe-area-inset-right, 0px)); }

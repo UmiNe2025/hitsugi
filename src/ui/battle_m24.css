@@ -164,6 +164,10 @@
   min-height: 0;
   overflow: hidden;
 }
+/* 勝敗画面は単一子要素。gridの自動配置で左端トラック(140-210px)に潰れるのを防ぎ全幅へ広げる(レビューHIGH) */
+.battle-bottom > .victory-scroll { grid-column: 1 / -1; }
+/* 隊MPサマリの前衛/後衛印(後衛は被ダメ-20% — 戦術情報。member-cards廃止で失われた表示を復元、レビューMEDIUM) */
+.turnpanel-party-mp .row-mark { font-style: normal; opacity: 0.68; margin-right: 1px; font-size: 0.85em; }
 .turnpanel-actor, .turnpanel-center, .turnpanel-detail {
   min-width: 0; min-height: 0; overflow: hidden;
   background: linear-gradient(160deg, rgba(30, 20, 14, 0.92), rgba(16, 10, 8, 0.95));
