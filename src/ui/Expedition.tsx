@@ -5,10 +5,11 @@ import { REGIONS, regionById } from '../core/data/regions'
 import { eventById } from '../core/expedition'
 import { facilityLevel } from '../core/data/facilities'
 import { dungeonByRegion } from '../dungeon/maps'
-import { isAdult, seasonsLeft } from '../core/inheritance'
+import { isAdult } from '../core/inheritance'
 import { PARTY_SIZE } from '../core/constants'
 import { ActionDock } from './layout/shell'
-import { Bar, CharCard, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { DepartPartyPicker } from './DepartParty'
+import { Bar, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { eventImg, gameImg, HOME_BG, regionBgR } from './img'
 import './m17_home.css'
 import './depart_m18.css'
@@ -158,11 +159,14 @@ export function DepartScreen() {
     setParty((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < PARTY_SIZE ? [...p, id] : p))
 
   const selectedRegion = regionId ? regionById(regionId) : null
-  const dockNote = !selectedRegion
-    ? '行き先を選べ'
-    : party.length === 0
-      ? `隊を組め(${party.length}/${PARTY_SIZE})`
-      : undefined
+  // 出立不可の理由はCTA近くへ常時表示する(押してから初めて出さない — M22 §1.4)
+  const dockNote = adults.length === 0
+    ? '成人がいない — 幼子の成長を待つか、星契りで子を授かれ'
+    : !selectedRegion
+      ? '行き先を選べ'
+      : party.length === 0
+        ? `隊を組め(${party.length}/${PARTY_SIZE})`
+        : undefined
 
   return (
     <div className="screen depart-m18-root">
@@ -221,21 +225,13 @@ export function DepartScreen() {
       </Panel>
 
       <Panel title={`隊を組む(${party.length}/${PARTY_SIZE})`}>
-        <div className="exp-party">
-          {adults.map((c) => (
-            <CharCard
-              key={c.id}
-              char={c}
-              seasonIndex={data.seasonIndex}
-              selected={party.includes(c.id)}
-              onClick={() => toggle(c.id)}
-            >
-              <p className="depart-char-extra">
-                体{c.hp}/{c.maxHp}・残{seasonsLeft(c, data.seasonIndex)}季
-              </p>
-            </CharCard>
-          ))}
-        </div>
+        <DepartPartyPicker
+          adults={adults}
+          family={data.family}
+          seasonIndex={data.seasonIndex}
+          party={party}
+          onToggle={toggle}
+        />
       </Panel>
 
       <ActionDock note={dockNote}>
