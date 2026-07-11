@@ -55,6 +55,22 @@ export function holeHalfResPos(
   }
 }
 
+// タップ座標(canvas px)→タイル添字の逆変換。zoom/worldオフセットを解いてタイルを求める。
+// cameraTarget/holeHalfResPosと同じscale前提で整合する(devil S2: タップが1タイル外す破壊の封じ)。
+export function screenToTile(
+  screenX: number,
+  screenY: number,
+  worldX: number,
+  worldY: number,
+  zoom: number,
+  tile: number,
+): { tx: number; ty: number } {
+  return {
+    tx: Math.floor((screenX - worldX) / zoom / tile),
+    ty: Math.floor((screenY - worldY) / zoom / tile),
+  }
+}
+
 // 進行方向のlook-aheadオフセット(world px)。dir=[dx,dy]は正規化前でよい(内部で単位化)。
 export function lookAheadOffset(dx: number, dy: number, tile: number, tiles = 1.2): { x: number; y: number } {
   const len = Math.hypot(dx, dy)

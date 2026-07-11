@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CAM_MIN_ZOOM, CAM_MAX_ZOOM,
   computeZoom, visibleTilesX, visibleTilesY,
-  cameraTarget, holeHalfResPos, lookAheadOffset,
+  cameraTarget, holeHalfResPos, lookAheadOffset, screenToTile,
 } from '../src/dungeon/camera'
 
 const TILE = 36
@@ -83,6 +83,35 @@ describe('cameraTarget × holeHalfResPos の整合(核心)', () => {
     // 右へlook-aheadした分、穴(主人公)は画面中央より左へ寄る
     expect(hole.x).toBeLessThan(vw / 4)
     expect(hole.y).toBeCloseTo(vh / 4, 6)
+  })
+})
+
+describe('screenToTile — タップ逆変換(cameraTargetと往復整合)', () => {
+  const cases: [number, number, number, number][] = [
+    [1280, 720, 5, 5],
+    [1280, 720, 20, 14],
+    [1440, 900, 12, 8],
+    [390, 844, 6, 25],
+  ]
+  for (const [vw, vh, px, py] of cases) {
+    it(`${vw}×${vh}: 画面中央タップ=主人公タイル(${px},${py})`, () => {
+      const zoom = computeZoom(vw, TILE)
+      const cam = cameraTarget(px * TILE + TILE / 2, py * TILE + TILE / 2, vw, vh, zoom)
+      // 画面中央をタップすれば主人公の居るタイルに解決される
+      const t = screenToTile(vw / 2, vh / 2, cam.x, cam.y, zoom, TILE)
+      expect(t.tx).toBe(px)
+      expect(t.ty).toBe(py)
+    })
+  }
+  it('隣タイル中心のタップは隣タイルに解決される', () => {
+    const vw = 1280
+    const vh = 720
+    const zoom = computeZoom(vw, TILE)
+    const cam = cameraTarget(10 * TILE + TILE / 2, 10 * TILE + TILE / 2, vw, vh, zoom)
+    // 主人公の1タイル右(world +TILE)の中心 = 画面上では vw/2 + TILE*zoom
+    const t = screenToTile(vw / 2 + TILE * zoom, vh / 2, cam.x, cam.y, zoom, TILE)
+    expect(t.tx).toBe(11)
+    expect(t.ty).toBe(10)
   })
 })
 
