@@ -14,6 +14,7 @@ import { GODS } from '../core/data/gods'
 import { REGIONS } from '../core/data/regions'
 import { REGION_LORE } from '../core/data/lore'
 import { MaybeImg, NightBackdrop } from './components'
+import { GodImgOrFallback } from './GodArtFallback'
 import { gameImg, HOME_BG, regionBgR } from './img'
 import { ScreenShell, WorkspaceTabs, EmptyGuide } from './layout/shell'
 import './codex_m18.css'
@@ -122,7 +123,7 @@ function EnemyDetail({ e }: { e: EnemyDef }) {
 function GodDetail({ g }: { g: God }) {
   return (
     <div className="codex-detail-panel">
-      <MaybeImg src={gameImg(g.portrait)} className="codex-detail-thumb" />
+      <GodImgOrFallback g={g} className="codex-detail-thumb" compact />
       <div className="codex-detail-name">{g.name}</div>
       <div className="codex-detail-meta">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
       <div className="codex-detail-body"><p>{g.desc}</p></div>

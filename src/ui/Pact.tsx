@@ -8,6 +8,7 @@ import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS } from '../core/types'
 import { GODS, godUnlocked } from '../core/data/gods'
 import { isAdult, predictChild, godStatValue, pactCost } from '../core/inheritance'
 import { CharCard, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { GodArtFallback } from './GodArtFallback'
 import { gameImg, godMaxImg, HOME_BG } from './img'
 import { ActionDock, StatusCallout } from './layout/shell'
 import './pact_m18.css'
@@ -21,12 +22,6 @@ function sealHint(g: (typeof GODS)[number]): string {
   if (u.regionId !== undefined) parts.push('とある地の主の討伐')
   if (u.gen !== undefined) parts.push(`第${u.gen}代の血`)
   return `${parts.join('と')}で道が開く`
-}
-
-const GOD_EMOJI: Record<string, string> = {
-  ishiusu: '🗿', tsubame: '🐦', shimihime: '📖', chidori: '🌊', kagaribi: '🔥',
-  yoigumo: '🕸️', yukiango: '☃️', tsukiura: '🐇', orihime: '🧵', ookuma: '🐻',
-  narukami: '🥁', hokushin: '🌟',
 }
 
 // 実ステップ表示(壱親/弐星/参見立て) — 表示専用。色+「▼現在」印の二重で伝える(M18 §5.1)
@@ -350,10 +345,8 @@ function GodPortraitPane({ godId, affinity }: { godId: string; sealedHint: strin
             onError={() => setIdx((i) => i + 1)}
           />
         ) : (
-          <div className="god-pane-fallback" data-el={g.element}>
-            <span className="god-pane-glyph">{GOD_EMOJI[g.id] ?? '✦'}</span>
-            <span className="god-pane-aura" />
-          </div>
+          // M22 §3: 共通✦を出さない — 属性別御影+神名焼き込み+「絵姿準備中」
+          <GodArtFallback g={g} />
         )}
       </div>
       <div className="god-pane-info">
