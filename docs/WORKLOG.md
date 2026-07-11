@@ -1048,3 +1048,5 @@
 - **機械検証**: tsc緑/oxlint0/vitest **201**/build成功/**index.css非編集(diff空)**/validate_data 0エラー/git diff --check クリーン。**実描画はpreview障害で目視未確認(⚠️)** — camera 19テスト+独立レビュー(ビルド後CSS解析)で代替検証。
 - **M3 地域5層** ✅: 材質7種+空気粒子6種をRegionVisualProfileへ追加、ground.ts材質形状+engine.ts粒子挙動分岐、40地域割当。vitest+10本で同系統内の色+材質+粒子の全ペア非重複を機械保証。全画面filter新規なし(fps制約)。
 - **終了判定=部分達成(terminal)**: 契約Phase A-Dの実装5項全✅(コード+機械検証**vitest 211**+独立レビュー+devil反映10緩和)。**実描画/fps実測のみpreview障害で⚠️**(再開手順=docs/MISSION_M24_BATTLE_DUNGEON.md④)。Phase E(敵の兆し/room archetype)は契約スコープ外=次期。push未実施(ユーザーゲート)。
+
+- **push実行**(ユーザー承認 2026-07-12): main→origin(a538ad4..a90d893、M24の7コミット)。出荷ゲート=build成功/vitest211/tsc0を再確認後にpush。GitHub Actions "Deploy to GitHub Pages"(run 29172729742)。公開URL: https://umine2025.github.io/hitsugi/ 。**実描画/fps実測は依然⚠️**(preview障害継続)— 機械検証+独立レビュー通過を根拠に公開。
