@@ -1,5 +1,7 @@
 # 素材生成の要件ログ(後日生成用) — 2026-07-06
 
+> 2026-07-11更新: 追加データ追随分348枚の緊急復旧は `docs/VISUAL_ASSET_AUDIT_2026-07-11.md` と `assets_src/VISUAL_RECOVERY_BATCH.md` を優先する。本書の将来素材より先に、神・敵・新12地域・新12ボスの404を解消する。
+
 ジャンル研究([GENRE_GAP_ANALYSIS.md](GENRE_GAP_ANALYSIS.md))と現状UIから、**将来の機能拡張で新規に画像/音源が要る項目**を先出し。コード側は未生成でも `MaybeImg` で優雅に退避するため、素材は後追いで良い。生成は別PCのComfyUI工場(gen_manifest経由)で。
 
 ## 命名規約(既存)

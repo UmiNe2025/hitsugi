@@ -50,29 +50,29 @@ const enDesc = (e, n = 120) => (e.promptEn && e.promptEn.trim()) ? e.promptEn.tr
 // P0: 郷背景(既存キュー)
 add(0, 'bg_sato', 'bg_sato.png', 1600, 900, 'wide night scene of a japanese mountain village under eternal night, giant amber paper lantern at center, thatched rooftops, starry indigo sky')
 
-// P1: ボス27 / P2: 基礎敵120
+// 復旧優先: 主→土地→神→基礎敵。出立/探索で場所と脅威が先に見える順。
 const bosses = DUMP.enemies.filter((e) => e.id.startsWith('boss_'))
 const baseEnemies = DUMP.enemies.filter((e) => !e.id.startsWith('boss_') && !e.id.endsWith('_w') && !e.id.endsWith('_o'))
 for (const b of bosses) {
   add(1, b.id, b.sprite, 1024, 1024, `boss illustration: japanese yokai lord, ${enDesc(b)}, menacing presence, ${EN_ELEM[b.element]} aura`)
 }
 for (const e of baseEnemies) {
-  add(2, e.id, e.sprite, 768, 768, `japanese yokai creature, centered, plain dark background: ${enDesc(e)}, ${EN_ELEM[e.element]} element`)
+  add(4, e.id, e.sprite, 768, 768, `japanese yokai creature, centered, plain dark background: ${enDesc(e)}, ${EN_ELEM[e.element]} element`)
 }
 
-// P3: 星神立ち絵120
+// P3: 星神通常立ち絵
 for (const g of DUMP.gods) {
   add(3, g.id, g.portrait, 768, 1024, `standing portrait of a japanese star deity: ${g.name}(${g.kana}) — ${clean(g.desc)}, ${clean(g.personality, 40)}, ${EN_ELEM[g.element]} motif`)
 }
 
-// P4: 地域個別背景27+主の間27(常夜百層の疑似地域は塔絵1枚に集約)
+// P2: 地域個別背景+主の間(常夜百層の疑似地域は塔絵1枚に集約)
 for (const r of DUMP.regions) {
   if (r.id === 'tokoyo_tou') {
-    add(4, 'bg_r_tokoyo_tou', 'bg_r_tokoyo_tou.png', 1600, 900, 'wide view of an endless spiral tower interior under eternal night, one hundred floors of amber lanterns fading upward into darkness')
+    add(2, 'bg_r_tokoyo_tou', 'bg_r_tokoyo_tou.png', 1600, 900, 'wide view of an endless spiral tower interior under eternal night, one hundred floors of amber lanterns fading upward into darkness')
     continue
   }
-  add(4, `bg_r_${r.id}`, `bg_r_${r.id}.png`, 1600, 900, `wide dungeon landscape, japanese eternal-night: ${r.name} — ${clean(r.desc, 120)}`)
-  add(4, `bossbg_${r.id}`, `bossbg_${r.id}.png`, 1600, 900, `wide ominous boss lair, japanese eternal-night: the master's chamber of ${r.name}, looming dread, scattered amber embers`)
+  add(2, `bg_r_${r.id}`, `bg_r_${r.id}.png`, 1600, 900, `wide dungeon landscape, japanese eternal-night: ${r.name} — ${clean(r.desc, 120)}`)
+  add(2, `bossbg_${r.id}`, `bossbg_${r.id}.png`, 1600, 900, `wide ominous boss lair, japanese eternal-night: the master's chamber of ${r.name}, looming dread, scattered amber embers`)
 }
 
 // P5: 物語CG13+儀式CG9+宿敵紋8
@@ -171,8 +171,8 @@ for (const g of DUMP.tomoshigata) {
 // P8: 敵変異(若/老)240
 for (const e of baseEnemies) {
   const stem = e.sprite.replace(/\.png$/, '')
-  add(8, `${stem}_w`, `${stem}_w.png`, 768, 768, `japanese yokai creature, YOUNG immature variant of the same creature, smaller slimmer silhouette, softer features, lighter tones: ${enDesc(e)}`)
-  add(8, `${stem}_o`, `${stem}_o.png`, 768, 768, `japanese yokai creature, ANCIENT elder variant of the same creature, larger heavier, battle-scarred, ornate growths, dim glowing eyes: ${enDesc(e)}`)
+  add(7, `${stem}_w`, `${stem}_w.png`, 768, 768, `japanese yokai creature, YOUNG immature variant of the same creature, smaller slimmer silhouette, softer features, lighter tones: ${enDesc(e)}`)
+  add(7, `${stem}_o`, `${stem}_o.png`, 768, 768, `japanese yokai creature, ANCIENT elder variant of the same creature, larger heavier, battle-scarred, ornate growths, dim glowing eyes: ${enDesc(e)}`)
 }
 
 // P9: 装備540
@@ -208,7 +208,7 @@ for (const s of DUMP.skills) {
 }
 for (const t of DUMP.toza) add(10, `cutin_toza_${t.gata}_${t.vein}`, `cutin_toza_${t.gata}_${t.vein}.png`, 1280, 512, `wide dramatic ultimate-art cut-in, speed lines: silhouetted warrior of 灯座「${t.label}」 unleashing 「${t.title}」, ${EN_ELEM[t.vein]} energy streaks`)
 for (const g of DUMP.gods.slice(0, 24)) add(10, `cutin_god_${g.id}`, `cutin_god_${g.id}.png`, 1280, 512, `wide dramatic divine-blessing cut-in: ${g.name} manifesting, ${clean(g.desc, 90)}, radiant ${EN_ELEM[g.element]} light`)
-for (const b of bosses) add(10, `cutin_${b.id}`, `cutin_${b.id}.png`, 1280, 512, `wide dramatic boss-entrance cut-in, dread and majesty: ${b.name} — ${clean(b.desc, 90)}`)
+for (const b of bosses) add(5, `cutin_${b.id}`, `cutin_${b.id}.png`, 1280, 512, `wide dramatic boss-entrance cut-in, dread and majesty: ${b.name} — ${clean(b.desc, 90)}`)
 
 // P11: 夜藪の出来事175+日常20
 for (const e of DUMP.events) add(11, `ev_${e.id}`, `ev_${e.id}.png`, 1024, 640, `story vignette illustration, no text, japanese eternal-night: ${clean(e.text, 130)}`)
@@ -223,9 +223,9 @@ const DAILY = [
 ]
 DAILY.forEach((p, i) => add(11, `life_daily_${String(i).padStart(2, '0')}`, `life_daily_${String(i).padStart(2, '0')}.png`, 1024, 640, `warm family-life vignette, japanese eternal-night village, no text: ${p}`))
 
-// P12: 星神・縁MAX第二立ち絵120
+// P6: 星神・縁MAX第二立ち絵(通常絵の承認後に生成)
 for (const g of DUMP.gods) {
-  add(12, `${g.id}_max`, g.portrait.replace(/\.png$/, '_max.png'), 768, 1024, `standing portrait, maximum-bond variant, warmer intimate expression, richer garments, amber embrace of light: ${g.name}(${g.kana}) — ${clean(g.desc, 100)}`)
+  add(6, `${g.id}_max`, g.portrait.replace(/\.png$/, '_max.png'), 768, 1024, `standing portrait, maximum-bond variant, warmer intimate expression, richer garments, amber embrace of light: ${g.name}(${g.kana}) — ${clean(g.desc, 100)}`)
 }
 
 // P13: 郷人16
