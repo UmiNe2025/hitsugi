@@ -109,14 +109,15 @@ export async function deadSpaceRatio(page: Page): Promise<number> {
     const p = i * ch
     luma[i] = 0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2]
   }
-  let dead = 0
-  let blocks = 0
-  for (let by = 0; by + BLOCK <= h; by += BLOCK) {
-    for (let bx = 0; bx + BLOCK <= w; bx += BLOCK) {
+  const cols = Math.floor(w / BLOCK)
+  const rows = Math.floor(h / BLOCK)
+  const flat: boolean[] = new Array(cols * rows).fill(false)
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
       let sum = 0
       let sumSq = 0
-      for (let y = by; y < by + BLOCK; y++) {
-        for (let x = bx; x < bx + BLOCK; x++) {
+      for (let y = r * BLOCK; y < (r + 1) * BLOCK; y++) {
+        for (let x = c * BLOCK; x < (c + 1) * BLOCK; x++) {
           const v = luma[y * w + x]
           sum += v
           sumSq += v * v
@@ -125,16 +126,39 @@ export async function deadSpaceRatio(page: Page): Promise<number> {
       const n = BLOCK * BLOCK
       const mean = sum / n
       const sd = Math.sqrt(Math.max(0, sumSq / n - mean * mean))
-      blocks++
-      if (mean < DEAD_LUMA && sd < DEAD_STDDEV) dead++
+      flat[r * cols + c] = mean < DEAD_LUMA && sd < DEAD_STDDEV
     }
   }
+  // 「説明のない暗部」は画素ではなく【領域】の概念である(正典 §3.3 の「何もない純黒」)。
+  // 平坦なブロックが1つあるだけでは情報の不在を意味しない — 森のシルエットの塊の内部も平坦になる。
+  // 情報が無いとは「平坦な暗部が周囲まで続く」こと。よって近傍8ブロックの過半も平坦な場合のみ死とする
+  // (= 形態学的収縮)。孤立した平坦ブロック(輪郭の内側)は死に数えない。
+  let dead = 0
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (!flat[r * cols + c]) continue
+      let n = 0
+      let f = 0
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue
+          const rr = r + dr
+          const cc = c + dc
+          if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) continue
+          n++
+          if (flat[rr * cols + cc]) f++
+        }
+      }
+      if (n > 0 && f / n >= 0.75) dead++
+    }
+  }
+  const blocks = cols * rows
   return blocks === 0 ? 0 : (dead / blocks) * 100
 }
 
 /** 暗部の画像証跡を残す(WORKLOG添付用) */
 export async function snapshot(page: Page, name: string): Promise<void> {
-  await page.screenshot({ path: `tests/visual/.artifacts/${name}.png` })
+  await page.screenshot({ path: `tests/visual/.shots/${name}.png` })
 }
 
 // ---- 矩形の実測 ----

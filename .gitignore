@@ -34,3 +34,4 @@ public/img/*.png
 /tests/visual/.artifacts/
 /playwright-report/
 /test-results/
+/tests/visual/.shots/

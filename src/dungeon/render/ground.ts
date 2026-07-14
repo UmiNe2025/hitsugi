@@ -14,13 +14,88 @@ export interface GroundResult {
   grassCells: { x: number; y: number }[]
 }
 
-// 色に揺らぎを加える(RGB各成分をdeltaの範囲で上下)
+// 色に揺らぎを加える(RGB各成分を同じdeltaで上下 = 明度だけ動く)
 function jitterColor(color: number, delta: number, rng: Rng): number {
   const d = Math.round((rng.next() * 2 - 1) * delta)
   const r = Math.max(0, Math.min(255, ((color >> 16) & 0xff) + d))
   const g = Math.max(0, Math.min(255, ((color >> 8) & 0xff) + d))
   const b = Math.max(0, Math.min(255, (color & 0xff) + d))
   return (r << 16) | (g << 8) | b
+}
+
+// M25 §3.3: チャンネル独立の揺らぎ。明度のみのjitterでは delta=8 でも 17通りしか作れず、
+// 4×4=16セルの窓では鳩の巣原理で色の完全反復が必ず起きる(=「同寸の灰色矩形の反復」に見える原因)。
+// チャンネル独立なら 17^3 通りとなり、反復を実質排除できる。振れ幅は同じなので色調は変えない。
+function jitterColorRGB(color: number, delta: number, rng: Rng): number {
+  const ch = (shift: number) => {
+    const v = (color >> shift) & 0xff
+    const d = Math.round((rng.next() * 2 - 1) * delta)
+    return Math.max(0, Math.min(255, v + d))
+  }
+  return (ch(16) << 16) | (ch(8) << 8) | ch(0)
+}
+
+/** M25 §3.3「4×4タイル以内で同じ床矩形の色を完全反復させない」の機械保証。
+ *  歩行セルの色を先にベイクし、4×4窓(Chebyshev距離3以内)に同色があれば振り直す。 */
+export function bakeFloorColors(
+  grid: TileKind[][],
+  theme: DungeonTheme,
+  seed: number,
+): (number | null)[][] {
+  const rng = new Rng(seed || 1)
+  const h = grid.length
+  const w = grid[0]?.length ?? 0
+  const floorTone = lift(theme.groundBase, 38)
+  const out: (number | null)[][] = Array.from({ length: h }, () => Array(w).fill(null))
+  const clashes = (x: number, y: number, c: number): boolean => {
+    for (let dy = -3; dy <= 0; dy++) {
+      for (let dx = -3; dx <= 3; dx++) {
+        if (dy === 0 && dx >= 0) continue // まだ未割当のセルは見ない
+        const v = out[y + dy]?.[x + dx]
+        if (v != null && v === c) return true
+      }
+    }
+    return false
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const kind = grid[y][x]
+      if (kind === 'wall' || kind === 'water') continue
+      const base = kind === 'grass' ? theme.grass : floorTone
+      let c = jitterColorRGB(base, theme.groundJitter, rng)
+      for (let t = 0; t < 12 && clashes(x, y, c); t++) c = jitterColorRGB(base, theme.groundJitter, rng)
+      out[y][x] = c
+    }
+  }
+  return out
+}
+
+// M25 §3.3: 奥壁(歩行域に非隣接)の「森のシルエット」。
+// 従来は地色のまま何も塗らず(ground.ts旧コメント「壁セルには何も塗らない」)、
+// 実ブラウザ実測で画面の28.4%が「暗く・のっぺり」= 説明のない暗部になっていた。
+// 正典は「闇は残すが、何もない純黒と、未踏の森のシルエットを区別する」と規定する。
+// 明度は上げない(常夜を壊さない)。形だけを与えて「入れない密林」と読ませる。
+function paintDeepWall(
+  g: Graphics,
+  cellX: number,
+  cellY: number,
+  tile: number,
+  base: number,
+  rng: Rng,
+): void {
+  // 樹冠 — 重なる暗い円を2〜3個。liftは+5〜+17に留める(闇のまま輪郭だけ立つ)
+  const n = rng.int(2, 3)
+  for (let i = 0; i < n; i++) {
+    const cx = cellX + rng.int(1, tile - 1)
+    const cy = cellY + rng.int(1, tile - 1)
+    const r = tile * (0.2 + rng.next() * 0.28)
+    g.circle(cx, cy, r).fill({ color: lift(base, 5 + rng.int(0, 12)), alpha: 0.42 + rng.next() * 0.34 })
+  }
+  // 幹・立ち枝 — 時折の縦線が「森」を決定づける
+  if (rng.chance(0.34)) {
+    const tx = cellX + rng.int(5, Math.max(6, tile - 5))
+    g.rect(tx, cellY + tile * 0.38, 1.6, tile * 0.62).fill({ color: lift(base, 15), alpha: 0.38 })
+  }
 }
 
 function lift(color: number, amount: number): number {
@@ -137,7 +212,11 @@ export function buildGround(
     for (let x = 0; x < w; x++) {
       if (grid[y][x] !== 'wall') continue
       const nb = [walkableAt(x, y - 1), walkableAt(x, y + 1), walkableAt(x - 1, y), walkableAt(x + 1, y)]
-      if (!nb.some(Boolean)) continue
+      if (!nb.some(Boolean)) {
+        // 奥壁 — 明度は据え置き、森のシルエットだけを与える(M25 §3.3)
+        paintDeepWall(ground, x * tile, y * tile, tile, theme.groundBase, rng)
+        continue
+      }
       ground.rect(x * tile, y * tile, tile, tile).fill(jitterColor(wallBody, theme.groundJitter, rng))
       // 床に面した辺へ縁光(上=nb[0]…の順で 上/下/左/右)
       if (nb[0]) ground.rect(x * tile, y * tile, tile, RIM_PX).fill({ color: wallRim, alpha: 0.5 })
@@ -149,7 +228,9 @@ export function buildGround(
 
   // 2) 歩行セルのトーンジッタ+小石スペックル
   // M24 §4.2: 歩行床の明度を+24→+38(概ね+14)へ引き上げ、壁との明度差で境界を明瞭化する。
+  // M25 §3.3: 床色は4×4窓で完全反復しないよう先にベイクする(「同寸の灰色矩形の反復」の解消)。
   const floorTone = lift(theme.groundBase, 38)
+  const floorColors = bakeFloorColors(grid, theme, seed)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const kind = grid[y][x]
@@ -160,7 +241,7 @@ export function buildGround(
         continue
       }
       const base = kind === 'grass' ? theme.grass : floorTone
-      ground.rect(x * tile, y * tile, tile, tile).fill(jitterColor(base, theme.groundJitter, rng))
+      ground.rect(x * tile, y * tile, tile, tile).fill(floorColors[y][x] ?? jitterColor(base, theme.groundJitter, rng))
       // 目地 — セル下端に極薄の陰。ベイク一回きりなので描画コストは増えない
       ground.rect(x * tile, y * tile + tile - 1, tile, 1).fill({ color: theme.groundBase, alpha: 0.28 })
       if (kind === 'grass') grassCells.push({ x, y })
