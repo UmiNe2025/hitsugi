@@ -4,9 +4,9 @@
 // 戦利品スロット(M12-5)、台詞チャネル(M15-1土台: kind:'voice')を備える。
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import type { BattleLogEntry, Combatant, Element, SkillTarget } from '../core/types'
+import type { BattleLogEntry, BattleState, Combatant, Element, SkillTarget } from '../core/types'
 import { ELEMENT_LABELS, ELEMENT_ADVANTAGE } from '../core/types'
-import { currentActor } from '../core/battle'
+import { currentActor, type BattleAction } from '../core/battle'
 
 // 相性: 攻がADVANTAGEで防を突けば有利、逆なら不利
 type Matchup = 'adv' | 'dis' | 'even'
@@ -23,8 +23,10 @@ import { enemyById } from '../core/data/enemies'
 import { regionById } from '../core/data/regions'
 import { Bar, MaybeImg } from './components'
 import { gameImg, spriteImg, poseImg, skillIcon, cutinImg, regionBgR, bossBgImg } from './img'
+import { BattleArtFrame, type CardTier } from './battle/BattleArtFrame'
 import './m17_battle.css'
 import './battle_m24.css'
+import './battle_m25.css'
 
 type Menu = { kind: 'root' } | { kind: 'skill' } | { kind: 'target'; skillId?: string; side: 'enemy' | 'ally' }
 
@@ -38,7 +40,8 @@ interface FxEvent {
   voice?: string
 }
 
-// 灯脈(§3.3) — 行動者→対象の足元を結ぶ一時的な線。座標は.battle-stageに対する%(0-100)
+// 灯脈(§3.3/M25§4.3) — 行動者→対象の足元を結ぶ一時的な線。座標は.stage-battlersに対する%(0-100)。
+// actorKey/targetKeyはaction layerの暗転対象判定(§4.3手順1)にも流用し、追加のrect取得を発生させない。
 interface VeinEvent {
   id: number
   x1: number
@@ -47,6 +50,8 @@ interface VeinEvent {
   y2: number
   kind: 'atk' | 'heal'
   pulse: boolean // 連撃中は脈動(devil S7: 接触点アニメ自体は既存lungeを維持し、灯脈のみ新規)
+  actorKey: string
+  targetKey: string
 }
 
 let fxSeq = 1
@@ -54,6 +59,34 @@ let fxSeq = 1
 // 継足の次撃倍率。行動順bar横の常設表示と中央chain-veinの両方から参照する共通式
 function chainMultiplier(chain: number): number {
   return 1 + Math.min(chain + 1, 4) * 0.15
+}
+
+// M25§4.4: 「攻撃/技名 → 対象名」表示ラベルの組み立て(表示専用・戦闘計算には触れない)
+function actionLabel(battle: BattleState, actionName: string, targetKey?: string): string {
+  if (!targetKey) return actionName
+  const t = battle.allies.find((c) => c.key === targetKey) ?? battle.enemies.find((c) => c.key === targetKey)
+  return t ? `${actionName} → ${t.name}` : actionName
+}
+
+// M25§4.3 手順5: 灯脈の走行(既存veinDraw/actionSparkTravelのCSS時間と揃える)+55〜75msのhit-stop。
+const VEIN_TRAVEL_MS = 150
+const HITSTOP_MS = 65
+const ACTION_LAYER_MS = VEIN_TRAVEL_MS + HITSTOP_MS
+
+// M25§4.2 スロット配置 — 1体/2体/3〜4体を別presetにし、単純なtranslateXの連鎖で並べない。
+// 列/行そのものはCSS側(.slot-preset-*、断幅で差し替わるgrid-template-columns)に委ね、
+// JSXはCSSの`order`とz-indexだけを渡す(inlineでgrid-column/rowを固定すると768px境界の
+// メディアクエリで上書きできなくなるため、決定論的な「役割(前列/後列)」のみをJSから渡す)。
+type Role = 'front' | 'back'
+function slotPresetOf(count: number): '1' | '2' | '34' {
+  if (count <= 1) return '1'
+  if (count === 2) return '2'
+  return '34'
+}
+// 3〜4体時のみ偶数index=前列/奇数index=後列(決定論的・乱数不使用)。1〜2体は単一列なので常に前列。
+function roleOf(index: number, count: number): Role {
+  if (count <= 2) return 'front'
+  return index % 2 === 0 ? 'front' : 'back'
 }
 
 export function BattleScreen() {
@@ -88,6 +121,8 @@ export function BattleScreen() {
   const [previewSkillId, setPreviewSkillId] = useState<string | null>(null)
   // M24: 灯脈(行動者→対象の足元を結ぶ一時的な線)の表示キュー
   const [veins, setVeins] = useState<VeinEvent[]>([])
+  // M25§4.4: 味方行動処理中/敵行動中/勝敗遷移中を空箱にしないための表示ラベル
+  const [pendingActionLabel, setPendingActionLabel] = useState<string | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const bodyRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
@@ -116,9 +151,9 @@ export function BattleScreen() {
     : []
   const stageBgCss = stageBgLayers.length > 0 ? stageBgLayers.map((u) => `url(${u})`).join(', ') : undefined
 
-  // 灯脈(§3.3) — 行動者/対象のcombatant-body位置から.battle-stage相対%を求めて一時表示する。
-  // 命中後300ms以内に消す。reduced-motionは既存の全体!important規則+battle_m24.cssの明示ルールにより
-  // 線が静止フレームのまま残るため、この300ms自体は変えない(情報は保たれる)。
+  // 灯脈(§3.3/M25§4.3) — 行動者/対象のcombatant-body(=戦絵札)位置から.stage-battlers相対%を求めて
+  // 一時表示する。ACTION_LAYER_MS(灯脈の走行150ms+hit-stop65ms)後に消す。reduced-motionは既存の
+  // 全体!important規則+battle_m24.cssの明示ルールにより線が静止フレームのまま残るため、情報は保たれる。
   const spawnVein = (actorKey: string | undefined, targetKey: string | undefined, kind: VeinEvent['kind']) => {
     if (!actorKey || !targetKey) return
     const stageEl = stageRef.current
@@ -138,8 +173,8 @@ export function BattleScreen() {
     const t = footPoint(tEl)
     const id = fxSeq++
     const pulse = kind === 'atk' && (battle?.chain ?? 0) > 0
-    setVeins((old) => [...old, { id, x1: a.x, y1: a.y, x2: t.x, y2: t.y, kind, pulse }])
-    window.setTimeout(() => setVeins((old) => old.filter((v) => v.id !== id)), 300)
+    setVeins((old) => [...old, { id, x1: a.x, y1: a.y, x2: t.x, y2: t.y, kind, pulse, actorKey, targetKey }])
+    window.setTimeout(() => setVeins((old) => old.filter((v) => v.id !== id)), ACTION_LAYER_MS)
   }
 
   // 演出キューへ変換
@@ -266,6 +301,8 @@ export function BattleScreen() {
       if (!Number.isInteger(n) || n < 1 || n > pool.length) return
       ev.preventDefault()
       const target = pool[n - 1]
+      const actionName = menu.skillId ? skillById(menu.skillId).name : '攻撃'
+      setPendingActionLabel(actionLabel(battle, actionName, target.key))
       battleCommand(
         menu.skillId
           ? { type: 'skill', skillId: menu.skillId, targetKey: target.key }
@@ -281,6 +318,11 @@ export function BattleScreen() {
   const actor = battle ? currentActor(battle) : undefined
   const isPlayerTurn = !!battle && battle.phase === 'input' && !!actor?.isAlly && !revealing
 
+  // M25§4.4: 自分の入力番になったら前回の行動ラベルを片付ける(次に空箱化するのは味方行動処理中のみ)
+  useEffect(() => {
+    if (isPlayerTurn) setPendingActionLabel(null)
+  }, [isPlayerTurn])
+
   // オート戦闘
   useEffect(() => {
     if (!auto || !isPlayerTurn || !battle || !actor) return
@@ -290,6 +332,7 @@ export function BattleScreen() {
       const target = battle.chainTarget && foes.some((f) => f.key === battle.chainTarget)
         ? battle.chainTarget
         : foes[0].key
+      setPendingActionLabel(actionLabel(battle, '攻撃', target))
       battleCommand({ type: 'attack', targetKey: target })
     }, 260)
     return () => clearTimeout(t)
@@ -308,6 +351,12 @@ export function BattleScreen() {
   const over = battle.phase !== 'input' && battle.phase !== 'anim' && !revealing
 
   const charOf = (c: Combatant) => family.find((f) => f.id === c.charId)
+
+  // M25§4.4: コマンド発火とラベル表示を1箇所へまとめる(味方行動処理中の空箱を防ぐ)
+  const runCommand = (action: BattleAction, label: string) => {
+    setPendingActionLabel(label)
+    battleCommand(action)
+  }
 
   // M17: 灯座奥義カットイン — tz_{gata2}{vein1}o形式の第4技(奥義)判定。
   // Combatant自体は灯型/星脈を持たないため、行動者のCharacterから安価に引く。
@@ -330,13 +379,17 @@ export function BattleScreen() {
     // 技のターゲット選択中はそれを消化
     if (menu.kind === 'target' && menu.side === 'enemy') {
       if (menu.skillId) tryShowOugiCutin(menu.skillId)
-      battleCommand(menu.skillId ? { type: 'skill', skillId: menu.skillId, targetKey: e.key } : { type: 'attack', targetKey: e.key })
+      const actionName = menu.skillId ? skillById(menu.skillId).name : '攻撃'
+      runCommand(
+        menu.skillId ? { type: 'skill', skillId: menu.skillId, targetKey: e.key } : { type: 'attack', targetKey: e.key },
+        actionLabel(battle, actionName, e.key),
+      )
       setMenu({ kind: 'root' })
       return
     }
     // それ以外は敵タップ=即通常攻撃(ワンタップ攻撃)
     if (menu.kind === 'root') {
-      battleCommand({ type: 'attack', targetKey: e.key })
+      runCommand({ type: 'attack', targetKey: e.key }, actionLabel(battle, '攻撃', e.key))
     }
   }
   // 「攻撃」ボタン=chainTarget/先頭生存敵に即発火(ワンタップ攻撃)
@@ -347,13 +400,16 @@ export function BattleScreen() {
     const target = battle.chainTarget && foes.some((f) => f.key === battle.chainTarget)
       ? battle.chainTarget
       : foes[0].key
-    battleCommand({ type: 'attack', targetKey: target })
+    runCommand({ type: 'attack', targetKey: target }, actionLabel(battle, '攻撃', target))
   }
   const onAllyClick = (a: Combatant) => {
     if (!isPlayerTurn || a.hp <= 0) return
     if (menu.kind === 'target' && menu.side === 'ally' && menu.skillId) {
       tryShowOugiCutin(menu.skillId)
-      battleCommand({ type: 'skill', skillId: menu.skillId, targetKey: a.key })
+      runCommand(
+        { type: 'skill', skillId: menu.skillId, targetKey: a.key },
+        actionLabel(battle, skillById(menu.skillId).name, a.key),
+      )
       setMenu({ kind: 'root' })
     }
   }
@@ -363,7 +419,7 @@ export function BattleScreen() {
     else if (sk.target === 'ally') setMenu({ kind: 'target', skillId, side: 'ally' })
     else {
       tryShowOugiCutin(skillId)
-      battleCommand({ type: 'skill', skillId })
+      runCommand({ type: 'skill', skillId }, sk.name)
       setMenu({ kind: 'root' })
     }
   }
@@ -373,9 +429,10 @@ export function BattleScreen() {
     ? battle.enemies.filter((c) => c.hp > 0) : []
   const targetableAllies = isPlayerTurn && menu.kind === 'target' && menu.side === 'ally'
     ? battle.allies.filter((c) => c.hp > 0) : []
-  // M24 §3.2: 生存数で--sz/--nを決め、仲間が斃れるほど残存側が大きく・中央寄りになるようにする
-  const aliveEnemyCount = battle.enemies.filter((c) => c.hp > 0).length || battle.enemies.length || 1
-  const aliveAllyCount = battle.allies.filter((c) => c.hp > 0).length || battle.allies.length || 1
+  // M25§4.2: 主(boss)は--szに依存しない専用slotへ。残りの通常敵で1/2/3〜4体のpresetを決める。
+  const nonBossEnemies = battle.enemies.filter((e) => !e.enemyId?.startsWith('boss_'))
+  const enemyGridPreset = slotPresetOf(nonBossEnemies.length)
+  const allyGridPreset = slotPresetOf(battle.allies.length)
   // M24 §3.4: 対象選択中は狙う技自体の属性で相性を示す(未指定時は行動者の属性のまま=既存挙動)
   const previewElement: Element | undefined =
     menu.kind === 'target' && menu.skillId ? (skillById(menu.skillId).element ?? actor?.element) : actor?.element
@@ -383,6 +440,15 @@ export function BattleScreen() {
     if (el) bodyRefs.current.set(key, el)
     else bodyRefs.current.delete(key)
   }
+  // M25§4.3 手順1: 行動者/対象「以外」を暗くする。veinsから導出するだけで追加のDOM計測はしない。
+  const focusKeys = new Set(veins.flatMap((v) => [v.actorKey, v.targetKey]))
+  const isDimmed = (key: string) => focusKeys.size > 0 && !focusKeys.has(key)
+  // M25§4.4: 入力不能時間を空箱にしない — 味方行動処理中/敵行動中/勝敗遷移中の表示ラベル
+  const centerStatusLabel = battle.phase === 'won' || battle.phase === 'lost' || battle.phase === 'fled'
+    ? '戦果を結ぶ'
+    : actor?.isAlly
+      ? (pendingActionLabel ?? '……')
+      : '敵の手番'
 
   return (
     <div className={`screen battle-screen stage-${stageFamily}`}>
@@ -409,8 +475,7 @@ export function BattleScreen() {
       <TurnOrderBar battle={battle} />
 
       <div
-        ref={stageRef}
-        className={`battle-stage${shakeKey ? ' stage-shake' : ''}${battle.phase === 'won' ? ' stage-won' : ''}${isBossVictory ? ' stage-won-boss' : ''}`}
+        className={`battle-stage${battle.phase === 'won' ? ' stage-won' : ''}${isBossVictory ? ' stage-won-boss' : ''}`}
         data-shake={shakeKey}
       >
         {stageBgCss && <div className="battle-stage-bg" style={{ backgroundImage: stageBgCss }} />}
@@ -433,59 +498,102 @@ export function BattleScreen() {
           )
         })()}
 
-        <div className="enemy-side" style={{ ['--n' as string]: aliveEnemyCount }}>
-          {battle.enemies.map((e, i) => (
-            <CombatantNode
-              key={e.key}
-              c={e}
-              index={i}
-              count={aliveEnemyCount}
-              fx={fx[e.key] ?? []}
-              targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
-              clickable={isPlayerTurn && menu.kind === 'root' && e.hp > 0}
-              chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
-              leader={battle.leaderKey === e.key}
-              isBoss={!!e.enemyId?.startsWith('boss_')}
-              targetNumber={targetableEnemies.indexOf(e) + 1}
-              elementBadge={{ el: e.element, adv: isPlayerTurn && actor?.isAlly ? matchup(previewElement, e.element) : 'even' }}
-              onClick={() => onEnemyClick(e)}
-              onBodyRef={registerBodyRef}
-            >
-              <EnemyVisual2 e={e} />
-            </CombatantNode>
-          ))}
+        {/* M25§4.2/§4.3: 敵/味方の陣形と灯脈をまとめる「同じtransformコンテナ」。
+            HP札・行動順・コマンド盤はこの外にあるため、被弾shakeで揺れない(§4.3手順4)。 */}
+        <div ref={stageRef} className={`stage-battlers${shakeKey ? ' stage-shake' : ''}`}>
+          <div className={`enemy-side${isBossBattle ? ' has-boss' : ''}`}>
+            {isBossBattle && bossCombatant && (
+              <div className="enemy-boss-slot">
+                <CombatantNode
+                  c={bossCombatant}
+                  role="front"
+                  fx={fx[bossCombatant.key] ?? []}
+                  targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && bossCombatant.hp > 0}
+                  clickable={isPlayerTurn && menu.kind === 'root' && bossCombatant.hp > 0}
+                  chainBadge={battle.chainTarget === bossCombatant.key && battle.chain > 0 ? battle.chain + 1 : 0}
+                  leader={false}
+                  isBoss
+                  cardTier="lord"
+                  spriteKey={bossCombatant.enemyId ? enemyById(bossCombatant.enemyId).sprite : undefined}
+                  dimmed={isDimmed(bossCombatant.key)}
+                  targetNumber={targetableEnemies.indexOf(bossCombatant) + 1}
+                  elementBadge={{ el: bossCombatant.element, adv: isPlayerTurn && actor?.isAlly ? matchup(previewElement, bossCombatant.element) : 'even' }}
+                  onClick={() => onEnemyClick(bossCombatant)}
+                  onBodyRef={registerBodyRef}
+                >
+                  <EnemyVisual2 e={bossCombatant} />
+                </CombatantNode>
+              </div>
+            )}
+            <div className={`enemy-grid slot-preset-${enemyGridPreset}`} data-count={nonBossEnemies.length}>
+              {nonBossEnemies.map((e, i) => {
+                const role = roleOf(i, nonBossEnemies.length)
+                const def = e.enemyId ? enemyById(e.enemyId) : null
+                return (
+                  <CombatantNode
+                    key={e.key}
+                    c={e}
+                    role={role}
+                    fx={fx[e.key] ?? []}
+                    targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
+                    clickable={isPlayerTurn && menu.kind === 'root' && e.hp > 0}
+                    chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
+                    leader={battle.leaderKey === e.key}
+                    isBoss={false}
+                    cardTier={def && def.tier >= 3 ? 'nemesis' : 'normal'}
+                    spriteKey={def?.sprite}
+                    dimmed={isDimmed(e.key)}
+                    targetNumber={targetableEnemies.indexOf(e) + 1}
+                    elementBadge={{ el: e.element, adv: isPlayerTurn && actor?.isAlly ? matchup(previewElement, e.element) : 'even' }}
+                    onClick={() => onEnemyClick(e)}
+                    onBodyRef={registerBodyRef}
+                  >
+                    <EnemyVisual2 e={e} />
+                  </CombatantNode>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="ally-side">
+            <div className={`ally-grid slot-preset-${allyGridPreset}`} data-count={battle.allies.length}>
+              {battle.allies.map((a, i) => {
+                const ch = charOf(a)
+                const role = roleOf(i, battle.allies.length)
+                return (
+                  <CombatantNode
+                    key={a.key}
+                    c={a}
+                    role={role}
+                    fx={fx[a.key] ?? []}
+                    targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' && a.hp > 0}
+                    acting={actor?.key === a.key && battle.phase === 'input'}
+                    chainBadge={0}
+                    cardTier="normal"
+                    spriteKey={ch?.tomoshigata ? `pose_${ch.tomoshigata}_${ch.sex}_adult.png` : undefined}
+                    dimmed={isDimmed(a.key)}
+                    targetNumber={targetableAllies.indexOf(a) + 1}
+                    onClick={() => onAllyClick(a)}
+                    onBodyRef={registerBodyRef}
+                  >
+                    <AllyVisual gata={ch?.tomoshigata ?? 'homura'} sex={ch?.sex ?? 'm'} element={a.element} />
+                  </CombatantNode>
+                )
+              })}
+            </div>
+          </div>
+
+          <VeinLayer veins={veins} />
         </div>
 
-        <div className="ally-side" style={{ ['--n' as string]: aliveAllyCount }}>
-          {battle.allies.map((a, i) => {
-            const ch = charOf(a)
-            return (
-              <CombatantNode
-                key={a.key}
-                c={a}
-                index={i}
-                count={aliveAllyCount}
-                fx={fx[a.key] ?? []}
-                targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' && a.hp > 0}
-                acting={actor?.key === a.key && battle.phase === 'input'}
-                chainBadge={0}
-                targetNumber={targetableAllies.indexOf(a) + 1}
-                onClick={() => onAllyClick(a)}
-                onBodyRef={registerBodyRef}
-              >
-                <AllyVisual gata={ch?.tomoshigata ?? 'homura'} sex={ch?.sex ?? 'm'} element={a.element} />
-              </CombatantNode>
-            )
-          })}
-        </div>
-
-        <VeinLayer veins={veins} />
-
-        {/* 戦況ログ — 直近一行を戦場下端に重ね、全履歴は「記」で展開(§3.4/§5.4) */}
-        <div className="battle-log-strip">
-          {displayed.slice(-1).map((l, i) => (
-            <p key={`${displayed.length}-${i}`} className={`log-${l.kind}`}>{l.text}</p>
-          ))}
+        {/* 戦況ログ — 戦場下端の専用帯(通常フロー・名札/HP/コマンドと矩形が重ならない §4.2)。
+            全履歴は「記」で展開(§3.4/§5.4) */}
+        <div className="battle-log-strip" data-zone="battle-log">
+          <div className="battle-log-strip-text">
+            {displayed.slice(-1).map((l, i) => (
+              <p key={`${displayed.length}-${i}`} className={`log-${l.kind}`}>{l.text}</p>
+            ))}
+          </div>
           {displayed.length > 1 && (
             <button className="btn btn-ghost log-expand" onClick={() => setShowFullLog(true)}>記</button>
           )}
@@ -521,7 +629,7 @@ export function BattleScreen() {
               </p>
             )}
             <button className="btn btn-main" onClick={finishBattle}>
-              {battle.phase === 'won' ? '戦果を得る' : battle.phase === 'fled' ? '先へ' : '……'}
+              {battle.phase === 'won' ? '戦果を得る' : battle.phase === 'fled' ? '先へ' : '帰り火へ'}
             </button>
           </div>
         ) : (
@@ -539,8 +647,14 @@ export function BattleScreen() {
                   <Bar value={actor.hp} max={actor.maxHp} kind="hp" />
                   <Bar value={actor.mp} max={actor.maxMp} kind="mp" />
                 </>
+              ) : actor ? (
+                // M25§9.2: 敵の手番でも名前を出し、390×844で誰の番かを500ms以内に特定できるようにする
+                <div className="turnpanel-actor-name">
+                  {actor.name}
+                  <span className="status-chip" title="敵の手番">敵</span>
+                </div>
               ) : (
-                <p className="cmd-hint-line">{revealing ? '' : '……'}</p>
+                <p className="cmd-hint-line">{centerStatusLabel}</p>
               )}
               <div className="turnpanel-party-mp">
                 {battle.allies.map((a) => (
@@ -555,23 +669,33 @@ export function BattleScreen() {
               </div>
             </div>
 
-            {/* 中央: 主要4コマンド(2×2+オート)/技一覧/対象選択ヒント(§3.5) */}
+            {/* 中央: 主要4コマンド(2×2+オート)/技一覧/対象選択ヒント(§3.5)。
+                M25§4.4: 入力不能時もcmd-gridは常設し、disabled表示+状態ラベルで領域を空箱にしない。 */}
             <div className="turnpanel-center">
-              {isPlayerTurn && menu.kind === 'root' && (
-                <div className="cmd-grid">
-                  <button className="cmd-btn cmd-main" onClick={doQuickAttack}>攻撃</button>
-                  <button
-                    className="cmd-btn"
-                    onClick={() => { setMenu({ kind: 'skill' }); setPreviewSkillId(actor?.skills[0] ?? null) }}
-                  >
-                    技
-                  </button>
-                  <button className="cmd-btn" onClick={() => battleCommand({ type: 'guard' })}>防御</button>
-                  <button className="cmd-btn" onClick={() => battleCommand({ type: 'flee' })}>逃げる</button>
-                  <button className={`cmd-btn cmd-ghost cmd-auto ${auto ? 'cmd-on' : ''}`} onClick={() => setAuto(!auto)}>
-                    {auto ? 'オート中' : 'オート'}
-                  </button>
-                </div>
+              {menu.kind === 'root' && (
+                <>
+                  {!isPlayerTurn && <p className="cmd-hint-line">{centerStatusLabel}</p>}
+                  <div className="cmd-grid">
+                    <button className="cmd-btn cmd-main" disabled={!isPlayerTurn} data-zone="command" onClick={doQuickAttack}>攻撃</button>
+                    <button
+                      className="cmd-btn"
+                      disabled={!isPlayerTurn}
+                      data-zone="command"
+                      onClick={() => { setMenu({ kind: 'skill' }); setPreviewSkillId(actor?.skills[0] ?? null) }}
+                    >
+                      技
+                    </button>
+                    <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'guard' }, '防御')}>防御</button>
+                    <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'flee' }, '逃げる')}>逃げる</button>
+                    <button
+                      className={`cmd-btn cmd-ghost cmd-auto ${auto ? 'cmd-on' : ''}`}
+                      disabled={!isPlayerTurn}
+                      onClick={() => setAuto(!auto)}
+                    >
+                      {auto ? 'オート中' : 'オート'}
+                    </button>
+                  </div>
+                </>
               )}
               {isPlayerTurn && menu.kind === 'skill' && actor && (
                 <div className="skill-panel">
@@ -606,7 +730,6 @@ export function BattleScreen() {
                   <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>やめる</button>
                 </div>
               )}
-              {!isPlayerTurn && <p className="cmd-hint-line">{revealing ? '' : '……'}</p>}
             </div>
 
             {/* 右: 選択中の技の威力/属性/消費/対象範囲(§3.5)。対象相性は戦場上の相性バッジ側で示す */}
@@ -632,7 +755,7 @@ function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGam
   const chainTargetAlive = chainTargetKey ? (byKey.get(chainTargetKey)?.hp ?? 0) > 0 : false
   const mult = chainTargetAlive && battle.chain > 0 ? chainMultiplier(battle.chain) : null
   return (
-    <div className="turn-order" aria-label="行動順">
+    <div className="turn-order" aria-label="行動順" data-zone="turnorder">
       <span className="turn-order-turn">第{battle.turn}巡</span>
       {mult !== null && <span className="turn-chain-mult" title="次撃倍率">次撃×{mult.toFixed(2)}</span>}
       {seq.map((c, i) => (
@@ -644,19 +767,35 @@ function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGam
   )
 }
 
-// 灯脈オーバーレイ — .battle-stage全体に重ね、%座標のlineで行動者→対象の足元を結ぶ(§3.3)
+// action layer(§4.3) — .stage-battlers全体に重ね、%座標のlineで行動者→対象の足元を結ぶ。
+// 近接の火花(action-spark)も同じveins座標を再利用し、追加のgetBoundingClientRect呼び出しはしない。
 function VeinLayer({ veins }: { veins: VeinEvent[] }) {
   if (veins.length === 0) return null
   return (
-    <svg className="hitvein-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-      {veins.map((v) => (
-        <line
-          key={v.id}
-          x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2}
-          className={`hitvein-line ${v.kind === 'heal' ? 'hitvein-heal' : ''} ${v.pulse ? 'hitvein-pulse' : ''}`}
+    <>
+      <svg className="hitvein-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+        {veins.map((v) => (
+          <line
+            key={v.id}
+            x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2}
+            className={`hitvein-line ${v.kind === 'heal' ? 'hitvein-heal' : ''} ${v.pulse ? 'hitvein-pulse' : ''}`}
+          />
+        ))}
+      </svg>
+      {veins.filter((v) => v.kind === 'atk').map((v) => (
+        <span
+          key={`spark-${v.id}`}
+          className="action-spark"
+          aria-hidden
+          style={{
+            ['--x1' as string]: `${v.x1}%`,
+            ['--y1' as string]: `${v.y1}%`,
+            ['--x2' as string]: `${v.x2}%`,
+            ['--y2' as string]: `${v.y2}%`,
+          }}
         />
       ))}
-    </svg>
+    </>
   )
 }
 
@@ -699,11 +838,12 @@ function SkillDetailPanel({ skillId }: { skillId: string | null | undefined }) {
 
 // 配置スロット+演出クラスを与える共通ラッパ
 function CombatantNode({
-  c, index, count, fx, targetable, clickable, acting, chainBadge, leader, isBoss, targetNumber, elementBadge, onClick, onBodyRef, children,
+  c, role, fx, targetable, clickable, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, onClick, onBodyRef, children,
 }: {
   c: Combatant
-  index: number
-  count: number // 同陣営の総数(中央寄せ+人数連動サイズ用)
+  // M25§4.2: 前列/後列の役割だけを渡す。列数・行そのものはCSS(.slot-preset-*)側の責務にし、
+  // 768px境界のメディアクエリで上書きできるようにする(inlineでgrid-column/rowは固定しない)。
+  role: Role
   fx: FxEvent[]
   targetable: boolean
   clickable?: boolean
@@ -711,6 +851,9 @@ function CombatantNode({
   chainBadge: number
   leader?: boolean
   isBoss?: boolean
+  cardTier: CardTier // M25§4.1: 通常札/宿敵札/主札の3階層
+  spriteKey?: string // BattleArtFrameのバケット解決キー(sprite接頭辞)
+  dimmed: boolean // M25§4.3手順1: 行動者/対象以外の暗転
   targetNumber?: number // 対象選択中の1始まり番号(0以下=非表示)
   elementBadge?: { el: Element; adv: Matchup }
   onClick: () => void
@@ -722,8 +865,8 @@ function CombatantNode({
   const heal = fx.find((f) => f.kind === 'heal')
   const ko = fx.some((f) => f.kind === 'ko')
   const voice = fx.find((f) => f.voice)
-  const depth = index % 2 // 雁行の前後
   const interactive = targetable || !!clickable
+  const zone: 'enemy-card' | 'ally-card' = c.isAlly ? 'ally-card' : 'enemy-card'
   return (
     <div
       className={[
@@ -733,15 +876,13 @@ function CombatantNode({
         targetable ? 'targetable' : '',
         acting ? 'acting' : '',
         isBoss ? 'is-boss' : '',
+        dimmed ? 'stage-dim' : '',
         lunge ? 'fx-lunge' : '',
         hit ? 'fx-hit' : '',
         ko ? 'fx-ko' : '',
       ].join(' ')}
-      style={{
-        ['--slot' as string]: index,
-        ['--depth' as string]: depth,
-        ['--sz' as string]: 1 + Math.max(0, 4 - count) * 0.12, // 人数が少ないほど大きく
-      }}
+      data-row={role}
+      style={{ order: role === 'back' ? 0 : 1, zIndex: role === 'front' ? 12 : 10 }}
       onClick={onClick}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : -1}
@@ -752,22 +893,33 @@ function CombatantNode({
     >
       {!!targetNumber && targetNumber > 0 && <span className="target-num-badge" aria-hidden>{targetNumber}</span>}
       {voice && <div className="voice-bubble">{voice.voice}</div>}
-      <span className="combatant-shadow" aria-hidden />
-      <div className="combatant-body" ref={(el) => onBodyRef?.(c.key, el)}>{children}</div>
-      {hit && (
-        <>
-          <span
-            className={`dmg-pop ${hit.crit ? 'crit' : ''} ${hit.weak ? 'weak' : ''}`}
-            style={{ ['--dx' as string]: `${((hit.id % 7) - 3) * 8}px` }} /* 多段ヒットの数字を扇状に散らす */
-          >
-            {hit.amount}
-            {hit.crit ? '!' : ''}
-          </span>
-          <span className={`burst el-${hit.element ?? 'fire'}`} />
-        </>
-      )}
-      {heal && <span className="dmg-pop heal-pop">+{heal.amount}</span>}
-      <div className="combatant-plate">
+      <span className="depth-mark" aria-hidden>{role === 'front' ? '前' : '後'}</span>
+      <div className="combatant-art-wrap">
+        <span className="combatant-shadow" aria-hidden />
+        <BattleArtFrame
+          className="combatant-body"
+          zone={zone}
+          tier={cardTier}
+          spriteKey={spriteKey}
+          domRef={(el) => onBodyRef?.(c.key, el)}
+        >
+          {children}
+        </BattleArtFrame>
+        {hit && (
+          <>
+            <span
+              className={`dmg-pop ${hit.crit ? 'crit' : ''} ${hit.weak ? 'weak' : ''}`}
+              style={{ ['--dx' as string]: `${((hit.id % 7) - 3) * 8}px` }} /* 多段ヒットの数字を扇状に散らす */
+            >
+              {hit.amount}
+              {hit.crit ? '!' : ''}
+            </span>
+            <span className={`burst el-${hit.element ?? 'fire'}`} />
+          </>
+        )}
+        {heal && <span className="dmg-pop heal-pop">+{heal.amount}</span>}
+      </div>
+      <div className="combatant-plate" data-zone="nameplate">
         <span className="combatant-name">
           {leader && <span className="leader-tag">長</span>}
           {elementBadge && (
@@ -898,7 +1050,7 @@ const SLOT_POOL = ['奉燈', '血珠', '武具', '霊薬', '宝珠', '古銭', '
 
 function LootSlot() {
   return (
-    <div className="loot-slot">
+    <div className="loot-slot" data-zone="reward">
       <span className="slot-label">報酬予告</span>
       {[0, 1, 2].map((i) => (
         <span key={i} className="slot-reel" style={{ animationDelay: `${i * 0.12}s` }}>
