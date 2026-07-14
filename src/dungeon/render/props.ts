@@ -307,10 +307,29 @@ export function buildProps(
 
   // ---- 2. 壁ラン(横→縦)に区画プロップを並べる ----
   const consumed: boolean[][] = Array.from({ length: h }, () => Array(w).fill(false))
+  // M25 §3.3「同じ茂み/石/茸を3個以上等間隔で並べない」。
+  // 旧実装は壁ランの【全セル】へ85%でプロップを置いていたため、1タイル等間隔の同型プロップが
+  // 延々と並び、実ブラウザ検収で「境界が同型の丸い茂みの反復に見え、森ではなく生成タイルの
+  // 試作感が勝つ」と指摘された。歩幅(stride)を1〜3セルで揺らし、変種の3連続を禁じ、
+  // 大きさと位置も散らして「等間隔の列」そのものを成立させない。
   const placeRun = (cells: [number, number][]) => {
-    for (const [x, y] of cells) {
-      consumed[y][x] = true
-      if (rng.chance(0.85)) addSprite(propTex(theme.runProp, rng.int(0, 1)), x, y, { jx: rng.int(-2, 2), flip: rng.chance(0.5) })
+    for (const [x, y] of cells) consumed[y][x] = true // ランは縦横で二重処理しない
+    let i = rng.int(0, 1)
+    let lastV = -1
+    let sameRun = 0
+    while (i < cells.length) {
+      const [x, y] = cells[i]
+      let v = rng.int(0, 1)
+      if (v === lastV && sameRun >= 1) v = 1 - v // 同一変種の3連続を作らない
+      sameRun = v === lastV ? sameRun + 1 : 0
+      lastV = v
+      addSprite(propTex(theme.runProp, v), x, y, {
+        jx: rng.int(-5, 5),
+        jy: rng.int(-2, 2),
+        flip: rng.chance(0.5),
+        scale: 0.86 + rng.next() * 0.3,
+      })
+      i += rng.int(1, 3) // 等間隔を崩す — 3個以上が同じ間隔で並ばない
     }
   }
   for (let y = 0; y < h; y++) {

@@ -83,18 +83,27 @@ function paintDeepWall(
   base: number,
   rng: Rng,
 ): void {
-  // 樹冠 — 重なる暗い円を2〜3個。liftは+5〜+17に留める(闇のまま輪郭だけ立つ)
-  const n = rng.int(2, 3)
+  // 樹冠 — 小さめの円を4〜6個「重ねて」葉叢にする。大きな単円は内部が平坦(16px窓に収まると
+  // 分散0=死に空間判定)になるため、小円の重なりで葉のざわめきを作り、隙間の地色も埋める。
+  // liftは+4〜+20に留める(闇のまま輪郭だけ立つ=常夜を壊さない)。
+  const n = rng.int(4, 6)
   for (let i = 0; i < n; i++) {
-    const cx = cellX + rng.int(1, tile - 1)
-    const cy = cellY + rng.int(1, tile - 1)
-    const r = tile * (0.2 + rng.next() * 0.28)
-    g.circle(cx, cy, r).fill({ color: lift(base, 5 + rng.int(0, 12)), alpha: 0.42 + rng.next() * 0.34 })
+    const cx = cellX + rng.int(-2, tile + 2)
+    const cy = cellY + rng.int(-2, tile + 2)
+    const r = tile * (0.13 + rng.next() * 0.17)
+    g.circle(cx, cy, r).fill({ color: lift(base, 4 + rng.int(0, 16)), alpha: 0.4 + rng.next() * 0.36 })
+  }
+  // 微細な木漏れ・小枝の散り — どの16px窓にも高周波の分散を残し「のっぺり」を作らせない。
+  const specks = rng.int(3, 5)
+  for (let i = 0; i < specks; i++) {
+    const sx = cellX + rng.int(2, tile - 2)
+    const sy = cellY + rng.int(2, tile - 2)
+    g.rect(sx, sy, 1, 1 + rng.int(0, 2)).fill({ color: lift(base, 12 + rng.int(0, 16)), alpha: 0.24 + rng.next() * 0.16 })
   }
   // 幹・立ち枝 — 時折の縦線が「森」を決定づける
-  if (rng.chance(0.34)) {
+  if (rng.chance(0.4)) {
     const tx = cellX + rng.int(5, Math.max(6, tile - 5))
-    g.rect(tx, cellY + tile * 0.38, 1.6, tile * 0.62).fill({ color: lift(base, 15), alpha: 0.38 })
+    g.rect(tx, cellY + tile * 0.34, 1.8, tile * 0.66).fill({ color: lift(base, 16), alpha: 0.4 })
   }
 }
 
