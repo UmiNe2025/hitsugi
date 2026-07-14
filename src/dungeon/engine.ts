@@ -15,7 +15,7 @@ import { buildProps, type PropsResult } from './render/props'
 import { LightingSystem } from './render/lighting'
 import { shadeArchetypes, createShadeVisual, type ShadeVisual } from './render/shades'
 import { Minimap } from './render/minimap'
-import { computeZoom, cameraTarget, lookAheadOffset, screenToTile } from './camera'
+import { CAM_MAX_SHAKE, cameraTarget, clampCamera, computeZoom, lookAheadOffset, screenToTile } from './camera'
 import { Rng } from '../core/rng'
 import { getReduceMotion } from '../core/settings'
 
@@ -1048,20 +1048,39 @@ export class DungeonEngine {
   }
 
   // world.scaleをレスポンシブzoomへ設定(PC横22-26/モバイル横10-12タイル)。camera.tsで検証済み。
+  private mapW(): number {
+    return this.grid[0]?.length ?? 0
+  }
+  private mapH(): number {
+    return this.grid.length
+  }
+
   private applyZoom(): void {
-    this.zoom = computeZoom(this.app.renderer.width, TILE)
+    // M25 §3.1: 高さ項を含む(旧実装はviewWのみを見ており、768×1024でマップ高がビューポートに
+    // 届かず黒帯31%が構造的に発生していた — clampでは1pxも減らせない)
+    this.zoom = computeZoom(
+      this.app.renderer.width,
+      this.app.renderer.height,
+      TILE,
+      this.mapW(),
+      this.mapH(),
+    )
     this.world.scale.set(this.zoom)
   }
 
   private centerCamera(snap = false): void {
     const vw = this.app.renderer.width
     const vh = this.app.renderer.height
-    const jx = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
-    const jy = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
     // zoom込みのカメラ目標(cameraTarget)。lighting穴のholeHalfResPosと同じ式で整合する。
     const t = cameraTarget(this.player.x + TILE / 2, this.player.y + TILE / 2, vw, vh, this.zoom, this.laX, this.laY)
-    const tx = t.x + jx
-    const ty = t.y + jy
+    // M25 §3.1: look-ahead後の座標へマップ境界クランプを掛ける(先にclampしてからlook-aheadを足さない)
+    const c = clampCamera(t, vw, vh, this.zoom, TILE, this.mapW(), this.mapH())
+    // 揺れはclamp後に最大4pxだけ(マップ外を大きく露出させない)
+    const s = Math.min(this.shake, CAM_MAX_SHAKE)
+    const jx = s > 0 ? (Math.random() * 2 - 1) * s : 0
+    const jy = s > 0 ? (Math.random() * 2 - 1) * s : 0
+    const tx = c.x + jx
+    const ty = c.y + jy
     if (snap) {
       this.world.x = tx
       this.world.y = ty
