@@ -31,6 +31,16 @@ npm run dev
 
 React 19 + TypeScript + Vite + Zustand。外部アセットなしでも動く軽量設計(音楽は全て実行時合成)。セーブはlocalStorage。
 
+## How OpenAI Codex & GPT-5.6 were used
+
+This project was built with two AI coding agents working the same repository as independent contractors — OpenAI **Codex CLI** (running on **GPT-5.6**) alongside Claude Code — not as a single autocomplete tool.
+
+- **Division of labor**: major systems (e.g. the 40-region dungeon overhaul, the rare-encounter/rare-drop system in `src/core/rare_encounters.ts`) were scoped as self-contained "missions" for Codex: a written contract (definition of done, out-of-scope items, protected files), task breakdown, implementation, and a required independent audit before merge. See [`docs/CODEX_MISSION_STATE.md`](docs/CODEX_MISSION_STATE.md) for a live example of this protocol.
+- **Shared source of truth**: both agents read from the same design doc ([`docs/GDD_v3.md`](docs/GDD_v3.md)) and decision log ([`docs/WORKLOG.md`](docs/WORKLOG.md)) instead of relying on chat history, so work stayed consistent across sessions and across agents.
+- **Verification, not trust**: every Codex mission ends in machine checks (`tsc`, `oxlint`, `vitest`, `scripts/validate_data.mjs` for zero ID/text duplication) plus an independent audit pass before being considered done.
+
+No OpenAI API calls happen at runtime — the game itself ships with zero external dependencies (procedural audio, localStorage saves). GPT-5.6/Codex was used entirely as part of the **build process**.
+
 ## ドキュメント
 
 - [ゲームデザインドキュメント](docs/GDD.md)
