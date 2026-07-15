@@ -6,6 +6,19 @@ import { Application, Assets, Container, Graphics, Sprite, Text, Texture } from 
 
 export const V_TILE = 46
 
+// M26 §6.2/§6.5: 郷の追従カメラ。主人公スプライトの world 高さは V_TILE*1.15。
+// zoom をこの範囲にクランプすると、主人公の表示高が常に 56〜88px(§6.5受入)に収まり、
+// かつ横タイル目標(PC 15 / モバイル 9)も満たせる — narrowな受入帯を両立させる要。
+const V_PLAYER_H = V_TILE * 1.15
+const V_CAM_MIN = 56 / V_PLAYER_H // ≈1.06
+const V_CAM_MAX = 88 / V_PLAYER_H // ≈1.66
+
+// マップが view より大きい軸は端を見せないようクランプ、小さい軸は中央寄せ(§6.2「world外の空白を見せない」)
+function vClampAxis(world: number, view: number, mapLen: number): number {
+  if (mapLen <= view) return (view - mapLen) / 2
+  return Math.max(view - mapLen, Math.min(0, world))
+}
+
 // 22×11。#=壁 K=鍛冶と蔵 S=星契りの祠 T=豆腐屋 G=出立門 L=大燈籠 ~=池 .=地面
 const MAP = [
   '######################',
@@ -92,6 +105,8 @@ export class VillageEngine {
   private focused: VillageFocus | null = null
   private time = 0
   private lanternGlow: Graphics | null = null
+  private zoom = 1 // 追従カメラのscale(V_CAM_MIN..V_CAM_MAX)
+  private survey = false // 「見渡す」押下中は全景fit(§6.2)
 
   private host: HTMLDivElement
   private opts: VillageEngineOpts
@@ -168,12 +183,51 @@ export class VillageEngine {
   // ---- 内部 ----
 
   private layout = () => {
-    const w = COLS * V_TILE
-    const h = ROWS * V_TILE
-    const scale = Math.min(this.app.screen.width / w, this.app.screen.height / h)
-    this.world.scale.set(scale)
-    this.world.x = (this.app.screen.width - w * scale) / 2
-    this.world.y = (this.app.screen.height - h * scale) / 2
+    this.applyZoom()
+    this.centerCamera(true)
+  }
+
+  // 追従scaleを算出(§6.2: PC 横15タイル / モバイル 横9タイル目安、主人公56-88pxへクランプ)
+  private applyZoom(): void {
+    const vw = this.app.screen.width
+    const targetTilesX = vw < 640 ? 9 : 15
+    const raw = vw / (targetTilesX * V_TILE)
+    this.zoom = Math.max(V_CAM_MIN, Math.min(V_CAM_MAX, raw))
+  }
+
+  // 主人公追従(§6.2)。survey中は全景fitへ滑らかに移る。マップ端でworld外の空白を見せない。
+  private centerCamera(snap = false): void {
+    const vw = this.app.screen.width
+    const vh = this.app.screen.height
+    const mapW = COLS * V_TILE
+    const mapH = ROWS * V_TILE
+    const fit = Math.min(vw / mapW, vh / mapH)
+    const targetScale = this.survey ? fit : this.zoom
+    const lerp = snap || this.opts.reduceMotion ? 1 : 0.18
+    const s = this.world.scale.x + (targetScale - this.world.scale.x) * lerp
+    this.world.scale.set(s)
+    const tx = this.survey
+      ? (vw - mapW * s) / 2
+      : vClampAxis(vw / 2 - this.px * s, vw, mapW * s)
+    const ty = this.survey
+      ? (vh - mapH * s) / 2
+      : vClampAxis(vh / 2 - this.py * s, vh, mapH * s)
+    if (snap) {
+      this.world.x = tx
+      this.world.y = ty
+    } else {
+      this.world.x += (tx - this.world.x) * lerp
+      this.world.y += (ty - this.world.y) * lerp
+    }
+    // 受入計測用: 主人公の表示高 = V_PLAYER_H * scale。canvas内スプライトは外から測れないため公開する。
+    // 精度を落とさず全桁公開する(モバイルはscaleがちょうど下限V_CAM_MIN=56/V_PLAYER_Hに張り付くため、
+    // 丸めると主人公高が56pxを僅かに割る)。
+    this.host.dataset.camScale = String(this.world.scale.x)
+  }
+
+  // 「見渡す」の押下/解放(§6.2)。押下中だけ全景、離すと追従へ戻る。
+  setSurvey(on: boolean): void {
+    this.survey = on
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -281,6 +335,7 @@ export class VillageEngine {
       this.animT += this.app.ticker.deltaMS
     }
     this.updatePlayerSprite()
+    this.centerCamera() // §6.2: 主人公を追う(survey中は全景へ寄る)
 
     // 大燈籠の呼吸(reduce-motion時は静止)
     if (this.lanternGlow && !this.opts.reduceMotion) {
@@ -460,10 +515,16 @@ export class VillageEngine {
       node.x = (n.x + 0.5) * V_TILE
       node.y = (n.y + 0.55) * V_TILE
       node.zIndex = node.y
-      // 肖像札(vil_*) — 読み込めなければ灯影
-      const frame = new Graphics()
-      frame.roundRect(-15, -V_TILE * 0.95, 30, 40, 5).fill(0x100c1c).stroke({ color: 0xc9a86a, width: 1.2, alpha: 0.7 })
-      node.addChild(frame)
+      // M8(§6): 浮いた金色の肖像札 → 郷に「立つ」村人へ。足元の影+立て札の台で接地し、
+      // 縁の金は 0.7→0.3 に抑えて商品札感を消す(村人は vil_* が肖像のみのため立て札様式で見せる)。
+      const shadow = new Graphics().ellipse(0, 1, 13, 4.5).fill({ color: 0x000000, alpha: 0.42 })
+      node.addChild(shadow)
+      const base = new Graphics()
+      base.moveTo(-9, -3).lineTo(9, -3).lineTo(12, 2).lineTo(-12, 2).closePath().fill({ color: 0x241c2e, alpha: 0.92 })
+      node.addChild(base)
+      const board = new Graphics()
+      board.roundRect(-14, -V_TILE * 1.02, 28, 42, 8).fill(0x161022).stroke({ color: 0xc9a86a, width: 1, alpha: 0.3 })
+      node.addChild(board)
       void Assets.load(n.imgUrl)
         .then((tex: Texture) => {
           if (this.destroyed) return
@@ -471,14 +532,18 @@ export class VillageEngine {
           const scale = 26 / sp.width
           sp.scale.set(scale)
           sp.x = -13
-          sp.y = -V_TILE * 0.95 + 2
-          const mask = new Graphics().roundRect(-13, -V_TILE * 0.95 + 2, 26, 36, 4).fill(0xffffff)
+          sp.y = -V_TILE * 1.0 + 3
+          const mask = new Graphics().roundRect(-13, -V_TILE * 1.0 + 3, 26, 36, 6).fill(0xffffff)
           node.addChild(mask)
           sp.mask = mask
-          node.addChildAt(sp, 1)
+          node.addChildAt(sp, 3)
         })
         .catch(() => {
-          const fb = new Graphics().circle(0, -V_TILE * 0.55, 9).fill({ color: 0xd9c26a, alpha: 0.5 })
+          // 肖像欠落時 — 人影シルエット(頭+肩)で「人」と読ませる(金円ではない)
+          const fb = new Graphics()
+          fb.circle(0, -V_TILE * 0.82, 6).fill({ color: 0x2a2440, alpha: 0.95 })
+          fb.moveTo(-9, -V_TILE * 0.5).quadraticCurveTo(0, -V_TILE * 0.74, 9, -V_TILE * 0.5).lineTo(9, -V_TILE * 0.5).closePath()
+            .fill({ color: 0x2a2440, alpha: 0.95 })
           node.addChild(fb)
         })
       const label = new Text({

@@ -1,0 +1,28 @@
+/* M26 §6: 郷の追従カメラUI。index.css を編集せず、village.css より後にimportして後勝ちで足す。 */
+
+/* 見渡す — 押している間だけ全景fit(§6.2)。追従が既定なので常設だが控えめに置く。 */
+.village-survey {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 168, 106, 0.5);
+  background: rgba(16, 12, 28, 0.82);
+  color: #efe6d4;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  touch-action: none; /* 押下中のスクロール/選択を抑え、hold操作を安定させる */
+  user-select: none;
+}
+.village-survey:active {
+  background: rgba(201, 168, 106, 0.24);
+  border-color: rgba(201, 168, 106, 0.85);
+}
+.village-survey:focus-visible {
+  outline: 2px solid #c9a86a;
+  outline-offset: 2px;
+}

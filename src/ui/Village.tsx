@@ -12,6 +12,7 @@ import { VillageEngine, type VillageFocus, type VillageNpc } from '../village/en
 import { charSprite, stageOf, villagerImg, walkBasePath } from './img'
 import { MaybeImg } from './components'
 import './village.css'
+import './village_m26.css' // M26 §6: 追従カメラUI(village.cssより後 — 後勝ち)
 
 // NPCの立ち位置(engine側MAPの歩行可タイルに合わせる)
 const NPC_SPOTS: Record<string, [number, number]> = {
@@ -159,6 +160,7 @@ export function VillageScreen() {
   const dpad = (dir: 'up' | 'down' | 'left' | 'right', label: string) => (
     <button
       className="dpad-btn"
+      aria-label={{ up: '上へ', down: '下へ', left: '左へ', right: '右へ' }[dir]}
       onPointerDown={(e) => {
         e.preventDefault()
         engineRef.current?.pressDir(dir, true)
@@ -215,6 +217,18 @@ export function VillageScreen() {
             <button className="btn btn-ghost" onClick={() => setTalk(null)}>閉じる</button>
           </div>
         )}
+
+        {/* 見渡す — 押している間だけ全景(§6.2)。離すと主人公追従へ戻る。 */}
+        <button
+          className="village-survey"
+          aria-label="郷を見渡す(押している間)"
+          onPointerDown={(e) => { e.preventDefault(); engineRef.current?.setSurvey(true) }}
+          onPointerUp={() => engineRef.current?.setSurvey(false)}
+          onPointerLeave={() => engineRef.current?.setSurvey(false)}
+          onPointerCancel={() => engineRef.current?.setSurvey(false)}
+        >
+          見渡す
+        </button>
 
         <div className="dpad">
           <div />
