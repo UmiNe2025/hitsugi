@@ -1,0 +1,23 @@
+/* M26 §7.4: 血潮鍛錬の回数ステッパー(確認Sheet内)。forge_m18.css より後にimport(後勝ち)。 */
+.train-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+.train-stepper .btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 16px;
+}
+.train-count {
+  min-width: 64px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--text);
+}
+.train-count b {
+  font-size: 19px;
+  color: var(--el-star, #c9d8f0);
+}

@@ -16,6 +16,7 @@ import { itemIcon } from './img'
 import { ScreenShell, WorkspaceTabs, Sheet, CompareRow, EmptyGuide } from './layout/shell'
 import { emitToast } from './toast'
 import './forge_m18.css'
+import './forge_m26.css' // M26 §7.4: 血潮鍛錬の回数ステッパー(forge_m18.cssより後 — 後勝ち)
 
 type Tab = 'buy' | 'equip' | 'reforge' | 'train'
 type SlotFilter = 'all' | 'weapon' | 'armor' | 'charm'
@@ -85,6 +86,7 @@ export function ForgeScreen() {
   const [rarF, setRarF] = useState<'all' | RarityKey>('all') // 希少度絞り込み(装備タブ)
   const [affordOnly, setAffordOnly] = useState(false) // 今買える物のみ(購うタブ)
   const [reforgeTarget, setReforgeTarget] = useState<{ it: Item; where: string } | null>(null)
+  const [trainTarget, setTrainTarget] = useState<StatKey | null>(null) // M26 §7.4: 鍛錬の確認対象(即消費を廃止)
 
   const alive = data.family.filter((c) => c.alive)
   const selChar = alive.find((c) => c.id === charId) ?? alive.find((c) => c.isHead) ?? alive[0]
@@ -376,7 +378,7 @@ export function ForgeScreen() {
                 key={k}
                 className="btn train-cell"
                 disabled={data.ketsu < 5 || selChar.potential[k] >= 120}
-                onClick={() => trainStat(selChar.id, k)}
+                onClick={() => setTrainTarget(k)}
               >
                 <span className="train-stat">{STAT_LABELS[k]}</span>
                 <span className="train-val">{selChar.potential[k]} → {Math.min(120, selChar.potential[k] + 3)}</span>
@@ -400,7 +402,59 @@ export function ForgeScreen() {
           }}
         />
       )}
+
+      {/* 血潮鍛錬確認 — 回数ステッパーで一括確定(§7.4「連打消費を廃止」)。閲覧だけで血珠は減らない */}
+      {trainTarget && selChar && (
+        <TrainConfirm
+          char={selChar}
+          statKey={trainTarget}
+          data={data}
+          onClose={() => setTrainTarget(null)}
+          onDo={(n) => {
+            const before = selChar.potential[trainTarget]
+            for (let i = 0; i < n; i++) trainStat(selChar.id, trainTarget)
+            emitToast(`${selChar.name}の${STAT_LABELS[trainTarget]}を鍛えた(${before}→${Math.min(120, before + n * 3)})`, 'info')
+            setTrainTarget(null)
+          }}
+        />
+      )}
     </ScreenShell>
+  )
+}
+
+// M26 §7.4: 血潮鍛錬の確認Sheet。回数(1〜上限)を選び総血珠を見てから一括確定する。
+// 上限 = min(買える回数 floor(血珠/5), 極みまでの回数 ceil((120-現在)/3))。
+function TrainConfirm({ char, statKey, data, onClose, onDo }: {
+  char: GameData['family'][number]
+  statKey: StatKey
+  data: GameData
+  onClose: () => void
+  onDo: (n: number) => void
+}) {
+  const start = char.potential[statKey]
+  const maxN = Math.max(1, Math.min(Math.floor(data.ketsu / 5), Math.ceil((120 - start) / 3)))
+  const [n, setN] = useState(1)
+  const nn = Math.max(1, Math.min(maxN, n))
+  const end = Math.min(120, start + nn * 3)
+  const cost = nn * 5
+  return (
+    <Sheet title={`血潮鍛錬 — ${char.name}の${STAT_LABELS[statKey]}`} onClose={onClose} closeLabel="やめる">
+      <p className="confirm-lead">
+        血珠5で{STAT_LABELS[statKey]}を+3。回数を選んで一括で鍛える。磨いた血潮は子へも受け継がれる。
+      </p>
+      <div className="train-stepper" role="group" aria-label="鍛錬回数">
+        <button className="btn btn-ghost" aria-label="回数を減らす" disabled={nn <= 1} onClick={() => setN(nn - 1)}>−</button>
+        <span className="train-count"><b>{nn}</b> 回</span>
+        <button className="btn btn-ghost" aria-label="回数を増やす" disabled={nn >= maxN} onClick={() => setN(nn + 1)}>＋</button>
+        <button className="btn btn-ghost" disabled={nn >= maxN} onClick={() => setN(maxN)}>最大({maxN})</button>
+      </div>
+      <CompareRow label={STAT_LABELS[statKey]} before={start} after={end} />
+      <CompareRow label="血珠" before={data.ketsu} after={data.ketsu - cost} />
+      <div className="confirm-actions">
+        <button className="btn btn-ghost" onClick={onClose}>やめる</button>
+        <button className="btn btn-main" onClick={() => onDo(nn)}>珠{cost}で鍛える</button>
+      </div>
+    </Sheet>
   )
 }
 
