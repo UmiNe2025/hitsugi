@@ -1,0 +1,44 @@
+/* Pact.tsx 専用 M26 §9.5 追加分 — 星契りの最終確認Sheet(M26-P0-01是正)
+   契約: docs/UI_SHELL_API.md。既存 index.css の行は編集しない(このファイルのみで完結)。
+   Sheet/CompareRow(index.css)と confirm-lead/confirm-actions(m17_home.css、Home.tsxが常時読込)を
+   そのまま再利用する — 確認Sheetの見た目はForge.tsxのReforgeConfirmと揃える。 */
+
+/* 親カード(CharCard compact)と神サムネイルを横並びに — 440px小窓でも並ぶ幅で設計 */
+.pact-confirm-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pact-confirm-pair .char-card {
+  flex: 1;
+  min-width: 150px;
+}
+
+.pact-confirm-god {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: rgba(10, 14, 30, 0.75);
+  text-align: center;
+}
+.pact-confirm-god-img {
+  width: 46px;
+  height: 62px;
+  object-fit: contain;
+  object-position: bottom center;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: rgba(8, 11, 22, 0.5);
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
+}
+.pact-confirm-god-name { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; }
+.pact-confirm-god-aff { font-size: 11.5px; color: var(--el-star); }

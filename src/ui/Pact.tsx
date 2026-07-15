@@ -1,17 +1,18 @@
 // 交神の儀(品質刷新v3.1 M9) — 俺屍様式の二面構成
 // 左=神名リスト(属性印+名+奉納点、奉納点昇順、位階タブ×属性チップ)/右=大立ち絵+情報札。
 // 遺伝子画面: 親系(人)/神系の二列バー+子の見立てレンジ。確定時は炎輪カットイン。
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import type { StatKey, GodRank, Element } from '../core/types'
-import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS } from '../core/types'
+import type { StatKey, GodRank, Element, Character, God, GameData } from '../core/types'
+import { GOD_RANK_LABELS, STAT_LABELS, ELEMENT_LABELS, seasonLabel } from '../core/types'
 import { GODS, godUnlocked } from '../core/data/gods'
 import { isAdult, predictChild, godStatValue, pactCost } from '../core/inheritance'
 import { CharCard, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { GodArtFallback } from './GodArtFallback'
 import { gameImg, godMaxImg, HOME_BG } from './img'
-import { ActionDock, StatusCallout } from './layout/shell'
+import { ActionDock, CompareRow, Sheet, StatusCallout } from './layout/shell'
 import './pact_m18.css'
+import './pact_m26.css' // M26 §9.5: 星契り最終確認Sheet(pact_m18.cssより後 — 後勝ち)
 
 // 封印中の神の解放条件を一言で(unlock条件から自動生成)
 function sealHint(g: (typeof GODS)[number]): string {
@@ -72,6 +73,8 @@ export function PactScreen() {
   const [onlyAffordable, setOnlyAffordable] = useState(false) // 絞り込み: 費用内(M18)
   const [onlyUncontracted, setOnlyUncontracted] = useState(false) // 絞り込み: 未契約(M18)
   const [ritual, setRitual] = useState(false) // 炎輪カットイン中
+  const [confirmOpen, setConfirmOpen] = useState(false) // M26 §9.5: 契りの最終確認Sheet
+  const pactFiredRef = useRef(false) // 二重実行防止 — 確認Sheetの実行CTA以外からdoPactを呼ばせない呼び出し済みフラグ
 
   const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const parent = adults.find((c) => c.id === parentId) ?? null
@@ -95,12 +98,23 @@ export function PactScreen() {
   // 実ステップ(壱親/弐星/参見立て) — 選択状態から導出。ロジック非依存の表示専用(M18)
   const pactStep: 1 | 2 | 3 = !parent ? 1 : !god ? 2 : 3
 
-  const beginRitual = () => {
-    if (!parent || !god || ritual) return
+  // M26 §9.5: 契るCTAは確認Sheetを開くだけ(M26-P0-01是正)。doPactは確認Sheetの実行CTAからのみ呼ぶ。
+  const openPactConfirm = () => {
+    if (!parent || !god || ritual || confirmOpen) return
+    setConfirmOpen(true)
+  }
+
+  // 確認Sheetの実行CTA(data-testid="pact-confirm")専用。pactFiredRefで二重実行を防ぎ、
+  // 実行後は即Sheetを閉じて演出へ入る — 演出中はActionDockのCTAもritual状態で無効化される。
+  const confirmPact = () => {
+    if (!parent || !god || ritual || pactFiredRef.current) return
+    pactFiredRef.current = true
+    setConfirmOpen(false)
     setRitual(true)
     setTimeout(() => {
       doPact(parent.id, god.id)
       setRitual(false)
+      pactFiredRef.current = false
     }, 1100)
   }
 
@@ -291,10 +305,22 @@ export function PactScreen() {
       </button>
 
       <ActionDock note={dockNote}>
-        <button className="btn btn-main" onClick={beginRitual} disabled={!dockReady}>
+        <button className="btn btn-main" onClick={openPactConfirm} disabled={!dockReady}>
           {dockLabel}
         </button>
       </ActionDock>
+
+      {confirmOpen && parent && god && prediction && (
+        <PactConfirmSheet
+          parent={parent}
+          god={god}
+          data={data}
+          prediction={prediction}
+          cost={dockCost}
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={confirmPact}
+        />
+      )}
 
       {ritual && god && (
         <div className="ritual-overlay">
@@ -308,6 +334,48 @@ export function PactScreen() {
         </div>
       )}
     </div>
+  )
+}
+
+// M26 §9.5: 星契り最終確認 — 契るCTAはここでのみdoPactを呼ぶ(誤操作是正 M26-P0-01)。
+// 親の顔・名前・残り灯/神の立ち絵・名前・縁/奉燈の現在→残り/子が生まれる月/見立ての強み弱みを一望させ、
+// 「この月の行いとして確定し、月が進む」ことを最後に一文で示す。
+function PactConfirmSheet({
+  parent, god, data, prediction, cost, onClose, onConfirm,
+}: {
+  parent: Character
+  god: God
+  data: GameData
+  prediction: Record<StatKey, [number, number]>
+  cost: number
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const affinity = Math.floor(data.godAffinity[god.id] ?? 0)
+  const isMax = affinity >= GOD_MAX_AFFINITY
+  return (
+    <Sheet title="星契り、最後の確かめ" onClose={onClose} closeLabel="やめる">
+      <div className="pact-confirm-pair">
+        <CharCard char={parent} seasonIndex={data.seasonIndex} compact />
+        <div className="pact-confirm-god">
+          <MaybeImg
+            src={isMax ? godMaxImg(god.portrait) : gameImg(god.portrait)}
+            className="pact-confirm-god-img"
+          />
+          <span className="pact-confirm-god-name">{god.name}</span>
+          <span className="pact-confirm-god-aff">縁 {affinity}</span>
+        </div>
+      </div>
+      <CompareRow label="奉燈" before={data.hoto} after={data.hoto - cost} />
+      <p className="confirm-lead">
+        子は{seasonLabel(data.seasonIndex + 1)}に生まれる。{predictionSummary(prediction)}
+      </p>
+      <p className="confirm-lead">この月の行いとして確定し、月が進む。</p>
+      <div className="confirm-actions">
+        <button className="btn btn-ghost" onClick={onClose}>やめる</button>
+        <button className="btn btn-main" data-testid="pact-confirm" onClick={onConfirm}>契る</button>
+      </div>
+    </Sheet>
   )
 }
 

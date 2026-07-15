@@ -1,0 +1,35 @@
+/* ============================================================
+   郷普請(Facilities) — M26 §8.3 確認Sheet
+   契約: docs/UI_SHELL_API.md。facilities.css より後にimport(後勝ち)。
+   Sheet/CompareRowの共通クラス(.cmp-row等はindex.css、.confirm-*はm17_home.css)を再利用し、
+   ここでは確認Sheet固有の段階印と、効果文の折り返しだけを追加する。
+   ============================================================ */
+
+/* 三段普請の段階印(丸印列) — cmp-rowの他要素と横並びでも崩れないよう中央揃え */
+.facility-stagemark {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.stagemark-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--panel-border);
+}
+
+.stagemark-dot.is-done { background: var(--sel); }
+.stagemark-dot.is-next { background: var(--gold); box-shadow: 0 0 0 2px rgba(201, 168, 106, 0.25); }
+
+/* 効果文(現在→次)は数値と違い長くなるため、cmp-rowの1行固定を崩して折り返す */
+.facility-effect-row {
+  flex-wrap: wrap;
+}
+
+.facility-effect-row .cmp-val {
+  flex: 1 1 auto;
+  min-width: 0;
+}
