@@ -1,6 +1,40 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import { useGame } from '../core/store'
 import { audio } from '../core/audio'
+
+// M26 §14.3: 場面送りの誤タップ防止。
+// - 250msデバウンス: 前の進行から250ms以内の入力を捨てる(誤連打・誤タップ)。
+// - 背景クリックのみ進行: 本文/選択/入力/CTA上のクリックは対象外(e.target===e.currentTargetで判定)。
+// - Space/Enterで進行、Escapeは進行に使わない。
+// 進行の順序・分岐ロジックは一切変えない — 入力の受理条件だけを安全化する。
+function useSceneAdvance(canAdvance: boolean, doAdvance: () => void) {
+  const lastRef = useRef(0)
+  const advance = useCallback(() => {
+    if (!canAdvance) return
+    const now = performance.now()
+    if (now - lastRef.current < 250) return
+    lastRef.current = now
+    audio.se('page')
+    doAdvance()
+  }, [canAdvance, doAdvance])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== ' ' && e.key !== 'Enter') return // Escape等は進行に使わない(§14.3)
+      const el = e.target as HTMLElement | null
+      // 入力欄(辞世の言葉等)やbutton上のキーは奪わない — Space入力/ボタン既定動作を壊さない
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON' || el.isContentEditable)) return
+      if (!canAdvance) return
+      e.preventDefault()
+      advance()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [advance, canAdvance])
+  // 背景(bare screen)クリックのみ進行 — 子要素(本文/CTA/入力)は e.target !== currentTarget で除外
+  const onBgClick = (e: ReactMouseEvent) => { if (e.target === e.currentTarget) advance() }
+  return { advance, onBgClick }
+}
 import { STAT_LABELS } from '../core/types'
 import type { StatKey } from '../core/types'
 import { godById, MOURNING } from '../core/data/gods'
@@ -201,6 +235,8 @@ export function DeathScene({ charId }: { charId: string }) {
     return lines
   })()
   const digestDone = beat >= digest.length
+  // フックは早期return前に無条件呼び出し(Rules of Hooks)
+  const { advance, onBgClick } = useSceneAdvance(!digestDone, () => setBeat((b) => b + 1))
   if (!char) return null
 
   const confirm = () => {
@@ -209,9 +245,9 @@ export function DeathScene({ charId }: { charId: string }) {
   }
 
   return (
-    <div className="scene-screen screen" onClick={() => { if (!digestDone) { audio.se('page'); setBeat(beat + 1) } }}>
+    <div className="scene-screen screen" onClick={onBgClick}>
       <SceneBg file="cg2_mitori.png" />
-      <div className="death-flame">🔥</div>
+      <div className="death-flame" aria-hidden>🔥</div>
       <h1 className="scene-title">看取り</h1>
       <div className="scene-body">
         <p>
@@ -222,7 +258,7 @@ export function DeathScene({ charId }: { charId: string }) {
             {digest.slice(0, Math.max(1, beat)).map((l, i) => (
               <p key={i} className="life-scroll-line">{l}</p>
             ))}
-            {!digestDone && <ScenePager page={Math.min(beat + 1, digest.length)} total={digest.length} onNext={() => { audio.se('page'); setBeat(beat + 1) }} />}
+            {!digestDone && <ScenePager page={Math.min(beat + 1, digest.length)} total={digest.length} onNext={advance} />}
           </div>
         )}
         {digestDone && (
@@ -269,8 +305,9 @@ export function LifeScene({ title, lines, bg }: { title: string; lines: { speake
   // SceneBg はファイル名(拡張子付き)を受け取り内部でgameImg()解決するため、
   // dailyIndexは素のファイル名(life_daily_NN.png)として組み立てる(dailyImg()は使わない)。
   const resolvedBg = bg ?? CHAPTER_BG[title] ?? `life_daily_${String(stableDailyIndex(title, lines)).padStart(2, '0')}.png`
+  const { advance, onBgClick } = useSceneAdvance(!done, () => setBeat((b) => b + 1))
   return (
-    <div className="scene-screen screen" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
+    <div className="scene-screen screen" onClick={onBgClick}>
       <SceneBg file={resolvedBg} />
       <h1 className="scene-title">{title}</h1>
       <div className="scene-body" style={{ textAlign: 'left' }}>
@@ -293,7 +330,7 @@ export function LifeScene({ title, lines, bg }: { title: string; lines: { speake
           この夜を憶えておく
         </button>
       ) : (
-        <ScenePager page={beat + 1} total={lines.length} onNext={() => { audio.se('page'); setBeat(beat + 1) }} />
+        <ScenePager page={beat + 1} total={lines.length} onNext={advance} />
       )}
     </div>
   )
