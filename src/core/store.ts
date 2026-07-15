@@ -34,13 +34,17 @@ import { saveGame, loadGame } from './save'
 import type { DungeonRun } from '../dungeon/types'
 import { dungeonByRegion } from '../dungeon/maps'
 import { traceIntelOf, bossMikiriLine } from './trace'
-import { regionSignOf } from './data/region_visuals'
+import { regionIdentityOf, regionSignOf } from './data/region_visuals'
 import type { Tomoshigata, JobClassId } from './types'
 import { tozaOf } from './data/toza'
 import { jobById, JOB_SKILL_UNLOCK_AGES } from './data/jobs'
 import { hatsujinScene, kizunaScene, hosoriScene, dailyScene } from './lifeEvents'
 import { nextGossip } from './data/gossip'
 import { nextDreamEpisode } from './data/dreams'
+import {
+  classifySpecialEncounter, createRareEncounter, rareVictoryFlag, rareVictoryLog,
+  specialShadeUsedKey, type RareEncounter,
+} from './rare_encounters'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene =
@@ -121,6 +125,7 @@ interface GameStore {
   dungeonStep: () => void
   dungeonEncounter: (boss?: boolean, golden?: boolean) => void
   goldenBattle: boolean // v3.1 M15-5: 金の敵影との戦闘中(勝てば実り2.5倍)
+  rareEncounter: RareEncounter | null // M27: 稀相戦の確定遺物(戦闘中だけ保持)
   nemesisBattleId: string | null // v3.1 M16-1: 対峙中の宿敵(勝てば仇討ち)
   boonDraft: string[] | null // v3.1 M16-4: 提示中の加護三択(出撃時・焚火時)
   chooseBoon: (id: string | null) => void // nullで見送り
@@ -480,6 +485,7 @@ export const useGame = create<GameStore>((set, get) => {
     dungeonRun: null,
     battleSource: 'node',
     goldenBattle: false,
+    rareEncounter: null,
     nemesisBattleId: null,
     boonDraft: null,
     rng: newRng(),
@@ -531,7 +537,11 @@ export const useGame = create<GameStore>((set, get) => {
         seed: rng.state(),
       }
       d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季(十五月)。`)
-      set({ data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [] })
+      set({
+        data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null,
+        pendingEvent: null, battleLogQueue: [], dungeonRun: null, battleSource: 'node',
+        goldenBattle: false, rareEncounter: null, nemesisBattleId: null, boonDraft: null,
+      })
       saveGame(d)
     },
 
@@ -591,6 +601,8 @@ export const useGame = create<GameStore>((set, get) => {
         rng: new Rng(d.seed ^ (Date.now() >>> 0)),
         screen: { id: 'home' },
         pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [],
+        dungeonRun: null, battleSource: 'node', goldenBattle: false, rareEncounter: null,
+        nemesisBattleId: null, boonDraft: null,
       })
       return true
     },
@@ -1252,6 +1264,7 @@ export const useGame = create<GameStore>((set, get) => {
       const firstVisit = !(get().data?.regionsVisited ?? []).includes(regionId)
       const lore = loreFor(regionId)
       const introLines = firstVisit && lore ? lore.intro : []
+      const identityLine = regionIdentityOf(regionId)?.entryLine
       const run: DungeonRun = {
         regionId,
         floor: 0,
@@ -1260,7 +1273,11 @@ export const useGame = create<GameStore>((set, get) => {
         light: 100,
         loot: { hoto: 0, ketsu: 0, items: [] },
         partyIds,
-        log: [`${regionById(regionId).name}に足を踏み入れた。灯を絶やすな。`, ...introLines],
+        log: [
+          `${regionById(regionId).name}に足を踏み入れた。灯を絶やすな。`,
+          ...introLines,
+          ...(identityLine ? [identityLine] : []),
+        ],
         used: [],
         bossDown: false,
       }
@@ -1328,9 +1345,19 @@ export const useGame = create<GameStore>((set, get) => {
       const region = regionById(run.regionId)
       const ease = d.narrativeMode ? 0.78 : 1
       const dark = run.light <= 0
+      // 特殊影は1floorにつき一度だけ。接触時点で消費し、戦闘往復での再抽選・無限稼ぎを防ぐ。
+      const specialKey = specialShadeUsedKey(run.floor)
+      const specialBattle = !boss && golden && !run.used.includes(specialKey)
+      const activeRun: DungeonRun = specialBattle
+        ? { ...run, used: [...run.used, specialKey] }
+        : run
+      if (specialBattle) set({ dungeonRun: activeRun })
+      const rareRoll = specialBattle && classifySpecialEncounter(rng) === 'rare'
+        ? createRareEncounter(run.regionId, rng)
+        : null
 
       // 宿敵の再来(v3.1 M16-1): 名を得た魔性は夜藪を渡り歩き、一族の前に現れる
-      if (!boss && !golden && (d.nemeses?.length ?? 0) > 0 && rng.chance(0.15)) {
+      if (!boss && !specialBattle && (d.nemeses?.length ?? 0) > 0 && rng.chance(0.15)) {
         const nem = rng.pick(d.nemeses!)
         const base = enemyById(nem.enemyId)
         const k = 1.25 + nem.level * 0.18
@@ -1364,13 +1391,16 @@ export const useGame = create<GameStore>((set, get) => {
           battleSource: 'dungeon',
           battleNodeId: null,
           goldenBattle: false,
+          rareEncounter: null,
           nemesisBattleId: nem.id,
           screen: { id: 'battle' },
           battleLogQueue: [...battle.log],
         })
         return
       }
-      const enemyIds = boss
+      const enemyIds = rareRoll
+        ? [rareRoll.enemy.id]
+        : boss
         ? [region.bossId ?? 'kubinashi_andon'] // 地域の主(未設定地域は首無し行灯が主代わり)
         : pickEnemies(region, 'battle', run.floor + 2, rng)
       const party = enrichAllies(
@@ -1385,7 +1415,7 @@ export const useGame = create<GameStore>((set, get) => {
       // 主が未設定の地域はエリート級を主に見立てて強化する。真の主(tier5)は素の強さで十分
       const standInBoss = boss && !region.bossId
       const enemies = enemyIds.map((id, i) => {
-        const def = enemyById(id)
+        const def = rareRoll?.enemy.id === id ? rareRoll.enemy : enemyById(id)
         return combatantFromEnemy(
           {
             ...def,
@@ -1431,14 +1461,19 @@ export const useGame = create<GameStore>((set, get) => {
           gods: dd.codex?.gods ?? [],
         },
       }))
-      if (golden) {
+      if (rareRoll) {
+        battle.log.unshift({ text: rareRoll.enemy.desc, kind: 'info' })
+        battle.log.unshift({ text: `——白金の脈動。稀相の魔性「${rareRoll.encounter.enemyName}」が現れた!`, kind: 'chain' })
+        battle.log.push({ text: `討ち果たせば、稀相遺物「${rareRoll.encounter.drop.name}」が残る。`, kind: 'info' })
+      } else if (specialBattle) {
         battle.log.push({ text: '金色の敵影だ! 逃がすな — 実りは並の比ではない!', kind: 'chain' })
       }
       set({
         battle,
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
         battleNodeId: null,
-        goldenBattle: golden,
+        goldenBattle: specialBattle,
+        rareEncounter: rareRoll?.encounter ?? null,
         screen: { id: 'battle' },
         battleLogQueue: [...battle.log],
       })
@@ -1693,7 +1728,8 @@ export const useGame = create<GameStore>((set, get) => {
               battle: null,
               battleSource: 'node',
               goldenBattle: false,
-            nemesisBattleId: null,
+              rareEncounter: null,
+              nemesisBattleId: null,
               dungeonRun: null,
               pendingScenes: [],
               screen: { id: 'finale' }, // v3.1 M15-4: 結末の選択へ
@@ -1718,8 +1754,21 @@ export const useGame = create<GameStore>((set, get) => {
           )
           const isBoss = battleSource === 'dungeonBoss'
           let nd: GameData = { ...d, family }
+          const rare = get().rareEncounter
+          if (rare) {
+            const flag = rareVictoryFlag(rare.markId)
+            const previous = typeof nd.flags[flag] === 'number' ? nd.flags[flag] as number : 0
+            nd = { ...nd, flags: { ...nd.flags, [flag]: previous + 1 } }
+            if (previous === 0) {
+              nd = chronicle(
+                nd,
+                'triumph',
+                `初の稀相討伐 — ${rare.enemyName}を鎮め、遺物「${rare.drop.name}」を得た。`,
+              )
+            }
+          }
           // 眷属(式神) v3.1 M16-5: 討った雑兵が稀に懐く(主・宿敵は対象外)。既知の種は増えない
-          if (!isBoss && !get().nemesisBattleId) {
+          if (!isBoss && !get().nemesisBattleId && !rare) {
             const owned = new Set((nd.familiars ?? []).map((f) => f.enemyId))
             const candidates = defs.filter((e) => e.tier < 5 && !owned.has(e.id))
             const uniqueCandidates = [...new Map(candidates.map((e) => [e.id, e])).values()]
@@ -1775,13 +1824,23 @@ export const useGame = create<GameStore>((set, get) => {
             battle: null,
             battleSource: 'node',
             goldenBattle: false,
+            rareEncounter: null,
             nemesisBattleId: null,
             dungeonRun: {
               ...run,
               bossDown: run.bossDown || isBoss,
               light: Math.max(0, run.light - 6),
-              loot: { ...run.loot, hoto: run.loot.hoto + hoto, ketsu: run.loot.ketsu + ketsu },
-              log: [...run.log, isBoss ? '主を討った! 森に静寂が戻る。' : `魔性を討った。奉燈${hoto}を得た。`],
+              loot: {
+                ...run.loot,
+                hoto: run.loot.hoto + hoto,
+                ketsu: run.loot.ketsu + ketsu,
+                items: rare ? [...run.loot.items, rare.drop] : run.loot.items,
+              },
+              log: [
+                ...run.log,
+                isBoss ? '主を討った! 森に静寂が戻る。' : `魔性を討った。奉燈${hoto}を得た。`,
+                ...(rare ? [rareVictoryLog(rare)] : []),
+              ],
             },
             screen: { id: 'dungeon' },
           })
@@ -1804,6 +1863,7 @@ export const useGame = create<GameStore>((set, get) => {
             battle: null,
             battleSource: 'node',
             goldenBattle: false,
+            rareEncounter: null,
             nemesisBattleId: null,
             dungeonRun: {
               ...run,
@@ -1864,6 +1924,7 @@ export const useGame = create<GameStore>((set, get) => {
         }
         set({ data: nd, battle: null, battleSource: 'node',
             goldenBattle: false,
+            rareEncounter: null,
             nemesisBattleId: null, dungeonRun: null })
         advanceSeason()
         return
@@ -2023,7 +2084,7 @@ export const useGame = create<GameStore>((set, get) => {
   }
 })
 
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.__game = useGame
   // ランタイム生成コンテンツ(敵の変異/装備の系譜/家業の技)はテキスト静的解析では
   // 数え漏れる。実データで件数とid重複を検証するためのdev専用フック(GDD_v3 §6)。

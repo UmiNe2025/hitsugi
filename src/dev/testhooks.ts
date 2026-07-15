@@ -13,6 +13,8 @@ import { useGame } from '../core/store'
 import { combatantFromChar, combatantFromEnemy, startBattle } from '../core/battle'
 import { ENEMIES } from '../core/data/enemies'
 import type { Character } from '../core/types'
+import { createRareEncounter } from '../core/rare_encounters'
+import { Rng } from '../core/rng'
 
 const isBoss = (id: string) => id.startsWith('boss_')
 const NORMAL_ENEMIES = () => ENEMIES.filter((e) => !isBoss(e.id))
@@ -48,6 +50,8 @@ export interface TestHooks {
   dungeon: (opts?: { regionId?: string; floor?: number; party?: number }) => void
   /** 戦闘画面へ。味方N対敵M。boss=true で主1体。 */
   battle: (opts?: { allies?: number; enemies?: number; boss?: boolean }) => void
+  /** M27: 稀相名・確定遺物予告を含む実戦闘画面へ。 */
+  rareBattle: (opts?: { regionId?: string; allies?: number }) => void
   /** 郷の歩行マップへ。 */
   village: () => void
   screen: (id: string) => void
@@ -88,6 +92,35 @@ export function installTestHooks(): void {
       useGame.setState({
         battle: startBattle(party, foes),
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
+        screen: { id: 'battle' },
+      })
+    },
+    rareBattle: ({ regionId = 'hotarubi_no_kubochi', allies = 1 } = {}) => {
+      reset()
+      const members = ensureFamily(allies)
+      const party = members.map((c, i) => combatantFromChar(c, i < 2 ? 'front' : 'back'))
+      const rolled = createRareEncounter(regionId, new Rng(27))
+      const battle = startBattle(party, [combatantFromEnemy(rolled.enemy, 0)])
+      battle.log.unshift({ text: `——白金の脈動。稀相の魔性「${rolled.encounter.enemyName}」が現れた!`, kind: 'chain' })
+      battle.log.push({ text: `討ち果たせば、稀相遺物「${rolled.encounter.drop.name}」が残る。`, kind: 'info' })
+      useGame.setState({
+        battle,
+        battleLogQueue: [...battle.log],
+        battleSource: 'dungeon',
+        goldenBattle: true,
+        rareEncounter: rolled.encounter,
+        dungeonRun: {
+          regionId,
+          floor: 0,
+          x: -1,
+          y: -1,
+          light: 100,
+          loot: { hoto: 0, ketsu: 0, items: [] },
+          partyIds: members.map((c) => c.id),
+          log: [],
+          used: [],
+          bossDown: false,
+        },
         screen: { id: 'battle' },
       })
     },

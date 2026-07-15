@@ -4,10 +4,11 @@
 import { describe, expect, it } from 'vitest'
 import { REGIONS } from '../src/core/data/regions'
 import {
-  REGION_VISUALS, regionVisualOf,
+  REGION_IDENTITIES, REGION_VISUALS, regionIdentityOf, regionVisualOf,
   type GroundKind, type LandmarkKind, type ParticleKind,
 } from '../src/core/data/region_visuals'
 import { themeForBg } from '../src/dungeon/render/theme'
+import { resolveRegionVisual } from '../src/dungeon/render/region_theme'
 
 const GROUND_CHANNEL_MAX = 0x33
 const MID_CHANNEL_MAX = 0x66
@@ -204,5 +205,45 @@ describe('regionVisualOf', () => {
   })
   it('未知idはnull', () => {
     expect(regionVisualOf('no_such_region')).toBeNull()
+  })
+})
+
+describe('REGION_IDENTITIES — 全40地域の景観文法(M27)', () => {
+  it('REGIONSと過不足なく一致し、地相名・入場文が重複しない', () => {
+    const regionIds = REGIONS.map((r) => r.id)
+    expect(Object.keys(REGION_IDENTITIES).sort()).toEqual([...regionIds].sort())
+    expect(new Set(Object.values(REGION_IDENTITIES).map((x) => x.motif)).size).toBe(40)
+    expect(new Set(Object.values(REGION_IDENTITIES).map((x) => x.entryLine)).size).toBe(40)
+  })
+
+  it('同じ背景系統でもプロップ構成の複合キーが重複しない', () => {
+    const familyKeys = new Map<string, string[]>()
+    for (const region of REGIONS) {
+      const identity = REGION_IDENTITIES[region.id]
+      const key = [identity.wallProps.join(','), identity.runProp, identity.bigProp, identity.gauntletProp].join('|')
+      const family = themeForBg(region.bg).family
+      familyKeys.set(family, [...(familyKeys.get(family) ?? []), key])
+    }
+    for (const [family, keys] of familyKeys) {
+      expect(new Set(keys).size, `${family}系統でプロップ構成が重複`).toBe(keys.length)
+    }
+  })
+
+  it('解決後themeへ4軸すべて適用し、基盤themeの配列を汚染しない', () => {
+    for (const region of REGIONS) {
+      const base = themeForBg(region.bg)
+      const before = [...base.wallProps]
+      const resolved = resolveRegionVisual(base, region.id, 'norm', false).theme
+      const identity = REGION_IDENTITIES[region.id]
+      expect(resolved.wallProps).toEqual(identity.wallProps)
+      expect(resolved.runProp).toBe(identity.runProp)
+      expect(resolved.bigProp).toBe(identity.bigProp)
+      expect(resolved.gauntletProp).toBe(identity.gauntletProp)
+      expect(base.wallProps).toEqual(before)
+    }
+  })
+
+  it('未知地域はnull', () => {
+    expect(regionIdentityOf('no_such_region')).toBeNull()
   })
 })

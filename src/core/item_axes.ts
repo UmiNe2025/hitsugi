@@ -29,7 +29,7 @@ export function qualityOf(baseId: string): { key: QualityKey; name: string } | n
 }
 
 // ---- 希少度 — 世に出回る数。品質(tier)とは独立に、産地と継承で駆動する ----
-// 基礎位: 見世=並 / 夜藪の拾得=稀 / 主・宿敵=逸 / 神授=伝。
+// 基礎位: 見世=並 / 夜藪の拾得=稀 / 主・宿敵=逸 / 稀相遺物=秘 / 神授=伝。
 // 形見(legacyOf)で一段、代重ね(generation>=3)でさらに一段深まる(上限=伝)。
 export type RarityKey = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
 export const RARITY_LABELS: Record<RarityKey, string> = {
@@ -38,12 +38,13 @@ export const RARITY_LABELS: Record<RarityKey, string> = {
 const RARITY_STEPS: { key: RarityKey; name: string }[] = (
   ['common', 'uncommon', 'rare', 'epic', 'legendary'] as RarityKey[]
 ).map((key) => ({ key, name: RARITY_LABELS[key] }))
-const SOURCE_RANK: Record<ItemSource, number> = { shop: 0, chest: 1, boss: 2, divine: 4 }
+const SOURCE_RANK: Record<ItemSource, number> = { shop: 0, chest: 1, boss: 2, rare: 3, divine: 4 }
 
 export const SOURCE_LABELS: Record<ItemSource, string> = {
   shop: '見世で購うた品',
   chest: '夜藪で拾うた品',
   boss: '主を鎮めて得た品',
+  rare: '稀相の魔性が遺した品',
   divine: '神より授かった品',
 }
 export const UNKNOWN_SOURCE_LABEL = '古くから家にある品'
@@ -55,7 +56,8 @@ export function rarityOf(it: Pick<Item, 'source' | 'generation' | 'legacyOf'>): 
   return RARITY_STEPS[Math.min(RARITY_STEPS.length - 1, r)]
 }
 
-export function sourceLabelOf(it: Pick<Item, 'source'>): string {
+export function sourceLabelOf(it: Pick<Item, 'source' | 'rareOrigin'>): string {
+  if (it.source === 'rare' && it.rareOrigin) return `${SOURCE_LABELS.rare} — ${it.rareOrigin}`
   return it.source ? SOURCE_LABELS[it.source] : UNKNOWN_SOURCE_LABEL
 }
 

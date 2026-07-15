@@ -321,3 +321,188 @@ export const REGION_VISUALS: Record<string, RegionVisualProfile> = {
 export function regionVisualOf(regionId: string): RegionVisualProfile | null {
   return REGION_VISUALS[regionId] ?? null
 }
+
+// ---- M27: 地域固有の景観文法 ----
+// 色・材質だけでなく、壁沿い/連続壁/大物/主参道のプロップ構成を地域ごとに変える。
+// PropKind と同じ文字列unionをcore側で持ち、core -> dungeon の逆依存を避ける。
+export type RegionPropKind =
+  | 'bamboo' | 'tree' | 'bush' | 'log' | 'rock'
+  | 'stonewall' | 'lantern' | 'fence' | 'brokenlantern'
+  | 'spire' | 'bone' | 'crystal' | 'cairn'
+  | 'torii' | 'grave' | 'pillar' | 'wisp'
+
+export interface RegionIdentity {
+  motif: string // HUD/ログで短く示す地相名
+  entryLine: string // 入場直後に一度だけ流す環境の読み取り
+  wallProps: RegionPropKind[]
+  runProp: RegionPropKind
+  bigProp: RegionPropKind
+  gauntletProp: RegionPropKind
+}
+
+export const REGION_IDENTITIES: Record<string, RegionIdentity> = {
+  yoi_forest: {
+    motif: '灯路の樹海', entryLine: '地相「灯路の樹海」——古い茸狩り道が、枝と灯の間を縫っている。',
+    wallProps: ['tree', 'bush', 'log', 'rock', 'bamboo'], runProp: 'bush', bigProp: 'tree', gauntletProp: 'tree',
+  },
+  hotarubi_no_kubochi: {
+    motif: '蛍環の窪', entryLine: '地相「蛍環の窪」——水没した灯籠を中心に、蛍が幾重もの輪を描く。',
+    wallProps: ['rock', 'lantern', 'bush', 'stonewall', 'tree'], runProp: 'lantern', bigProp: 'rock', gauntletProp: 'lantern',
+  },
+  nureen_no_tsuji: {
+    motif: '濡れ四辻', entryLine: '地相「濡れ四辻」——板と垣根の継ぎ目を、雨のない雫が伝っている。',
+    wallProps: ['fence', 'brokenlantern', 'bush', 'log', 'stonewall'], runProp: 'fence', bigProp: 'brokenlantern', gauntletProp: 'stonewall',
+  },
+  nemurijizou_no_michi: {
+    motif: '伏し地蔵列', entryLine: '地相「伏し地蔵列」——苔むす石像が、道の奥へ同じ角度で首を垂れる。',
+    wallProps: ['grave', 'cairn', 'rock', 'bush', 'lantern'], runProp: 'cairn', bigProp: 'grave', gauntletProp: 'grave',
+  },
+  karasu_no_sato: {
+    motif: '羽葬の廃里', entryLine: '地相「羽葬の廃里」——空家を囲う垣根に、黒い羽根だけが積もっている。',
+    wallProps: ['fence', 'tree', 'brokenlantern', 'bone', 'log'], runProp: 'fence', bigProp: 'tree', gauntletProp: 'brokenlantern',
+  },
+  tourou_kuzure_michi: {
+    motif: '崩灯参道', entryLine: '地相「崩灯参道」——割れた石灯籠が、消えぬ火で進路を刻んでいる。',
+    wallProps: ['lantern', 'brokenlantern', 'stonewall', 'rock', 'fence'], runProp: 'lantern', bigProp: 'brokenlantern', gauntletProp: 'lantern',
+  },
+  mushishigure_michi: {
+    motif: '羽音の蛇行路', entryLine: '地相「羽音の蛇行路」——竹と藪の狭間で、羽音が雨脚のように濃くなる。',
+    wallProps: ['bush', 'bamboo', 'tree', 'log', 'wisp'], runProp: 'bamboo', bigProp: 'bush', gauntletProp: 'tree',
+  },
+  karita_no_bourei: {
+    motif: '亡霊の畦', entryLine: '地相「亡霊の畦」——刈田を区切る畦が、夜ごと違う格子を結ぶ。',
+    wallProps: ['fence', 'bush', 'log', 'rock', 'grave'], runProp: 'fence', bigProp: 'log', gauntletProp: 'fence',
+  },
+  yaregasa_douhyou: {
+    motif: '偽りの道標', entryLine: '地相「偽りの道標」——破れ傘と倒れた灯が、互いに違う方角を指す。',
+    wallProps: ['brokenlantern', 'fence', 'tree', 'rock', 'lantern'], runProp: 'brokenlantern', bigProp: 'tree', gauntletProp: 'brokenlantern',
+  },
+  minomushi_no_kairou: {
+    motif: '吊り房廻廊', entryLine: '地相「吊り房廻廊」——竹の長廊に、風のない蓑が無数に揺れている。',
+    wallProps: ['bamboo', 'tree', 'bush', 'log', 'wisp'], runProp: 'bamboo', bigProp: 'tree', gauntletProp: 'bamboo',
+  },
+  chochin_zaka: {
+    motif: '百灯の段坂', entryLine: '地相「百灯の段坂」——提灯の列が坂を刻み、こちらを数える目を灯す。',
+    wallProps: ['lantern', 'brokenlantern', 'stonewall', 'fence', 'torii'], runProp: 'lantern', bigProp: 'lantern', gauntletProp: 'torii',
+  },
+  haikyo_goten: {
+    motif: '朽ち御殿', entryLine: '地相「朽ち御殿」——柱間と崩れ壁が、誰もいない座敷の序列を守る。',
+    wallProps: ['pillar', 'stonewall', 'fence', 'lantern', 'grave'], runProp: 'pillar', bigProp: 'pillar', gauntletProp: 'pillar',
+  },
+  nurikabe_koji: {
+    motif: '閉ざし小路', entryLine: '地相「閉ざし小路」——石壁が視線を折り、来たはずの路地を塞いでいる。',
+    wallProps: ['stonewall', 'pillar', 'rock', 'fence', 'brokenlantern'], runProp: 'stonewall', bigProp: 'pillar', gauntletProp: 'stonewall',
+  },
+  kare_numa: {
+    motif: '涸れた島影', entryLine: '地相「涸れた島影」——沼底の石と骨が、乾いた中洲の輪郭を残す。',
+    wallProps: ['rock', 'cairn', 'bone', 'fence', 'brokenlantern'], runProp: 'cairn', bigProp: 'rock', gauntletProp: 'fence',
+  },
+  oboro_bashi: {
+    motif: '帰らずの橋', entryLine: '地相「帰らずの橋」——霧に沈む欄干と橋脚が、同じ岸へ道を戻す。',
+    wallProps: ['pillar', 'lantern', 'fence', 'stonewall', 'wisp'], runProp: 'fence', bigProp: 'pillar', gauntletProp: 'pillar',
+  },
+  kuchinawa_no_hotoke: {
+    motif: '蛇縄仏道', entryLine: '地相「蛇縄仏道」——鳥居と墓標の間を、朽ちた注連縄が締め上げる。',
+    wallProps: ['torii', 'pillar', 'grave', 'stonewall', 'bone'], runProp: 'grave', bigProp: 'torii', gauntletProp: 'torii',
+  },
+  usugiri_no_watashiba: {
+    motif: '岸なき渡し', entryLine: '地相「岸なき渡し」——桟橋の杭と淡い灯だけが、霧の対岸を偽っている。',
+    wallProps: ['fence', 'pillar', 'lantern', 'brokenlantern', 'wisp'], runProp: 'fence', bigProp: 'pillar', gauntletProp: 'lantern',
+  },
+  suzuriishi_no_saka: {
+    motif: '墨溜りの段', entryLine: '地相「墨溜りの段」——黒い石壁の窪みに、乾かぬ墨が月を映す。',
+    wallProps: ['stonewall', 'rock', 'cairn', 'pillar', 'wisp'], runProp: 'stonewall', bigProp: 'rock', gauntletProp: 'pillar',
+  },
+  rousoku_kashi: {
+    motif: '不滅蝋の河岸', entryLine: '地相「不滅蝋の河岸」——蝋燭列が涸れた水路と平行に、奥へ燃え続ける。',
+    wallProps: ['lantern', 'brokenlantern', 'pillar', 'fence', 'stonewall'], runProp: 'lantern', bigProp: 'pillar', gauntletProp: 'lantern',
+  },
+  kagami_ga_fuchi: {
+    motif: '鏡面の淵', entryLine: '地相「鏡面の淵」——柱と水晶が左右対称に並び、水面だけが別の道を映す。',
+    wallProps: ['pillar', 'crystal', 'cairn', 'stonewall', 'wisp'], runProp: 'crystal', bigProp: 'pillar', gauntletProp: 'pillar',
+  },
+  hoshimukuro_tani: {
+    motif: '星骸の窪', entryLine: '地相「星骸の窪」——骨と星晶が、墜ちたものを囲む放射状の谷を作る。',
+    wallProps: ['bone', 'spire', 'crystal', 'rock', 'cairn'], runProp: 'bone', bigProp: 'spire', gauntletProp: 'bone',
+  },
+  hisui_no_sawa: {
+    motif: '翡翠水脈', entryLine: '地相「翡翠水脈」——割れた翠柱の間を、細い沢筋が枝分かれしている。',
+    wallProps: ['crystal', 'rock', 'cairn', 'spire', 'wisp'], runProp: 'crystal', bigProp: 'crystal', gauntletProp: 'spire',
+  },
+  kageboushi_no_oka: {
+    motif: '影立つ丘', entryLine: '地相「影立つ丘」——開けた丘に、持ち主のいない影と墓標だけが立つ。',
+    wallProps: ['wisp', 'pillar', 'grave', 'rock', 'torii'], runProp: 'wisp', bigProp: 'pillar', gauntletProp: 'grave',
+  },
+  kaji_ato: {
+    motif: '冷えぬ炉跡', entryLine: '地相「冷えぬ炉跡」——炉床と石柱が作業場を囲み、打音の余韻を返す。',
+    wallProps: ['stonewall', 'pillar', 'rock', 'lantern', 'crystal'], runProp: 'stonewall', bigProp: 'pillar', gauntletProp: 'stonewall',
+  },
+  nakiotoko_no_hara: {
+    motif: '慟哭の石環', entryLine: '地相「慟哭の石環」——泣き石と塚が、声の中心を避ける輪を描く。',
+    wallProps: ['cairn', 'grave', 'rock', 'wisp', 'pillar'], runProp: 'cairn', bigProp: 'grave', gauntletProp: 'cairn',
+  },
+  kottou_zaka: {
+    motif: '遺物の露店坂', entryLine: '地相「遺物の露店坂」——柱間に古物と割れ灯が積まれ、細い折返しを作る。',
+    wallProps: ['pillar', 'stonewall', 'brokenlantern', 'fence', 'grave'], runProp: 'brokenlantern', bigProp: 'pillar', gauntletProp: 'fence',
+  },
+  sabigatana_no_haka: {
+    motif: '錆刃の墓林', entryLine: '地相「錆刃の墓林」——墓標と骨の間から、抜けぬ刀のような柱が突き出す。',
+    wallProps: ['bone', 'grave', 'pillar', 'rock', 'cairn'], runProp: 'grave', bigProp: 'pillar', gauntletProp: 'bone',
+  },
+  hyakki_yakou_no_tsuji: {
+    motif: '夜行の大辻', entryLine: '地相「夜行の大辻」——鳥居と灯の大きな十字路に、見えぬ行列の間が空く。',
+    wallProps: ['torii', 'lantern', 'grave', 'wisp', 'pillar'], runProp: 'torii', bigProp: 'lantern', gauntletProp: 'torii',
+  },
+  yumemaboroshi_no_yakata: {
+    motif: '入れ子座敷', entryLine: '地相「入れ子座敷」——柱と垣の向こうに、同じ間取りが一回り小さく続く。',
+    wallProps: ['pillar', 'fence', 'lantern', 'wisp', 'grave'], runProp: 'pillar', bigProp: 'pillar', gauntletProp: 'fence',
+  },
+  hakkotsu_bayashi: {
+    motif: '肋骨の林', entryLine: '地相「肋骨の林」——白骨と石塔が、獣の胸郭のような回廊を組む。',
+    wallProps: ['bone', 'spire', 'grave', 'rock', 'cairn'], runProp: 'bone', bigProp: 'spire', gauntletProp: 'bone',
+  },
+  tokoyami_no_kairou: {
+    motif: '灯絶え回廊', entryLine: '地相「灯絶え回廊」——墓標と柱の直路を、淡い鬼火だけが逆行する。',
+    wallProps: ['pillar', 'grave', 'wisp', 'torii', 'brokenlantern'], runProp: 'grave', bigProp: 'pillar', gauntletProp: 'torii',
+  },
+  hoshikui_no: {
+    motif: '星穴の環野', entryLine: '地相「星穴の環野」——星晶の消えた穴を、尖塔と骨の円環路が結ぶ。',
+    wallProps: ['spire', 'crystal', 'bone', 'wisp', 'rock'], runProp: 'crystal', bigProp: 'spire', gauntletProp: 'spire',
+  },
+  maboroshi_no_sandou: {
+    motif: '尽きぬ鳥居', entryLine: '地相「尽きぬ鳥居」——くぐった鳥居が背後へ戻り、参道の終わりを隠す。',
+    wallProps: ['torii', 'grave', 'pillar', 'wisp', 'lantern'], runProp: 'torii', bigProp: 'torii', gauntletProp: 'torii',
+  },
+  mouja_machi: {
+    motif: '死者の町割', entryLine: '地相「死者の町割」——墓と垣根で区切られた路地に、無人の灯が点る。',
+    wallProps: ['grave', 'lantern', 'fence', 'pillar', 'brokenlantern'], runProp: 'grave', bigProp: 'pillar', gauntletProp: 'lantern',
+  },
+  nakiryuu_no_mine: {
+    motif: '龍骨稜線', entryLine: '地相「龍骨稜線」——骨と尖塔の折返しが、泣く竜の背を登ってゆく。',
+    wallProps: ['bone', 'spire', 'rock', 'crystal', 'cairn'], runProp: 'bone', bigProp: 'spire', gauntletProp: 'spire',
+  },
+  gentou_zentei: {
+    motif: '玄冬の対庭', entryLine: '地相「玄冬の対庭」——柱と鳥居が左右を揃え、中央の空白だけを畏れている。',
+    wallProps: ['pillar', 'torii', 'grave', 'wisp', 'crystal'], runProp: 'pillar', bigProp: 'torii', gauntletProp: 'pillar',
+  },
+  todome_no_kaidan: {
+    motif: '数違いの石段', entryLine: '地相「数違いの石段」——石壁と塚が段を刻むたび、上りと下りの数がずれる。',
+    wallProps: ['stonewall', 'pillar', 'grave', 'cairn', 'bone'], runProp: 'stonewall', bigProp: 'pillar', gauntletProp: 'stonewall',
+  },
+  gentou_no_zenya: {
+    motif: '無人の宴座', entryLine: '地相「無人の宴座」——柱間の灯と空席が、客のいない祝宴を囲む。',
+    wallProps: ['lantern', 'pillar', 'grave', 'wisp', 'brokenlantern'], runProp: 'lantern', bigProp: 'pillar', gauntletProp: 'lantern',
+  },
+  akashi_miyama: {
+    motif: '封星の神路', entryLine: '地相「封星の神路」——鳥居と星晶が同心に重なり、山頂の座へ絞られる。',
+    wallProps: ['torii', 'pillar', 'crystal', 'wisp', 'grave'], runProp: 'torii', bigProp: 'torii', gauntletProp: 'torii',
+  },
+  tokoyo_tou: {
+    motif: '巡る百層', entryLine: '地相「巡る百層」——柱、尖塔、鳥居、骨が十層ごとに支配を入れ替える。',
+    wallProps: ['pillar', 'spire', 'torii', 'crystal', 'bone'], runProp: 'pillar', bigProp: 'spire', gauntletProp: 'torii',
+  },
+}
+
+export function regionIdentityOf(regionId: string): RegionIdentity | null {
+  return REGION_IDENTITIES[regionId] ?? null
+}

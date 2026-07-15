@@ -17,6 +17,7 @@ import { shadeArchetypes, createShadeVisual, type ShadeVisual } from './render/s
 import { Minimap } from './render/minimap'
 import { CAM_MAX_SHAKE, cameraTarget, clampCamera, computeZoom, lookAheadOffset, screenToTile } from './camera'
 import { Rng } from '../core/rng'
+import { SPECIAL_SHADE_RATE, specialShadeUsedKey } from '../core/rare_encounters'
 import { getReduceMotion } from '../core/settings'
 
 const TILE = 36 // px(44→36 に縮小: 同画面内タイル数を約1.22倍に広げつつ、プロップ/スプライトの視認性を維持)
@@ -432,8 +433,11 @@ export class DungeonEngine {
     // 討伐後(鎮)の再訪は魔性が薄れる(M23 指示7 V3 — 光と密度の変化。採取物は未実装)
     const shadeBase = Math.max(2, this.floor.shades - 2)
     const shadeCount = this.opts.cleared ? Math.max(1, shadeBase - 2) : shadeBase
-    const goldenIdx = Math.random() < 0.18 ? Math.floor(Math.random() * shadeCount) : -1
-    for (let i = 0; i < shadeCount; i++) this.spawnShade(i === goldenIdx)
+    // 敵影の初期配置はfloor seedで決定論化する。戦闘往復の再mountで特殊影を再抽選できない。
+    const shadeRng = new Rng(((this.opts.seed ?? this.floor.seed ?? this.floorIndex + 1) ^ 0x51ad3e7b) >>> 0)
+    const specialSpent = this.used.has(specialShadeUsedKey(this.floorIndex))
+    const goldenIdx = !specialSpent && shadeRng.chance(SPECIAL_SHADE_RATE) ? shadeRng.int(0, shadeCount - 1) : -1
+    for (let i = 0; i < shadeCount; i++) this.spawnShade(i === goldenIdx, shadeRng)
 
     // ミニマップ(訪問霧)
     this.minimap = new Minimap(this.grid)
@@ -479,19 +483,19 @@ export class DungeonEngine {
     this.centerCamera(true)
   }
 
-  private spawnShade(golden = false): void {
+  private spawnShade(golden: boolean, rng: Pick<Rng, 'int' | 'next' | 'pick'>): void {
     if (!this.registry) return
     let x = 0
     let y = 0
     let guard = 0
     do {
-      y = 1 + Math.floor(Math.random() * (this.grid.length - 2))
-      x = 1 + Math.floor(Math.random() * (this.grid[0].length - 2))
+      y = rng.int(1, this.grid.length - 2)
+      x = rng.int(1, this.grid[0].length - 2)
       guard++
     } while ((!isWalkable(this.tileAt(x, y)) || dist(x, y, this.px, this.py) < 6) && guard < 200)
     if (guard >= 200) return
 
-    const archetype = this.archetypes[Math.floor(Math.random() * this.archetypes.length)] ?? {
+    const archetype = (this.archetypes.length > 0 ? rng.pick(this.archetypes) : undefined) ?? {
       species: 'beast' as const,
       accent: 0xff9d45,
     }
@@ -502,9 +506,9 @@ export class DungeonEngine {
     this.layerMid.addChild(visual.node)
     this.shades.push({
       x, y, visual,
-      cd: Math.random() * SHADE_BASE_MS,
+      cd: rng.next() * SHADE_BASE_MS,
       fromX: x, fromY: y, moveT: 1,
-      bobPhase: Math.random() * Math.PI * 2,
+      bobPhase: rng.next() * Math.PI * 2,
       alert: false,
     })
   }

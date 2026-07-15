@@ -40,12 +40,17 @@ describe('品質(qualityOf) — shopTier帯からの導出', () => {
 })
 
 describe('希少度(rarityOf) — 産地+継承駆動で品質から独立', () => {
-  it('由来の基礎位: 無記録/店=並, 夜藪=稀, 主=逸, 神授=伝', () => {
+  it('由来の基礎位: 無記録/店=並, 夜藪=稀, 主=逸, 稀相=秘, 神授=伝', () => {
     expect(rarityOf({ generation: 0 }).name).toBe('並')
     expect(rarityOf({ generation: 0, source: 'shop' }).name).toBe('並')
     expect(rarityOf({ generation: 0, source: 'chest' }).name).toBe('稀')
     expect(rarityOf({ generation: 0, source: 'boss' }).name).toBe('逸')
+    expect(rarityOf({ generation: 0, source: 'rare' }).name).toBe('秘')
     expect(rarityOf({ generation: 0, source: 'divine' }).name).toBe('伝')
+  })
+  it('稀相遺物は討伐した魔性の来歴を表示する', () => {
+    const it: Item = { ...makeItem('w_kodachi', 'rare'), rareOrigin: '稀相・灯冠の古強者' }
+    expect(sourceLabelOf(it)).toBe('稀相の魔性が遺した品 — 稀相・灯冠の古強者')
   })
   it('形見(legacyOf)で一段、代重ね(gen>=3)でさらに一段。上限=伝', () => {
     expect(rarityOf({ generation: 0, source: 'shop', legacyOf: '祖母' }).name).toBe('稀')

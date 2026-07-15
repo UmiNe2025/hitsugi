@@ -3,7 +3,10 @@
 // 適用範囲の正直な限定(devil反映): props内蔵色は基盤テーマの同一性として維持し、
 // 差別化は ground/stain/grass/water/光tint/mote/landmark で行う。
 import type { DungeonTheme } from './theme'
-import { regionVisualOf, type GroundKind, type LandmarkKind, type ParticleKind } from '../../core/data/region_visuals'
+import {
+  regionIdentityOf, regionVisualOf,
+  type GroundKind, type LandmarkKind, type ParticleKind,
+} from '../../core/data/region_visuals'
 
 export type DungeonAct = 'norm' | 'dread' | 'seat' // 幕: 通常 / 畏(最終前) / 座(ボス階)
 
@@ -33,6 +36,7 @@ export function resolveRegionVisual(
   cleared: boolean,
 ): ResolvedVisual {
   const p = regionId ? regionVisualOf(regionId) : null
+  const identity = regionId ? regionIdentityOf(regionId) : null
   const theme: DungeonTheme = { ...base }
   if (p) {
     if (p.ground !== undefined) theme.groundBase = p.ground
@@ -41,6 +45,13 @@ export function resolveRegionVisual(
     if (p.waterDeep !== undefined) theme.waterDeep = p.waterDeep
     if (p.waterGlint !== undefined) theme.waterGlint = p.waterGlint
     if (p.lantern !== undefined) theme.lanternTint = p.lantern
+  }
+  if (identity) {
+    // 配列を複製し、基盤themeや別地域の解決結果へ変更が漏れないようにする。
+    theme.wallProps = [...identity.wallProps]
+    theme.runProp = identity.runProp
+    theme.bigProp = identity.bigProp
+    theme.gauntletProp = identity.gauntletProp
   }
   let mote = p?.mote ?? 0xffe79e
   let moteCount = p?.moteCount ?? 22

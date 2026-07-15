@@ -6,7 +6,7 @@ import { dungeonByRegion } from '../dungeon/maps'
 import { ENEMIES } from './data/enemies'
 import { ELEMENT_ADVANTAGE, ELEMENT_LABELS, type Element, type GameData } from './types'
 
-// 地域の石碑総数(痕跡の物理上限)。歩行ダンジョン未実装の地域は0
+// 地域の石碑総数(痕跡の物理上限)。未知地域は0
 export function maxTraceOf(regionId: string): number {
   const d = dungeonByRegion(regionId)
   if (!d) return 0

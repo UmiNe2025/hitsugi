@@ -39,6 +39,21 @@ const REGION_TABLE = [
   { id: 'mouja_machi', name: '亡者町', tier: 4, floors: 5 },
   { id: 'gentou_zentei', name: '玄冬前庭', tier: 4, floors: 5 },
   { id: 'akashi_miyama', name: '灯ノ御山', tier: 4, floors: 6 },
+  // M27: 旧ノード探索に残っていた12地域を歩行ダンジョン化(計57層)。
+  // 既存27地域のseedを変えないため末尾へ追加する。各地の色/材質/粒子/署名物/プロップ文法は
+  // core/data/region_visuals.ts が担い、生成器は到達可能な地形を担う。
+  { id: 'hotarubi_no_kubochi', name: '蛍火の窪地', tier: 1, floors: 3, water: true },
+  { id: 'nemurijizou_no_michi', name: '眠り地蔵の道', tier: 1, floors: 3 },
+  { id: 'kuchinawa_no_hotoke', name: '朽縄の仏道', tier: 2, floors: 4 },
+  { id: 'usugiri_no_watashiba', name: '薄霧の渡し場', tier: 2, floors: 4, water: true },
+  { id: 'hisui_no_sawa', name: '翡翠の沢', tier: 3, floors: 5, water: true },
+  { id: 'nakiotoko_no_hara', name: '泣き男の原', tier: 3, floors: 5 },
+  { id: 'sabigatana_no_haka', name: '錆刀の墓', tier: 3, floors: 5 },
+  { id: 'yumemaboroshi_no_yakata', name: '夢幻の館', tier: 3, floors: 5 },
+  { id: 'maboroshi_no_sandou', name: '幻の参道', tier: 4, floors: 5 },
+  { id: 'nakiryuu_no_mine', name: '泣き竜の峰', tier: 4, floors: 6 },
+  { id: 'todome_no_kaidan', name: '止めの階段', tier: 4, floors: 6 },
+  { id: 'gentou_no_zenya', name: '玄冬の前夜', tier: 4, floors: 6 },
 ]
 
 const lines = []

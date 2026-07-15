@@ -16,10 +16,10 @@ describe('痕跡の物理到達性(maxTraceOf)', () => {
       expect(maxTraceOf(id), id).toBeGreaterThan(0)
     }
   })
-  it('ダンジョン未実装地域は0(開示は物見櫓のみに委ねる)', () => {
-    const legacy = REGIONS.find((r) => !dungeonByRegion(r.id))
-    expect(legacy).toBeDefined()
-    expect(maxTraceOf(legacy!.id)).toBe(0)
+  it('非塔39地域に未実装がなく、未知地域だけが0', () => {
+    const missing = REGIONS.filter((r) => r.id !== 'tokoyo_tou' && !dungeonByRegion(r.id))
+    expect(missing).toEqual([])
+    expect(maxTraceOf('no_such_region')).toBe(0)
   })
 })
 

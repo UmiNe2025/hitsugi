@@ -1071,3 +1071,16 @@
 - **素材監査**: public/imgのsc_forge/sc_shop/sc_shrine/sc_bath/sc_gate、四季のbg_sato、祭、村人、装備、神絵は既存だが一部メニューで未活用。新規は施設4種×Lv0〜3の16枚とsc_library/sc_watchtowerの2枚を最小セットに限定。
 - **成果物**: docs/MENU_UI_UX_AUDIT_M26.md / docs/GDD_v3.md §8.11。
 - **検証**: 文書のみのためソースbuildは未実行。Markdown構造、git diff、既存dirty stateを確認する。実装、実描画検収、pushはClaude/Fable 5とユーザー確認へ引き継ぐ。
+
+## 2026-07-15 (M27 地域固有ダンジョン・稀相の魔性・稀相遺物 — Codex /mission)
+
+- **依頼**: ダンジョンごとにデザインと特徴を変え、たまに遭遇するレア魔性とレアドロップを実装し、探索をさらに魅力的にする。
+- **契約**: 全40地域の景観文法、非塔39地域171層の歩行化、既存特殊率18%を崩さない稀相5%、勝利時だけ確定する産地付き遺物、初討伐記録、再抽選防止、機械検証、独立監査。push/公開は対象外。
+- **地域差**: `REGION_IDENTITIES`を40地域へ追加。地相名/入場文/壁候補/連続壁/大物/主参道を固有化し、`resolveRegionVisual()`から既存描画へ接続。40配色・7材質・6粒子・12ランドマークとの複合で差別化する。
+- **歩行範囲**: 未歩行12地域を`gen_all_maps.mjs`へ57層追加し、`maps.gen.ts`を再生成。出力は**39地域/171層**。既存27地域の行順とseedは維持し、生成済み114層を不必要に変更していない。常夜百層は別枠100層を維持。
+- **稀相**: 金影の総率18%を金影13%/稀相5%へ分割。地域の粒子文法に応じた6印を用い、同tier・対応属性の既存魔性(老成変異を優先)を固有名とHP/攻/防/速補正で強化する。通常敵定義へrare IDを追加せず、通常pool混入を回避。
+- **報酬**: 稀相勝利時だけ地域進度相応の既存装備1点を`run.loot.items`へ追加。`source='rare'`、`rareOrigin`、固有銘、希少度「秘」。逃走/全滅は0、直接inventoryへ入れず帰還リスクを維持。最初の印討伐だけ家譜へ記録し、以後は討伐数を加算。
+- **抜け道修正**: floor seedから敵影の初期配置/特殊影有無を決定論化し、接触済み特殊影を`shade-special:<floor>`でrunへ記録。戦闘往復の再mountによる特殊影再抽選と稀相遺物の無限取得を防止。
+- **テスト追加**: `generated_maps.test.ts`(39/171+塔100+171層の個数/BFS)、`rare_encounters.test.ts`(10万floor分布+40地域生成+来歴)、`rare_store.test.ts`(勝利/逃走/全滅/二重確定)、既存region/item tests拡張。
+- **検証**: 変更前 build/lint/vitest **468/468緑**。最終 `npm run build`成功、`npm run lint` exit 0(並行M25の`perf.spec.ts`に未使用import警告1件のみ)、`npm test` **524/524緑**、`validate_data` 0 errors、生成器の再実行SHA-256一致。Playwrightは1440×900 / 1280×720 / 768×1024 / 390×844 / 360×800の全5幅で、2地域の実描画差と稀相名・遺物予告を **10/10緑**。独立監査結果はmission stateへ記録する。
+- **独立監査**: **GO**。Critical/High/Medium 0、Low 1(実engine再mount専用テストの将来追加・非阻害)。契約全項PASS、監査側でも重点208件/全524件、lint、validate_data、diff checkを再実行。帰還時のrun loot→inventory一度移送テストは監査中に追加済み。未commit・未push。
