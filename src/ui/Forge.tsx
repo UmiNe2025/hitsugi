@@ -155,6 +155,7 @@ export function ForgeScreen() {
       onBack={() => setScreen({ id: 'home' })}
       resources={<>奉燈 <b>{data.hoto}</b> ／ 血珠 <b>{data.ketsu}</b></>}
       tabs={<WorkspaceTabs tabs={TABS} active={tab} onChange={changeTab} />}
+      activeTab={tab}
     >
       <NightBackdrop />
 

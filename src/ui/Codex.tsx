@@ -236,6 +236,7 @@ export function CodexScreen() {
       title="図鑑"
       onBack={() => setScreen({ id: 'home' })}
       tabs={<WorkspaceTabs tabs={TABS} active={tab} onChange={setTab} />}
+      activeTab={tab}
     >
       <NightBackdrop bg={gameImg(HOME_BG)} />
       <div className="codex-layout">

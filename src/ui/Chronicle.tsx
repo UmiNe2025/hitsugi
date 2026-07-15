@@ -118,6 +118,7 @@ export function ChronicleScreen() {
       onBack={() => setScreen({ id: 'home' })}
       resources={head ? <>当主 <b>{head.name}</b>(第{head.gen}代)</> : undefined}
       tabs={<WorkspaceTabs tabs={TABS} active={tab} onChange={setTab} />}
+      activeTab={tab}
       dock={
         <ActionDock>
           <button className="btn btn-main" onClick={() => setShowTree(true)}>

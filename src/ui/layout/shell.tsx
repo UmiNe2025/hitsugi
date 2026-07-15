@@ -3,24 +3,35 @@
 //  - クリック音: 既存クラス(.btn / .filter-tab 等)を継承する。個別のSFX配線は禁止(main.tsx委譲)。
 //  - 文言: 独立画面=「郷へ戻る」/ モーダル=「閉じる」/ 選択取消=「やめる」。
 //  - フォーカス: Sheetは開時に保存→閉時に復帰。Tabは内部循環。ESCで閉じる。背景スクロールはロック。
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 
 // ---- フォーカス管理(useSheetBehavior/useForcedDialog)はdialogs.tsへ分離(M22) ----
 // hookはコンポーネントファイルからexportしない(Fast Refresh対象を保つ)。利用側は './layout/dialogs' から直接importする。
 import { useSheetBehavior } from './dialogs'
 
+// M26 §15.1: WAI-ARIA tabs。作業画面は同時に1枚しかマウントされないため、
+// タブが指すパネルはScreenShellの本文1枚で足りる(内容が差し替わる単一パネル方式)。
+const WS_PANEL_ID = 'ws-tabpanel'
+const wsTabId = (key: string) => `ws-tab-${key}`
+
 // ---- ScreenShell — 独立作業画面の殻: 上部戻る/画面題/資源、下部に任意のActionDock ----
 export function ScreenShell({
-  title, onBack, backLabel = '郷へ戻る', resources, tabs, dock, children,
+  title, onBack, backLabel = '郷へ戻る', resources, tabs, activeTab, dock, children,
 }: {
   title: string
   onBack: () => void
   backLabel?: string
   resources?: ReactNode // 右上の資源表示(例: <>奉燈 {hoto}</>)
   tabs?: ReactNode // WorkspaceTabs を渡すと題の直下に固定される
+  activeTab?: string // WorkspaceTabs使用時に選択中tabのkeyを渡すと、本文をtabpanelとして関連付ける(§15.1)
   dock?: ReactNode // ActionDock を渡すと下部固定+本文に余白を確保
   children: ReactNode
 }) {
+  // タブ有り + activeTab既知のとき、本文を role=tabpanel にして選択中tabへ aria-labelledby で紐づける
+  const panelProps =
+    tabs && activeTab != null
+      ? { role: 'tabpanel' as const, id: WS_PANEL_ID, 'aria-labelledby': wsTabId(activeTab), tabIndex: 0 }
+      : {}
   return (
     <div className={`screen shell ${dock ? 'has-dock' : ''}`}>
       <header className="shell-head">
@@ -29,7 +40,7 @@ export function ScreenShell({
         {resources && <div className="shell-res">{resources}</div>}
       </header>
       {tabs}
-      <div className="shell-body">{children}</div>
+      <div className="shell-body" {...panelProps}>{children}</div>
       {dock}
     </div>
   )
@@ -68,7 +79,9 @@ export function Sheet({
   )
 }
 
-// ---- WorkspaceTabs — 作業画面の固定タブ。SFXは .filter-tab 既存クラスが担う ----
+// ---- WorkspaceTabs — 作業画面の固定タブ(WAI-ARIA tabs 準拠)。SFXは .filter-tab 既存クラスが担う ----
+// §15.1: role=tab/tablist + id/aria-controls + roving tabIndex(選択中のみ0) + Left/Right/Home/End。
+// 選択方式は既存の「クリックで選択」に合わせ自動選択(矢印移動=選択)へ統一する。
 export function WorkspaceTabs<T extends string>({
   tabs, active, onChange,
 }: {
@@ -76,13 +89,30 @@ export function WorkspaceTabs<T extends string>({
   active: T
   onChange: (key: T) => void
 }) {
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const idx = tabs.findIndex((t) => t.key === active)
+    if (idx < 0) return
+    let next = -1
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % tabs.length
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + tabs.length) % tabs.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = tabs.length - 1
+    if (next < 0) return
+    e.preventDefault()
+    const key = tabs[next].key
+    onChange(key)
+    document.getElementById(wsTabId(key))?.focus() // 自動選択 — 焦点も移す
+  }
   return (
-    <div className="ws-tabs" role="tablist">
+    <div className="ws-tabs" role="tablist" onKeyDown={onKeyDown}>
       {tabs.map((t) => (
         <button
           key={t.key}
+          id={wsTabId(t.key)}
           role="tab"
           aria-selected={active === t.key}
+          aria-controls={WS_PANEL_ID}
+          tabIndex={active === t.key ? 0 : -1}
           className={`btn btn-ghost filter-tab ${active === t.key ? 'active' : ''}`}
           onClick={() => onChange(t.key)}
         >
