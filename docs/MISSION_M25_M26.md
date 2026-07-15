@@ -90,6 +90,8 @@ push / 契約・スコープの変更 / バランス変更が必要と判明 / *
 - **M4 プロップ+奥壁細粒** ✅ commit `f43ae50`(等間隔解消/細粒樹冠。ベタ塗り失敗→細粒へ修正の経緯を記録)
 - **★進行ゲート(正典§11)** ✅ **45/45緑**(4画面×5viewport。暗部 PC14.0%/1440<15%/tablet<18%/mobile11-19%、戦闘の重なり≤12%・矩形交差0)。→ **M25 Phase1+2 完了。Phase3以降へ進める。**
 - **M8 郷の追従カメラ・報告バグ是正** ✅ commit `d84600f`(ユーザー当初報告「4体の金色人型」)。根因: layout()の全マップfit(主人公20px)+ buildNpcsの金色肖像札。修正: 追従カメラ(主人公56-88pxクランプ)+見渡すボタン+NPC接地(影+台、金縁0.7→0.3)+D-pad aria-label。実測 全5viewport 15/15緑(主人公 PC85px/モバイル56px)。`village_m26.css`新規・index.css非編集・core非編集。`src/village/*`はCodex非対象で衝突なし。
+- **M26 Phase0-a: WorkspaceTabs WAI-ARIA** ✅ commit `6f60070`(§15.1)。id/aria-controls/tabpanel/roving tabIndex/矢印・Home・End。ScreenShellに`activeTab`追加で本文をtabpanel化。呼出3画面(Chronicle/Codex/Forge)。実測 全5viewport 10/10緑。
+- **M26 Phase0-b: 血潮鍛錬 確認Sheet** ✅ commit `22dfad2`(§7.4/P0-03)。連打即消費→回数ステッパー付き確認Sheetで一括確定。実測: 確認前は血珠不変・確定で消費・ステッパーで費用増。`forge_m26.css`新規・store非編集。
 
 ## ④保留リスト(再開手順)
 - **【Codex衝突・保留】M5(敵の兆し)/M6(room archetype)/M7の図鑑個別既読(セーブ移行)** — ユーザー判断(2026-07-15)により、Codexミッション(地域固有ダンジオン・稀少魔性)が共通インフラ(`store.ts`/`types.ts`/`maps.gen.ts`/`gen_all_maps.mjs`/`engine.ts`)を編集中のため保留。**Codexのインフラがコミットされてから着手**する。M5設計(enemyActionを不変に保ちキャッシュ)・M6設計(個数不変条件)は本STATEに確定済み。
@@ -105,7 +107,7 @@ push / 契約・スコープの変更 / バランス変更が必要と判明 / *
 - Phase0: 正典2文書読了 → 報告バグ根因特定(`village/engine.ts:465` 金縁立ち絵札) → 契約草案 → **devil-advocate 攻撃(REWORK / 12条)** → ユーザーへスコープ2択提示 → 確定(2026-07-15)。
 
 ## ⑦次の一手
-M8完了。次は **M26 Phase0の非衝突部**: WorkspaceTabs ARIA(`shell.tsx`)/ clickable div→button(`FamilyTree.tsx`/`Home.tsx`/`Scenes.tsx`)/ 場面送り誤タップ防止(`Scenes.tsx`)/ 確認Sheet(Pact/Facilities/Forgeのcomponent内・store非変更で可能な範囲)。いずれもCodex非対象を都度確認してから着手。**M5/M6/M7-図鑑既読移行はCodexのインフラ(store/types/maps)コミット後**まで保留。
+M26 Phase0の残り非衝突部: **郷普請の確認Sheet(§8.3/P0-02)** / **星契りの確認Sheet(§9.5/P0-01・大restructureは避け確認だけ)** / **clickable div→button**(FamilyTree P0-10 / Home日参り P0-13)/ **場面送り誤タップ防止**(Scenes P0-12・ゲーム進行の根幹で相対的に高リスク)。**M5/M6/M7-図鑑既読移行はCodexのインフラ(store/types/maps)コミット後**まで保留。Facilities/Pact/FamilyTree/Home/Scenes は都度Codex非対象を確認してから着手。
 
 ## ⑧最終監査表
 (未実施)
