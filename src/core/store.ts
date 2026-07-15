@@ -23,6 +23,7 @@ import {
 } from './inheritance'
 import {
   combatantFromChar, combatantFromEnemy, startBattle, performAction, enemyAction, currentActor,
+  computeIntents,
 } from './battle'
 import {
   generateExpedition, rollTreasure, campHeal, LIGHT_COST,
@@ -137,6 +138,7 @@ interface GameStore {
   battleCommand: (action: BattleAction) => void
   drainBattleLog: () => BattleLogEntry[]
   finishBattle: () => void
+  refreshBattleIntents: () => void // M25 §5: 敵の兆しを先読み設定(表示専用)
 }
 
 function newRng(): Rng {
@@ -1663,7 +1665,16 @@ export const useGame = create<GameStore>((set, get) => {
         guard++
       }
 
-      set({ battle: st, battleLogQueue: [...get().battleLogQueue, ...entries] })
+      // M25 §5: 味方の入力番に戻ったら敵の兆しを先読み更新(rngクローンで挙動不変)
+      const stWithIntents = st.phase === 'input' ? { ...st, intents: computeIntents(st, rng) } : st
+      set({ battle: stWithIntents, battleLogQueue: [...get().battleLogQueue, ...entries] })
+    },
+
+    // M25 §5: 戦闘開始直後など、入力番の兆しを設定する(Battle.tsx がマウント時に呼ぶ)
+    refreshBattleIntents: () => {
+      const { battle, rng } = get()
+      if (!battle || battle.phase !== 'input') return
+      set({ battle: { ...battle, intents: computeIntents(battle, rng) } })
     },
 
     drainBattleLog: () => {

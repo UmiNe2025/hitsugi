@@ -1,4 +1,4 @@
-import type { BattleState, BattleLogEntry, Character, Combatant, EnemyDef, Element } from './types'
+import type { BattleState, BattleLogEntry, Character, Combatant, EnemyDef, EnemyIntent, Element } from './types'
 import { ELEMENT_ADVANTAGE } from './types'
 import { Rng, uid } from './rng'
 import { skillById } from './data/skills'
@@ -372,6 +372,32 @@ export function enemyAction(st: BattleState, actor: Combatant, rng: Rng): Battle
     return { type: 'skill', skillId: rng.pick(actor.skills), targetKey: target.key }
   }
   return { type: 'attack', targetKey: target.key }
+}
+
+// ---- M25 §5: 敵の兆し ----
+// enemyAction は一切変更しない(上の関数はバイト同一)。兆しは「いつ呼ぶか」だけを足す:
+// 実rngをクローンして先読みし、実戦闘の乱数消費・対象選択・威力を一切変えない。
+// → ゴールデンテスト(固定RngでenemyActionの返り値が前後一致)が成立する。
+
+/** BattleAction を兆しカテゴリへ写像。guard/flee は兆しを出さない(null)。 */
+export function intentOf(action: BattleAction): EnemyIntent | null {
+  if (action.type === 'attack') return 'atk'
+  if (action.type === 'skill') {
+    return action.skillId && skillById(action.skillId).target === 'enemies' ? 'aoe' : 'tech'
+  }
+  return null
+}
+
+/** 各生存敵の次行動カテゴリを先読みする。
+ *  rng は new Rng(rng.state()) でクローンし、実rngを一切消費しない(挙動を変えない)。 */
+export function computeIntents(st: BattleState, rng: Rng): Record<string, EnemyIntent> {
+  const out: Record<string, EnemyIntent> = {}
+  for (const e of st.enemies) {
+    if (e.hp <= 0) continue
+    const cat = intentOf(enemyAction(st, e, new Rng(rng.state())))
+    if (cat) out[e.key] = cat
+  }
+  return out
 }
 
 function avg(xs: number[]): number {

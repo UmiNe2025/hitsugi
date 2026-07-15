@@ -4,7 +4,7 @@
 // 戦利品スロット(M12-5)、台詞チャネル(M15-1土台: kind:'voice')を備える。
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import type { BattleLogEntry, BattleState, Combatant, Element, SkillTarget } from '../core/types'
+import type { BattleLogEntry, BattleState, Combatant, Element, EnemyIntent, SkillTarget } from '../core/types'
 import { ELEMENT_LABELS, ELEMENT_ADVANTAGE } from '../core/types'
 import { currentActor, type BattleAction } from '../core/battle'
 
@@ -94,6 +94,7 @@ export function BattleScreen() {
   const queue = useGame((s) => s.battleLogQueue)
   const drainBattleLog = useGame((s) => s.drainBattleLog)
   const battleCommand = useGame((s) => s.battleCommand)
+  const refreshBattleIntents = useGame((s) => s.refreshBattleIntents)
   const finishBattle = useGame((s) => s.finishBattle)
   const regionId = useGame((s) => s.dungeonRun?.regionId)
   const runLoot = useGame((s) => s.dungeonRun?.loot)
@@ -254,6 +255,11 @@ export function BattleScreen() {
   useEffect(() => {
     logRef.current?.scrollTo({ top: 99999, behavior: 'smooth' })
   }, [displayed])
+
+  // M25 §5: 戦闘開始直後の入力番に敵の兆しを先読み設定(以後はbattleCommand側で更新)
+  useEffect(() => {
+    if (battle?.phase === 'input' && !battle.intents) refreshBattleIntents()
+  }, [battle?.phase, battle?.intents, refreshBattleIntents])
 
   // ボス題字と戦利品スロットの寿命
   useEffect(() => {
@@ -518,6 +524,7 @@ export function BattleScreen() {
                   dimmed={isDimmed(bossCombatant.key)}
                   targetNumber={targetableEnemies.indexOf(bossCombatant) + 1}
                   elementBadge={{ el: bossCombatant.element, adv: isPlayerTurn && actor?.isAlly ? matchup(previewElement, bossCombatant.element) : 'even' }}
+                  intent={isPlayerTurn ? battle.intents?.[bossCombatant.key] : undefined}
                   onClick={() => onEnemyClick(bossCombatant)}
                   onBodyRef={registerBodyRef}
                 >
@@ -545,6 +552,7 @@ export function BattleScreen() {
                     dimmed={isDimmed(e.key)}
                     targetNumber={targetableEnemies.indexOf(e) + 1}
                     elementBadge={{ el: e.element, adv: isPlayerTurn && actor?.isAlly ? matchup(previewElement, e.element) : 'even' }}
+                    intent={isPlayerTurn ? battle.intents?.[e.key] : undefined}
                     onClick={() => onEnemyClick(e)}
                     onBodyRef={registerBodyRef}
                   >
@@ -837,8 +845,14 @@ function SkillDetailPanel({ skillId }: { skillId: string | null | undefined }) {
 }
 
 // 配置スロット+演出クラスを与える共通ラッパ
+// M25 §5: 敵の兆しカテゴリの表示ラベル(最大2字)。攻=単体 / 術=状態・属性 / 群=全体・複数。
+const INTENT_LABEL: Record<EnemyIntent, string> = { atk: '攻', tech: '術', aoe: '群' }
+const INTENT_TITLE: Record<EnemyIntent, string> = {
+  atk: '次は単体攻撃の構え', tech: '次は術(状態・属性)の構え', aoe: '次は全体・複数攻撃の構え',
+}
+
 function CombatantNode({
-  c, role, fx, targetable, clickable, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, onClick, onBodyRef, children,
+  c, role, fx, targetable, clickable, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, onClick, onBodyRef, children,
 }: {
   c: Combatant
   // M25§4.2: 前列/後列の役割だけを渡す。列数・行そのものはCSS(.slot-preset-*)側の責務にし、
@@ -856,6 +870,7 @@ function CombatantNode({
   dimmed: boolean // M25§4.3手順1: 行動者/対象以外の暗転
   targetNumber?: number // 対象選択中の1始まり番号(0以下=非表示)
   elementBadge?: { el: Element; adv: Matchup }
+  intent?: EnemyIntent // M25 §5: 敵の次行動カテゴリ(生存敵・入力番のみ)
   onClick: () => void
   onBodyRef?: (key: string, el: HTMLDivElement | null) => void
   children: React.ReactNode
@@ -892,6 +907,13 @@ function CombatantNode({
       }}
     >
       {!!targetNumber && targetNumber > 0 && <span className="target-num-badge" aria-hidden>{targetNumber}</span>}
+      {/* M25 §5: 敵の兆し — 名札の上に2字+印。色だけに頼らず文字で示す。 */}
+      {intent && c.hp > 0 && (
+        <span className={`enemy-intent intent-${intent}`} title={INTENT_TITLE[intent]}>
+          <span className="intent-dot" aria-hidden />
+          {INTENT_LABEL[intent]}
+        </span>
+      )}
       {voice && <div className="voice-bubble">{voice.voice}</div>}
       <span className="depth-mark" aria-hidden>{role === 'front' ? '前' : '後'}</span>
       <div className="combatant-art-wrap">

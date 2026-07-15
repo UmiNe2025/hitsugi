@@ -254,3 +254,40 @@
   .ally-grid.slot-preset-34 > [data-row='back'] { transform: none; }
   .slot-preset-34 .depth-mark { display: none; } /* 前後列の区別自体が無いため列印も隠す(詳細度をdesktop側の表示ルールと揃える) */
 }
+
+/* M25 §5: 敵の兆し — 名札の上に2字+印。色だけに頼らず文字で示す(§15.3)。 */
+.combatant { position: relative; }
+.enemy-intent {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 14;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px 1px 5px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f4ead6;
+  background: rgba(14, 10, 20, 0.88);
+  border: 1px solid rgba(201, 168, 106, 0.55);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.enemy-intent .intent-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.enemy-intent.intent-atk { color: #ff9d76; }   /* 攻 = 単体攻撃 */
+.enemy-intent.intent-tech { color: #9bb5ff; }  /* 術 = 状態・属性 */
+.enemy-intent.intent-aoe { color: #ffcf6b; }   /* 群 = 全体・複数 */
+
+@media (prefers-reduced-motion: no-preference) {
+  .enemy-intent { animation: intent-in 220ms ease-out; }
+  @keyframes intent-in { from { opacity: 0; transform: translate(-50%, 3px); } to { opacity: 1; transform: translate(-50%, 0); } }
+}
