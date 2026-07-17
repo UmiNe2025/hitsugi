@@ -74,6 +74,8 @@ function actionLabel(battle: BattleState, actionName: string, targetKey?: string
 }
 
 // M25§4.3 手順5: 灯脈の走行(既存veinDraw/actionSparkTravelのCSS時間と揃える)+55〜75msのhit-stop。
+// M32: オート中、味方のHPがこの割合を下回ったら回復薬を優先使用する(理不尽死の防止)
+const AUTO_HEAL_HP_RATIO = 0.35
 const VEIN_TRAVEL_MS = 150
 const HITSTOP_MS = 65
 const ACTION_LAYER_MS = VEIN_TRAVEL_MS + HITSTOP_MS
@@ -358,6 +360,21 @@ export function BattleScreen() {
   useEffect(() => {
     if (!auto || !isPlayerTurn || !battle || !actor) return
     const t = setTimeout(() => {
+      // M32修正: オートは攻撃連打専用で、味方が瀕死でも回復薬を使わず理不尽死を招いていた。
+      // 常設化で気軽にONにできる分だけ危険なので、瀕死の味方がいて回復薬を持つ場合は先に使う。
+      const consum = useGame.getState().data?.consumables ?? []
+      const wounded = battle.allies.filter((a) => a.hp > 0 && a.hp < a.maxHp * AUTO_HEAL_HP_RATIO)
+      const hpStack = wounded.length > 0
+        ? consum.find((s) => s.count > 0 && consumableById(s.id)?.effect.stat === 'hp')
+        : undefined
+      if (hpStack) {
+        const def = consumableById(hpStack.id)!
+        const worst = wounded.reduce((a, b) => (a.hp / a.maxHp <= b.hp / b.maxHp ? a : b))
+        const targetKey = def.effect.scope === 'party' ? undefined : worst.key
+        setPendingActionLabel(actionLabel(battle, def.name, targetKey))
+        battleCommand({ type: 'item', itemId: def.id, targetKey })
+        return
+      }
       const foes = battle.enemies.filter((e) => e.hp > 0)
       if (foes.length === 0) return
       const target = battle.chainTarget && foes.some((f) => f.key === battle.chainTarget)
@@ -737,7 +754,9 @@ export function BattleScreen() {
                   type="button"
                   className={`cmd-auto-persist ${auto ? 'is-on' : ''}`}
                   aria-pressed={auto}
-                  onClick={() => setAuto(!auto)}
+                  // M32修正: 技/道具/対象選択中にオートONにすると、選択が宙に浮いて素攻撃が自動発火し
+                  // target-hintがチラつく回帰があった。切替時は必ずメニューをrootへ戻す。
+                  onClick={() => { setAuto(!auto); setMenu({ kind: 'root' }) }}
                 >
                   {auto ? '■ オート停止(タップ／Esc)' : '▶ オート戦闘にする'}
                 </button>

@@ -325,54 +325,6 @@
 .enemy-grid.slot-preset-34 > [data-row='back'],
 .ally-grid.slot-preset-34 > [data-row='back'] { transform: scale(0.92) translateY(8px); }
 
-/* ---- M-C(続き): オートをボタンとして視認できる形へ ----
-   素テキスト同然で「押せる」と分からなかった(ユーザー報告)。トグルの状態も色で明示する。 */
-.cmd-auto {
-  min-height: 40px;
-  padding: 4px 22px;
-  border: 1px solid rgba(201, 168, 106, 0.4);
-  border-radius: 9px;
-  background: rgba(16, 12, 28, 0.6);
-  letter-spacing: 0.14em;
-}
-.cmd-auto.cmd-on {
-  border-color: rgba(255, 157, 69, 0.9);
-  background: rgba(255, 157, 69, 0.16);
-  color: #ffd9a0;
-}
-.cmd-auto:focus-visible { outline: 2px solid #c9a86a; outline-offset: 2px; }
-
-/* ---- A(M28): オート停止の常時到達性 ---- */
-.auto-stop-strip {
-  position: fixed;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  z-index: 60;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 20px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 157, 69, 0.85);
-  background: rgba(28, 14, 10, 0.92);
-  color: #ffd9a0;
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
-}
-.auto-stop-strip:hover { background: rgba(255, 157, 69, 0.22); }
-.auto-stop-strip:focus-visible { outline: 2px solid #ffd9a0; outline-offset: 2px; }
-.auto-stop-dot {
-  width: 9px; height: 9px; border-radius: 2px; background: #ff9d45;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .auto-stop-dot { animation: autoStopPulse 1s ease-in-out infinite; }
-  @keyframes autoStopPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-}
-
 /* A(M29+): 戦闘コマンド盤の常設オート切替。盤の最上段に置き、手番・メニュー・演出中も常に見える。
    コマンドの流れ内なので重ならない。オフ=落ち着いた金/オン=緋の強調で状態が一目で分かる。 */
 .cmd-auto-persist {
