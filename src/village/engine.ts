@@ -578,7 +578,10 @@ export class VillageEngine {
       node.y = (ty + 0.62) * V_TILE
       node.zIndex = node.y
       if (k.spriteUrl) {
+        // 老い姿/幼子シートが無ければ成人姿へ退避(buildPlayerと同じ二段フォールバック)
+        const adultUrl = k.spriteUrl.replace(/\/(walke|walkc)_/, '/walk_')
         void Assets.load(k.spriteUrl)
+          .catch(() => Assets.load(adultUrl))
           .then((tex: Texture) => {
             if (this.destroyed) return
             const sp = new Sprite(tex)
@@ -614,23 +617,36 @@ export class VillageEngine {
   private async buildPlayer(): Promise<void> {
     this.player = new Container()
     if (this.opts.leaderSpriteBase) {
-      try {
-        const dirs = ['down', 'up', 'left'] as const
-        const tex: Record<'down' | 'up' | 'left', Texture[]> = { down: [], up: [], left: [] }
-        for (const d of dirs) {
-          for (let i = 0; i < 3; i++) {
-            tex[d].push(await Assets.load(`${this.opts.leaderSpriteBase}_${d}_${i}.png`))
+      // 老い姿(walke_)/幼子(walkc_)のシートが無ければ成人姿(walk_)へ静かに退避する
+      // (dungeon/engine.ts と同じ設計。M23工場汚染分は assets_src/quarantine_sprites_m23 へ退避済み)
+      const adultBase = this.opts.leaderSpriteBase.replace(/\/(walke|walkc)_/, '/walk_')
+      const bases = [...new Set([this.opts.leaderSpriteBase, adultBase])]
+      let loaded: Record<'down' | 'up' | 'left', Texture[]> | null = null
+      for (const b of bases) {
+        try {
+          const dirs = ['down', 'up', 'left'] as const
+          const tex: Record<'down' | 'up' | 'left', Texture[]> = { down: [], up: [], left: [] }
+          for (const d of dirs) {
+            for (let i = 0; i < 3; i++) {
+              tex[d].push(await Assets.load(`${b}_${d}_${i}.png`))
+            }
           }
+          loaded = tex
+          break
+        } catch {
+          // 次のbase(成人姿)へ — 全滅なら灯影
         }
-        this.textures = tex
-        const sp = new Sprite(tex.down[1])
+      }
+      if (loaded) {
+        this.textures = loaded
+        const sp = new Sprite(loaded.down[1])
         sp.anchor.set(0.5, 0)
         const scale = (V_TILE * 1.15) / sp.height
         sp.scale.set(scale)
         sp.y = -V_TILE * 0.9
         this.playerSprite = sp
         this.player.addChild(sp)
-      } catch {
+      } else {
         this.player.addChild(this.flameFigure())
       }
     } else {
