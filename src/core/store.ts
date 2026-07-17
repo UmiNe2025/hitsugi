@@ -807,6 +807,7 @@ export const useGame = create<GameStore>((set, get) => {
         nd = chronicle(nd, 'event', `${c.name}、成人の儀。灯座「${toza.name}」を授かる。`)
         return nd
       })
+      saveGame(get().data!) // M33: 一代一度の不可逆選択(灯座)を即保存 — タブ閉じ/クラッシュで消えないように
       get().processNextScene()
     },
 
@@ -832,6 +833,7 @@ export const useGame = create<GameStore>((set, get) => {
         nd = chronicle(nd, 'event', `${c.name}、生業の儀。家業「${job.name}」の道を歩み始める。`)
         return nd
       })
+      saveGame(get().data!) // M33: 一代一度の不可逆選択(家業)を即保存
       get().processNextScene()
     },
 
@@ -844,6 +846,7 @@ export const useGame = create<GameStore>((set, get) => {
         nd = chronicle(nd, 'era', `${head?.name ?? '当主'}、家訓「${motto === 'budan' ? '武断' : motto === 'gakumon' ? '学問' : motto === 'shinjin' ? '信心' : '商売'}」を掲げる。`)
         return nd
       })
+      saveGame(get().data!) // M33: 家訓(一代一度)を即保存
     },
 
     // v3.1 M16-5: 随行させる眷属を選ぶ(懐いた眷属のうちから一体だけ)
@@ -938,6 +941,7 @@ export const useGame = create<GameStore>((set, get) => {
         nd = chronicle(nd, 'event', `${c.name}の遺言 — 「${trimmed}」`, c.id)
         return nd
       })
+      saveGame(get().data!) // M33: 遺言(故人・一度きり)を即保存
     },
 
     // v3.1 M9(M16-2): 誕生時の命名。家譜の産声の行も新しい名で書き直す
@@ -957,6 +961,7 @@ export const useGame = create<GameStore>((set, get) => {
           ),
         }
       })
+      saveGame(get().data!) // M33: 命名(誕生時・一度きり)を即保存
     },
 
     resolveEvent: (choiceIdx) => {

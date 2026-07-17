@@ -22,13 +22,16 @@ const BAK_BUDGET_CHARS = 4_500_000 // 本体+BAK合算の目安(localStorage≈5
 
 // 保存トラブル通知の受け口(App.tsxがtoastへ配線)。coreからuiへ依存しない。
 let troubleSink: ((msg: string) => void) | null = null
-let warnedThisSession = false
+// M33: 深刻度別ラッチ。以前は単一フラグで、先に軽い警告(quotaで年代記を畳んだ等)が出ると、
+// 後から起きる致命(全段保存失敗=この端末にデータが残っていない)のトーストを握り潰していた。
+// warn/critical を別ラッチにし、致命は軽い警告に関係なく必ず一度は伝える。
+const warnedBySeverity = { warn: false, critical: false }
 export function setSaveTroubleSink(fn: ((msg: string) => void) | null): void {
   troubleSink = fn
 }
-function warnOnce(msg: string): void {
-  if (warnedThisSession) return
-  warnedThisSession = true
+function warnOnce(msg: string, severity: 'warn' | 'critical' = 'warn'): void {
+  if (warnedBySeverity[severity]) return
+  warnedBySeverity[severity] = true
   troubleSink?.(msg)
 }
 
@@ -135,8 +138,8 @@ export function saveGame(data: GameData): void {
       }
     }
   }
-  // 全段失敗(プライベートモード等の恒常失敗を含む)
-  warnOnce('この端末には記が保存できていない。「セーブの管理」からの書き出しで控えを残すことを強く勧める。')
+  // 全段失敗(プライベートモード等の恒常失敗を含む)= 致命。軽い警告に握り潰されないよう critical で。
+  warnOnce('この端末には記が保存できていない。「セーブの管理」からの書き出しで控えを残すことを強く勧める。', 'critical')
 }
 
 // v1(季節単位)→v3(月単位): 時間軸を3倍に換算
