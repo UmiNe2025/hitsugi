@@ -151,6 +151,19 @@ export interface ActionResult {
   entries: BattleLogEntry[]
 }
 
+// M33: バフ効果量をpower由来にする(旧: atkUp固定×1.25 / defUp固定÷1.2 で、powerもbuffKind別の威力差も無視。
+// himamori(30)もgs_earth3「大防御」(48)も同一効果だった)。対称化: 攻撃も防御も (1+mag) の同じ枠で扱い、
+// 両者同power同時なら相殺する(旧の攻撃常時有利 1.25/1.2≈+4% を是正=defUp非対称の解消も兼ねる)。
+// アンカーは実power分布で決める: 防御バフ平均power≈45で mag≈0.20(=旧 1/1.2 の実効-16.7%相当)に寄せ、
+// 防御の全面易化を避ける(devil HIGH-1)。攻撃バフは相対的にやや弱まる方向で overshoot を避ける。
+const BUFF_MAG_PER_POWER = 0.0045
+const BUFF_MAG_MIN = 0.14
+const BUFF_MAG_MAX = 0.33
+/** バフ技のpowerを効果量(与ダメ/被ダメの±割合)へ写す。単調増加・min/maxでclamp。 */
+export function buffMagFromPower(power: number): number {
+  return Math.min(BUFF_MAG_MAX, Math.max(BUFF_MAG_MIN, power * BUFF_MAG_PER_POWER))
+}
+
 // 行動を解決し新しい状態を返す(不変更新)
 export function performAction(st0: BattleState, actorKey: string, action: BattleAction, rng: Rng): ActionResult {
   let st = st0
@@ -264,7 +277,8 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         const rageK = actor.boonRage && actor.hp <= actor.maxHp / 2 ? 1.25 : 1
         const atkV = (isMagic ? actor.matk : actor.atk) * rageK
         const defV = (isMagic ? t.mdef : t.def) * (t.guard ? 1.8 : 1)
-        const buffMult = (actor.buffs.atkUp ? 1.25 : 1) / (t.buffs.defUp ? 1.2 : 1)
+        // M33: 対称なpower由来倍率。atkMag/defMagは残ターン中のみ生き、decayでturnsと同時にクリアされる。
+        const buffMult = (1 + (actor.buffs.atkMag ?? 0)) / (1 + (t.buffs.defMag ?? 0))
         // M28-B: 減算防御で弱攻撃が1固定になるのを是正。生ダメージの一定割合(下限)は必ず通す。
         // 下限はguard/back倍率の「前」に置き、防御姿勢・後列の軽減は下限にも効かせる(devil指摘)。
         const raw = atkV * (power / 100) * (0.9 + rng.next() * 0.2)
@@ -341,12 +355,16 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
     } else if (skill.type === 'buff') {
       // M29修正: id白判定を廃し、Skill.buffKind で防御/攻撃を決める(既定=攻撃)。
       // 旧: himamori/g_iwakura の2idのみdefで、灯座「巌」・家業「盾」等の防御バフが攻撃上昇に化けていた。
+      // M33: 効果量をpower由来に(大防御48>守り30)。再付与はmax上書き+上限clampで、多人数の重ね掛けが
+      // 青天井(mag加算)になる exploit を防ぐ(現行の「3ターンに再セット」意味論=非累積を保つ)。
       const isDef = skill.buffKind === 'def'
+      const mag = buffMagFromPower(skill.power)
       for (const t of friends.filter((c) => c.hp > 0)) {
-        updateCombatant(t.key, (c) => ({
-          ...c,
-          buffs: { ...c.buffs, [isDef ? 'defUp' : 'atkUp']: 3 },
-        }))
+        updateCombatant(t.key, (c) =>
+          isDef
+            ? { ...c, buffs: { ...c.buffs, defUp: 3, defMag: Math.min(BUFF_MAG_MAX, Math.max(c.buffs.defMag ?? 0, mag)) } }
+            : { ...c, buffs: { ...c.buffs, atkUp: 3, atkMag: Math.min(BUFF_MAG_MAX, Math.max(c.buffs.atkMag ?? 0, mag)) } },
+        )
       }
       push(`${actor.name}の${skill.name}! 一族の${isDef ? '守り' : '闘気'}が高まる。`, 'heal', {
         actorKey: actor.key, element: skill.element,
@@ -396,14 +414,20 @@ function endOfAction(st0: BattleState, entries: BattleLogEntry[], rng?: Rng): Ac
     idx = 0
     turn += 1
     // ターン終了処理: ガード解除・バフ減衰
-    const decay = (c: Combatant): Combatant => ({
-      ...c,
-      guard: false,
-      buffs: {
-        atkUp: c.buffs.atkUp && c.buffs.atkUp > 1 ? c.buffs.atkUp - 1 : undefined,
-        defUp: c.buffs.defUp && c.buffs.defUp > 1 ? c.buffs.defUp - 1 : undefined,
-      },
-    })
+    const decay = (c: Combatant): Combatant => {
+      const atkAlive = !!c.buffs.atkUp && c.buffs.atkUp > 1
+      const defAlive = !!c.buffs.defUp && c.buffs.defUp > 1
+      return {
+        ...c,
+        guard: false,
+        buffs: {
+          atkUp: atkAlive ? c.buffs.atkUp! - 1 : undefined,
+          defUp: defAlive ? c.buffs.defUp! - 1 : undefined,
+          atkMag: atkAlive ? c.buffs.atkMag : undefined, // M33: 残ターンが尽きたら効果量もクリア
+          defMag: defAlive ? c.buffs.defMag : undefined,
+        },
+      }
+    }
     allies = allies.map(decay)
     enemies = enemies.map(decay)
     st = { ...st, allies, enemies }

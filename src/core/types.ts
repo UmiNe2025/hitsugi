@@ -225,7 +225,9 @@ export interface Combatant {
   enemyId?: string // 敵のみ
   row: 'front' | 'back'
   guard: boolean
-  buffs: { atkUp?: number; defUp?: number } // 残ターン数
+  // M33: atkUp/defUp=残ターン数(既存)、atkMag/defMag=効果量(power由来・max上書き・上限clamp)。
+  // 効果量枠を分けることで「大防御(power48)>守り(power30)」を実装しつつ、残ターンのdecayは不変に保つ。
+  buffs: { atkUp?: number; defUp?: number; atkMag?: number; defMag?: number }
   chainCount: number // 継足カウント(味方全体で敵ごと管理は battle 側)
   kinKeys?: string[] // v3.1 M12-7: 連携奥義の血縁(兄妹/親子)にあたる味方key
   personalityId?: string // v3.1 M15-1: 戦闘台詞の性根
