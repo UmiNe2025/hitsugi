@@ -1084,3 +1084,16 @@
 - **テスト追加**: `generated_maps.test.ts`(39/171+塔100+171層の個数/BFS)、`rare_encounters.test.ts`(10万floor分布+40地域生成+来歴)、`rare_store.test.ts`(勝利/逃走/全滅/二重確定)、既存region/item tests拡張。
 - **検証**: 変更前 build/lint/vitest **468/468緑**。最終 `npm run build`成功、`npm run lint` exit 0(並行M25の`perf.spec.ts`に未使用import警告1件のみ)、`npm test` **524/524緑**、`validate_data` 0 errors、生成器の再実行SHA-256一致。Playwrightは1440×900 / 1280×720 / 768×1024 / 390×844 / 360×800の全5幅で、2地域の実描画差と稀相名・遺物予告を **10/10緑**。独立監査結果はmission stateへ記録する。
 - **独立監査**: **GO**。Critical/High/Medium 0、Low 1(実engine再mount専用テストの将来追加・非阻害)。契約全項PASS、監査側でも重点208件/全524件、lint、validate_data、diff checkを再実行。帰還時のrun loot→inventory一度移送テストは監査中に追加済み。未commit・未push。
+
+## 2026-07-18 (M32 第2次総合監査 — 追加改善のsonnet並列洗い出し /mission)
+
+- **依頼**: さらに改善点がないかsonnetを並列起動させて徹底的に洗い出す。前提=M29で6次元監査済(10修正)、M28-M31の新コードは全て未push。
+- **契約**: M28-31新コード回帰+M29未修正報告項目+全画面を6次元でsonnet並列再監査し、各findingにfile:line/重大度/根拠を付す。M29既出・修正済みは再報告しない。指揮側が敵対的再検証→低リスク高価値を緑実証で適用、残りは報告。監査区分=自己監査(push無し・git可逆)。
+- **調査**: 6投入(I-A新コード回帰/I-Bセーブ状態/I-C UI全画面a11y/I-Dバランス経済/I-E性能技術債/I-F体験導線)。詳細台帳は docs/MISSION_M32_AUDIT2.md ⑩。
+- **適用(第1バッチ13件)**: ①オート×メニュー競合(私M31回帰・setMenu root) ②事件タグ誤分類(battle:true→賭け) ③BAK saveSeqリセットで健全保存が古BAKに敗北(CRITICAL・seq=max(KEY,BAK)+1) ④Scenes儀式カードのキーボード到達不能(CRITICAL a11y・role/tabIndex/onKeyDown) ⑤報酬tier/初期地域をunlockFame基準へ(配列順非単調の是正) ⑥オート低HP時に回復薬使用(理不尽死防止) ⑦孤立CSS約45行削除(私M31デッドコード) ⑧home_polish CSSスコープ漏れ ⑨isValidSave形状検証(equipment/inventory/consumables) ⑩灯尽き説明の復活(LanternRing title/aria) ⑪exhaustive-deps Lint有効化 ⑫Settings aria-pressed+音量label ⑬見世(薬)ラベル。
+- **適用(第2バッチ a11y純属性)**: Pact role="listbox"除去+god-row aria-pressed/aria-disabled、Chronicle/Codex/Pact filter-tab aria-pressed(FamilyTree実装済パターンの複製)。
+- **テスト硬化**: `auto_heal.spec.ts`新設(瀕死+薬でオート回復薬使用/技盤中オートON→root復帰。後者はmobile bottom-sheet設計につきPC 3幅専用)。`rare_encounters.test.ts`に報酬tier単調性テスト(drop.shopTier===rewardTier厳密一致を利用・公開API経由)。
+- **新発見(報告)**: モバイル≤560pxは技盤がposition:fixed/z-index:55 bottom-sheetでコマンド帯を覆う設計(意図的・欠陥でない)。オートはroot帯から常時到達可でM31要件充足。
+- **報告のみ(設計/大規模/要リファクタ)**: buff技power無視(全バフ再バランス)/難易度崖(玄冬)/回復薬段階/装備価格カーブ/defUp非対称/bundle分割/複数タブ競合/歩行ダンジョンcheckpoint/sealBoss・renderFailedテスト(要純関数抽出リファクタ・次段)/ActionDock safe-area/Codex aria-current/技MP mobileラベル。
+- **検証**: tsc -b 0 / oxlint 0 / vitest **553緑**(rare+1) / playwright 第1バッチ **198緑+2skip**(全5幅)、第2バッチ codex_seen+menu_a11y **15緑**。validate_data未変更。
+- **git**: M32を8論理グループでcommit(自己監査区分=git可逆)。**push=公開デプロイはユーザー承認待ち**(未push)。
