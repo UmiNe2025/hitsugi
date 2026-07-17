@@ -69,7 +69,10 @@ export function enemyPower(tier: number): { hp: number; atk: number } {
 }
 
 export function combatantFromEnemy(e: EnemyDef, idx: number): Combatant {
-  const pow = enemyPower(e.tier)
+  // M29修正: 老成(_o)個体は variantsOf で既に ×1.55hp/×1.35atk 強化済み。その上に enemyPower を
+  // 二重乗算すると tier4老が tier5ボス(最終ボス玄冬 atk85 すら)を上回る回帰が出るため、老成には
+  // enemyPower を適用しない(若/基礎/常には従来通り=M28の序盤の手応えは維持)。
+  const pow = e.id.endsWith('_o') ? { hp: 1, atk: 1 } : enemyPower(e.tier)
   const atk = Math.round(e.atk * pow.atk)
   return {
     key: `en_${e.id}_${idx}_${uid('c')}`,
