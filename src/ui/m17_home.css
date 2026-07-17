@@ -182,3 +182,19 @@
 .confirm-notes p { font-size: 12.5px; color: var(--gold); margin: 2px 0; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .confirm-actions .btn { margin: 0; }
+
+/* B(M29+): 事件モーダルの目的明示フレーム + 選択肢の吉凶タグ(何のための選択かを可視化) */
+.ev-frame {
+  font-size: 12.5px; color: var(--text-dim, rgba(230, 220, 205, 0.72));
+  line-height: 1.5; margin: 0 0 12px; padding: 8px 10px;
+  border-left: 2px solid rgba(201, 168, 106, 0.5);
+  background: rgba(201, 168, 106, 0.06); border-radius: 0 4px 4px 0;
+}
+.ev-choice { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+.ev-choice-label { flex: 1; min-width: 0; }
+.ev-choice-tag {
+  flex-shrink: 0; font-size: 11px; padding: 2px 9px; border-radius: 999px;
+  letter-spacing: 0.03em; white-space: nowrap;
+}
+.ev-choice-tag.is-gamble { color: #ffcf8a; border: 1px solid rgba(255, 157, 69, 0.6); background: rgba(255, 157, 69, 0.1); }
+.ev-choice-tag.is-safe { color: #9fd4b0; border: 1px solid rgba(120, 200, 150, 0.45); background: rgba(120, 200, 150, 0.08); }

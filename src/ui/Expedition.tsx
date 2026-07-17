@@ -396,20 +396,28 @@ function EventDialog({ eventId }: { eventId: string }) {
     <div className="modal-back" role="presentation">
       <div className="modal" role="dialog" aria-modal="true" aria-label="事件 — 選ばねば先へ進めない" ref={ref}>
         <h2 className="panel-title">事件</h2>
+        {/* B(M29+): 事件の目的を明示 — 「何のための選択か」が分かるように */}
+        <p className="ev-frame">夜藪の出来事。選んだ道が実り(宝・縁・灯)にも災い(傷・灯減り)にもなる。どちらを選んでも先へは進める。</p>
         <MaybeImg src={eventImg(eventId)} className="ev-img" />
         <p style={{ marginBottom: 16, fontSize: 15 }}>{ev.text}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {ev.choices.map((c, i) => (
-            <button
-              key={i}
-              className="btn"
-              disabled={c.requireHoto !== undefined && data.hoto < c.requireHoto}
-              onClick={() => resolveEvent(i)}
-            >
-              {c.label}
-              {c.successRate !== undefined && ' (賭け)'}
-            </button>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {ev.choices.map((c, i) => {
+            const gamble = c.successRate !== undefined || c.outcomes.length > 1
+            const cost = c.requireHoto !== undefined ? `(奉燈${c.requireHoto})` : ''
+            return (
+              <button
+                key={i}
+                className="btn ev-choice"
+                disabled={c.requireHoto !== undefined && data.hoto < c.requireHoto}
+                onClick={() => resolveEvent(i)}
+              >
+                <span className="ev-choice-label">{c.label} {cost}</span>
+                <span className={`ev-choice-tag ${gamble ? 'is-gamble' : 'is-safe'}`}>
+                  {gamble ? '賭け — 吉凶あり' : '確かな道'}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>
