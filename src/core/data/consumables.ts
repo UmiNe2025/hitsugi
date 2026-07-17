@@ -14,9 +14,12 @@ export interface ConsumableDef {
   price: number // 奉燈(hoto)
   effect: ConsumableEffect
   icon: string // 表示用の字(絵文字1字。素材追加まではこれで足りる)
+  unlockFame?: number // M33 ⑮: 解禁武功。未設定=0=開始直後から購入可。上位薬は進度(武功)で解禁する。
 }
 
-// 序盤から手が届く価格帯。party回復は割高(乱用を抑える)。
+// M33 ⑮: 装備15段・敵tier4+ボス(hp2150)に対し、旧は回復薬4種(hp60/165・mp45・party75)が無段階だった。
+// 上位tier(hp360・mp120・party180)を追加し、進度(unlockFame)で解禁して装備の伸びに追随させる。
+// party回復は割高(乱用を抑える)。序盤の3種(洗い草/練り膏/灯明油)は解禁武功0=最初から手が届く。
 export const CONSUMABLES: ConsumableDef[] = [
   {
     id: 'araigusa',
@@ -49,6 +52,34 @@ export const CONSUMABLES: ConsumableDef[] = [
     price: 145,
     effect: { stat: 'hp', amount: 75, scope: 'party' },
     icon: '💧',
+  },
+  // ---- M33 ⑮: 進度で解禁される上位薬 ----
+  {
+    id: 'mantou_yu',
+    name: '満灯油',
+    desc: '尽きた灯力(ともしび)を大きく満たす上等の油。',
+    price: 95,
+    effect: { stat: 'mp', amount: 120, scope: 'one' },
+    icon: '🕯️',
+    unlockFame: 100,
+  },
+  {
+    id: 'bankin_kou',
+    name: '万金膏',
+    desc: '万金に値する秘伝の傷薬。深い手傷も瞬く間に塞ぐ。',
+    price: 130,
+    effect: { stat: 'hp', amount: 360, scope: 'one' },
+    icon: '🏺',
+    unlockFame: 150,
+  },
+  {
+    id: 'ooshizuku',
+    name: '大星の雫',
+    desc: '星神の大慈悲を宿した秘薬。一族みなの深手を癒す。惜しみて使え。',
+    price: 360,
+    effect: { stat: 'hp', amount: 180, scope: 'party' },
+    icon: '🌟',
+    unlockFame: 250,
   },
 ]
 

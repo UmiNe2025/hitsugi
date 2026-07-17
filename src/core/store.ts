@@ -1110,7 +1110,8 @@ export const useGame = create<GameStore>((set, get) => {
     buyConsumable: (id) => {
       mutate((d) => {
         const def = consumableById(id)
-        if (!def || d.hoto < def.price) return d
+        // M33 ⑮: 上位薬は解禁武功(unlockFame)未満では購えない(進度ゲート)。奉燈不足も従来どおり弾く。
+        if (!def || d.hoto < def.price || (def.unlockFame !== undefined && d.fame < def.unlockFame)) return d
         const stacks = d.consumables ?? []
         const idx = stacks.findIndex((s) => s.id === id)
         const next =

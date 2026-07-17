@@ -56,6 +56,22 @@ describe('M28-C 回復薬(消耗品)', () => {
     expect(d.hoto).toBe(5)
   })
 
+  it('M33 ⑮: 上位薬は解禁武功(unlockFame)未満では買えず、到達後に買える', () => {
+    const g = useGame.getState()
+    // 万金膏(unlockFame 150)。奉燈は潤沢だが武功100(未満)では購えない。
+    useGame.setState({ data: { ...g.data!, hoto: 1000, fame: 100, consumables: [] } })
+    useGame.getState().buyConsumable('bankin_kou')
+    let d = useGame.getState().data!
+    expect(d.consumables ?? [], '武功未満では在庫が増えない(ゲートが効いている)').toEqual([])
+    expect(d.hoto, '武功未満では奉燈も減らない').toBe(1000)
+    // 武功150到達後は買える。
+    useGame.setState({ data: { ...useGame.getState().data!, fame: 150 } })
+    useGame.getState().buyConsumable('bankin_kou')
+    d = useGame.getState().data!
+    expect((d.consumables ?? []).find((s) => s.id === 'bankin_kou')?.count, '解禁後は買える').toBe(1)
+    expect(d.hoto, '解禁後は奉燈が減る').toBe(1000 - 130)
+  })
+
   it('消耗品入りセーブが load→save→load で安定(devil #2 旧セーブ互換)', () => {
     const g = useGame.getState()
     const withConsum = { ...g.data!, consumables: [{ id: 'araigusa', count: 3 }, { id: 'tomoshi_abura', count: 1 }] }

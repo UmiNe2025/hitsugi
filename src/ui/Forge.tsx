@@ -527,14 +527,16 @@ export function ForgeScreen() {
           <div className="consum-list">
             {CONSUMABLES.map((c) => {
               const owned = (data.consumables ?? []).find((s) => s.id === c.id)?.count ?? 0
+              const locked = c.unlockFame !== undefined && data.fame < c.unlockFame // M33 ⑮: 上位薬は武功で解禁
               const afford = data.hoto >= c.price
               return (
-                <div key={c.id} className="consum-cell">
+                <div key={c.id} className={`consum-cell ${locked ? 'is-locked' : ''}`}>
                   <span className="consum-ico" aria-hidden>{c.icon}</span>
                   <div className="consum-body">
                     <span className="consum-name">
                       {c.name}
                       {owned > 0 && <span className="consum-owned">控え×{owned}</span>}
+                      {locked && <span className="consum-lock">武功{c.unlockFame}で解禁</span>}
                     </span>
                     <span className="consum-eff">
                       {c.effect.scope === 'party' ? '一族みな ' : ''}
@@ -544,13 +546,13 @@ export function ForgeScreen() {
                   </div>
                   <button
                     className="btn btn-primary consum-buy"
-                    disabled={!afford}
+                    disabled={!afford || locked}
                     onClick={() => {
                       buyConsumable(c.id)
                       emitToast(`${c.name}を購うた — 残り奉燈${data.hoto - c.price}`, 'info')
                     }}
                   >
-                    {c.price} 奉燈で購う
+                    {locked ? `武功${c.unlockFame}で解禁` : `${c.price} 奉燈で購う`}
                   </button>
                 </div>
               )
