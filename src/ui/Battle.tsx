@@ -833,6 +833,7 @@ export function BattleScreen() {
 }
 
 // 第N巡と、現在から最大6手の行動順(§5.4「上段行動順」)。§3.3: 次撃倍率をここへ常設する
+// UI視覚(2026-07-17): 「今」を発光バッジ化、敵味方を色非依存の1字印(味/魔)でも判別できるようにする。
 function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGame.getState>['battle']> }) {
   const byKey = new Map([...battle.allies, ...battle.enemies].map((c) => [c.key, c]))
   const seq = [...battle.order.slice(battle.orderIndex), ...battle.order.slice(0, battle.orderIndex)]
@@ -846,10 +847,16 @@ function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGam
   return (
     <div className="turn-order" aria-label="行動順" data-zone="turnorder">
       <span className="turn-order-turn">第{battle.turn}巡</span>
-      {mult !== null && <span className="turn-chain-mult" title="次撃倍率">次撃×{mult.toFixed(2)}</span>}
+      {mult !== null && (
+        <span className="turn-chain-mult" title="次撃倍率">
+          <i className="turn-chain-mult-ico" aria-hidden>灯</i>次撃×{mult.toFixed(2)}
+        </span>
+      )}
       {seq.map((c, i) => (
         <span key={`${c.key}-${i}`} className={`turn-chip ${c.isAlly ? 'is-ally' : 'is-enemy'} ${i === 0 ? 'is-now' : ''}`}>
-          {i === 0 && <em>今</em>}{c.name}
+          {i === 0 && <em>今</em>}
+          <i className="turn-chip-side">{c.isAlly ? '味' : '魔'}</i>
+          {c.name}
         </span>
       ))}
     </div>

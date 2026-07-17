@@ -99,3 +99,66 @@
     max-width: 200px;
   }
 }
+
+/* ============================================================
+   UI視覚(2026-07-17): 隊員HP札の情報リッチ化(視覚のみ・寸法は不変)。
+   既存の.ally-cell/Bar(components.tsx)のDOM構造はそのまま、色・グラデ・タイポの階調だけを足す。
+   高さに影響する値(padding/line-height/.barの高さ)にはあえて触れない —
+   .dungeon-logのモバイルbottom:168px(既存算出済み位置)との新規交差を避けるため。
+   ============================================================ */
+.dungeon-hud-party .ally-cell {
+  position: relative;
+  background: linear-gradient(160deg, rgba(30, 21, 14, 0.88), rgba(12, 9, 8, 0.9));
+  border-left: 3px solid rgba(201, 168, 106, 0.55);
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+.dungeon-hud-party .ally-name {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* ゲージ化 — グラデに上面の艶(sheen)を足す。sheenは.bar-fillの子(::after)止まりなので
+   .bar-text(数値)は常にその上に描画され、視認性は変わらない。 */
+.dungeon-hud-party .bar {
+  border-radius: 4px;
+}
+.dungeon-hud-party .bar-hp .bar-fill {
+  position: relative;
+  background: linear-gradient(180deg, #ff9569 0%, #e8724c 45%, #c73e3a 100%);
+}
+.dungeon-hud-party .bar-hp .bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%);
+  pointer-events: none;
+}
+.dungeon-hud-party .bar-text {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* 瀕死(残HP25%以下、Dungeon.tsx側でis-criticalを付与) — 燠火/朱の警戒色。名も連動させる。 */
+.dungeon-hud-party .ally-cell.is-critical {
+  border-left-color: var(--ember);
+}
+.dungeon-hud-party .ally-cell.is-critical .ally-name {
+  color: var(--ember-text);
+}
+.dungeon-hud-party .ally-cell.is-critical .bar-hp .bar-fill {
+  background: linear-gradient(180deg, #ff8a5c 0%, var(--ember) 55%, #6e1c1a 100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dungeon-hud-party .ally-cell.is-critical .bar {
+    animation: partyHpCriticalPulse 1.6s ease-in-out infinite;
+  }
+}
+.reduce-motion .dungeon-hud-party .ally-cell.is-critical .bar { animation: none !important; }
+@keyframes partyHpCriticalPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(199, 62, 58, 0); }
+  50% { box-shadow: 0 0 9px 2px rgba(199, 62, 58, 0.55); }
+}

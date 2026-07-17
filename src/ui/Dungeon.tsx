@@ -29,6 +29,9 @@ const DPAD_ARIA_LABEL: Record<'up' | 'down' | 'left' | 'right', string> = {
   up: '上', down: '下', left: '左', right: '右',
 }
 
+// UI視覚(2026-07-17): 隊員HP札の瀕死しきい値。表示専用の派生値であり、戦闘/探索の計算には使わない。
+const PARTY_HP_CRITICAL_RATIO = 0.25
+
 // M24 §4.5: 短期目的の算出(石碑の残数はfloorDef.ascii+run.usedから導出、階段発見/灯不足はengine/runから)
 function monumentProgress(ascii: string[], floorIndex: number, used: string[]): { found: number; total: number } {
   const usedSet = new Set(used)
@@ -352,12 +355,15 @@ function DungeonFloor() {
       <FirstActIntro />
 
       <div className="dungeon-hud-party">
-        {party.map((c) => (
-          <div key={c.id} className="ally-cell" data-zone="party">
-            <div className="ally-name">{c.name}</div>
-            <Bar value={c.hp} max={c.maxHp} kind="hp" />
-          </div>
-        ))}
+        {party.map((c) => {
+          const isCritical = c.maxHp > 0 && c.hp / c.maxHp <= PARTY_HP_CRITICAL_RATIO
+          return (
+            <div key={c.id} className={`ally-cell${isCritical ? ' is-critical' : ''}`} data-zone="party">
+              <div className="ally-name">{c.name}</div>
+              <Bar value={c.hp} max={c.maxHp} kind="hp" />
+            </div>
+          )
+        })}
       </div>
 
       <RecentLog log={run.log} />

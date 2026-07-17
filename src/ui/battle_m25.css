@@ -382,3 +382,145 @@
   margin-right: 0.15em;
   font-size: 1.05em; line-height: 1;
 }
+
+/* ============================================================
+   UI視覚(2026-07-17): 戦闘コマンド盤・行動順バーの情報リッチ化(視覚のみ)。
+   戦闘計算/AI/報酬/handlerには一切触れない。既存トークン(--gold/--flame/--ember/--sel等)と
+   既存の色分け(index.css .ally-cell.targetable:hover の緑など)だけを再利用し、新色は増やさない。
+   ============================================================ */
+
+/* ---- turnpanel-center: 主要4コマンドの「盤」自体にわずかな奥行きを足す(displayはbattle_m24.css継承) ---- */
+.turnpanel-center {
+  background: linear-gradient(160deg, rgba(33, 23, 15, 0.94), rgba(14, 9, 7, 0.97));
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ---- コマンド6ボタン: 触れる質感(枠/内影/押下状態)。onClick/disabled/data-zone/aria/文言/
+   DOM構造は一切変更しない(既存JSXのまま)— 色・枠・影・タイポのみのCSS追加。
+   .cmd-autoは既存の独立トグル意匠(§M-C)を保つため:not(.cmd-auto)で除外する。
+   寸法に影響する値(min-height/padding/gap)は変更しない — 44px gate/横スクロールgateを崩さないため。 ---- */
+.cmd-grid .cmd-btn:not(.cmd-auto) {
+  position: relative;
+  background: linear-gradient(180deg, rgba(58, 42, 26, 0.55), rgba(20, 14, 10, 0.72));
+  border: 1px solid rgba(201, 168, 106, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+    0 2px 5px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.cmd-grid .cmd-btn:not(.cmd-auto):hover:not(:disabled) {
+  border-color: var(--amber);
+  background: linear-gradient(180deg, rgba(90, 62, 30, 0.6), rgba(28, 18, 10, 0.78));
+}
+.cmd-grid .cmd-btn:not(.cmd-auto):active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+/* 無効表示の可読性 — 既存opacity:0.4(上のM25§4.4規則)に彩度/明度も足して「押せない」をより明確にする */
+.cmd-grid .cmd-btn:disabled {
+  filter: saturate(0.35) brightness(0.85);
+}
+/* 攻撃(cmd-main)は主コマンドとして一段明るい琥珀を纏う。:not(.cmd-auto)と同specificity(3クラス相当)
+   のため、後勝ちで背景/枠/影を上書きする(cmd-grid .cmd-btn.cmd-mainと明示し曖昧さを避ける)。 */
+.cmd-grid .cmd-btn.cmd-main {
+  background: linear-gradient(180deg, rgba(232, 163, 61, 0.34), rgba(120, 72, 20, 0.55));
+  border-color: var(--amber);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(232, 163, 61, 0.25);
+  font-weight: 700;
+}
+
+/* 道具の数量バッジ — 既存の<span className="sk-info">をボタン内側の円形バッジへ(絶対配置だが
+   top/right共に3pxでボタン内側に収め、隣接ボタンへはみ出させない)。pointer-events:noneで
+   クリック横取りを防ぐ(既存M-B修正と同じ配慮)。skill-list/item-list側の.sk-infoは
+   .cmd-gridの外のため無関係(この規則は影響しない)。 */
+.cmd-grid .cmd-btn .sk-info {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--night-deep);
+  background: var(--flame);
+  border: 1px solid rgba(11, 15, 30, 0.6);
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+  pointer-events: none;
+  margin-left: 0;
+}
+
+/* ---- 行動順チップ: 敵味方を色以外(1字印「味」/「魔」)でも判別可能にする。
+   box-shadowで塗るため既存.is-now(index.css: border/color/background)とプロパティが競合しない。 ---- */
+.turn-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.turn-chip-side {
+  font-style: normal;
+  font-size: 9.5px;
+  opacity: 0.8;
+}
+.turn-chip.is-ally:not(.is-now) { box-shadow: inset 3px 0 0 rgba(111, 174, 143, 0.65); }
+.turn-chip.is-enemy:not(.is-now) { box-shadow: inset 3px 0 0 rgba(199, 62, 58, 0.55); }
+.turn-chip.is-ally .turn-chip-side { color: #7fc79a; }
+.turn-chip.is-enemy .turn-chip-side { color: var(--ember-text); }
+
+/* 「今」— 発光バッジ化。is-now自体のborder/color/background(index.css)はそのまま活かす */
+.turn-chip.is-now {
+  box-shadow: 0 0 10px rgba(255, 157, 69, 0.5);
+}
+.turn-chip.is-now em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 50%;
+  background: var(--sel);
+  color: var(--night-deep);
+  font-size: 9.5px;
+  font-weight: 800;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .turn-chip.is-now { animation: turnChipNowPulse 1.6s ease-in-out infinite; }
+}
+.reduce-motion .turn-chip.is-now { animation: none !important; }
+@keyframes turnChipNowPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 157, 69, 0.35); }
+  50% { box-shadow: 0 0 16px rgba(255, 157, 69, 0.7); }
+}
+
+/* 次撃倍率 — 火脈らしい発光チップへ(padding/border/font-sizeはbattle_m24.css既存を継承) */
+.turn-chain-mult {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, rgba(255, 157, 69, 0.26), rgba(199, 62, 58, 0.16));
+  box-shadow: 0 0 8px rgba(255, 157, 69, 0.32);
+}
+.turn-chain-mult-ico { font-style: normal; font-size: 10px; opacity: 0.85; }
+@media (prefers-reduced-motion: no-preference) {
+  .turn-chain-mult { animation: turnChainMultGlow 1.8s ease-in-out infinite; }
+}
+.reduce-motion .turn-chain-mult { animation: none !important; }
+@keyframes turnChainMultGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 157, 69, 0.28); }
+  50% { box-shadow: 0 0 14px rgba(255, 157, 69, 0.55); }
+}
