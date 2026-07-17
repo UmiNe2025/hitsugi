@@ -94,10 +94,12 @@ function agg(n: number, make: (rng: Rng) => { party: Combatant[]; enemies: Comba
 const report = (label: string, a: ReturnType<typeof agg>) =>
   console.log(`[balance] ${label}: 勝率${(a.winRate * 100).toFixed(0)}% 行動${a.avgRounds.toFixed(1)} 被HP${a.avgHpLossPct.toFixed(1)}% 瀕死${(a.nearDeathRate * 100).toFixed(0)}%`)
 
+// M33 ⑭: 玄冬は実 boss_gentou(実skillIds e_hoshikui/e_hisui/e_yamiuta)を使う。
+// 旧は骸星のkitをspreadした非忠実な代役だった(devil指摘)。実kitで測ることで玄冬の本当の難度を評価する。
 const BOSSES: [string, EnemyDef][] = [
   ['苔ノ主(序ボス)', enemyById('boss_kokenushi')],
   ['骸星大熊(終盤)', enemyById('boss_hoshimukuro')],
-  ['合成玄冬(atk85/hp2400)', { ...enemyById('boss_hoshimukuro'), id: 'boss_gentou_sim', name: '玄冬', hp: 2400, atk: 85, def: 40, agi: 26 }],
+  ['玄冬(実kit)', enemyById('boss_gentou')],
 ]
 
 describe('M28-B 戦闘バランス実測(忠実harness)', () => {
@@ -135,7 +137,12 @@ describe('M28-B 戦闘バランス実測(忠実harness)', () => {
     // 実ボス(苔ノ主/骸星大熊)は worst-play でも100%勝てる。合成玄冬(想定最強)も破綻(勝率<90%)させない。
     expect(win['苔ノ主(序ボス)_1']).toBe(1)
     expect(win['骸星大熊(終盤)_1']).toBe(1)
-    expect(win['合成玄冬(atk85/hp2400)_1']).toBeGreaterThanOrEqual(0.9)
+    // M33 ⑭: 玄冬は実kit(atk低下+150スパイク)で戦術必須の最終ボス。旧の「素手で玄冬≥0.9」は
+    // fake弱玄冬(骸星kitのspread)に基づく誤ったoracleだった。実kitでは素手プレイは勝率0.5前後=
+    // 「完全な詰みではないが戦術を強く要求する」。この下限/上限で緩和後の難度をbracketする:
+    expect(win['玄冬(実kit)_1'], '緩和後、素手でも運が良ければ勝てる(完全な詰みでない)').toBeGreaterThan(0.4)
+    expect(win['玄冬(実kit)_1'], '最終ボスは素手で確実勝ちにしない(over-easingの番人=戦術を要求)').toBeLessThan(0.85)
+    // 確実な勝利は「現実policy(バフ/回復)」テストで担保する(下)。
   })
 
   it('現実policy(バフ/回復を使う)でも終盤ボスは手応えを残す(M33 ⑬受入)', () => {
@@ -148,12 +155,14 @@ describe('M28-B 戦闘バランス実測(忠実harness)', () => {
       report(`ボス ${name} 現実policy`, smart[name])
       report(`ボス ${name} 素手policy `, dumb[name])
     }
-    const g = smart['合成玄冬(atk85/hp2400)']
+    const g = smart['玄冬(実kit)']
     // ① 現実policy(バフ/回復)なら玄冬に安定して勝てる — 戦術に意味がある。
     expect(g.winRate, '現実policyなら玄冬に勝てる').toBeGreaterThanOrEqual(0.9)
     // ② バフ/回復を使う方が素手より有利 = sim が確かにバフ効果(⑬)を見ている証跡(devil CRITICAL-1の解消)。
-    expect(g.winRate, 'バフ/回復policyは素手より不利にならない').toBeGreaterThanOrEqual(dumb['合成玄冬(atk85/hp2400)'].winRate)
+    expect(g.winRate, 'バフ/回復policyは素手より不利にならない').toBeGreaterThanOrEqual(dumb['玄冬(実kit)'].winRate)
     // ③ ⑬でバフを power反映+強化しても、玄冬は無傷の作業ゲーにしない(被HPが有意に残る)。
     expect(g.avgHpLossPct, '玄冬は依然として削られる(作業ゲー化しない)').toBeGreaterThan(8)
+    // ④ M33 ⑭: 崖緩和の受入 — 戦術(バフ/回復)プレイなら玄冬の瀕死は稀(素手79%のような崖にしない)。
+    expect(g.nearDeathRate, '戦術プレイなら玄冬で瀕死は稀(崖でない)').toBeLessThan(0.35)
   })
 })
