@@ -341,3 +341,36 @@
   color: #ffd9a0;
 }
 .cmd-auto:focus-visible { outline: 2px solid #c9a86a; outline-offset: 2px; }
+
+/* ---- A(M28): オート停止の常時到達性 ---- */
+.auto-stop-strip {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 157, 69, 0.85);
+  background: rgba(28, 14, 10, 0.92);
+  color: #ffd9a0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+.auto-stop-strip:hover { background: rgba(255, 157, 69, 0.22); }
+.auto-stop-strip:focus-visible { outline: 2px solid #ffd9a0; outline-offset: 2px; }
+.auto-stop-dot {
+  width: 9px; height: 9px; border-radius: 2px; background: #ff9d45;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .auto-stop-dot { animation: autoStopPulse 1s ease-in-out infinite; }
+  @keyframes autoStopPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+}
+/* オートON時のコマンドボタンも「停止」と分かる強調(cmd-onは既存) */
+.cmd-auto.cmd-on { font-weight: 700; }

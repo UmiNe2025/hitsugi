@@ -110,6 +110,8 @@ export function BattleScreen() {
   const [shakeKey, setShakeKey] = useState(0) // ヒット時のstage-shake発火用
   const shakeTimerRef = useRef<number | null>(null)
   const [auto, setAutoRaw] = useState(initialAuto)
+  const autoRef = useRef(auto) // キー処理が最新autoを確実に読むため(クロージャ/dep churn回避)
+  autoRef.current = auto
   // オート状態は遠征越しに継続 — 変更したら遠征ランへも書き戻す
   const setAuto = (next: boolean) => { setAutoRaw(next); setAutoBattleFlag(next) }
   const [fx, setFx] = useState<Record<string, FxEvent[]>>({})
@@ -301,6 +303,8 @@ export function BattleScreen() {
       ? (menu.side === 'enemy' ? battle.enemies : battle.allies).filter((c) => c.hp > 0)
       : []
     const onKey = (ev: KeyboardEvent) => {
+      // A(M28): オート中はEscapeでまず停止(止め時が無い不具合の恒久対策)。autoRefで最新値を読む。
+      if (ev.key === 'Escape' && autoRef.current) { ev.preventDefault(); setAuto(false); return }
       if (ev.key === 'Escape') { ev.preventDefault(); setMenu({ kind: 'root' }); return }
       if (menu.kind !== 'target') return
       const n = Number(ev.key)
@@ -318,6 +322,8 @@ export function BattleScreen() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+    // autoはautoRefで読むため依存不要(dep churnを避ける)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [battle, menu, battleCommand])
 
   const revealing = pending.length > 0
@@ -608,6 +614,20 @@ export function BattleScreen() {
         </div>
       </div>
 
+      {/* A(M28): オート実行中は常時クリック可能な停止ストリップを出す。コマンド盤が処理中で
+          無効化されていても、ここから必ず止められる(「止め時が無い」不具合の恒久対策)。 */}
+      {auto && !over && (
+        <button
+          type="button"
+          className="auto-stop-strip"
+          aria-label="オートを停止する"
+          onClick={() => setAuto(false)}
+        >
+          <span className="auto-stop-dot" aria-hidden />
+          オート実行中 — タップ／Escで停止
+        </button>
+      )}
+
       {showFullLog && (
         <div className="log-full-back" onClick={() => setShowFullLog(false)}>
           <div className="log-full" onClick={(e) => e.stopPropagation()}>
@@ -695,12 +715,14 @@ export function BattleScreen() {
                     </button>
                     <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'guard' }, '防御')}>防御</button>
                     <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'flee' }, '逃げる')}>逃げる</button>
+                    {/* A(M28): オートの入切は常時可能にする(処理中も無効化しない)。
+                        無効化していたため「オート中に止め時が無い」不具合が出ていた。 */}
                     <button
                       className={`cmd-btn cmd-ghost cmd-auto ${auto ? 'cmd-on' : ''}`}
-                      disabled={!isPlayerTurn}
+                      aria-pressed={auto}
                       onClick={() => setAuto(!auto)}
                     >
-                      {auto ? 'オート中' : 'オート'}
+                      {auto ? '■ オート停止' : '▶ オート'}
                     </button>
                   </div>
                 </>
