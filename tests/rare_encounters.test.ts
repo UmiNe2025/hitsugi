@@ -62,6 +62,22 @@ describe('稀相の魔性 — 全地域の生成契約', () => {
     expect(seenMarks.size).toBe(6)
   })
 
+  // M32回帰: 報酬tierは配列順ではなく解禁武功(unlockFame)の昇順で決まる。
+  // drop選択が shopTier===rewardTier で厳密に絞るため、drop.shopTier は rewardTier を雑音なく反映する。
+  it('報酬tierは解禁武功(unlockFame)昇順で単調 — regions配列順に依存しない', () => {
+    const byFame = [...REGIONS].sort((a, b) => a.unlockFame - b.unlockFame)
+    const tierOf = (regionId: string) =>
+      itemBaseById(createRareEncounter(regionId, new Rng(11)).encounter.drop.baseId).shopTier
+    let prev = 0
+    for (const r of byFame) {
+      const t = tierOf(r.id)
+      expect(t, `${r.id}(武功${r.unlockFame})が前地より低い報酬tierになっている`).toBeGreaterThanOrEqual(prev)
+      prev = t
+    }
+    expect(tierOf(byFame[0].id), '最低武功の地は最下位帯').toBe(1)
+    expect(tierOf(byFame[byFame.length - 1].id), '最高武功の地は最上位帯').toBe(14)
+  })
+
   it('地相の粒子種から稀相印を安定して解決する', () => {
     expect(rareMarkForRegion('hotarubi_no_kubochi').title).toBe('灯冠')
     expect(rareMarkForRegion('nakiotoko_no_hara').title).toBe('逆雨')

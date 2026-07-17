@@ -77,10 +77,16 @@ export function rareMarkForRegion(regionId: string): RareMark {
   return MARKS[particle]
 }
 
+// M32修正: 報酬tierは配列順ではなく解禁武功(unlockFame)の昇順順位で決める。regions.tsのtier2ブロックが
+// 配列順で非単調だったため、旧実装(findIndex=配列順)は haikyo_goten(fame180)を過小・oboro_bashi(fame75)を
+// 過大に評価していた。順位は一度だけ算出してmapに焼く。
+const FAME_RANK: Map<string, number> = new Map(
+  [...REGIONS].sort((a, b) => a.unlockFame - b.unlockFame).map((r, i) => [r.id, i]),
+)
 function rewardTier(regionId: string): number {
-  const index = Math.max(0, REGIONS.findIndex((r) => r.id === regionId))
-  // 最初の地でも店より一段上、終盤は最上位。常夜百層は最上位へ丸める。
-  return Math.min(14, 1 + Math.floor(index * 14 / Math.max(1, REGIONS.length - 1)))
+  const rank = FAME_RANK.get(regionId) ?? 0
+  // 最初の地でも店より一段上、終盤は最上位。
+  return Math.min(14, 1 + Math.floor(rank * 14 / Math.max(1, REGIONS.length - 1)))
 }
 
 export function createRareEncounter(regionId: string, rng: Pick<Rng, 'next' | 'pick'>): RareEncounterRoll {
