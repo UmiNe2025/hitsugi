@@ -1927,22 +1927,30 @@ export const useGame = create<GameStore>((set, get) => {
         const partyAlive = nd.family.filter((c) => run.partyIds.includes(c.id) && c.alive)
         const survivor = [...partyAlive].sort((a, b) => b.potential.luk - a.potential.luk)[0]
         const lostNames: string[] = []
+        const keepsakes: Item[] = [] // M29修正: 全滅で斃れた者の得物も形見として蔵へ(寿命死と対称化)
+        const bereaved = nd.family.map((c) => {
+          if (!run.partyIds.includes(c.id) || !c.alive) return c
+          if (survivor && c.id === survivor.id) {
+            return { ...c, hp: 1, mp: 0, fatigue: Math.min(100, c.fatigue + 40), deeds: [...c.deeds, '全滅の夜藪から独り生還した'] }
+          }
+          lostNames.push(c.name)
+          for (const slot of ['weapon', 'armor', 'charm'] as const) {
+            const it = c.equipment[slot]
+            if (it) keepsakes.push(inheritItem(it, c.name, c.kills))
+          }
+          return {
+            ...c, alive: false, hp: 0,
+            deathSeason: nd.seasonIndex,
+            deathCause: deathCauseLabel('lost'),
+            epitaph: generateEpitaph(c, 'lost', rng),
+            isHead: false,
+            equipment: {},
+          }
+        })
         nd = {
           ...nd,
-          family: nd.family.map((c) => {
-            if (!run.partyIds.includes(c.id) || !c.alive) return c
-            if (survivor && c.id === survivor.id) {
-              return { ...c, hp: 1, mp: 0, fatigue: Math.min(100, c.fatigue + 40), deeds: [...c.deeds, '全滅の夜藪から独り生還した'] }
-            }
-            lostNames.push(c.name)
-            return {
-              ...c, alive: false, hp: 0,
-              deathSeason: nd.seasonIndex,
-              deathCause: deathCauseLabel('lost'),
-              epitaph: generateEpitaph(c, 'lost', rng),
-              isHead: false,
-            }
-          }),
+          family: bereaved,
+          inventory: [...nd.inventory, ...keepsakes],
           hoto: nd.hoto + Math.round(run.loot.hoto / 2),
           ketsu: nd.ketsu + Math.round(run.loot.ketsu / 2),
         }
@@ -2091,27 +2099,35 @@ export const useGame = create<GameStore>((set, get) => {
       const partyAlive = nd.family.filter((c) => exp.partyIds.includes(c.id) && c.alive)
       const survivor = [...partyAlive].sort((a, b) => b.potential.luk - a.potential.luk)[0]
       const lostNames: string[] = []
+      const keepsakes: Item[] = [] // M29修正: 全滅で斃れた者の得物も形見として蔵へ(寿命死と対称化)
+      const bereaved = nd.family.map((c) => {
+        if (!exp.partyIds.includes(c.id) || !c.alive) return c
+        if (survivor && c.id === survivor.id) {
+          return {
+            ...c, hp: 1, mp: 0,
+            fatigue: Math.min(100, c.fatigue + 40),
+            deeds: [...c.deeds, '全滅の夜藪から独り生還した'],
+          }
+        }
+        lostNames.push(c.name)
+        for (const slot of ['weapon', 'armor', 'charm'] as const) {
+          const it = c.equipment[slot]
+          if (it) keepsakes.push(inheritItem(it, c.name, c.kills))
+        }
+        const epitaph = generateEpitaph(c, 'lost', rng)
+        return {
+          ...c, alive: false, hp: 0,
+          deathSeason: nd.seasonIndex,
+          deathCause: deathCauseLabel('lost'),
+          epitaph,
+          isHead: false,
+          equipment: {},
+        }
+      })
       nd = {
         ...nd,
-        family: nd.family.map((c) => {
-          if (!exp.partyIds.includes(c.id) || !c.alive) return c
-          if (survivor && c.id === survivor.id) {
-            return {
-              ...c, hp: 1, mp: 0,
-              fatigue: Math.min(100, c.fatigue + 40),
-              deeds: [...c.deeds, '全滅の夜藪から独り生還した'],
-            }
-          }
-          lostNames.push(c.name)
-          const epitaph = generateEpitaph(c, 'lost', rng)
-          return {
-            ...c, alive: false, hp: 0,
-            deathSeason: nd.seasonIndex,
-            deathCause: deathCauseLabel('lost'),
-            epitaph,
-            isHead: false,
-          }
-        }),
+        family: bereaved,
+        inventory: [...nd.inventory, ...keepsakes],
         hoto: nd.hoto + Math.round(exp.loot.hoto / 2),
         ketsu: nd.ketsu + Math.round(exp.loot.ketsu / 2),
         expedition: undefined,

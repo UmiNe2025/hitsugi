@@ -58,8 +58,18 @@ export function isValidSave(d: unknown): d is GameData & { saveSeq?: number } {
   if (!d || typeof d !== 'object') return false
   const g = d as Partial<GameData>
   if (!Array.isArray(g.family) || g.family.length < 1) return false
+  // M29修正: 各族員の最低限の形(id/hp)を検証。空{}のような偽の族員(family:[{}])が通過して
+  // store.tsの c.equipment[...] や hp 参照で例外/NaN化する crash-on-continue を防ぐ(devil C2)。
+  for (const c of g.family) {
+    if (!c || typeof c !== 'object') return false
+    const cc = c as { id?: unknown; hp?: unknown }
+    if (typeof cc.id !== 'string' || typeof cc.hp !== 'number' || !Number.isFinite(cc.hp)) return false
+  }
   if (typeof g.seasonIndex !== 'number' || !Number.isFinite(g.seasonIndex) || g.seasonIndex < 0) return false
+  // M29修正: hotoだけでなくketsuも有限数を要求。ketsu欠落/NaNのセーブが通過すると
+  // `undefined < cost` でガードを素通りし、鍛錬/打ち直しでNaNが永久伝播する(devil C2の主要ベクタ)。
   if (typeof g.hoto !== 'number' || !Number.isFinite(g.hoto)) return false
+  if (typeof g.ketsu !== 'number' || !Number.isFinite(g.ketsu)) return false
   if (!Array.isArray(g.chronicle)) return false
   return true
 }
