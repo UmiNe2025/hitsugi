@@ -16,7 +16,7 @@ import { FacilitiesScreen } from './ui/Facilities'
 import { BirthScene, CeremonyScene, DeathScene, DreamScene, DreamEpScene, EndingScene, FinaleScene, JobRiteScene, LifeScene } from './ui/Scenes'
 import { SettingsModal } from './ui/Settings'
 import { setToastSink, emitToast, type ToastKind } from './ui/toast'
-import { setSaveTroubleSink } from './core/save'
+import { setSaveTroubleSink, onExternalSaveChange } from './core/save'
 
 // 全画面共通の設定ボタン(⚙)。音量/ミュート/演出軽減/オート既定へアクセス。
 function SettingsButton() {
@@ -49,6 +49,30 @@ function Toaster() {
       {toasts.map((t) => (
         <div key={t.id} className={`toast toast-${t.kind}`}>{t.msg}</div>
       ))}
+    </div>
+  )
+}
+
+// M33: 複数タブ競合バナー。別タブがこの記を更新すると、こちらは保存停止(read-only)になる。
+// 3秒で消えるトーストでは見落とすため、常設バナーで「保存停止」と再読み込み導線を明示する。
+function ConflictBanner() {
+  const [conflict, setConflict] = useState(false)
+  useEffect(() => onExternalSaveChange(() => setConflict(true)), [])
+  if (!conflict) return null
+  return (
+    <div
+      role="alert"
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: '12px', flexWrap: 'wrap', padding: '10px 16px',
+        background: 'rgba(120, 20, 20, 0.96)', color: '#ffeede',
+        borderBottom: '1px solid var(--flame, #ff7a46)', fontSize: '13px',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.5)',
+      }}
+    >
+      <span>別のタブでこの記が進んだため、競合を避けてこのタブは保存を止めました。</span>
+      <button className="btn btn-main" onClick={() => window.location.reload()}>最新へ再読み込み</button>
     </div>
   )
 }
@@ -185,6 +209,7 @@ function App() {
       {view}
       <SettingsButton />
       <Toaster />
+      <ConflictBanner />
     </>
   )
 }

@@ -35,6 +35,26 @@ function warnOnce(msg: string, severity: 'warn' | 'critical' = 'warn'): void {
   troubleSink?.(msg)
 }
 
+// M33: 複数タブ競合対策(read-only化)。同一ゲームを2タブで開くと saveGame は last-writer-wins で、
+// こちらのメモリ上の(古い)状態が相手タブの新しい進行を黙って上書き潰す。別タブの保存(storageイベント)を
+// 検知したタブは saveReadOnly=true にして以後の saveGame を止め、上書き喪失を実際に防ぐ(警告のみでは防げない)。
+// ユーザーには再読み込みで最新へ戻す導線を出す(App.tsxのConflictBanner)。
+let saveReadOnly = false
+export function isSaveReadOnly(): boolean {
+  return saveReadOnly
+}
+/** 別タブがKEY/KEY_BAKを更新したら cb を一度呼び、このタブを read-only 化する。cleanup関数を返す。 */
+export function onExternalSaveChange(cb: () => void): () => void {
+  const handler = (e: StorageEvent): void => {
+    if (e.key !== KEY && e.key !== KEY_BAK) return
+    if (saveReadOnly) return // 既に検知済み — 二重通知しない
+    saveReadOnly = true
+    cb()
+  }
+  window.addEventListener('storage', handler)
+  return () => window.removeEventListener('storage', handler)
+}
+
 function isQuotaError(e: unknown): boolean {
   return e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22)
 }
@@ -98,6 +118,7 @@ function readRaw(key: string): { raw: string; data: Persisted } | null {
 }
 
 export function saveGame(data: GameData): void {
+  if (saveReadOnly) return // M33: 別タブの保存を検知した後は保存を止め、相手の新しい進行を上書きしない
   // 直前の正常セーブ(saveSeq取得+BAK候補)
   const prev = readRaw(KEY)
   // M32修正: seqは本体だけでなくBAKの最大も上回らせる。本体破損時にseqが1へ再起動すると、
