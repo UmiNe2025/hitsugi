@@ -29,10 +29,10 @@
 }
 
 /* ---- 綴の一言 — 縦アクセントに微光、本文の可読性を一段上げる ---- */
-.tsuzuri {
+.home-screen .tsuzuri {
   box-shadow: inset 2px 0 0 rgba(201, 168, 106, 0.15);
 }
-.tsuzuri-text {
+.home-screen .tsuzuri-text {
   line-height: 1.6;
 }
 

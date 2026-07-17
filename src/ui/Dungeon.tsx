@@ -111,7 +111,13 @@ function LanternRing({ pct }: { pct: number }) {
   const C = 2 * Math.PI * R
   const level = pct < 15 ? 'crit' : pct < 40 ? 'low' : 'ok'
   return (
-    <div className={`lantern-ring lantern-${level}`} data-zone="hud-top" title={`灯 ${Math.round(pct)}/100`}>
+    <div
+      className={`lantern-ring lantern-${level}`}
+      data-zone="hud-top"
+      /* M32修正: 歩行ダンジョン化で失われた「灯が尽きると何が起きるか」の説明を復活(旧: 尽きれば常夜が牙を剥く) */
+      title={`灯 ${Math.round(pct)}/100 — 尽きれば常夜の魔性が狂暴化する。帰り火を絶やすな。`}
+      aria-label={`灯 ${Math.round(pct)}パーセント。尽きれば魔性が狂暴化する`}
+    >
       <svg viewBox="0 0 64 64" width="64" height="64">
         <circle cx="32" cy="32" r={R} fill="rgba(11,15,30,0.7)" stroke="rgba(201,168,106,0.25)" strokeWidth="3" />
         <circle

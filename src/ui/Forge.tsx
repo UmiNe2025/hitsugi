@@ -197,7 +197,7 @@ export function ForgeScreen() {
     { key: 'equip', label: '装備' },
     { key: 'reforge', label: '打ち直し' },
     { key: 'train', label: '鍛錬' },
-    { key: 'shop', label: '見世' }, // M28-C: 回復薬(消耗品)
+    { key: 'shop', label: '見世(薬)' }, // M28-C/M32: 回復薬(消耗品)。「購う=武具/見世=薬」の区別を明示
   ]
   const changeTab = (t: Tab) => { setTab(t); setShown(PAGE) }
 
