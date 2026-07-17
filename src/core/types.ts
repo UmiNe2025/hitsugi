@@ -222,6 +222,9 @@ export interface Combatant {
   weaponLegacy?: string // v3.1 M15-1: 形見の得物の故人名(台詞用)
   mpDiscount?: number // v3.1 M16-4: 静心の加護(技の灯力割引 0〜1)
   boonRage?: boolean // v3.1 M16-4: 血汐の滾り(体力半分以下で攻撃+25%)
+  // M28-B: ダメージ下限割合。減算防御(def×0.9)で弱攻撃が1固定になる問題の是正。
+  // 生ダメージ(防御前)のこの割合は必ず通す。tier別: 弱敵=大/ボス=小 で難易度カーブを保つ。
+  dmgFloorFrac?: number
 }
 
 // M25 §5: 敵の兆し(次行動のカテゴリ)。攻=単体攻撃 / 術=状態・属性技 / 群=全体・複数攻撃。

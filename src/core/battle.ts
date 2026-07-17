@@ -41,16 +41,41 @@ export function combatantFromChar(c: Character, row: 'front' | 'back'): Combatan
   }
 }
 
+// M28-B: ダメージ下限割合を「攻撃側atkに反比例」で決める。減算防御(def×0.9)で弱攻撃が1固定に
+// なる問題の是正。下限=生ダメ×frac が「毎撃ほぼ一定の最低ダメージ(≈7)」を全attackerに保証する。
+// tierではなくatk基準にする理由(devil指摘): ボスは全てtier5だが atk32(苔ノ主)〜85(玄冬)と幅が
+// あり、tier一律では弱ボスが無力・強ボスが過剰になる。atk基準なら弱敵ほど下限大・強敵ほど下限小で
+// 最低ダメージが一定化し、ボスの長期戦バランス(玄冬の被弾量)を壊さない。
+const FLOOR_TARGET = 13 // 下限が保証する概算の最低ダメージ(序盤の手応えの主レバー)
+export function floorFracFromAtk(atk: number): number {
+  return Math.max(0.08, Math.min(0.55, FLOOR_TARGET / Math.max(1, atk)))
+}
+
+// M28-B: 敵の生存力(hp)・打点(atk)のtier別強化。「1-2撃で勝ち・被弾なし」の是正。
+// シミュレーション(tests/balance_sim)で宿命モードの被HP/瀕死率を見て決定。
+// ボス(tier5)は据え置き(既存の長期戦バランスを壊さない)。老(_o)変異は元tierの倍率で乗る。
+export function enemyPower(tier: number): { hp: number; atk: number } {
+  switch (tier) {
+    case 1: return { hp: 2.5, atk: 1.6 }
+    case 2: return { hp: 2.1, atk: 1.45 }
+    case 3: return { hp: 1.65, atk: 1.28 }
+    case 4: return { hp: 1.3, atk: 1.13 }
+    default: return { hp: 1, atk: 1 } // tier5 ボス
+  }
+}
+
 export function combatantFromEnemy(e: EnemyDef, idx: number): Combatant {
+  const pow = enemyPower(e.tier)
+  const atk = Math.round(e.atk * pow.atk)
   return {
     key: `en_${e.id}_${idx}_${uid('c')}`,
     isAlly: false,
     name: idx > 0 ? `${e.name} ${String.fromCharCode(65 + idx)}` : e.name,
     element: e.element,
-    hp: e.hp, maxHp: e.hp, mp: 999, maxMp: 999,
-    atk: e.atk,
+    hp: Math.round(e.hp * pow.hp), maxHp: Math.round(e.hp * pow.hp), mp: 999, maxMp: 999,
+    atk,
     def: e.def,
-    matk: e.atk,
+    matk: atk,
     mdef: Math.round(e.def * 0.8),
     agi: e.agi,
     luk: 10,
@@ -60,6 +85,7 @@ export function combatantFromEnemy(e: EnemyDef, idx: number): Combatant {
     guard: false,
     buffs: {},
     chainCount: 0,
+    dmgFloorFrac: floorFracFromAtk(atk),
   }
 }
 
@@ -207,7 +233,10 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
         const atkV = (isMagic ? actor.matk : actor.atk) * rageK
         const defV = (isMagic ? t.mdef : t.def) * (t.guard ? 1.8 : 1)
         const buffMult = (actor.buffs.atkUp ? 1.25 : 1) / (t.buffs.defUp ? 1.2 : 1)
-        let dmg = Math.max(1, atkV * (power / 100) * (0.9 + rng.next() * 0.2) - defV * 0.9)
+        // M28-B: 減算防御で弱攻撃が1固定になるのを是正。生ダメージの一定割合(下限)は必ず通す。
+        // 下限はguard/back倍率の「前」に置き、防御姿勢・後列の軽減は下限にも効かせる(devil指摘)。
+        const raw = atkV * (power / 100) * (0.9 + rng.next() * 0.2)
+        let dmg = Math.max(raw * (actor.dmgFloorFrac ?? 0), raw - defV * 0.9)
         dmg *= elementMult(el, t.element) * chainMult * buffMult
         if (t.guard) dmg *= 0.55
         if (t.row === 'back') dmg *= 0.8
