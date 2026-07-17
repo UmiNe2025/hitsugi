@@ -95,14 +95,21 @@
 }
 .forge-detail-target b, .forge-detail-price b { color: var(--amber); font-variant-numeric: tabular-nums; }
 
-/* ===== M28-C: 見世(みせ) — 回復薬(消耗品)の一覧札 ===== */
-/* item-grid を流用しつつ、消耗品は「アイコン+本文+購うボタン」の横並び札にする(装備の master/detail とは別UI)。 */
+/* ===== M28-C / M29+修正: 見世(みせ) — 回復薬(消耗品)の一覧札 ===== */
+/* 旧: 装備用の .item-grid(多列)へ載せていたため各札が細列に潰れ、本文が縦1文字に折り返していた。
+   消耗品は「アイコン+本文+購うボタン」の横長札なので、1列の縦リストにして幅を確保する。 */
+.consum-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+}
 .consum-cell {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 14px;
+  padding: 12px 14px;
   border: 1px solid var(--line, rgba(201, 168, 106, 0.28));
   border-radius: 10px;
   background: var(--panel-2, rgba(28, 22, 18, 0.5));

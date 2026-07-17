@@ -524,7 +524,7 @@ export function ForgeScreen() {
           <p className="forge-note">
             戦(いくさ)の場で使う消えものの薬。買えば蔵(装備)とは別に控え、戦の「道具」で用いる。持てる奉燈: {data.hoto}
           </p>
-          <div className="item-grid">
+          <div className="consum-list">
             {CONSUMABLES.map((c) => {
               const owned = (data.consumables ?? []).find((s) => s.id === c.id)?.count ?? 0
               const afford = data.hoto >= c.price
