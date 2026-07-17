@@ -8,6 +8,7 @@ import type { KeyboardEvent, ReactNode } from 'react'
 // ---- フォーカス管理(useSheetBehavior/useForcedDialog)はdialogs.tsへ分離(M22) ----
 // hookはコンポーネントファイルからexportしない(Fast Refresh対象を保つ)。利用側は './layout/dialogs' から直接importする。
 import { useSheetBehavior } from './dialogs'
+import './shell_fix_m29.css' // M29+: mobile幅での .shell-head 横スクロール是正(後勝ち)
 
 // M26 §15.1: WAI-ARIA tabs。作業画面は同時に1枚しかマウントされないため、
 // タブが指すパネルはScreenShellの本文1枚で足りる(内容が差し替わる単一パネル方式)。

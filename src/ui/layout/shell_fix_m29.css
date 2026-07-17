@@ -1,0 +1,9 @@
+/* M29+: ScreenShell の全幅ヘッダ(.shell-head の横 -16px マージン)が mobile-360/390 幅で
+   約6pxの横スクロールを生む既存不具合の是正。狭幅では横の負マージンを解除して本文と揃える
+   (全幅の艶は失うが「崩れ=横スクロール」を消す)。index.css は非編集、後勝ちで上書きする。 */
+@media (max-width: 480px) {
+  .shell-head {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
