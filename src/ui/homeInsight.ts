@@ -123,9 +123,14 @@ export function ledgerStats(d: GameData, odaiClaimable: boolean): { work: Ledger
   const gossipUnlocked = Math.min(d.gossipIndex ?? 0, GOSSIP.length)
   const gossipSeen = typeof d.flags.gossipSeen === 'number' ? d.flags.gossipSeen : 0
   const gossipNew = Math.max(0, gossipUnlocked - gossipSeen)
-  // 図鑑の新着(M19 A1): 既読カーソル(flags)以降に増えた発見数
-  const codexNew = Math.max(0, (d.codex?.enemies?.length ?? 0) - (typeof d.flags.codexSeenEn === 'number' ? d.flags.codexSeenEn : 0))
-    + Math.max(0, (d.codex?.gods?.length ?? 0) - (typeof d.flags.codexSeenGods === 'number' ? d.flags.codexSeenGods : 0))
+  // 図鑑の新着(M29修正): M26以降 markCodexItemSeen は codexSeenIds のみ更新するため、旧flags
+  // (codexSeenEn/Gods)基準では新規セーブで常に全件新着に固着していた。Codex.tsxと同じく
+  // codexSeenIds(enemiesはbaseEnemyId正規化)を正典とし、未読=発見済み−既読 を数える。
+  const seenEnemies = new Set(d.codexSeenIds?.enemies ?? [])
+  const seenGods = new Set(d.codexSeenIds?.gods ?? [])
+  const discoveredEnemies = new Set((d.codex?.enemies ?? []).map((id) => id.replace(/_[wo]$/, '')))
+  const codexNew = [...discoveredEnemies].filter((id) => !seenEnemies.has(id)).length
+    + (d.codex?.gods ?? []).filter((id) => !seenGods.has(id)).length
   const fam = d.familiars ?? []
   const activeFam = fam.find((f) => f.enemyId === d.activeFamiliar)
 
