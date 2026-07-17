@@ -1097,3 +1097,4 @@
 - **報告のみ(設計/大規模/要リファクタ)**: buff技power無視(全バフ再バランス)/難易度崖(玄冬)/回復薬段階/装備価格カーブ/defUp非対称/bundle分割/複数タブ競合/歩行ダンジョンcheckpoint/sealBoss・renderFailedテスト(要純関数抽出リファクタ・次段)/ActionDock safe-area/Codex aria-current/技MP mobileラベル。
 - **検証**: tsc -b 0 / oxlint 0 / vitest **553緑**(rare+1) / playwright 第1バッチ **198緑+2skip**(全5幅)、第2バッチ codex_seen+menu_a11y **15緑**。validate_data未変更。
 - **git**: M32を8論理グループでcommit(自己監査区分=git可逆)。**push=公開デプロイはユーザー承認待ち**(未push)。
+- **デプロイ実行**(ユーザー承認「今すぐ全部デプロイ」): npm run build緑→全19コミット(M30/M31/M32)を push。GitHub Actions run 29615749908 success、https://umine2025.github.io/hitsugi/ 公開反映済み。
