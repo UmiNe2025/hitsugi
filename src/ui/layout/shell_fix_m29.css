@@ -7,3 +7,13 @@
     margin-right: 0;
   }
 }
+
+/* M33: タッチ目標 — filter-tab(小チップ)を推奨44pxへ底上げ。index.css:1598は40px止まりで、
+   直前1595の自コメント「小チップは高さのみ底上げ」の意図を満たしていなかった。視覚は維持し高さのみ。
+   index.css非編集・同一specificityの後勝ちで確実に上書き(全画面が./layout/shellを踏むため全域適用)。 */
+.filter-tab { min-height: 44px; }
+
+/* M33: ドック逃げ余白のsafe-area対応。.action-dock自体は既に calc(...+env(safe-area-inset-bottom))で
+   ノッチ端末では背が伸びるのに、.shell.has-dock の逃げ余白は静的96pxで、末尾本文がドック裏に隠れうる
+   不整合を是正(index.css:1678)。 */
+.shell.has-dock { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }

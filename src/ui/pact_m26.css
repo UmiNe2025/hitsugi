@@ -42,3 +42,12 @@
 }
 .pact-confirm-god-name { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; }
 .pact-confirm-god-aff { font-size: 11.5px; color: var(--el-star); }
+
+/* M33: Pact独自ドックラッパー(.pact-has-dock)の逃げ余白もsafe-area対応(.shell.has-dockと同旨・
+   ノッチ端末で交神ドック裏に本文が隠れるのを防ぐ)。index.css/pact_m18.cssより後勝ち。 */
+.pact-has-dock { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+/* M33: 交神の推奨★ — 当主の最強素質を伸ばす神(topBias一致)を成人の儀/生業の儀と同じ炎縁でハイライト。
+   god-rowの既存borderに依存せずレイアウトを動かさないよう inset box-shadow で縁取る(選択/locked状態と加算共存)。 */
+.god-row.recommended { box-shadow: inset 0 0 0 1px var(--flame), 0 0 8px rgba(255, 122, 70, 0.22); }
+.god-row-rec { color: var(--flame); font-size: 12px; margin-left: 3px; letter-spacing: 0; }

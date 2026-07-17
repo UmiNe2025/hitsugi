@@ -80,6 +80,8 @@ export function PactScreen() {
   const parent = adults.find((c) => c.id === parentId) ?? null
   const god = GODS.find((g) => g.id === godId) ?? null
   const contractedGodIds = data.codex?.gods ?? []
+  // M33: 当主の最強素質を伸ばす神を推奨★表示(灯型/家業と同文法)。当主未選択(parent=null)なら推奨なし。
+  const recommendStat = parent ? strongestPotential(parent.potential) : null
 
   // 奉納点(cost)昇順 — 俺屍の神名リスト様式。費用内/未契約は表示の絞り込みのみ(選択可否には無関係)
   const shownGods = GODS.filter((g) => {
@@ -214,10 +216,11 @@ export function PactScreen() {
               const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
               const eff = pactCost(g, data.godAffinity[g.id] ?? 0) // 縁の割引(M12-2)
               const affordable = data.hoto >= eff && !sealed
+              const recommended = !sealed && recommendStat != null && topBias(g.statBias)[0]?.[0] === recommendStat
               return (
                 <button
                   key={g.id}
-                  className={`god-row ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''}`}
+                  className={`god-row ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''} ${recommended ? 'recommended' : ''}`}
                   aria-pressed={godId === g.id}
                   aria-disabled={!affordable}
                   onClick={() => affordable && setGodId(g.id)}
@@ -225,6 +228,7 @@ export function PactScreen() {
                   <span className={`element-badge el-${g.element} god-row-el`}>{ELEMENT_LABELS[g.element]}</span>
                   <span className="god-row-name">
                     {sealed ? '???' : g.name}
+                    {recommended && <span className="god-row-rec" title="血潮の勧め" aria-label="血潮の勧め">★</span>}
                     {sealed && <span className="god-row-hint">{sealHint(g)}</span>}
                   </span>
                   {!sealed && (
@@ -393,6 +397,14 @@ function topBias(statBias: Partial<Record<StatKey, number>>): [StatKey, number][
     .filter(([, v]) => v > 0)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
+}
+
+// M33: 当主の最も高い素質キー。交神の推奨★判定に使う — 成人の儀(灯型)/生業の儀(家業)と同じ
+// 「血潮の強みを伸ばす」思想で、神の得意(topBias先頭)が当主の最強素質と一致する神を勧める。
+function strongestPotential(potential: Partial<Record<StatKey, number>>): StatKey | null {
+  const entries = (Object.entries(potential) as [StatKey, number][]).filter(([, v]) => typeof v === 'number')
+  if (entries.length === 0) return null
+  return entries.sort((a, b) => b[1] - a[1])[0][0]
 }
 
 // 大立ち絵パネル — 縁MAX(affinity>=5)なら第二立ち絵を優先し、god_*→炎のオーラへ静かに退避する

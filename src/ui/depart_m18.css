@@ -34,9 +34,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ActionDockぶんの逃げ(§5.2-5): 96px。2クラス指定で .screen 単体より詳細度を上げ確実に上書きする */
+/* ActionDockぶんの逃げ(§5.2-5): 96px。2クラス指定で .screen 単体より詳細度を上げ確実に上書きする。
+   M33: safe-area対応 — ドック自体はenv込みで背が伸びるので逃げ余白も追随させ、ノッチ端末で末尾が隠れないように。 */
 .depart-m18-root.screen {
-  padding-bottom: 96px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
 /* ================================================================

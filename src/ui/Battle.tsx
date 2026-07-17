@@ -805,7 +805,9 @@ export function BattleScreen() {
                           {sk.name}
                           {(sk.type === 'attack' || sk.type === 'heal') && <span className="sk-info">威{sk.power}</span>}
                           {(sk.target === 'enemies' || sk.target === 'allies') && <span className="sk-info sk-aoe">全</span>}
-                          <span className="mp-cost">{sk.mpCost}</span>
+                          {/* M33: mobileは.turnpanel-detail(散文の威力/灯説明)が隠れるため、消費灯力に灯ラベルを付け裸数字を解消。
+                              道具盤の×{count}(mp-cost流用)とは別JSXなので誤爆しない。 */}
+                          <span className="mp-cost">灯{sk.mpCost}</span>
                         </button>
                       )
                     })}

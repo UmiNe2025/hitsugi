@@ -268,6 +268,7 @@ export function CodexScreen() {
                 <button
                   key={r.id}
                   className={`btn codex-card codex-card-btn ${selectedId === r.id ? 'is-sel' : ''}`}
+                  aria-current={selectedId === r.id ? 'true' : undefined}
                   onClick={() => select(r.id)}
                 >
                   <MaybeImg src={regionBgR(r.id)} className="codex-thumb" />
@@ -289,6 +290,7 @@ export function CodexScreen() {
                 <button
                   key={e.id}
                   className={`btn codex-card codex-card-btn ${selectedId === e.id ? 'is-sel' : ''}`}
+                  aria-current={selectedId === e.id ? 'true' : undefined}
                   onClick={() => select(e.id)}
                 >
                   <MaybeImg src={gameImg(e.sprite)} className="codex-thumb" />
@@ -308,6 +310,7 @@ export function CodexScreen() {
                 <button
                   key={g.id}
                   className={`btn codex-card codex-card-btn ${selectedId === g.id ? 'is-sel' : ''}`}
+                  aria-current={selectedId === g.id ? 'true' : undefined}
                   onClick={() => select(g.id)}
                 >
                   <GodImgOrFallback g={g} className="codex-thumb codex-thumb-tall" compact />
@@ -331,6 +334,7 @@ export function CodexScreen() {
                         <button
                           key={n.id}
                           className={`btn codex-card codex-card-btn nemesis-card ${selectedId === n.id ? 'is-sel' : ''}`}
+                          aria-current={selectedId === n.id ? 'true' : undefined}
                           onClick={() => select(n.id)}
                         >
                           {e && <MaybeImg src={gameImg(e.sprite)} className="codex-thumb nemesis-thumb" />}
