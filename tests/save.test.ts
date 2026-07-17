@@ -31,7 +31,7 @@ function makeData(over: Partial<GameData> = {}): GameData {
     hoto: 100,
     ketsu: 0,
     fame: 0,
-    family: [{ id: 'c1', name: '燈吾', alive: true, gen: 1, isHead: true, hp: 10, maxHp: 10 }],
+    family: [{ id: 'c1', name: '燈吾', alive: true, gen: 1, isHead: true, hp: 10, maxHp: 10, equipment: {} }],
     pendingBirths: [],
     chronicle: [],
     inventory: [],

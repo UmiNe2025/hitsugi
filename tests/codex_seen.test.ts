@@ -7,10 +7,11 @@ import type { GameData } from '../src/core/types'
 // 最小の有効セーブ(isValidSaveを通す下限)+ codex 件数マーク
 function oldSave(seenEn: number, seenGd: number): GameData {
   return {
-    family: [{ id: 'c1', alive: true, hp: 10 } as never], // M29: 実セーブは必ずhpを持つ(isValidSave強化に整合)
+    family: [{ id: 'c1', alive: true, hp: 10, equipment: {} } as never], // M29/M32: 実セーブは hp/equipment を持つ
     seasonIndex: 12,
     hoto: 40,
-    ketsu: 0, // M29: 実セーブは必ずketsuを持つ(isValidSave強化に整合)
+    ketsu: 0,
+    inventory: [], // M32: isValidSave が inventory 配列を要求
     chronicle: [],
     godAffinity: {},
     flags: { codexSeenEn: seenEn, codexSeenGods: seenGd },

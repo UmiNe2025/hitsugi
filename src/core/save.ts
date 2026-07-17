@@ -62,10 +62,16 @@ export function isValidSave(d: unknown): d is GameData & { saveSeq?: number } {
   // store.tsの c.equipment[...] や hp 参照で例外/NaN化する crash-on-continue を防ぐ(devil C2)。
   for (const c of g.family) {
     if (!c || typeof c !== 'object') return false
-    const cc = c as { id?: unknown; hp?: unknown }
+    const cc = c as { id?: unknown; hp?: unknown; equipment?: unknown }
     if (typeof cc.id !== 'string' || typeof cc.hp !== 'number' || !Number.isFinite(cc.hp)) return false
+    // M32修正: equipment欠落の族員は advanceSeason(寿命死判定 c.equipment[slot])で即例外化する。
+    if (typeof cc.equipment !== 'object' || cc.equipment === null) return false
   }
   if (typeof g.seasonIndex !== 'number' || !Number.isFinite(g.seasonIndex) || g.seasonIndex < 0) return false
+  // M32修正: 配列必須/optional配列の型を検証。非配列の inventory/consumables が通過すると
+  // store.ts の .map/.filter/.findIndex で初めて例外化する(BAKはロード失敗にしか効かない)。
+  if (!Array.isArray(g.inventory)) return false
+  if (g.consumables !== undefined && !Array.isArray(g.consumables)) return false
   // M29修正: hotoだけでなくketsuも有限数を要求。ketsu欠落/NaNのセーブが通過すると
   // `undefined < cost` でガードを素通りし、鍛錬/打ち直しでNaNが永久伝播する(devil C2の主要ベクタ)。
   if (typeof g.hoto !== 'number' || !Number.isFinite(g.hoto)) return false
@@ -91,7 +97,10 @@ function readRaw(key: string): { raw: string; data: Persisted } | null {
 export function saveGame(data: GameData): void {
   // 直前の正常セーブ(saveSeq取得+BAK候補)
   const prev = readRaw(KEY)
-  const seq = (prev?.data.saveSeq ?? 0) + 1
+  // M32修正: seqは本体だけでなくBAKの最大も上回らせる。本体破損時にseqが1へ再起動すると、
+  // 残存する高seqの古いBAKが loadGame の比較で勝ち、直前に保存した正常データを恒久的に覆い隠す。
+  const prevBak = readRaw(KEY_BAK)
+  const seq = Math.max(prev?.data.saveSeq ?? 0, prevBak?.data.saveSeq ?? 0) + 1
 
   const serialize = (chronMax: number) =>
     JSON.stringify({ ...data, chronicle: boundChronicle(data.chronicle, chronMax), lastPlayedAt: Date.now(), saveSeq: seq })
