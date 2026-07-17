@@ -169,7 +169,8 @@ function initialRegionId(fame: number): string | null {
     // private mode等で読めなくても初期選択は成立させる
   }
   if (last && unlocked.some((r) => r.id === last)) return last
-  return unlocked[unlocked.length - 1].id
+  // M32修正: 「最前線」は配列末尾でなく解禁武功が最大の地(regions.tsのtier2が配列順で非単調のため)
+  return unlocked.reduce((a, b) => (b.unlockFame >= a.unlockFame ? b : a)).id
 }
 
 // 地域画 — 404時は同じ森へ黙って差し替えず、地域名入りの墨絵シルエット+「遠見が利かぬ」(M22 §5)
@@ -402,7 +403,8 @@ function EventDialog({ eventId }: { eventId: string }) {
         <p style={{ marginBottom: 16, fontSize: 15 }}>{ev.text}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {ev.choices.map((c, i) => {
-            const gamble = c.successRate !== undefined || c.outcomes.length > 1
+            // M32修正: 単発outcomeでも battle:true(必ず戦闘発生)は「確かな道」にせず危険側に分類する
+            const gamble = c.successRate !== undefined || c.outcomes.length > 1 || c.outcomes.some((o) => o.battle)
             const cost = c.requireHoto !== undefined ? `(奉燈${c.requireHoto})` : ''
             return (
               <button
