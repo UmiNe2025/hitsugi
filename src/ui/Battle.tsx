@@ -657,19 +657,6 @@ export function BattleScreen() {
         </div>
       </div>
 
-      {/* A(M28): オート実行中は常時クリック可能な停止ストリップを出す。コマンド盤が処理中で
-          無効化されていても、ここから必ず止められる(「止め時が無い」不具合の恒久対策)。 */}
-      {auto && !over && (
-        <button
-          type="button"
-          className="auto-stop-strip"
-          aria-label="オートを停止する"
-          onClick={() => setAuto(false)}
-        >
-          <span className="auto-stop-dot" aria-hidden />
-          オート実行中 — タップ／Escで停止
-        </button>
-      )}
 
       {showFullLog && (
         <div className="log-full-back" onClick={() => setShowFullLog(false)}>
@@ -743,6 +730,18 @@ export function BattleScreen() {
             {/* 中央: 主要4コマンド(2×2+オート)/技一覧/対象選択ヒント(§3.5)。
                 M25§4.4: 入力不能時もcmd-gridは常設し、disabled表示+状態ラベルで領域を空箱にしない。 */}
             <div className="turnpanel-center">
+              {/* A(M28→M29+): オート切替を常設(手番・メニュー・演出に関わらず戦闘中いつでも入切可能)。
+                  盤の流れ内に置くのでコマンドと重ならない。オート中は「■ 停止」で必ず止められる。 */}
+              {!over && (
+                <button
+                  type="button"
+                  className={`cmd-auto-persist ${auto ? 'is-on' : ''}`}
+                  aria-pressed={auto}
+                  onClick={() => setAuto(!auto)}
+                >
+                  {auto ? '■ オート停止(タップ／Esc)' : '▶ オート戦闘にする'}
+                </button>
+              )}
               {menu.kind === 'root' && (
                 <>
                   {!isPlayerTurn && <p className="cmd-hint-line">{centerStatusLabel}</p>}
@@ -766,15 +765,6 @@ export function BattleScreen() {
                       onClick={() => setMenu({ kind: 'item' })}
                     >
                       道具{availItems.length > 0 && <span className="sk-info">{availItems.reduce((n, x) => n + x.count, 0)}</span>}
-                    </button>
-                    {/* A(M28): オートの入切は常時可能にする(処理中も無効化しない)。
-                        無効化していたため「オート中に止め時が無い」不具合が出ていた。 */}
-                    <button
-                      className={`cmd-btn cmd-ghost cmd-auto ${auto ? 'cmd-on' : ''}`}
-                      aria-pressed={auto}
-                      onClick={() => setAuto(!auto)}
-                    >
-                      {auto ? '■ オート停止' : '▶ オート'}
                     </button>
                   </div>
                 </>

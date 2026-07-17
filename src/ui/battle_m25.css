@@ -372,8 +372,30 @@
   .auto-stop-dot { animation: autoStopPulse 1s ease-in-out infinite; }
   @keyframes autoStopPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 }
-/* オートON時のコマンドボタンも「停止」と分かる強調(cmd-onは既存) */
-.cmd-auto.cmd-on { font-weight: 700; }
+
+/* A(M29+): 戦闘コマンド盤の常設オート切替。盤の最上段に置き、手番・メニュー・演出中も常に見える。
+   コマンドの流れ内なので重ならない。オフ=落ち着いた金/オン=緋の強調で状態が一目で分かる。 */
+.cmd-auto-persist {
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 168, 106, 0.7);
+  background: linear-gradient(180deg, rgba(40, 32, 22, 0.9), rgba(24, 18, 14, 0.92));
+  color: #e8c887;
+  font-size: 13.5px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.cmd-auto-persist:hover { background: rgba(201, 168, 106, 0.18); }
+.cmd-auto-persist:focus-visible { outline: 2px solid #e8c887; outline-offset: 2px; }
+.cmd-auto-persist.is-on {
+  border-color: rgba(255, 157, 69, 0.9);
+  background: linear-gradient(180deg, rgba(60, 26, 16, 0.95), rgba(36, 16, 12, 0.95));
+  color: #ffd9a0;
+  font-weight: 700;
+}
 
 /* M28-C: 道具(回復薬)一覧のアイコン字(素材追加までは絵文字1字) */
 .item-ico {

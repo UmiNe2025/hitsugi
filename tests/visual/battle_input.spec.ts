@@ -9,9 +9,8 @@ test.use({ viewport: { width: 1873, height: 896 } })
 
 test('ultrawide: オートが押せて「オート中」へ切り替わる', async ({ page }) => {
   await gotoBattle(page, { allies: 3, enemies: 2 })
-  // コマンド盤のオートトグルを対象にする(オート中は別に停止ストリップも出て /オート/ が
-  // 2要素に解決するため、role名ではなく .cmd-auto で一意に掴む — M29修正)
-  const auto = page.locator('.cmd-auto')
+  // 常設オート切替(.cmd-auto-persist)を対象にする(M29+: 盤最上段の常設トグルへ一本化)
+  const auto = page.locator('.cmd-auto-persist')
   await expect(auto).toBeVisible()
   const before = (await auto.textContent())?.trim()
   await auto.click({ timeout: 3000 })
