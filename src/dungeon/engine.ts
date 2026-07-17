@@ -5,6 +5,7 @@
 import { Application, Container, Graphics, Sprite, Texture, Assets } from 'pixi.js'
 import type { FloorDef, TileKind } from './types'
 import { TILE_CHARS, isWalkable } from './types'
+import { usedKey, isReusableGuardTile, sealBossKeys } from './usedTiles' // M33: 使用済みキー/ボス床の純関数(vitest固定)
 import { themeForBg, type DungeonTheme } from './render/theme'
 import { resolveRegionVisual, type DungeonAct } from './render/region_theme'
 import { buildLandmark } from './render/landmarks'
@@ -857,7 +858,7 @@ export class DungeonEngine {
     const kind = this.tileAt(x, y)
     if (kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'stairs' || kind === 'entrance' || kind === 'boss' || kind === 'monument') {
       // M29修正: bossも使用済み判定に含める(討伐後のsealBossで使用済み化され、再踏で演出が空発火しない)
-      if ((kind === 'chest' || kind === 'camp' || kind === 'shrine' || kind === 'monument' || kind === 'boss') && this.used.has(`${this.floorIndex}:${x}:${y}`)) return
+      if (isReusableGuardTile(kind) && this.used.has(usedKey(this.floorIndex, x, y))) return
       if (kind === 'boss') {
         // ボスは緋の閃光で威圧してから対峙
         this.startEncounterFx('boss', () => this.events.onSpecialTile(kind, x, y))
@@ -868,7 +869,7 @@ export class DungeonEngine {
   }
 
   markUsed(x: number, y: number): void {
-    this.used.add(`${this.floorIndex}:${x}:${y}`)
+    this.used.add(usedKey(this.floorIndex, x, y))
     const kind = this.tileAt(x, y)
     const marker = this.propsData?.markers.get(`${x}:${y}`)
     const tex = this.propsData?.usedTexture(kind)
@@ -881,11 +882,7 @@ export class DungeonEngine {
    *  これをしないと討伐後もボス床を踏む度に戦闘演出(閃光/振動/暗転+入力凍結)が空発火する。
    *  Dungeon.tsxが run.bossDown の立ち上がりで一度だけ呼ぶ。冪等。 */
   sealBoss(): void {
-    for (let y = 0; y < this.grid.length; y++) {
-      for (let x = 0; x < this.grid[y].length; x++) {
-        if (this.grid[y][x] === 'boss') this.used.add(`${this.floorIndex}:${x}:${y}`)
-      }
-    }
+    for (const key of sealBossKeys(this.grid, this.floorIndex)) this.used.add(key)
     this.lighting?.dim('boss')
   }
 
