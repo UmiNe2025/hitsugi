@@ -162,3 +162,14 @@
   0%, 100% { box-shadow: 0 0 0 rgba(199, 62, 58, 0); }
   50% { box-shadow: 0 0 9px 2px rgba(199, 62, 58, 0.55); }
 }
+
+/* M29+: ダンジョン描画の初期化失敗オーバーレイ(沈黙の空キャンバス回避) */
+.dungeon-render-error {
+  position: absolute; inset: 0; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 24px; text-align: center;
+  background: radial-gradient(ellipse at center, rgba(20, 14, 12, 0.85), rgba(6, 6, 10, 0.94));
+}
+.dungeon-render-error .dre-title { font-size: 1.05rem; color: var(--gold, #e8c887); font-weight: 700; margin: 0; }
+.dungeon-render-error .dre-sub { font-size: 0.85rem; color: var(--text-dim, rgba(230, 220, 205, 0.75)); max-width: 30em; margin: 0; line-height: 1.5; }
+.dungeon-render-error .dre-actions { display: flex; gap: 10px; margin-top: 6px; }

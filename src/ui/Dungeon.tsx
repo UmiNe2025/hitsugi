@@ -160,6 +160,9 @@ function DungeonFloor() {
   const hostRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<DungeonEngine | null>(null)
   const [confirm, setConfirm] = useState<Confirm>(null)
+  // M29+: ダンジョン描画(PixiJS)の初期化失敗を握りつぶさず可視化する。WebGLコンテキスト取得失敗や
+  // 素材読込失敗で init() が例外を投げると、従来は void で無視され「真っ暗な空キャンバス」になっていた。
+  const [renderFailed, setRenderFailed] = useState(false)
 
   const region = regionById(run.regionId)
   const dungeon = dungeonByRegion(run.regionId)!
@@ -228,7 +231,12 @@ function DungeonFloor() {
     if (import.meta.env.DEV) {
       ;(window as unknown as { __dungeon?: unknown }).__dungeon = engine
     }
-    void engine.init()
+    setRenderFailed(false)
+    engine.init().catch((err) => {
+      // WebGL不可/素材失敗などで描画不能になった場合、沈黙の空キャンバスにせず可視化する。
+      console.error('[dungeon] 描画の初期化に失敗:', err)
+      setRenderFailed(true)
+    })
     return () => {
       engine.destroy()
       engineRef.current = null
@@ -307,6 +315,18 @@ function DungeonFloor() {
   return (
     <div className="dungeon-screen">
       <div className="dungeon-canvas" ref={hostRef} />
+
+      {/* M29+: 描画初期化に失敗した時だけ、沈黙の空画面でなく手立てを示す */}
+      {renderFailed && (
+        <div className="dungeon-render-error" role="alert">
+          <p className="dre-title">ダンジョンの描画を用意できませんでした。</p>
+          <p className="dre-sub">画面描画(WebGL)が使えないか、一時的な不具合かもしれません。再読み込みで直ることが多いです。</p>
+          <div className="dre-actions">
+            <button className="btn btn-primary" onClick={() => window.location.reload()}>再読み込み</button>
+            <button className="btn" onClick={() => setConfirm({ kind: 'return' })}>郷へ戻る</button>
+          </div>
+        </div>
+      )}
 
       {/* M24 §4.6→M25 §3.2: 灯・地名・階層・短期目的を左上〜上中央の一帯へ統合。資源/暦は右寄せの小型表示。
           390px幅ではdungeon_m25.cssが2段gridへ再配置し、暦・資源・帰り火は非表示にして小休止sheetへ寄せる。 */}
