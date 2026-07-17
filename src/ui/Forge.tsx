@@ -8,6 +8,7 @@ import { useGame } from '../core/store'
 import type { Character, GameData, Item, ItemSlot, StatKey, Stats } from '../core/types'
 import { STAT_LABELS } from '../core/types'
 import { ITEM_BASES, previewReforge, reforgeCost, REFORGE_MAX } from '../core/data/items'
+import { CONSUMABLES } from '../core/data/consumables' // M28-C: 回復薬(見世で購う)
 import {
   diffItems, qualityOf, rarityOf, sourceLabelOf,
   RARITY_LABELS, SLOT_MARKS, SOURCE_LABELS, type ItemDiff, type RarityKey,
@@ -20,7 +21,7 @@ import { emitToast } from './toast'
 import './forge_m18.css'
 import './forge_m26.css' // M26 §7.3/§7.4: master/detail・血潮鍛錬の回数ステッパー(forge_m18.cssより後 — 後勝ち)
 
-type Tab = 'buy' | 'equip' | 'reforge' | 'train'
+type Tab = 'buy' | 'equip' | 'reforge' | 'train' | 'shop' // shop=見世(回復薬・M28-C)
 type SlotFilter = 'all' | 'weapon' | 'armor' | 'charm'
 const SLOT_LABEL: Record<string, string> = { weapon: '武具', armor: '防具', charm: '御守' }
 const SLOT_ORDER: Record<string, number> = { weapon: 0, armor: 1, charm: 2 }
@@ -102,6 +103,7 @@ export function ForgeScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const buyItem = useGame((s) => s.buyItem)
+  const buyConsumable = useGame((s) => s.buyConsumable) // M28-C
   const equipItem = useGame((s) => s.equipItem)
   const trainStat = useGame((s) => s.trainStat)
   const forgeUpgrade = useGame((s) => s.forgeUpgrade)
@@ -195,6 +197,7 @@ export function ForgeScreen() {
     { key: 'equip', label: '装備' },
     { key: 'reforge', label: '打ち直し' },
     { key: 'train', label: '鍛錬' },
+    { key: 'shop', label: '見世' }, // M28-C: 回復薬(消耗品)
   ]
   const changeTab = (t: Tab) => { setTab(t); setShown(PAGE) }
 
@@ -278,8 +281,8 @@ export function ForgeScreen() {
         </div>
       )}
 
-      {/* 絞り込み(購う/装備/打ち直し): 検索+部位+希少度+買える物のみ(M22 §2.2) */}
-      {tab !== 'train' && (
+      {/* 絞り込み(購う/装備/打ち直し): 検索+部位+希少度+買える物のみ(M22 §2.2)。見世(shop)は絞り込み不要 */}
+      {tab !== 'train' && tab !== 'shop' && (
         <div className="forge-filter-row">
           <input
             className="forge-search"
@@ -511,6 +514,47 @@ export function ForgeScreen() {
                 <span className="item-price">{selChar.potential[k] >= 120 ? '極み' : '珠5'}</span>
               </button>
             ))}
+          </div>
+        </Panel>
+      )}
+
+      {/* M28-C: 見世(みせ) — 回復薬(消耗品)を購う。装備の master/detail とは別系統の単純な一覧。 */}
+      {tab === 'shop' && (
+        <Panel title="見世(みせ) — 傷と灯(ともしび)の備え">
+          <p className="forge-note">
+            戦(いくさ)の場で使う消えものの薬。買えば蔵(装備)とは別に控え、戦の「道具」で用いる。持てる奉燈: {data.hoto}
+          </p>
+          <div className="item-grid">
+            {CONSUMABLES.map((c) => {
+              const owned = (data.consumables ?? []).find((s) => s.id === c.id)?.count ?? 0
+              const afford = data.hoto >= c.price
+              return (
+                <div key={c.id} className="consum-cell">
+                  <span className="consum-ico" aria-hidden>{c.icon}</span>
+                  <div className="consum-body">
+                    <span className="consum-name">
+                      {c.name}
+                      {owned > 0 && <span className="consum-owned">控え×{owned}</span>}
+                    </span>
+                    <span className="consum-eff">
+                      {c.effect.scope === 'party' ? '一族みな ' : ''}
+                      {c.effect.stat === 'hp' ? '傷' : '灯'}を{c.effect.amount}癒す
+                    </span>
+                    <span className="consum-desc">{c.desc}</span>
+                  </div>
+                  <button
+                    className="btn btn-primary consum-buy"
+                    disabled={!afford}
+                    onClick={() => {
+                      buyConsumable(c.id)
+                      emitToast(`${c.name}を購うた — 残り奉燈${data.hoto - c.price}`, 'info')
+                    }}
+                  >
+                    {c.price} 奉燈で購う
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </Panel>
       )}
