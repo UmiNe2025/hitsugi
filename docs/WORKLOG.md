@@ -1127,3 +1127,4 @@
 - **報告**: 家系図(全画面modal)から元のメニューへ戻る導線が見つからない。
 - **原因/是正**: 閉じるは topbar 内の「閉じる」+ESC+背景クリックだが、(1)全画面modalは背景全面を覆い背景クリック不可、(2)topbarのwrapや端末ノッチ(safe-area未考慮)で「閉じる」が埋もれ/隠れうる、(3)`.modal`の背景がfullscreen変種で効かず半透明に見えHomeが透けて「別画面」と認識されない。→ 常設の固定「✕ 閉じる」(topbar/ノッチに隠れない・44px・aria)を追加、safe-area padding、高詳細度規則で不透明背景を明示、topbarの旧「閉じる」は撤去。
 - **検証**: tsc0/lint0/build緑。回帰テスト `familytree_close.spec` を新設し全5幅で「固定閉じる釦が可視・44px・押下でHomeへ戻る」を固定(5緑)。実機スクショで不透明表示+釦視認を確認(初回の透け見えはscreenInフェード中の撮影アーティファクトと判明)。
+- **デプロイ実行**(ユーザー承認「デプロイしてください」): build緑→commit `8259404` を push。GitHub Actions run 29629866297 success(build 45s+deploy 15s)、https://umine2025.github.io/hitsugi/ 公開反映済み。
