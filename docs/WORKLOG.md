@@ -1111,3 +1111,4 @@
 - **検証**: tsc0/oxlint0/vitest**565**/validate_data0/build緑/playwright全幅(最終ゲート)。各項に機械検証・バランスは現実sim測定+根拠記録で受入。
 - **正直申告**: 現実sim botは単純方策で実プレイ全ては代表せず、バランス値は最適解の証明でなく実測に基づく設計判断。手動プレイテスト未実施。
 - **git**: M33を9論理グループでcommit(自己監査区分=git可逆)。**push=公開デプロイはユーザー承認待ち**(未push)。
+- **デプロイ実行**(ユーザー承認「全て今すぐデプロイ」・バランス手動未検証を明示の上): build緑→全10コミットをpush。GitHub Actions run 29624778894 success、https://umine2025.github.io/hitsugi/ 公開反映済み。
