@@ -1098,3 +1098,16 @@
 - **検証**: tsc -b 0 / oxlint 0 / vitest **553緑**(rare+1) / playwright 第1バッチ **198緑+2skip**(全5幅)、第2バッチ codex_seen+menu_a11y **15緑**。validate_data未変更。
 - **git**: M32を8論理グループでcommit(自己監査区分=git可逆)。**push=公開デプロイはユーザー承認待ち**(未push)。
 - **デプロイ実行**(ユーザー承認「今すぐ全部デプロイ」): npm run build緑→全19コミット(M30/M31/M32)を push。GitHub Actions run 29615749908 success、https://umine2025.github.io/hitsugi/ 公開反映済み。
+
+## 2026-07-18 (M33 M32次段送り項目の完遂 /mission)
+
+- **依頼**: M32で「報告のみ・次段送り」とした設計判断/技術債/UX項目を全て対応する。
+- **契約**: 17項を3マイルストーン(M1低リスク/M2技術債/M3バランス)で。監査区分=自己監査(push無し・git可逆)。
+- **Phase0**: 3発見エージェント(balance/save-techdebt/a11y)+devil-advocate投入。**devil判定=否**: (CRITICAL-1)balance_simは味方attack固定でバフ/道具/装備を使わず⑬⑮⑯を測れない=「sim緑」は空虚オラクル。(CRITICAL-2)⑨checkpointは`continueGame`が意図的にdungeonRunを破棄する設計の反転(WORKLOG M25_M26が「永続化されない/変更はスコープ外」と明記)。他HIGH: ⑬式は防御バフ全面強化に、加算方式にstack上限なし、⑧警告のみは無実効。
+- **ユーザー3決定(契約変更承認)**: A=現実policy sim整備し全部測定調整 / B=⑨は意図的設計維持でスキップ / C=⑧はread-only化。
+- **M1(7件・commit 856c12f/4334638)**: ドック逃げ余白3種のsafe-area・filter-tab 44px・Codex aria-current・技MP灯ラベル・交神god-row推奨★ / 一代一度の選択(灯座/家業/家訓/遺言/命名)の即saveGame・保存通知の深刻度別ラッチ。
+- **M2(技術債)**: ⑧複数タブread-only化+ConflictBanner(c59f9e6) / ⑩sealBoss等の使用済みキーをusedTiles.ts純関数へ抽出+vitest(40f1d8b) / ⑪Village・DungeonをReact.lazy化しmain chunk 1782→1347kB(8631772) / ⑫perfはheadless GPU無しで硬い閾値が無意味なため描画liveness(fps>1)+判断根拠コメント。**⑨はスキップ(ユーザー決定)**。
+- **M3(バランス・sim先)**: balance_simに現実policy(最良バフ→回復→攻撃)botを追加=devil CRITICAL-1解消(玄冬瀕死 素手62%→戦術1%と可視化)。⑬バフをpower由来+対称`(1+atkMag)/(1+defMag)`+max上書きclamp(exploit封じ)、防御バフ平均≈-17%にアンカーし全面易化回避、⑨defUp非対称も同時解消(a0d7760)。⑭玄冬崖: 前触れの影のディップ是正(hp1100→1750)+玄冬小幅緩和(hp2400→2150、atkは不変条件で85維持)+実kit測定(素手36→45%・戦術瀕死3%)+oracle是正(7fb4a20)。⑮回復薬に上位3tier+武功ゲート+ゲート実効テスト(805e22d)。⑯価格をgrowth連動で緩和(tier14の性能あたり27→約10倍)+絶対比ピン(ddd4703)。
+- **検証**: tsc0/oxlint0/vitest**565**/validate_data0/build緑/playwright全幅(最終ゲート)。各項に機械検証・バランスは現実sim測定+根拠記録で受入。
+- **正直申告**: 現実sim botは単純方策で実プレイ全ては代表せず、バランス値は最適解の証明でなく実測に基づく設計判断。手動プレイテスト未実施。
+- **git**: M33を9論理グループでcommit(自己監査区分=git可逆)。**push=公開デプロイはユーザー承認待ち**(未push)。
