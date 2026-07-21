@@ -18,6 +18,77 @@
 }
 .depart-readybar b { color: var(--gold); font-variant-numeric: tabular-nums; }
 
+/* VC3: 全40件より先に「今夜の候補」を四つまで提示し、絵地図/文字一覧を同じ選択へ同期する。 */
+.depart-route-shortlist {
+  margin: 12px 0 14px;
+  padding: 14px;
+  border: 1px solid rgba(201, 168, 106, .42);
+  border-radius: 10px;
+  background: linear-gradient(120deg, rgba(31, 23, 23, .88), rgba(12, 18, 35, .9));
+  box-shadow: inset 0 -22px 35px rgba(0, 0, 0, .16);
+}
+.depart-shortlist-head { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 10px; }
+.depart-shortlist-head span { color: var(--amber); font-size: 10.5px; letter-spacing: .15em; }
+.depart-shortlist-head h2 { margin: 2px 0 0; font-size: 17px; color: var(--gold); }
+.depart-view-switch { display: inline-flex; padding: 3px; border: 1px solid rgba(201, 168, 106, .32); border-radius: 7px; background: rgba(4, 8, 17, .58); }
+.depart-view-switch button {
+  min-width: 76px; min-height: 44px; border: 0; border-radius: 5px; background: transparent; color: var(--text-dim); cursor: pointer;
+}
+.depart-view-switch button.is-sel { background: rgba(232, 163, 61, .14); color: var(--gold); box-shadow: inset 0 0 0 1px var(--amber); }
+.depart-view-switch button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.depart-shortlist-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.depart-shortlist-card {
+  min-width: 0; min-height: 76px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px;
+  padding: 9px 11px; border: 1px solid rgba(201, 168, 106, .28); border-radius: 6px; background: rgba(5, 9, 20, .68); color: var(--text); text-align: left; cursor: pointer;
+}
+.depart-shortlist-card:hover, .depart-shortlist-card.is-sel { border-color: var(--sel); background: var(--sel-bg); }
+.depart-shortlist-card:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.depart-shortlist-card:disabled { opacity: .6; cursor: not-allowed; }
+.depart-shortlist-card .depart-shortlist-label { color: var(--amber); font-size: 10.5px; letter-spacing: .1em; }
+.depart-shortlist-card b { max-width: 100%; color: var(--gold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.depart-shortlist-card small { color: var(--text-dim); }
+
+.depart-region-list {
+  max-height: 510px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(201, 168, 106, .22);
+  background: rgba(7, 11, 23, .7);
+  scrollbar-gutter: stable;
+}
+.depart-region-row {
+  width: 100%;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 1px solid rgba(201, 168, 106, .22);
+  border-radius: 5px;
+  background: rgba(16, 22, 40, .72);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.depart-region-row:hover, .depart-region-row.is-sel { border-color: var(--sel); background: var(--sel-bg); }
+.depart-region-row:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+.depart-region-row:disabled { opacity: .5; cursor: not-allowed; }
+.depart-region-row-state { display: inline-grid; place-items: center; width: 27px; height: 27px; border: 1px solid var(--gold); border-radius: 50%; color: var(--gold); font-size: 11px; }
+.depart-region-row > span:nth-child(2) { min-width: 0; }
+.depart-region-row b, .depart-region-row small { display: block; }
+.depart-region-row b { color: var(--gold); }
+.depart-region-row small { margin-top: 2px; color: var(--text-dim); font-size: 10.5px; }
+.depart-region-row em { color: var(--text-dim); font-size: 11px; font-style: normal; white-space: nowrap; }
+
+.depart-confirm-route { display: grid; gap: 8px; }
+.depart-confirm-route .region-art-fallback, .depart-confirm-route .region-detail-img { max-height: 170px; }
+.depart-confirm-route p { display: grid; grid-template-columns: 94px minmax(0, 1fr); gap: 8px; margin: 0; font-size: 13px; }
+.depart-confirm-route p b { color: var(--gold); }
+
 /* 地域詳細カードの追加行(§5.2-2): 見立て★tier / 推奨武功。12.5px以上・通常コントラスト */
 .region-detail-risk {
   font-size: 12.5px;
@@ -38,7 +109,9 @@
    M33: safe-area対応 — ドック自体はenv込みで背が伸びるので逃げ余白も追随させ、ノッチ端末で末尾が隠れないように。 */
 .depart-m18-root.screen {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  overflow-x: clip;
 }
+.depart-cols, .depart-cols > *, .depart-side, .depart-region-list, .region-detail { min-width: 0; max-width: 100%; }
 
 /* ================================================================
    M22 P0-1 — 出立専用の隊編成(docs/POLISH_FIX_INSTRUCTIONS_CLAUDE.md §1)
@@ -206,7 +279,7 @@
 }
 .depart-cand-detail {
   margin-top: 8px;
-  min-height: 32px;
+  min-height: 44px;
   font-size: 12.5px;
   padding: 4px 10px;
 }
@@ -257,6 +330,7 @@
 
 /* 641〜1099px: 候補2列(§1.2) */
 @media (max-width: 1099px) {
+  .depart-shortlist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .depart-party-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -264,6 +338,11 @@
 
 /* 640px以下: 1列コンパクト横カード。高さを抑え、全幅は許容(§1.2) */
 @media (max-width: 640px) {
+  .depart-shortlist-head { align-items: stretch; flex-direction: column; }
+  .depart-view-switch { width: 100%; }
+  .depart-view-switch button { flex: 1; }
+  .depart-shortlist-grid { grid-template-columns: 1fr; }
+  .depart-shortlist-card { min-height: 64px; }
   .depart-party-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
@@ -279,6 +358,13 @@
     padding: 4px 6px;
     font-size: 12.5px;
   }
+}
+
+@media (max-width: 390px) {
+  .depart-route-shortlist { padding: 10px; }
+  .depart-region-row { grid-template-columns: 28px minmax(0, 1fr); }
+  .depart-region-row em { grid-column: 2; }
+  .depart-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ================================================================

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hitsugi-game.github.io/schema/visual-recovery-asset-manifest-v1.json",
+  "title": "HITSUGI visual recovery asset manifest",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "assetId", "screen", "role", "family", "state", "requiredStates",
+      "dimensions", "alpha", "crop", "collision", "source", "generator",
+      "modelLicenseChain", "rightsStatus", "promptVersion", "reviewStatus",
+      "reviewer", "rejectReason", "sourceSha256", "runtimePath", "runtimeSha256"
+    ],
+    "properties": {
+      "assetId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+      "screen": { "enum": ["home", "village", "dungeon", "battle", "pact", "forge", "storehouse"] },
+      "role": { "enum": ["ground", "edge", "facade", "prop", "landmark", "foreground", "effect", "portrait", "stage"] },
+      "family": { "type": "string", "minLength": 1 },
+      "state": { "type": "string", "minLength": 1 },
+      "requiredStates": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+      "dimensions": {
+        "type": "object", "additionalProperties": false, "required": ["width", "height"],
+        "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } }
+      },
+      "alpha": { "type": "boolean" },
+      "crop": {
+        "type": "object", "additionalProperties": false,
+        "required": ["pc", "tablet", "mobile390", "mobile360"],
+        "properties": {
+          "pc": { "type": "string", "minLength": 1 }, "tablet": { "type": "string", "minLength": 1 },
+          "mobile390": { "type": "string", "minLength": 1 }, "mobile360": { "type": "string", "minLength": 1 }
+        }
+      },
+      "collision": { "type": "string", "minLength": 1 },
+      "source": { "type": ["string", "null"] },
+      "generator": { "type": ["string", "null"] },
+      "modelLicenseChain": { "type": ["string", "null"] },
+      "rightsStatus": { "enum": ["planned", "unverified", "cleared", "rejected"] },
+      "promptVersion": { "type": "string", "minLength": 1 },
+      "reviewStatus": { "enum": ["planned", "generated", "needs-review", "accepted", "rejected"] },
+      "reviewer": { "type": ["string", "null"] },
+      "rejectReason": { "type": ["string", "null"] },
+      "sourceSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+      "runtimePath": { "type": ["string", "null"] },
+      "runtimeSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" }
+    }
+  }
+}

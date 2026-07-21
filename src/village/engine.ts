@@ -3,6 +3,15 @@
 // 歩くことを強制ロードにしない: 施設への即時移動(すぐ行く)はVillage.tsx側のバーが担い、
 // 本エンジンは「世界観を味わう経路」を提供する(POLISH_FIX §5)。
 import { Application, Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
+import type { VillageVisualState } from '../core/data/village_visual_state'
+import {
+  buildVillageFacadesV2,
+  resolveVillageSceneCoverage,
+  villageFacadeAssetUrls,
+  type VillageFacadeAssetSet,
+} from './render/facades'
+import { buildVillageForegroundV2, buildVillageReturnTraceV2 } from './render/foreground'
+import { buildVillageGroundV2, VILLAGE_V2_GROUND_MARKER } from './render/ground'
 
 export const V_TILE = 46
 
@@ -78,6 +87,9 @@ export interface VillageEngineOpts {
   npcs: VillageNpc[]
   kin: VillageKin[] // 存命の家族(先頭=操作キャラは含めない)
   reduceMotion: boolean
+  visualV2: boolean
+  visualState: VillageVisualState
+  facadeAssets?: VillageFacadeAssetSet
 }
 
 export interface VillageEvents {
@@ -88,6 +100,13 @@ const KIN_SPOTS: [number, number][] = [[8, 4], [14, 6], [6, 8], [16, 8], [13, 4]
 
 const isBlockedChar = (ch: string) => ch !== '.'
 const tileAt = (x: number, y: number) => (y >= 0 && y < ROWS && x >= 0 && x < COLS ? MAP[y][x] : '#')
+
+// AR1の直接回帰hook。V2 rendererもこの正典を読むため、K/Lのfocus/collision座標は変わらない。
+export const villageTileAt = (x: number, y: number): string => tileAt(x, y)
+export const villageIsBlockedTile = (x: number, y: number): boolean => isBlockedChar(tileAt(x, y))
+export const villageFacilityAt = (x: number, y: number): { kind: VillageFocusKind; label: string } | null => (
+  FACILITY[tileAt(x, y)] ?? null
+)
 
 export class VillageEngine {
   private app = new Application()
@@ -100,6 +119,7 @@ export class VillageEngine {
   private waterG = new Graphics()
   private gSmoke = new Container()
   private gParticles = new Container()
+  private gForeground = new Container()
   private destroyed = false
   private player!: Container
   private playerSprite: Sprite | null = null
@@ -136,12 +156,47 @@ export class VillageEngine {
   async init(): Promise<void> {
     await this.app.init({ background: 0x0a0e1d, resizeTo: this.host, antialias: true })
     if (this.destroyed) return // init中に破棄された(dungeon engineと同じレース対策)
+    if (this.opts.visualV2) {
+      // facadeを後追い差し替えにすると、低速回線ではfallback→生成画像のちらつきが見える。
+      // 5施設を同じframe契約で先にcacheし、解決済み/placeholderを決定論的に公開する。
+      const state = this.opts.visualState.lifeState
+      const assets = this.opts.facadeAssets ?? {}
+      const entries = villageFacadeAssetUrls(assets, state)
+      const resolvedUrls = new Set<string>()
+      await Promise.all(entries.map(async ({ url }) => {
+        if (!url) return
+        try {
+          await Assets.load(url)
+          resolvedUrls.add(url)
+        } catch {
+          // code-native facadeへ縮退。coverage datasetではplaceholderとして残す。
+        }
+      }))
+      if (this.destroyed) return
+      const coverage = resolveVillageSceneCoverage(assets, state, resolvedUrls)
+      this.host.dataset.facadeTotal = String(coverage.total)
+      this.host.dataset.facadeResolved = String(coverage.resolved)
+      this.host.dataset.facadePlaceholder = String(coverage.placeholder)
+      this.host.dataset.facadeMismatch = String(coverage.mismatch)
+      // rights/物理性能/人間gateを含まないため sceneReady とは呼ばない。
+      this.host.dataset.facadeCoverage = coverage.ready ? 'complete' : 'fallback'
+    }
     this.host.appendChild(this.app.canvas)
+    this.host.dataset.villageVisual = this.opts.visualV2 ? 'v2' : 'v1'
+    this.host.dataset.groundPattern = this.opts.visualV2 ? VILLAGE_V2_GROUND_MARKER : 'tile-grid'
+    this.host.dataset.returnTrace = this.opts.visualState.freshReturn?.kind ?? 'none'
+    this.host.dataset.cameraMode = 'follow'
+    if (this.opts.visualV2) {
+      this.host.dataset.portraitPin = 'none'
+      this.host.dataset.portraitPinCount = '0'
+      this.host.dataset.portraitPinPolicy = 'proximity-only'
+    }
 
     this.app.stage.addChild(this.world)
     // z順(bottom→top): 地面 → 平面デカール → 池グリント → mid(y-sort) → 煙(normal) → 灯り(add) → 蛍/火の粉(add)
-    this.world.addChild(this.buildGround())
+    this.world.addChild(this.opts.visualV2 ? this.buildGroundV2() : this.buildGround())
     this.world.addChild(this.gDecal)
+    if (this.opts.visualV2) this.gDecal.addChild(buildVillageReturnTraceV2(V_TILE, this.opts.visualState))
     this.gWater.addChild(this.waterG)
     this.world.addChild(this.gWater)
     this.mid.sortableChildren = true
@@ -149,11 +204,19 @@ export class VillageEngine {
     this.world.addChild(this.gSmoke)
     this.world.addChild(this.gGlow)
     this.world.addChild(this.gParticles)
-    this.buildBuildings()
+    this.world.addChild(this.gForeground)
+    if (this.opts.visualV2) this.buildBuildingsV2()
+    else this.buildBuildings()
     this.buildProps()
     this.buildWater()
-    this.buildParticles()
+    if (!this.opts.visualV2) this.buildParticles()
     this.buildSmoke()
+    if (this.opts.visualV2) {
+      this.gForeground.addChild(buildVillageForegroundV2(
+        V_TILE,
+        this.opts.visualState.lifeState === 'bloodline-crisis',
+      ))
+    }
     this.buildNpcs()
     this.buildKin()
     await this.buildPlayer()
@@ -253,6 +316,16 @@ export class VillageEngine {
   // 「見渡す」の押下/解放(§6.2)。押下中だけ全景、離すと追従へ戻る。
   setSurvey(on: boolean): void {
     this.survey = on
+    this.host.dataset.cameraMode = on ? 'survey' : 'follow'
+    // mobileではsurvey中だけstageをmap比率へ畳む。CSS reflow後にrendererの
+    // drawing bufferも追従させないと、旧canvas上端だけが残りworldが見切れる。
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (this.destroyed) return
+      const width = Math.max(1, this.host.clientWidth)
+      const height = Math.max(1, this.host.clientHeight)
+      this.app.renderer.resize(width, height)
+      this.layout()
+    }))
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
@@ -377,7 +450,7 @@ export class VillageEngine {
       }
       // 水面グリントは8Hz(少セルなので引き直しても安い)
       this.waterT += this.app.ticker.deltaMS
-      if (this.waterT >= 125) {
+      if (!this.opts.visualV2 && this.waterT >= 125) {
         this.waterT = 0
         this.drawWater()
       }
@@ -447,6 +520,7 @@ export class VillageEngine {
     const changed = (this.focused?.kind !== next?.kind) || (this.focused?.id !== next?.id)
     if (changed) {
       this.focused = next
+      this.syncPersonPins(next)
       this.events.onFocus(next)
     }
   }
@@ -480,6 +554,16 @@ export class VillageEngine {
     // 池セルを収集(下地塗り 0x0e1d33 は上のループで済み。グリントのアニメは gWater/drawWater が担う)
     this.pond = MAP.flatMap((row, y) => [...row].map((ch, x) => (ch === '~' ? [x, y] : null)).filter(Boolean)) as [number, number][]
     return g
+  }
+
+  private buildGroundV2(): Graphics {
+    this.pond = MAP.flatMap((row, y) => [...row].map((ch, x) => (ch === '~' ? [x, y] : null)).filter(Boolean)) as [number, number][]
+    return buildVillageGroundV2({
+      tile: V_TILE,
+      cols: COLS,
+      rows: ROWS,
+      crisis: this.opts.visualState.lifeState === 'bloodline-crisis',
+    })
   }
 
   private buildBuildings(): void {
@@ -550,9 +634,45 @@ export class VillageEngine {
     this.glowAt(11.5, 5.4, 0xffc36a, 52, 0.5, { period: 900, amp: 0.14 }) // 大燈籠(郷の心臓)
   }
 
-  private glowAt(tx: number, ty: number, color: number, r: number, alpha: number, breathe?: { period: number; amp: number }): Graphics {
+  private buildBuildingsV2(): void {
+    const placements = buildVillageFacadesV2(
+      V_TILE,
+      this.opts.visualState.lifeState,
+      this.opts.facadeAssets,
+    )
+    for (const placement of placements) {
+      placement.node.x = placement.tx * V_TILE
+      placement.node.y = placement.ty * V_TILE
+      placement.node.zIndex = placement.node.y + V_TILE * placement.depthTiles
+      this.mid.addChild(placement.node)
+      for (const light of placement.lights) {
+        this.glowAt(light.tx, light.ty, light.color, light.radius, light.alpha, {
+          period: light.period,
+          amp: light.amplitude,
+          soft: true,
+        })
+      }
+    }
+  }
+
+  private glowAt(
+    tx: number,
+    ty: number,
+    color: number,
+    r: number,
+    alpha: number,
+    breathe?: { period: number; amp: number; soft?: boolean },
+  ): Graphics {
     const g = new Graphics()
-    g.circle(0, 0, r).fill({ color, alpha })
+    if (breathe?.soft) {
+      // V2 facadeは一枚の半透明円だと「画像を置いただけ」に見える。
+      // 小さな同心光を重ね、外縁ほど急速に薄くして建物の灯りへ馴染ませる。
+      g.circle(0, 0, r).fill({ color, alpha: 0.1 })
+      g.circle(0, 0, r * 0.66).fill({ color, alpha: 0.18 })
+      g.circle(0, 0, r * 0.34).fill({ color, alpha: 0.42 })
+    } else {
+      g.circle(0, 0, r).fill({ color, alpha })
+    }
     g.blendMode = 'add'
     g.x = tx * V_TILE
     g.y = ty * V_TILE
@@ -568,16 +688,32 @@ export class VillageEngine {
       node.x = (n.x + 0.5) * V_TILE
       node.y = (n.y + 0.55) * V_TILE
       node.zIndex = node.y
-      // M8(§6): 浮いた金色の肖像札 → 郷に「立つ」村人へ。足元の影+立て札の台で接地し、
-      // 縁の金は 0.7→0.3 に抑えて商品札感を消す(村人は vil_* が肖像のみのため立て札様式で見せる)。
-      const shadow = new Graphics().ellipse(0, 1, 13, 4.5).fill({ color: 0x000000, alpha: 0.42 })
+      // 人物の足元は施設と同じ右下へ落ちる二層影。V2ではportrait札を身体の代用にせず、
+      // 低密度の立ち姿を常設し、顔・名前・「話」印は近接時だけ展開する。
+      const shadow = this.personContactShadow()
       node.addChild(shadow)
-      const base = new Graphics()
-      base.moveTo(-9, -3).lineTo(9, -3).lineTo(12, 2).lineTo(-12, 2).closePath().fill({ color: 0x241c2e, alpha: 0.92 })
-      node.addChild(base)
-      const board = new Graphics()
-      board.roundRect(-14, -V_TILE * 1.02, 28, 42, 8).fill(0x161022).stroke({ color: 0xc9a86a, width: 1, alpha: 0.3 })
-      node.addChild(board)
+      const pin = new Container()
+      if (this.opts.visualV2) {
+        node.addChild(this.groundedVillagerFigure(n))
+        pin.y = -V_TILE * 1.22
+        pin.visible = false
+        pin.addChild(new Graphics()
+          .roundRect(-18, -44, 36, 48, 5)
+          .fill({ color: 0x0b0f1e, alpha: 0.92 })
+          .stroke({ color: 0xc9a86a, width: 1, alpha: 0.52 }))
+        node.addChild(pin)
+        this.personPins.set(`npc:${n.id}`, pin)
+      } else {
+        const base = new Graphics()
+        base.moveTo(-9, -3).lineTo(9, -3).lineTo(12, 2).lineTo(-12, 2).closePath().fill({ color: 0x241c2e, alpha: 0.92 })
+        node.addChild(base)
+        const board = new Graphics()
+        board.roundRect(-14, -V_TILE * 1.02, 28, 42, 8).fill(0x161022).stroke({ color: 0xc9a86a, width: 1, alpha: 0.3 })
+        node.addChild(board)
+      }
+      const portraitParent = this.opts.visualV2 ? pin : node
+      const portraitLayer = new Container()
+      portraitParent.addChild(portraitLayer)
       void Assets.load(n.imgUrl)
         .then((tex: Texture) => {
           if (this.destroyed) return
@@ -585,35 +721,37 @@ export class VillageEngine {
           const scale = 26 / sp.width
           sp.scale.set(scale)
           sp.x = -13
-          sp.y = -V_TILE * 1.0 + 3
-          const mask = new Graphics().roundRect(-13, -V_TILE * 1.0 + 3, 26, 36, 6).fill(0xffffff)
-          node.addChild(mask)
+          sp.y = this.opts.visualV2 ? -40 : -V_TILE * 1.0 + 3
+          const mask = new Graphics().roundRect(-13, sp.y, 26, 36, 5).fill(0xffffff)
+          portraitLayer.addChild(mask)
           sp.mask = mask
-          node.addChildAt(sp, 3)
+          portraitLayer.addChild(sp)
         })
         .catch(() => {
           // 肖像欠落時 — 人影シルエット(頭+肩)で「人」と読ませる(金円ではない)
           const fb = new Graphics()
-          fb.circle(0, -V_TILE * 0.82, 6).fill({ color: 0x2a2440, alpha: 0.95 })
-          fb.moveTo(-9, -V_TILE * 0.5).quadraticCurveTo(0, -V_TILE * 0.74, 9, -V_TILE * 0.5).lineTo(9, -V_TILE * 0.5).closePath()
+          const baseY = this.opts.visualV2 ? -30 : -V_TILE * 0.82
+          fb.circle(0, baseY, 6).fill({ color: 0x2a2440, alpha: 0.95 })
+          fb.moveTo(-9, baseY + 14).quadraticCurveTo(0, baseY - 2, 9, baseY + 14).lineTo(9, baseY + 18).lineTo(-9, baseY + 18).closePath()
             .fill({ color: 0x2a2440, alpha: 0.95 })
-          node.addChild(fb)
+          portraitLayer.addChild(fb)
         })
       const label = new Text({
         text: n.name,
         style: { fontSize: 11, fill: 0xefe6d4, stroke: { color: 0x0a0e1d, width: 3 } },
       })
       label.anchor.set(0.5)
-      label.y = 8
-      node.addChild(label)
+      label.y = this.opts.visualV2 ? 11 : 8
+      portraitParent.addChild(label)
       if (n.news) {
-        const badge = new Graphics().circle(16, -V_TILE * 0.95, 7).fill(0xd9c26a).stroke({ color: 0x0a0e1d, width: 1.5 })
-        node.addChild(badge)
+        const badgeY = this.opts.visualV2 ? -39 : -V_TILE * 0.95
+        const badge = new Graphics().circle(16, badgeY, 7).fill(0xd9c26a).stroke({ color: 0x0a0e1d, width: 1.5 })
+        portraitParent.addChild(badge)
         const mark = new Text({ text: '話', style: { fontSize: 9, fill: 0x14100b, fontWeight: '700' } })
         mark.anchor.set(0.5)
         mark.x = 16
-        mark.y = -V_TILE * 0.95
-        node.addChild(mark)
+        mark.y = badgeY
+        portraitParent.addChild(mark)
         this.npcBadges.set(n.id, [badge, mark])
       }
       this.mid.addChild(node)
@@ -622,6 +760,43 @@ export class VillageEngine {
 
   private kinNodes: { id: string; name: string; node: Container }[] = []
   private npcBadges = new Map<string, (Graphics | Text)[]>()
+  private personPins = new Map<string, Container>()
+
+  private personContactShadow(): Graphics {
+    return new Graphics()
+      .ellipse(3, 3, 14, 5).fill({ color: 0x020309, alpha: 0.54 })
+      .ellipse(0, 1, 9, 2.8).fill({ color: 0x11131b, alpha: 0.82 })
+  }
+
+  private groundedVillagerFigure(npc: VillageNpc): Graphics {
+    const figure = new Graphics()
+    const apron = /豆腐|店|職人/.test(npc.role)
+    figure.circle(0, -V_TILE * 0.80, 6.5).fill({ color: 0x554b55, alpha: 0.96 })
+    figure.poly([
+      -8, -V_TILE * 0.65,
+      8, -V_TILE * 0.65,
+      apron ? 10 : 7, -4,
+      -7, -4,
+    ]).fill({ color: apron ? 0x615956 : 0x353446, alpha: 0.98 })
+    figure.moveTo(-7, -V_TILE * 0.52).lineTo(7, -V_TILE * 0.28)
+      .stroke({ color: 0x9a917f, width: 2, alpha: 0.42 })
+    if (npc.news) {
+      // 遠距離では黄badgeでなく、会話の気配だけを形で残す小さな結び。
+      figure.poly([7, -V_TILE * 0.62, 12, -V_TILE * 0.68, 10, -V_TILE * 0.55])
+        .fill({ color: 0x8b6745, alpha: 0.82 })
+    }
+    return figure
+  }
+
+  private syncPersonPins(focus: VillageFocus | null): void {
+    if (!this.opts.visualV2) return
+    const activeKey = focus?.id && (focus.kind === 'npc' || focus.kind === 'kin')
+      ? `${focus.kind}:${focus.id}`
+      : null
+    for (const [key, pin] of this.personPins) pin.visible = key === activeKey
+    this.host.dataset.portraitPin = activeKey ?? 'none'
+    this.host.dataset.portraitPinCount = activeKey ? '1' : '0'
+  }
 
   private buildKin(): void {
     this.opts.kin.slice(0, KIN_SPOTS.length).forEach((k, i) => {
@@ -630,6 +805,7 @@ export class VillageEngine {
       node.x = (tx + 0.5) * V_TILE
       node.y = (ty + 0.62) * V_TILE
       node.zIndex = node.y
+      if (this.opts.visualV2) node.addChild(this.personContactShadow())
       if (k.spriteUrl) {
         // 老い姿/幼子シートが無ければ成人姿へ退避(buildPlayerと同じ二段フォールバック)
         const adultUrl = k.spriteUrl.replace(/\/(walke|walkc)_/, '/walk_')
@@ -653,8 +829,22 @@ export class VillageEngine {
         style: { fontSize: 10.5, fill: 0xd9c26a, stroke: { color: 0x0a0e1d, width: 3 } },
       })
       label.anchor.set(0.5)
-      label.y = -V_TILE * 1.14
-      node.addChild(label)
+      if (this.opts.visualV2) {
+        const pin = new Container()
+        pin.y = -V_TILE * 1.22
+        pin.visible = false
+        pin.addChild(new Graphics()
+          .roundRect(-Math.max(22, label.width / 2 + 6), -14, Math.max(44, label.width + 12), 25, 5)
+          .fill({ color: 0x0b0f1e, alpha: 0.9 })
+          .stroke({ color: 0xc9a86a, width: 1, alpha: 0.46 }))
+        label.y = 0
+        pin.addChild(label)
+        node.addChild(pin)
+        this.personPins.set(`kin:${k.id}`, pin)
+      } else {
+        label.y = -V_TILE * 1.14
+        node.addChild(label)
+      }
       this.mid.addChild(node)
       this.kinNodes.push({ id: k.id, name: k.name, node })
     })
@@ -735,8 +925,10 @@ export class VillageEngine {
   // 煙: normal ブレンドの暖灰。上昇+拡大+alpha山なり(0→peak→0)。this.time 基準の周期で再利用。
   private buildSmoke(): void {
     const mob = this.app.screen.width < 640
-    const stacks: [number, number][] = mob ? [[4.5, 2.0]] : [[4.5, 2.0], [17.8, 1.9]]
-    const per = 4
+    const stacks: [number, number][] = this.opts.visualV2 || mob ? [[4.5, 2.0]] : [[4.5, 2.0], [17.8, 1.9]]
+    const per = this.opts.visualV2
+      ? (this.opts.visualState.lifeState === 'bloodline-crisis' ? 2 : 3)
+      : 4
     const ttl = 2800
     stacks.forEach(([sx, sy], si) => {
       for (let i = 0; i < per; i++) {
@@ -776,13 +968,24 @@ export class VillageEngine {
     if (kind === 'plant' || kind === 'fence') {
       const g = new Graphics()
       if (kind === 'plant') {
-        for (const [ox, oy, rr, col] of [[-6, 2, 9, 0x14231c], [6, 3, 8, 0x172a20], [0, -3, 10, 0x1b3226]] as [number, number, number, number][]) {
-          g.ellipse(ox, oy, rr, rr * 0.8).fill({ color: col, alpha: 0.9 })
+        if (this.opts.visualV2) {
+          // 大きな丸い植栽をやめ、濡土から生える疎な葉先へ。通行面の読みを塞がない。
+          g.ellipse(2, 4, 10, 3).fill({ color: 0x0a1014, alpha: 0.76 })
+          for (const [ox, lean, height] of [[-7, -3, 14], [-3, 1, 18], [2, -2, 16], [7, 3, 13]] as [number, number, number][]) {
+            g.moveTo(ox, 2).quadraticCurveTo(ox + lean, -height * 0.55, ox + lean * 1.4, -height)
+              .stroke({ color: 0x28352f, width: 2.4, alpha: 0.82 })
+          }
+        } else {
+          for (const [ox, oy, rr, col] of [[-6, 2, 9, 0x14231c], [6, 3, 8, 0x172a20], [0, -3, 10, 0x1b3226]] as [number, number, number, number][]) {
+            g.ellipse(ox, oy, rr, rr * 0.8).fill({ color: col, alpha: 0.9 })
+          }
         }
       } else {
-        g.rect(-14, -12, 3, 14).fill(0x2e2018)
-        g.rect(11, -12, 3, 14).fill(0x2e2018)
-        g.moveTo(-12, -8).quadraticCurveTo(0, -4, 12, -8).stroke({ color: 0x6a5a3a, width: 2, alpha: 0.8 })
+        const postColor = this.opts.visualV2 ? 0x241b18 : 0x2e2018
+        g.rect(-14, -12, 3, 14).fill(postColor)
+        g.rect(11, -12, 3, 14).fill(postColor)
+        g.moveTo(-12, -8).quadraticCurveTo(0, -4, 12, -8)
+          .stroke({ color: this.opts.visualV2 ? 0x594634 : 0x6a5a3a, width: 2, alpha: 0.8 })
       }
       g.position.set(x, y)
       this.gDecal.addChild(g)
@@ -816,9 +1019,26 @@ export class VillageEngine {
         break
       case 'hut': {
         const w = V_TILE * 0.72
-        node.roundRect(-w, -V_TILE * 0.28, w * 2, V_TILE * 0.95, 3).fill(0x1a1626).stroke({ color: 0x322a44, width: 1.2 })
-        node.poly([-w - 6, -V_TILE * 0.22, 0, -V_TILE * 0.98, w + 6, -V_TILE * 0.22]).fill(0x2a2338)
-        node.rect(-8, -V_TILE * 0.1, 16, V_TILE * 0.6).fill({ color: 0xffd98a, alpha: 0.42 })
+        if (this.opts.visualV2) {
+          // facade群と同じ右下奥行き・左上稜線を持つ、抑制した生活家屋。
+          node.poly([
+            -w, -V_TILE * 0.18, w * 0.72, -V_TILE * 0.10,
+            w, V_TILE * 0.63, -w * 0.76, V_TILE * 0.58,
+          ]).fill(0x151522).stroke({ color: 0x3d3540, width: 1.8, alpha: 0.72 })
+          node.poly([
+            -w - 7, -V_TILE * 0.18, -w * 0.18, -V_TILE * 0.92,
+            w * 0.78, -V_TILE * 0.72, w + 7, -V_TILE * 0.12,
+            w * 0.65, V_TILE * 0.02, -w * 0.72, -V_TILE * 0.10,
+          ]).fill(0x1c1a28).stroke({ color: 0x51454d, width: 2, alpha: 0.62 })
+          node.moveTo(-w * 0.78, -V_TILE * 0.18).lineTo(-w * 0.15, -V_TILE * 0.83)
+            .stroke({ color: 0x756048, width: 1.4, alpha: 0.34 })
+          node.poly([-8, -V_TILE * 0.05, 10, -V_TILE * 0.02, 9, V_TILE * 0.56, -7, V_TILE * 0.53])
+            .fill({ color: 0x67513d, alpha: 0.66 })
+        } else {
+          node.roundRect(-w, -V_TILE * 0.28, w * 2, V_TILE * 0.95, 3).fill(0x1a1626).stroke({ color: 0x322a44, width: 1.2 })
+          node.poly([-w - 6, -V_TILE * 0.22, 0, -V_TILE * 0.98, w + 6, -V_TILE * 0.22]).fill(0x2a2338)
+          node.rect(-8, -V_TILE * 0.1, 16, V_TILE * 0.6).fill({ color: 0xffd98a, alpha: 0.42 })
+        }
         break
       }
     }
@@ -826,7 +1046,7 @@ export class VillageEngine {
     node.y = y
     node.zIndex = y + (kind === 'hut' ? V_TILE * 1.3 : V_TILE * 0.4)
     this.mid.addChild(node)
-    if (kind === 'stone_lantern' || kind === 'chochin') {
+    if (!this.opts.visualV2 && (kind === 'stone_lantern' || kind === 'chochin')) {
       this.glowAt(tx + 0.5, ty + 0.3, 0xffc36a, 15, 0.26, { period: 1200, amp: 0.09 })
     }
   }
@@ -870,7 +1090,9 @@ export class VillageEngine {
       this.player.addChild(this.flameFigure())
     }
     // 足元の影
-    const shadow = new Graphics().ellipse(0, 2, 12, 5).fill({ color: 0x000000, alpha: 0.4 })
+    const shadow = this.opts.visualV2
+      ? this.personContactShadow()
+      : new Graphics().ellipse(0, 2, 12, 5).fill({ color: 0x000000, alpha: 0.4 })
     this.player.addChildAt(shadow, 0)
     this.mid.addChild(this.player)
   }

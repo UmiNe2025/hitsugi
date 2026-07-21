@@ -100,34 +100,11 @@
   .dungeon-hud-band .lantern-ring { width: 38px; height: 38px; }
 }
 
-/* ---- ミニマップ拡大トグル(§4.6) — Pixi描画の上に重ねる不可視タップ域 ----
-   minimap.ts は非所有のため位置/寸法はおおよその重なりを狙った近似値(実機未検証)。 */
-.minimap-tap-zone {
-  position: absolute;
-  top: 50px;
-  right: 4px;
-  width: 145px;
-  height: 100px;
-  z-index: 6;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.minimap-tap-zone:hover,
-.minimap-tap-zone:focus-visible {
-  border-color: rgba(201, 168, 106, 0.4);
-  outline: none;
-}
-@media (max-width: 560px) {
-  .minimap-tap-zone { width: 100px; height: 78px; top: 44px; }
-}
-
 /* ---- 隊員HP: 左下の短い横札。1人でも横に伸ばさない(§4.6) ---- */
 .dungeon-hud-party {
   position: absolute;
   left: calc(10px + env(safe-area-inset-left, 0px));
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
   z-index: 5;
   display: flex;
   flex-direction: row;
@@ -153,7 +130,7 @@
 .dungeon-log-line {
   position: absolute;
   left: 50%;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: 5;
   max-width: min(72vw, 480px);
@@ -178,20 +155,20 @@
   .dungeon-log-line { animation: none; }
 }
 @media (max-width: 560px) {
-  .dungeon-log-line { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-width: 84vw; }
+  .dungeon-log-line { bottom: calc(206px + env(safe-area-inset-bottom, 0px)); max-width: 84vw; }
 }
 
-/* ---- D-pad: タッチ環境だけ強調し、マウス/キーボード環境では控えめに(§4.6) ----
+/* ---- D-pad: Dungeon内だけに適用。Villageの操作帯へ漏らさない(§4.6/AR0) ----
    index.cssの `@media(min-width:900px){.dpad{opacity:.35}}` は画面幅基準で誤判定しうるため、
    pointer種別基準の本ルールで実質的に上書きする(後勝ち)。 */
-.dpad {
+.dungeon-screen .dpad {
   right: calc(14px + env(safe-area-inset-right, 0px));
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
 }
 @media (pointer: coarse) {
-  .dpad { opacity: 0.9; }
+  .dungeon-screen .dpad { opacity: 0.9; }
 }
 @media (pointer: fine) {
-  .dpad { opacity: 0.28; }
-  .dpad:hover, .dpad:focus-within { opacity: 0.7; }
+  .dungeon-screen .dpad { opacity: 0.28; }
+  .dungeon-screen .dpad:hover, .dungeon-screen .dpad:focus-within { opacity: 0.7; }
 }

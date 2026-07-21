@@ -27,6 +27,11 @@ export interface PropsResult {
   usedTexture: (kind: TileKind) => Texture | null // 開封/使用後の差し替え絵
 }
 
+export interface BuildPropsOptions {
+  /** High-fidelity region stages own their environment; retain only interactive markers. */
+  markersOnly?: boolean
+}
+
 const DARK = 0x04060c // シルエットの基調(地色より一段沈める)
 const RIM = 0x2e3a52 // 月明かり側の縁光
 
@@ -251,6 +256,7 @@ export function buildProps(
   usedKeys: Set<string>,
   floorIndex: number,
   isBossFloor: boolean,
+  options: BuildPropsOptions = {},
 ): PropsResult {
   const rng = new Rng((seed || 1) ^ 0x9e3779b9)
   const h = grid.length
@@ -301,7 +307,7 @@ export function buildProps(
       if (at(x, y) !== 'wall') continue
       const open =
         isWalkable(at(x + 1, y)) || isWalkable(at(x - 1, y)) || isWalkable(at(x, y + 1)) || isWalkable(at(x, y - 1))
-      face[y][x] = open
+      face[y][x] = !options.markersOnly && open
     }
   }
 
@@ -371,7 +377,7 @@ export function buildProps(
   // ---- 4. 直線通路に灯りのプロップ(定置光) ----
   const lightProp = LIGHT_PROP[theme.family]
   let lightCount = 0
-  for (let y = 1; y < h - 1 && lightCount < 6; y++) {
+  for (let y = 1; !options.markersOnly && y < h - 1 && lightCount < 6; y++) {
     for (let x = 1; x < w - 1 && lightCount < 6; x++) {
       if (!isWalkable(at(x, y))) continue
       if ((x * 7 + y * 13 + (seed % 97)) % 29 !== 0) continue // 決定論的な間引き
@@ -386,7 +392,7 @@ export function buildProps(
   }
 
   // ---- 5. 墓所クラスタ(zaka/tani/miyamaの開けた場所に4〜7基) ----
-  if (theme.family !== 'forest') {
+  if (!options.markersOnly && theme.family !== 'forest') {
     outer: for (let ty = 2; ty < h - 3; ty++) {
       for (let tx = 2; tx < w - 3; tx++) {
         let ok = true
@@ -408,7 +414,7 @@ export function buildProps(
   }
 
   // ---- 6. ボスの間: 門の連なり+妖光 ----
-  if (isBossFloor) {
+  if (!options.markersOnly && isBossFloor) {
     let bMinX = w
     let bMinY = h
     let bMaxX = 0

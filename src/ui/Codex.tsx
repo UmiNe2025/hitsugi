@@ -170,6 +170,7 @@ export function CodexScreen() {
   // タブごとに選択カード/表示件数を保持(§6.3: 滞在中は状態を失わない)
   const [selByTab, setSelByTab] = useState<Partial<Record<Tab, string>>>({})
   const [shownByTab, setShownByTab] = useState<Record<Tab, number>>({ lore: PAGE, enemies: PAGE, gods: PAGE, nemesis: PAGE })
+  const detailRef = useRef<HTMLDivElement>(null)
 
   const seenEnemies = new Set((data.codex?.enemies ?? []).map(baseEnemyId))
   const knownGods = new Set([
@@ -238,6 +239,12 @@ export function CodexScreen() {
   const selectedNemesis = tab === 'nemesis' && selectedId ? nemeses.find((n) => n.id === selectedId) : undefined
   const hasSelection = !!(selectedLore || selectedEnemy || selectedGod || selectedNemesis)
 
+  // 狭幅では一覧の下に詳細を放置しない。選択直後に同じ拓本帳の詳細面へ移す。
+  useEffect(() => {
+    if (!hasSelection || !window.matchMedia('(max-width: 768px)').matches) return
+    requestAnimationFrame(() => detailRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' }))
+  }, [hasSelection, selectedId, tab])
+
   return (
     <ScreenShell
       title="図鑑"
@@ -246,7 +253,20 @@ export function CodexScreen() {
       activeTab={tab}
     >
       <NightBackdrop bg={gameImg(HOME_BG)} />
-      <div className="codex-layout">
+      <section className={`codex-register codex-register--${tab}`} aria-label="採集と見聞の拓本帳">
+        <span className="codex-register-binding" aria-hidden="true" />
+        <header className="codex-register-head">
+          <div className="codex-rubbing-seal" aria-hidden="true">拓</div>
+          <div>
+            <span className="codex-register-kicker">夜藪見聞・採集帖</span>
+            <p>{tab === 'lore' ? '石碑から拾った土地の声。' : tab === 'enemies' ? '遭遇した魔性の輪郭と性質。' : tab === 'gods' ? '契り、識った星神の御影。' : '逃した夜が名を与えた宿敵。'}</p>
+          </div>
+          <span className="codex-register-count">
+            {tab === 'lore' ? `${loreDone}/${loreRegions.length}` : tab === 'enemies' ? `${enemySeen}/${baseEnemies.length}` : tab === 'gods' ? `${godSeen}/${GODS.length}` : nemeses.length}
+          </span>
+        </header>
+
+      <div className={`codex-layout ${hasSelection ? 'has-selection' : ''}`}>
         <div className="codex-list">
           {(tab === 'enemies' || tab === 'gods') && (fresh.en.size + fresh.gods.size > 0 || freshOnly) && (
             <div className="codex-fresh-row">
@@ -282,7 +302,9 @@ export function CodexScreen() {
           )}
 
           {tab === 'enemies' && (
-            <GroupedCards
+            freshOnly && fresh.en.size === 0
+              ? <EmptyGuide text="新着の魔性はない。全てへ戻せば、これまでの拓影を見直せる。" />
+              : <GroupedCards
               groups={enemyGroups}
               shown={shown}
               onMore={showMore}
@@ -302,7 +324,9 @@ export function CodexScreen() {
           )}
 
           {tab === 'gods' && (
-            <GroupedCards
+            freshOnly && fresh.gods.size === 0
+              ? <EmptyGuide text="新着の星神はない。全てへ戻せば、既知の御影を見直せる。" />
+              : <GroupedCards
               groups={godGroups}
               shown={shown}
               onMore={showMore}
@@ -353,7 +377,7 @@ export function CodexScreen() {
           )}
         </div>
 
-        <div className="codex-detail">
+        <div className="codex-detail" ref={detailRef} role="region" aria-label="選んだ記録の詳細" tabIndex={-1}>
           {selectedLore && <LoreDetail r={selectedLore} frags={frags[selectedLore.id] ?? 0} cleared={cleared.has(selectedLore.id)} />}
           {selectedEnemy && <EnemyDetail e={selectedEnemy} />}
           {selectedGod && <GodDetail g={selectedGod} />}
@@ -363,6 +387,7 @@ export function CodexScreen() {
           {!hasSelection && <div className="codex-detail-empty">カードを選ぶと、ここに詳しく綴られる。</div>}
         </div>
       </div>
+      </section>
     </ScreenShell>
   )
 }

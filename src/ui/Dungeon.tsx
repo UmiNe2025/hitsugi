@@ -4,12 +4,14 @@ import { regionById } from '../core/data/regions'
 import { MONTH_NAMES } from '../core/types'
 import { dungeonByRegion } from '../dungeon/maps'
 import { DungeonEngine } from '../dungeon/engine'
-import { TILE_CHARS } from '../dungeon/types'
-import type { DungeonRun } from '../dungeon/types'
+import type { DungeonDiscoverySnapshot, DungeonPoiKind } from '../dungeon/types'
 import { boonById } from '../core/data/boons'
 import { Bar, MaybeImg } from './components'
 import { Sheet } from './layout/shell'
 import { regionSignOf } from '../core/data/region_visuals'
+import { regionExperienceOf } from '../core/data/region_experience'
+import { resolveRegionStageContract } from '../core/data/region_stage_contracts'
+import { resolveRegionAudioContract } from '../dungeon/render/region_audio'
 import { loreFor } from '../core/data/lore'
 import { getReduceMotion } from '../core/settings'
 import { regionBgR, stageOf, uiIcon } from './img'
@@ -41,54 +43,68 @@ export function dungeonEntryEcho(regionId: string, loreFragments: number): strin
   return (loreFragments > 0 ? intro[1] : intro[0]) ?? intro[0]
 }
 
-// M24 §4.5: 短期目的の算出(石碑の残数はfloorDef.ascii+run.usedから導出、階段発見/灯不足はengine/runから)
-function monumentProgress(ascii: string[], floorIndex: number, used: string[]): { found: number; total: number } {
-  const usedSet = new Set(used)
-  let total = 0
-  let found = 0
-  for (let y = 0; y < ascii.length; y++) {
-    const row = ascii[y]
-    for (let x = 0; x < row.length; x++) {
-      if (TILE_CHARS[row[x]] !== 'monument') continue
-      total++
-      if (usedSet.has(`${floorIndex}:${x}:${y}`)) found++
-    }
-  }
-  return { found, total }
+const EMPTY_DISCOVERY: DungeonDiscoverySnapshot = { exploredRatio: 0, pois: [], totals: {} }
+
+const POI_LABELS: Record<DungeonPoiKind, string> = {
+  entrance: '入口',
+  stairs: '下り階段',
+  chest: '宝箱',
+  camp: '焚火',
+  shrine: '祠',
+  monument: '石碑',
+  boss: '主の座',
 }
 
-function shortTermGoal(light: number, stairsFound: boolean, m: { found: number; total: number }): string {
+const POI_ORDER: DungeonPoiKind[] = ['entrance', 'stairs', 'monument', 'camp', 'shrine', 'chest', 'boss']
+
+function shortTermGoal(light: number, discovery: DungeonDiscoverySnapshot): string {
   if (light < 15) return '帰り火を考えよ'
-  if (stairsFound) return '下り階段を見つけた'
-  if (m.total > 0 && m.found < m.total) return `石碑を探す ${m.found}/${m.total}`
+  if (discovery.pois.some((poi) => poi.kind === 'stairs')) return '下り階段を見つけた'
+  const totalMonuments = discovery.totals.monument ?? 0
+  const foundMonuments = discovery.pois.filter((poi) => poi.kind === 'monument').length
+  if (totalMonuments > 0 && foundMonuments < totalMonuments) return `石碑を探す ${foundMonuments}/${totalMonuments}`
   return '下り階段を探す'
 }
 
 // 灯籠の炎リング — 灯ゲージの視覚化(俺屍の月齢リング様式)
 // 踏査%+短期目的を1つの帯として表示(M24 §4.5/§4.6)。engineをpollingするが500ms間隔で軽負荷。
-function ObjectivePlate({
-  engineRef, run, floorAscii,
-}: {
-  engineRef: React.MutableRefObject<{ exploreRatio(): number; stairsFound(): boolean } | null>
-  run: DungeonRun
-  floorAscii: string[]
-}) {
-  const [pct, setPct] = useState(0)
-  const [stairs, setStairs] = useState(false)
-  useEffect(() => {
-    const t = setInterval(() => {
-      setPct(Math.round((engineRef.current?.exploreRatio() ?? 0) * 100))
-      setStairs(engineRef.current?.stairsFound() ?? false)
-    }, 500)
-    return () => clearInterval(t)
-  }, [engineRef])
-  const monuments = monumentProgress(floorAscii, run.floor, run.used)
-  const goal = shortTermGoal(run.light, stairs, monuments)
+function ObjectivePlate({ light, discovery }: { light: number; discovery: DungeonDiscoverySnapshot }) {
+  const pct = Math.round(discovery.exploredRatio * 100)
+  const goal = shortTermGoal(light, discovery)
   return (
     <div className="objective-plate">
       <span className="objective-goal" data-zone="hud-top">{goal}</span>
       <span className="objective-explore" data-zone="hud-top">踏査 {pct}%</span>
     </div>
+  )
+}
+
+function ExplorationGuide({
+  light,
+  discovery,
+  loot,
+}: {
+  light: number
+  discovery: DungeonDiscoverySnapshot
+  loot: { hoto: number; ketsu: number }
+}) {
+  const counts = new Map<DungeonPoiKind, number>()
+  for (const poi of discovery.pois) counts.set(poi.kind, (counts.get(poi.kind) ?? 0) + 1)
+  const labels = POI_ORDER.flatMap((kind) => {
+    const count = counts.get(kind) ?? 0
+    if (count === 0) return []
+    // 主の座は複数セルで一つの場所を表すため、セル数を件数として見せない。
+    return [`${POI_LABELS[kind]}${count > 1 && kind !== 'boss' ? `×${count}` : ''}`]
+  })
+  return (
+    <aside className={`exploration-guide${light < 15 ? ' is-danger' : ''}`} data-zone="exploration-guide" aria-label="探索案内">
+      <p><span>目的</span><b data-guide="objective">{shortTermGoal(light, discovery)}</b></p>
+      <p><span>発見</span><b data-guide="pois">{labels.length > 0 ? labels.join('・') : 'まだなし'}</b></p>
+      <p>
+        <span>帰還</span>
+        <b data-guide="return">いつでも可・奉燈{loot.hoto}/血珠{loot.ketsu}を確保・今月を使う</b>
+      </p>
+    </aside>
   )
 }
 
@@ -175,6 +191,7 @@ function DungeonFloor() {
   const hostRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<DungeonEngine | null>(null)
   const [confirm, setConfirm] = useState<Confirm>(null)
+  const [discovery, setDiscovery] = useState<DungeonDiscoverySnapshot>(EMPTY_DISCOVERY)
   // M29+: ダンジョン描画(PixiJS)の初期化失敗を握りつぶさず可視化する。WebGLコンテキスト取得失敗や
   // 素材読込失敗で init() が例外を投げると、従来は void で無視され「真っ暗な空キャンバス」になっていた。
   const [renderFailed, setRenderFailed] = useState(false)
@@ -182,6 +199,14 @@ function DungeonFloor() {
   const region = regionById(run.regionId)
   const dungeon = dungeonByRegion(run.regionId)!
   const floorDef = dungeon.floors[run.floor]
+  const stageContract = resolveRegionStageContract({
+    regionId: run.regionId,
+    floor: run.floor,
+    visualVersion: run.visualVersion ?? 'v1',
+    stageContractId: run.stageContractId,
+  })
+  const regionExperience = run.visualVersion === 'v2' ? regionExperienceOf(run.regionId) : null
+  const regionAudio = run.visualVersion === 'v2' ? resolveRegionAudioContract(run.regionId) : null
   const party = data.family.filter((c) => run.partyIds.includes(c.id) && c.alive)
   // 眷属(式神, v3.1 M16-5): 随行中の一体の属性(未捕獲/未設定ならundefined)
   const familiarElement = data.familiars?.find((f) => f.enemyId === data.activeFamiliar)?.element
@@ -240,9 +265,12 @@ function DungeonFloor() {
               : 'norm',
         cleared: data.regionsCleared.includes(run.regionId),
         showLandmark: run.floor === 0,
+        stageContract,
+        visualVersion: run.visualVersion ?? 'v1',
       },
     )
     engineRef.current = engine
+    setDiscovery(engine.discoverySnapshot())
     if (import.meta.env.DEV) {
       ;(window as unknown as { __dungeon?: unknown }).__dungeon = engine
     }
@@ -257,14 +285,27 @@ function DungeonFloor() {
       engineRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run.floor, stageContract?.id])
+
+  // Canvas内の霧開けを、DOMの探索案内へ同期する。発見状態はengineのread APIが唯一の情報源。
+  useEffect(() => {
+    const update = () => {
+      const next = engineRef.current?.discoverySnapshot()
+      if (next) setDiscovery(next)
+    }
+    update()
+    const timer = window.setInterval(update, 400)
+    return () => window.clearInterval(timer)
   }, [run.floor])
 
   // 地域の環境音(M10): 探索中だけ地域系統の音を敷き、離脱で止める
   useEffect(() => {
-    audio.startAmbience(AMBIENCE_BY_BG[region.bg] ?? 'none')
+    // The existing AudioEngine can safely consume the macro-biome ambience.
+    // Exact navigation/danger one-shots stay visual-only until world-cue synthesis exists.
+    audio.startAmbience(regionAudio?.ambience ?? AMBIENCE_BY_BG[region.bg] ?? 'none')
     return () => audio.stopAmbience()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [region.bg])
+  }, [region.bg, regionAudio?.ambience])
 
   const lastLightRef = useRef(run.light)
   useEffect(() => {
@@ -328,7 +369,15 @@ function DungeonFloor() {
   )
 
   return (
-    <div className="dungeon-screen">
+    <div
+      className={`dungeon-screen${run.visualVersion === 'v2' ? ' dungeon-visual-v2' : ''}`}
+      data-visual-version={run.visualVersion ?? 'v1'}
+      data-stage-contract-id={stageContract?.id}
+      data-stage-ground-materials={stageContract?.groundMaterials.join(',') ?? regionExperience?.groundMaterials.join(',')}
+      data-stage-navigation-cue={stageContract?.navigationCue.id ?? regionExperience?.navigationCue.id}
+      data-stage-danger-cue={stageContract?.dangerCue.id ?? regionExperience?.danger.cueId}
+      data-stage-sound-cue={regionAudio?.soundCueId}
+    >
       <div className="dungeon-canvas" ref={hostRef} />
 
       {/* M29+: 描画初期化に失敗した時だけ、沈黙の空画面でなく手立てを示す */}
@@ -352,7 +401,7 @@ function DungeonFloor() {
             <span className="hud-region-name">{region.name}</span>
             <span className="hud-floor-num">地下{run.floor + 1}層</span>
           </div>
-          <ObjectivePlate engineRef={engineRef} run={run} floorAscii={floorDef.ascii} />
+          <ObjectivePlate light={run.light} discovery={discovery} />
         </div>
         <div className="hud-band-spacer" />
         <span className="hud-calendar">
@@ -369,28 +418,19 @@ function DungeonFloor() {
         >
           ☰ 小休止
         </button>
-        {/* M25 §3.2 row2: モバイルの2段目に置く可視ミニマップ拡大ボタン(既存の不可視tap-zoneと併存) */}
+        {/* AR0: 地図入口は、全幅で見えるこのbutton一つだけにする。Canvasを覆う透明tap-zoneは置かない。 */}
         <button
           className="btn btn-ghost hud-minimap-btn"
-          data-zone="hud-top"
+          data-zone="minimap"
           aria-label="地図を拡大表示する"
           title="地図を拡大"
           onClick={() => engineRef.current?.toggleMinimapZoom()}
         >
-          🗺
-        </button>
-        <button className="btn btn-danger hud-return-btn" data-zone="return-fire" onClick={() => setConfirm({ kind: 'return' })}>
-          帰り火
+          地図
         </button>
       </div>
 
-      {/* M24 §4.6: ミニマップ(Pixi描画)の上に重ねる不可視タップ域 — 拡大トグル */}
-      <button
-        className="minimap-tap-zone"
-        data-zone="minimap"
-        aria-label="地図の拡大表示を切り替える"
-        onClick={() => engineRef.current?.toggleMinimapZoom()}
-      />
+      <ExplorationGuide light={run.light} discovery={discovery} loot={run.loot} />
 
       <FirstActIntro />
 
@@ -420,6 +460,13 @@ function DungeonFloor() {
         <div />
       </div>
 
+      {/* AR0: 安全行動を隠さない。1回目で確認Sheet、2回目でのみ月消費を確定する。 */}
+      <div className="dungeon-return-dock">
+        <button className="btn btn-danger hud-return-btn" data-zone="return-fire" onClick={() => setConfirm({ kind: 'return' })}>
+          帰り火 — 今回の実りを持って郷へ戻る
+        </button>
+      </div>
+
       {/* 特殊床/帰還の確認 — 中央モーダルでなく下部の短い選択面(§5.3。SheetはPC=中央小窓/モバイル=下から) */}
       {confirm && confirm.kind === 'pause' && (
         <Sheet title="小休止" onClose={() => setConfirm(null)} closeLabel="探索に戻る">
@@ -438,8 +485,6 @@ function DungeonFloor() {
             灯が細るほど魔性は狂暴になる。深追いは禁物。
           </p>
           <div className="confirm-actions">
-            {/* M25: 帰り火は小休止→本ボタンの2操作で到達できる導線 */}
-            <button className="btn btn-danger" data-zone="return-fire" onClick={() => { setConfirm({ kind: 'return' }) }}>帰り火を焚く(郷へ)</button>
             <button className="btn btn-main" onClick={() => setConfirm(null)}>探索に戻る</button>
           </div>
         </Sheet>

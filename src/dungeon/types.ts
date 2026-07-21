@@ -1,10 +1,32 @@
 import type { Item } from '../core/types'
+import type { RegionVisualVersion } from '../core/feature_flags'
 
 // タイル記号: # 壁 / . 床 / , 下草 / > 階段(下) / < 入口(帰還口) / C 宝箱
 // F 焚火 / S 祠(事件) / B 主(ボス) / ~ 水(通行不可) / M 石碑(縁起の欠片 — v3.1)
 export type TileKind =
   | 'wall' | 'floor' | 'grass' | 'stairs' | 'entrance'
   | 'chest' | 'camp' | 'shrine' | 'boss' | 'water' | 'monument'
+
+export type DungeonPoiKind = Extract<
+  TileKind,
+  'stairs' | 'entrance' | 'chest' | 'camp' | 'shrine' | 'boss' | 'monument'
+>
+
+export interface DiscoveredDungeonPoi {
+  kind: DungeonPoiKind
+  x: number
+  y: number
+}
+
+/**
+ * Canvas外の探索案内が読む、engine所有の発見状態。
+ * `DungeonRun.used`は「利用済み」であって「発見済み」ではないため、この契約へ混ぜない。
+ */
+export interface DungeonDiscoverySnapshot {
+  exploredRatio: number
+  pois: DiscoveredDungeonPoi[]
+  totals: Partial<Record<DungeonPoiKind, number>>
+}
 
 export const TILE_CHARS: Record<string, TileKind> = {
   '#': 'wall', '.': 'floor', ',': 'grass', '>': 'stairs', '<': 'entrance',
@@ -30,6 +52,9 @@ export interface DungeonDef {
 // 進行中のダンジョン行(storeに保持)
 export interface DungeonRun {
   regionId: string
+  /** Session-only AR1 renderer snapshot. DungeonRun is never part of GameData/save. */
+  visualVersion?: RegionVisualVersion
+  stageContractId?: string
   floor: number
   x: number
   y: number

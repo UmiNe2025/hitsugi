@@ -34,6 +34,8 @@ import { ITEM_BASES } from './data/items'
 import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
 import type { DungeonRun } from '../dungeon/types'
+import { captureRegionVisualVersion } from './feature_flags'
+import { captureRegionStageSession } from './data/region_stage_contracts'
 import { dungeonByRegion } from '../dungeon/maps'
 import { traceIntelOf, bossMikiriLine } from './trace'
 import { regionIdentityOf, regionSignOf } from './data/region_visuals'
@@ -1624,8 +1626,12 @@ export const useGame = create<GameStore>((set, get) => {
       const lore = loreFor(regionId)
       const introLines = firstVisit && lore ? lore.intro : []
       const identityLine = regionIdentityOf(regionId)?.entryLine
+      // AR1: renderer choice is a run-local snapshot. It never enters GameData/save,
+      // and toggling the flag mid-expedition cannot switch an active run.
+      const visualSession = captureRegionStageSession(regionId, captureRegionVisualVersion())
       const run: DungeonRun = {
         regionId,
+        ...visualSession,
         floor: 0,
         x: -1,
         y: -1,

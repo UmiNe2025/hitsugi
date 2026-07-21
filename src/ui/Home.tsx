@@ -391,15 +391,24 @@ function FamilyBoard({ data, onGo }: { data: GameData; onGo: (a: ActionKind) => 
   }
   const head = c.alive.find((x) => x.isHead) ?? c.alive[0]
   const sel = c.alive.find((x) => x.id === selId) ?? head
-  const smalls = c.alive.filter((x) => x.id !== sel.id)
+  // 小札は詳細表示の選択後も同じDOMを残す。選択した札を配列から外すと、
+  // キーボードフォーカスが失われ「次の人物」へ続けて移れなくなるため。
+  const smalls = c.alive
   return (
     <div className="family-board">
       <div className="family-main">
         <CharCard char={sel} seasonIndex={data.seasonIndex} />
-        {smalls.length > 0 && (
+        {smalls.length > 1 && (
           <div className="family-smalls">
             {smalls.map((ch) => (
-              <CharCard key={ch.id} char={ch} seasonIndex={data.seasonIndex} compact onClick={() => setSelId(ch.id)} />
+              <CharCard
+                key={ch.id}
+                char={ch}
+                seasonIndex={data.seasonIndex}
+                compact
+                selected={sel.id === ch.id}
+                onClick={() => setSelId(ch.id)}
+              />
             ))}
           </div>
         )}

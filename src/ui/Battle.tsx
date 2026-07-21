@@ -22,6 +22,7 @@ import { skillById } from '../core/data/skills'
 import { consumableById } from '../core/data/consumables'
 import { enemyById } from '../core/data/enemies'
 import { regionById } from '../core/data/regions'
+import { resolveRegionStageContract, type RegionStageContract } from '../core/data/region_stage_contracts'
 import { loreFor } from '../core/data/lore'
 import { bossEmotion } from '../core/narrative'
 import { Bar, MaybeImg } from './components'
@@ -30,12 +31,93 @@ import { BattleArtFrame, type CardTier } from './battle/BattleArtFrame'
 import './m17_battle.css'
 import './battle_m24.css'
 import './battle_m25.css'
+import './battle_ar1.css'
+
+function Ar1BattleStage({ contract }: { contract: RegionStageContract }) {
+  const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
+  return (
+    <div
+      className="ar1-battle-stage"
+      data-stage-contract-id={contract.id}
+      data-ground-materials={contract.groundMaterials.join(',')}
+      data-navigation-cue={contract.navigationCue.id}
+      data-danger-cue={contract.dangerCue.id}
+    >
+      <div className="ar1-stage-environment" aria-hidden="true">
+        <div className="ar1-stage-night" />
+        <div className="ar1-stage-soil" />
+        <div className="ar1-stage-water" />
+        <div className="ar1-stage-shrine">
+          <i /><i /><b />
+          <div
+            className="ar1-stage-kit-shrine"
+            style={{ backgroundImage: `url(${publicAsset(contract.landmark.assetPath)})` }}
+          />
+        </div>
+        <div
+          className="ar1-stage-kit-foreground"
+          style={{ backgroundImage: `url(${publicAsset(contract.foreground.assetPath)})` }}
+        />
+        <div className="ar1-stage-reeds reeds-left" />
+        <div className="ar1-stage-reeds reeds-right" />
+        <div className="ar1-stage-mist">
+          {Array.from({ length: contract.ambientMotion.mistPool }, (_, i) => <i key={i} />)}
+        </div>
+        <div className="ar1-stage-rings">
+          {Array.from({ length: contract.ambientMotion.ringPool }, (_, i) => <i key={i} />)}
+        </div>
+        <div className="ar1-stage-embers">
+          {Array.from({ length: contract.ambientMotion.emberPool }, (_, i) => <i key={i} />)}
+        </div>
+      </div>
+      <div className="ar1-stage-identity" role="status" aria-label={`${contract.name}。${contract.navigationCue.label}。危険の兆し: ${contract.dangerCue.label}`}>
+        <span>現在地</span><strong>{contract.name}</strong><small>濡土と浅水 ・ {contract.landmark.label}</small>
+      </div>
+    </div>
+  )
+}
+
+type TargetMenu =
+  | { kind: 'target'; skillId?: string; itemId?: string; side: 'enemy' | 'ally' }
+
+type ConfirmMenu = {
+  kind: 'confirm'
+  source: TargetMenu
+  action: BattleAction
+  actionName: string
+  targetKey: string
+}
 
 type Menu =
   | { kind: 'root' }
   | { kind: 'skill' }
   | { kind: 'item' } // M28-C: 道具(回復薬)一覧
-  | { kind: 'target'; skillId?: string; itemId?: string; side: 'enemy' | 'ally' }
+  | TargetMenu
+  | ConfirmMenu
+
+// AR0: 対象札の操作は「選択」だけに限定し、ここでは戦闘コマンドを発火しない。
+// 通常攻撃/単体技/単体道具は必ず確認盤を経由してから実行する。
+function targetConfirmation(source: TargetMenu, targetKey: string): ConfirmMenu {
+  if (source.itemId) {
+    return {
+      kind: 'confirm', source, targetKey,
+      actionName: consumableById(source.itemId)?.name ?? '道具',
+      action: { type: 'item', itemId: source.itemId, targetKey },
+    }
+  }
+  if (source.skillId) {
+    return {
+      kind: 'confirm', source, targetKey,
+      actionName: skillById(source.skillId).name,
+      action: { type: 'skill', skillId: source.skillId, targetKey },
+    }
+  }
+  return {
+    kind: 'confirm', source, targetKey,
+    actionName: '攻撃',
+    action: { type: 'attack', targetKey },
+  }
+}
 
 interface FxEvent {
   id: number
@@ -111,8 +193,11 @@ export function BattleScreen() {
   const battleCommand = useGame((s) => s.battleCommand)
   const refreshBattleIntents = useGame((s) => s.refreshBattleIntents)
   const finishBattle = useGame((s) => s.finishBattle)
-  const regionId = useGame((s) => s.dungeonRun?.regionId)
-  const runLoot = useGame((s) => s.dungeonRun?.loot)
+  const dungeonRun = useGame((s) => s.dungeonRun)
+  const goldenBattle = useGame((s) => s.goldenBattle)
+  const rareEncounter = useGame((s) => s.rareEncounter)
+  const regionId = dungeonRun?.regionId
+  const runLoot = dungeonRun?.loot
   // 遠征でオートを一度も触っていなければ、設定の「オート既定」を初期値にする
   const initialAuto = useGame((s) => s.dungeonRun?.autoBattle ?? getAutoBattleDefault())
   const setAutoBattleFlag = useGame((s) => s.setAutoBattle)
@@ -143,6 +228,15 @@ export function BattleScreen() {
   const [pendingActionLabel, setPendingActionLabel] = useState<string | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const bodyRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  // AR0: 対象選択→確認→実行のフォーカス経路。対象札と実行釦へ明示的に移し、
+  // Escで一段戻った時は選択札、二段戻った時は起点コマンドへ復元する。
+  const combatantRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const confirmButtonRef = useRef<HTMLButtonElement>(null)
+  const attackButtonRef = useRef<HTMLButtonElement>(null)
+  const skillButtonRef = useRef<HTMLButtonElement>(null)
+  const itemButtonRef = useRef<HTMLButtonElement>(null)
+  const menuOriginRef = useRef<'attack' | 'skill' | 'item' | null>(null)
+  const lastTargetKeyRef = useRef<string | null>(null)
 
   const stageFamily = (() => {
     if (!regionId) return 'forest'
@@ -161,10 +255,25 @@ export function BattleScreen() {
     ? bossEmotion(regionById(regionId).name, loreFrags?.[regionId] ?? 0)
     : null
   const bossRequiem = isBossVictory && regionId ? bossVictoryRequiem(regionId) : null
+  const stageContract = dungeonRun
+    ? resolveRegionStageContract({
+        regionId: dungeonRun.regionId,
+        floor: dungeonRun.floor,
+        visualVersion: dungeonRun.visualVersion ?? 'v1',
+        stageContractId: dungeonRun.stageContractId,
+      })
+    : null
+  const ar1Hero = stageContract
+    ? isBossBattle
+      ? 'boss'
+      : goldenBattle && rareEncounter
+        ? 'rare'
+        : null
+    : null
 
   // M17: 地域別の戦場背景。主戦は専用主背景→地域別背景→従来のtier共有bg、の3層。
   // 手前の層が未生成(404)でも下の層がそのまま見えるので退避は自然に成立する。
-  const stageBgLayers = regionId
+  const stageBgLayers = !stageContract && regionId
     ? [
         ...(isBossBattle ? [bossBgImg(regionId)] : []),
         regionBgR(regionId),
@@ -313,40 +422,78 @@ export function BattleScreen() {
     return () => clearTimeout(t)
   }, [])
 
-  // M24 §3.5/§7.1: 対象選択中は数字キー(1〜)でも選べ、Escapeで取消せる(Tab/Enter/Spaceは
-  // CombatantNode側のtabIndex/onKeyDownで既に対応済み)
+  // AR0: 数字/Enter/Space/タップは対象の「選択」まで。戦闘コマンドの実行は確認盤の
+  // 明示ボタンだけに限定する。Escは 確認→対象選択→起点コマンド の二段戻り。
   useEffect(() => {
     if (!battle) return
-    if (menu.kind !== 'target' && menu.kind !== 'skill' && menu.kind !== 'item') return
+    if (menu.kind !== 'target' && menu.kind !== 'confirm' && menu.kind !== 'skill' && menu.kind !== 'item') return
     const pool = menu.kind === 'target'
       ? (menu.side === 'enemy' ? battle.enemies : battle.allies).filter((c) => c.hp > 0)
       : []
     const onKey = (ev: KeyboardEvent) => {
-      // 技/道具/対象メニュー中のEscはメニューを閉じる。オート停止は auto 依存の別effectが担当(M29修正)。
-      if (ev.key === 'Escape') { ev.preventDefault(); setMenu({ kind: 'root' }); return }
+      // オート停止は auto 依存の別effectが担当(M29修正)。
+      if (ev.key === 'Escape') {
+        ev.preventDefault()
+        if (menu.kind === 'confirm') {
+          lastTargetKeyRef.current = menu.targetKey
+          setMenu(menu.source)
+        } else {
+          setMenu({ kind: 'root' })
+          window.setTimeout(() => {
+            const origin = menuOriginRef.current === 'attack'
+              ? attackButtonRef.current
+              : menuOriginRef.current === 'skill'
+                ? skillButtonRef.current
+                : menuOriginRef.current === 'item'
+                  ? itemButtonRef.current
+                  : null
+            origin?.focus()
+          }, 0)
+        }
+        return
+      }
       if (menu.kind !== 'target') return
       const n = Number(ev.key)
       if (!Number.isInteger(n) || n < 1 || n > pool.length) return
       ev.preventDefault()
       const target = pool[n - 1]
-      const actionName = menu.itemId
-        ? consumableById(menu.itemId)?.name ?? '道具'
-        : menu.skillId ? skillById(menu.skillId).name : '攻撃'
-      setPendingActionLabel(actionLabel(battle, actionName, target.key))
-      battleCommand(
-        menu.itemId
-          ? { type: 'item', itemId: menu.itemId, targetKey: target.key }
-          : menu.skillId
-            ? { type: 'skill', skillId: menu.skillId, targetKey: target.key }
-            : { type: 'attack', targetKey: target.key },
-      )
-      setMenu({ kind: 'root' })
+      // 回復対象は既存の高速操作を維持。AR0の誤発火防止対象は敵札から発火する攻撃経路。
+      if (menu.side === 'ally') {
+        const actionName = menu.itemId
+          ? consumableById(menu.itemId)?.name ?? '道具'
+          : menu.skillId ? skillById(menu.skillId).name : '支援'
+        setPendingActionLabel(actionLabel(battle, actionName, target.key))
+        battleCommand(
+          menu.itemId
+            ? { type: 'item', itemId: menu.itemId, targetKey: target.key }
+            : { type: 'skill', skillId: menu.skillId!, targetKey: target.key },
+        )
+        setMenu({ kind: 'root' })
+        return
+      }
+      lastTargetKeyRef.current = target.key
+      setMenu(targetConfirmation(menu, target.key))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // autoはautoRefで読むため依存不要(dep churnを避ける)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [battle, menu, battleCommand])
+
+  useEffect(() => {
+    if (menu.kind === 'confirm') {
+      window.requestAnimationFrame(() => confirmButtonRef.current?.focus())
+      return
+    }
+    if (menu.kind !== 'target' || !battle) return
+    const pool = (menu.side === 'enemy' ? battle.enemies : battle.allies).filter((c) => c.hp > 0)
+    const key = lastTargetKeyRef.current && pool.some((c) => c.key === lastTargetKeyRef.current)
+      ? lastTargetKeyRef.current
+      : pool[0]?.key
+    window.requestAnimationFrame(() => {
+      if (key) combatantRefs.current.get(key)?.focus()
+    })
+  }, [battle, menu])
 
   const revealing = pending.length > 0
   const actor = battle ? currentActor(battle) : undefined
@@ -437,47 +584,41 @@ export function BattleScreen() {
 
   const onEnemyClick = (e: Combatant) => {
     if (!isPlayerTurn || e.hp <= 0) return
-    // 技のターゲット選択中はそれを消化
-    if (menu.kind === 'target' && menu.side === 'enemy') {
-      if (menu.skillId) tryShowOugiCutin(menu.skillId)
-      const actionName = menu.skillId ? skillById(menu.skillId).name : '攻撃'
-      runCommand(
-        menu.skillId ? { type: 'skill', skillId: menu.skillId, targetKey: e.key } : { type: 'attack', targetKey: e.key },
-        actionLabel(battle, actionName, e.key),
-      )
-      setMenu({ kind: 'root' })
-      return
-    }
-    // それ以外は敵タップ=即通常攻撃(ワンタップ攻撃)
-    if (menu.kind === 'root') {
-      runCommand({ type: 'attack', targetKey: e.key }, actionLabel(battle, '攻撃', e.key))
+    const source = menu.kind === 'target'
+      ? menu
+      : menu.kind === 'confirm'
+        ? menu.source
+        : null
+    if (source?.side === 'enemy') {
+      lastTargetKeyRef.current = e.key
+      setMenu(targetConfirmation(source, e.key))
     }
   }
-  // 「攻撃」ボタン=chainTarget/先頭生存敵に即発火(ワンタップ攻撃)
-  const doQuickAttack = () => {
-    if (!battle || !isPlayerTurn) return
-    const foes = battle.enemies.filter((e) => e.hp > 0)
-    if (foes.length === 0) return
-    const target = battle.chainTarget && foes.some((f) => f.key === battle.chainTarget)
-      ? battle.chainTarget
-      : foes[0].key
-    runCommand({ type: 'attack', targetKey: target }, actionLabel(battle, '攻撃', target))
+  // 「攻撃」は対象選択の開始だけを行う。敵札からの即時攻撃経路は持たない。
+  const beginAttack = () => {
+    if (!isPlayerTurn) return
+    menuOriginRef.current = 'attack'
+    lastTargetKeyRef.current = battle.chainTarget ?? null
+    setMenu({ kind: 'target', side: 'enemy' })
   }
   const onAllyClick = (a: Combatant) => {
     if (!isPlayerTurn || a.hp <= 0) return
-    // M28-C: 道具(単体回復)の対象選択を消化
-    if (menu.kind === 'target' && menu.side === 'ally' && menu.itemId) {
-      const def = consumableById(menu.itemId)
-      runCommand({ type: 'item', itemId: menu.itemId, targetKey: a.key }, actionLabel(battle, def?.name ?? '道具', a.key))
-      setMenu({ kind: 'root' })
-      return
-    }
-    if (menu.kind === 'target' && menu.side === 'ally' && menu.skillId) {
-      tryShowOugiCutin(menu.skillId)
-      runCommand(
-        { type: 'skill', skillId: menu.skillId, targetKey: a.key },
-        actionLabel(battle, skillById(menu.skillId).name, a.key),
-      )
+    const source = menu.kind === 'target'
+      ? menu
+      : menu.kind === 'confirm'
+        ? menu.source
+        : null
+    if (source?.side === 'ally') {
+      if (source.itemId) {
+        const def = consumableById(source.itemId)
+        runCommand({ type: 'item', itemId: source.itemId, targetKey: a.key }, actionLabel(battle, def?.name ?? '道具', a.key))
+      } else if (source.skillId) {
+        tryShowOugiCutin(source.skillId)
+        runCommand(
+          { type: 'skill', skillId: source.skillId, targetKey: a.key },
+          actionLabel(battle, skillById(source.skillId).name, a.key),
+        )
+      }
       setMenu({ kind: 'root' })
     }
   }
@@ -509,10 +650,34 @@ export function BattleScreen() {
     }
   }
 
+  const executeConfirmed = () => {
+    if (menu.kind !== 'confirm') return
+    if (menu.source.skillId) tryShowOugiCutin(menu.source.skillId)
+    runCommand(menu.action, actionLabel(battle, menu.actionName, menu.targetKey))
+    lastTargetKeyRef.current = null
+    setMenu({ kind: 'root' })
+  }
+
+  const returnToRoot = () => {
+    lastTargetKeyRef.current = null
+    setMenu({ kind: 'root' })
+    window.setTimeout(() => {
+      const origin = menuOriginRef.current === 'attack'
+        ? attackButtonRef.current
+        : menuOriginRef.current === 'skill'
+          ? skillButtonRef.current
+          : menuOriginRef.current === 'item'
+            ? itemButtonRef.current
+            : null
+      origin?.focus()
+    }, 0)
+  }
+
   // M24: 対象選択中の番号バッジ(1始まり。0=非表示)用に、選択可能な生存者だけの並びを求める
-  const targetableEnemies = isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy'
+  const activeTargetMenu = menu.kind === 'target' ? menu : menu.kind === 'confirm' ? menu.source : null
+  const targetableEnemies = isPlayerTurn && activeTargetMenu?.side === 'enemy'
     ? battle.enemies.filter((c) => c.hp > 0) : []
-  const targetableAllies = isPlayerTurn && menu.kind === 'target' && menu.side === 'ally'
+  const targetableAllies = isPlayerTurn && activeTargetMenu?.side === 'ally'
     ? battle.allies.filter((c) => c.hp > 0) : []
   // M25§4.2: 主(boss)は--szに依存しない専用slotへ。残りの通常敵で1/2/3〜4体のpresetを決める。
   const nonBossEnemies = battle.enemies.filter((e) => !e.enemyId?.startsWith('boss_'))
@@ -520,11 +685,24 @@ export function BattleScreen() {
   const allyGridPreset = slotPresetOf(battle.allies.length)
   // M24 §3.4: 対象選択中は狙う技自体の属性で相性を示す(未指定時は行動者の属性のまま=既存挙動)
   const previewElement: Element | undefined =
-    menu.kind === 'target' && menu.skillId ? (skillById(menu.skillId).element ?? actor?.element) : actor?.element
+    activeTargetMenu?.skillId ? (skillById(activeTargetMenu.skillId).element ?? actor?.element) : actor?.element
   const registerBodyRef = (key: string, el: HTMLDivElement | null) => {
     if (el) bodyRefs.current.set(key, el)
     else bodyRefs.current.delete(key)
   }
+  const registerCombatantRef = (key: string, el: HTMLDivElement | null) => {
+    if (el) combatantRefs.current.set(key, el)
+    else combatantRefs.current.delete(key)
+  }
+  const confirmedTarget = menu.kind === 'confirm'
+    ? battle.enemies.find((c) => c.key === menu.targetKey) ?? battle.allies.find((c) => c.key === menu.targetKey)
+    : undefined
+  const confirmedMatchup = menu.kind === 'confirm' && confirmedTarget && !confirmedTarget.isAlly
+    ? matchup(previewElement, confirmedTarget.element)
+    : null
+  const confirmedMultiplier = menu.kind === 'confirm' && battle.chainTarget === menu.targetKey && battle.chain > 0
+    ? chainMultiplier(battle.chain)
+    : 1
   // M25§4.3 手順1: 行動者/対象「以外」を暗くする。veinsから導出するだけで追加のDOM計測はしない。
   const focusKeys = new Set(veins.flatMap((v) => [v.actorKey, v.targetKey]))
   const isDimmed = (key: string) => focusKeys.size > 0 && !focusKeys.has(key)
@@ -536,7 +714,14 @@ export function BattleScreen() {
       : '敵の手番'
 
   return (
-    <div className={`screen battle-screen stage-${stageFamily}`}>
+    <div
+      className={`screen battle-screen stage-${stageFamily}${stageContract ? ' battle-visual-v2' : ''}${ar1Hero ? ` battle-hero-${ar1Hero}` : ''}`}
+      data-visual-version={stageContract ? 'v2' : 'v1'}
+      data-stage-contract-id={stageContract?.id}
+      data-region-id={regionId}
+      data-hero-treatment={ar1Hero ?? undefined}
+      data-rare-mark-id={ar1Hero === 'rare' ? rareEncounter?.markId : undefined}
+    >
       {bossShown && bossName && (
         <div className="boss-banner">
           <span className="boss-banner-sub">主(ぬし)、現る</span>
@@ -555,16 +740,36 @@ export function BattleScreen() {
         </div>
       )}
 
-      {slotPhase === 'spin' && <LootSlot />}
-
-      <TurnOrderBar battle={battle} />
+      {/* AR0: 上端は行動順・報酬予告・全画面設定釦だけの予約帯。戦場と同じ
+          position層へ混ぜないため、敵兆し/敵札が上端UIへ侵入しない。 */}
+      <div className="battle-top-rail" data-zone="battle-top">
+        <TurnOrderBar battle={battle} />
+        {slotPhase === 'spin' && <LootSlot />}
+      </div>
 
       <div
         className={`battle-stage${battle.phase === 'won' ? ' stage-won' : ''}${isBossVictory ? ' stage-won-boss' : ''}`}
         data-shake={shakeKey}
       >
-        {stageBgCss && <div className="battle-stage-bg" style={{ backgroundImage: stageBgCss }} />}
-        <div className="stage-ground" />
+        {stageContract
+          ? <Ar1BattleStage contract={stageContract} />
+          : <>
+              {stageBgCss && <div className="battle-stage-bg" style={{ backgroundImage: stageBgCss }} />}
+              <div className="stage-ground" />
+            </>}
+        {ar1Hero && (
+          <div
+            className={`ar1-hero-mark ar1-hero-${ar1Hero}`}
+            role="status"
+            aria-label={ar1Hero === 'rare'
+              ? `稀相 ${rareEncounter?.enemyName}。確定遺物 ${rareEncounter?.drop.name}`
+              : `この地の主 ${bossName}`}
+          >
+            <span>{ar1Hero === 'rare' ? '稀相' : 'この地の主'}</span>
+            <strong>{ar1Hero === 'rare' ? rareEncounter?.enemyName : bossName}</strong>
+            {ar1Hero === 'rare' && <small>遺物予告 ・ {rareEncounter?.drop.name}</small>}
+          </div>
+        )}
 
         {/* §3.7: 主専用HPゲージ — 通常敵の枠に混ぜず画面上部へ分離 */}
         {isBossBattle && bossCombatant && <BossHpBar boss={bossCombatant} />}
@@ -598,8 +803,8 @@ export function BattleScreen() {
                   c={bossCombatant}
                   role="front"
                   fx={fx[bossCombatant.key] ?? []}
-                  targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && bossCombatant.hp > 0}
-                  clickable={isPlayerTurn && menu.kind === 'root' && bossCombatant.hp > 0}
+                  targetable={isPlayerTurn && activeTargetMenu?.side === 'enemy' && bossCombatant.hp > 0}
+                  selected={menu.kind === 'confirm' && menu.targetKey === bossCombatant.key}
                   chainBadge={battle.chainTarget === bossCombatant.key && battle.chain > 0 ? battle.chain + 1 : 0}
                   leader={false}
                   isBoss
@@ -611,6 +816,7 @@ export function BattleScreen() {
                   intent={isPlayerTurn ? battle.intents?.[bossCombatant.key] : undefined}
                   onClick={() => onEnemyClick(bossCombatant)}
                   onBodyRef={registerBodyRef}
+                  onCombatantRef={registerCombatantRef}
                 >
                   <EnemyVisual2 e={bossCombatant} />
                 </CombatantNode>
@@ -626,8 +832,8 @@ export function BattleScreen() {
                     c={e}
                     role={role}
                     fx={fx[e.key] ?? []}
-                    targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
-                    clickable={isPlayerTurn && menu.kind === 'root' && e.hp > 0}
+                    targetable={isPlayerTurn && activeTargetMenu?.side === 'enemy' && e.hp > 0}
+                    selected={menu.kind === 'confirm' && menu.targetKey === e.key}
                     chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
                     leader={battle.leaderKey === e.key}
                     isBoss={false}
@@ -639,6 +845,7 @@ export function BattleScreen() {
                     intent={isPlayerTurn ? battle.intents?.[e.key] : undefined}
                     onClick={() => onEnemyClick(e)}
                     onBodyRef={registerBodyRef}
+                    onCombatantRef={registerCombatantRef}
                   >
                     <EnemyVisual2 e={e} />
                   </CombatantNode>
@@ -658,7 +865,8 @@ export function BattleScreen() {
                     c={a}
                     role={role}
                     fx={fx[a.key] ?? []}
-                    targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' && a.hp > 0}
+                    targetable={isPlayerTurn && activeTargetMenu?.side === 'ally' && a.hp > 0}
+                    selected={menu.kind === 'confirm' && menu.targetKey === a.key}
                     acting={actor?.key === a.key && battle.phase === 'input'}
                     chainBadge={0}
                     cardTier="normal"
@@ -667,6 +875,7 @@ export function BattleScreen() {
                     targetNumber={targetableAllies.indexOf(a) + 1}
                     onClick={() => onAllyClick(a)}
                     onBodyRef={registerBodyRef}
+                    onCombatantRef={registerCombatantRef}
                   >
                     <AllyVisual gata={ch?.tomoshigata ?? 'homura'} sex={ch?.sex ?? 'm'} element={a.element} />
                   </CombatantNode>
@@ -778,6 +987,7 @@ export function BattleScreen() {
                   type="button"
                   className={`cmd-auto-persist ${auto ? 'is-on' : ''}`}
                   aria-pressed={auto}
+                  data-zone="battle-settings"
                   // M32修正: 技/道具/対象選択中にオートONにすると、選択が宙に浮いて素攻撃が自動発火し
                   // target-hintがチラつく回帰があった。切替時は必ずメニューをrootへ戻す。
                   onClick={() => { setAuto(!auto); setMenu({ kind: 'root' }) }}
@@ -789,12 +999,23 @@ export function BattleScreen() {
                 <>
                   {!isPlayerTurn && <p className="cmd-hint-line">{centerStatusLabel}</p>}
                   <div className="cmd-grid">
-                    <button className="cmd-btn cmd-main" disabled={!isPlayerTurn} data-zone="command" onClick={doQuickAttack}>攻撃</button>
                     <button
+                      ref={attackButtonRef}
+                      className="cmd-btn cmd-main"
+                      disabled={!isPlayerTurn}
+                      data-zone="command"
+                      onClick={beginAttack}
+                    >攻撃</button>
+                    <button
+                      ref={skillButtonRef}
                       className="cmd-btn"
                       disabled={!isPlayerTurn}
                       data-zone="command"
-                      onClick={() => { setMenu({ kind: 'skill' }); setPreviewSkillId(actor?.skills[0] ?? null) }}
+                      onClick={() => {
+                        menuOriginRef.current = 'skill'
+                        setMenu({ kind: 'skill' })
+                        setPreviewSkillId(actor?.skills[0] ?? null)
+                      }}
                     >
                       技
                     </button>
@@ -802,10 +1023,11 @@ export function BattleScreen() {
                     <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'flee' }, '逃げる')}>逃げる</button>
                     {/* M28-C: 道具(回復薬)。所持が無ければ無効表示で領域は保つ。 */}
                     <button
+                      ref={itemButtonRef}
                       className="cmd-btn"
                       disabled={!isPlayerTurn || availItems.length === 0}
                       data-zone="command"
-                      onClick={() => setMenu({ kind: 'item' })}
+                      onClick={() => { menuOriginRef.current = 'item'; setMenu({ kind: 'item' }) }}
                     >
                       道具{availItems.length > 0 && <span className="sk-info">{availItems.reduce((n, x) => n + x.count, 0)}</span>}
                     </button>
@@ -837,7 +1059,7 @@ export function BattleScreen() {
                     })}
                   </div>
                   {/* 戻るはスクロール外に固定(§3.8/§5.4) */}
-                  <button className="cmd-btn cmd-ghost skill-back" onClick={() => setMenu({ kind: 'root' })}>選ばず戻る</button>
+                  <button className="cmd-btn cmd-ghost skill-back" onClick={returnToRoot}>選ばず戻る</button>
                 </div>
               )}
               {/* M28-C: 道具一覧。技盤と同じ骨格を流用(scrollは.skill-list、戻るは外固定) */}
@@ -853,21 +1075,56 @@ export function BattleScreen() {
                       </button>
                     ))}
                   </div>
-                  <button className="cmd-btn cmd-ghost skill-back" onClick={() => setMenu({ kind: 'root' })}>選ばず戻る</button>
+                  <button className="cmd-btn cmd-ghost skill-back" onClick={returnToRoot}>選ばず戻る</button>
                 </div>
               )}
               {isPlayerTurn && menu.kind === 'target' && (
                 <div className="target-hint">
                   <p className="cmd-hint-line">{menu.side === 'enemy' ? '狙う魔性を選べ' : '授ける相手を選べ'}</p>
-                  <p className="cmd-hint-line cmd-hint-sub">数字キー・Tabで選択/Escで取消</p>
-                  <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>やめる</button>
+                  <p className="cmd-hint-line cmd-hint-sub">数字キー・Tabで選択／Escで取消</p>
+                  <button className="cmd-btn cmd-ghost" onClick={returnToRoot}>やめる</button>
+                </div>
+              )}
+              {isPlayerTurn && menu.kind === 'confirm' && confirmedTarget && (
+                <div
+                  className="action-confirm"
+                  id="battle-action-confirm"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <p className="action-confirm-kicker">行動予告</p>
+                  <p className="action-confirm-title"><b>{menu.actionName}</b><span>→</span>{confirmedTarget.name}</p>
+                  <dl className="action-confirm-facts">
+                    <div><dt>相性</dt><dd>{confirmedMatchup === 'adv' ? '有利 ▲' : confirmedMatchup === 'dis' ? '不利 ▽' : confirmedMatchup === 'even' ? '互角' : '—'}</dd></div>
+                    <div><dt>継足</dt><dd>×{confirmedMultiplier.toFixed(2)}</dd></div>
+                    <div><dt>対象体力</dt><dd>{confirmedTarget.hp}/{confirmedTarget.maxHp}</dd></div>
+                  </dl>
+                  <div className="action-confirm-actions">
+                    <button
+                      ref={confirmButtonRef}
+                      type="button"
+                      className="cmd-btn cmd-main"
+                      data-zone="action-execute"
+                      onClick={executeConfirmed}
+                    >この行動を実行</button>
+                    <button
+                      type="button"
+                      className="cmd-btn cmd-ghost"
+                      onClick={() => {
+                        lastTargetKeyRef.current = menu.targetKey
+                        setMenu(menu.source)
+                      }}
+                    >標的を選び直す</button>
+                  </div>
+                  <p className="action-confirm-keys">Esc: 標的選択へ戻る</p>
                 </div>
               )}
             </div>
 
             {/* 右: 選択中の技の威力/属性/消費/対象範囲(§3.5)。対象相性は戦場上の相性バッジ側で示す */}
             <div className="turnpanel-detail">
-              <SkillDetailPanel skillId={menu.kind === 'target' ? menu.skillId : menu.kind === 'skill' ? previewSkillId : null} />
+              <SkillDetailPanel skillId={activeTargetMenu?.skillId ?? (menu.kind === 'skill' ? previewSkillId : null)} />
             </div>
           </>
         )}
@@ -897,7 +1154,13 @@ function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGam
         </span>
       )}
       {seq.map((c, i) => (
-        <span key={`${c.key}-${i}`} className={`turn-chip ${c.isAlly ? 'is-ally' : 'is-enemy'} ${i === 0 ? 'is-now' : ''}`}>
+        <span
+          key={`${c.key}-${i}`}
+          className={`turn-chip ${c.isAlly ? 'is-ally' : 'is-enemy'} ${i === 0 ? 'is-now' : ''}`}
+          data-step={i}
+          aria-current={i === 0 ? 'step' : undefined}
+          title={`${i === 0 ? '現在' : `あと${i}手`}・${c.name}`}
+        >
           {i === 0 && <em>今</em>}
           <i className="turn-chip-side">{c.isAlly ? '味' : '魔'}</i>
           {c.name}
@@ -984,7 +1247,7 @@ const INTENT_TITLE: Record<EnemyIntent, string> = {
 }
 
 function CombatantNode({
-  c, role, fx, targetable, clickable, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, onClick, onBodyRef, children,
+  c, role, fx, targetable, clickable, selected, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, onClick, onBodyRef, onCombatantRef, children,
 }: {
   c: Combatant
   // M25§4.2: 前列/後列の役割だけを渡す。列数・行そのものはCSS(.slot-preset-*)側の責務にし、
@@ -993,6 +1256,7 @@ function CombatantNode({
   fx: FxEvent[]
   targetable: boolean
   clickable?: boolean
+  selected?: boolean // AR0: 確認盤に載っている現在の標的
   acting?: boolean
   chainBadge: number
   leader?: boolean
@@ -1005,6 +1269,7 @@ function CombatantNode({
   intent?: EnemyIntent // M25 §5: 敵の次行動カテゴリ(生存敵・入力番のみ)
   onClick: () => void
   onBodyRef?: (key: string, el: HTMLDivElement | null) => void
+  onCombatantRef?: (key: string, el: HTMLDivElement | null) => void
   children: React.ReactNode
 }) {
   const lunge = fx.some((f) => f.kind === 'lunge')
@@ -1021,6 +1286,7 @@ function CombatantNode({
         c.isAlly ? 'is-ally' : 'is-enemy',
         c.hp <= 0 ? 'dead' : '',
         targetable ? 'targetable' : '',
+        selected ? 'is-selected-target' : '',
         acting ? 'acting' : '',
         isBoss ? 'is-boss' : '',
         dimmed ? 'stage-dim' : '',
@@ -1028,12 +1294,15 @@ function CombatantNode({
         hit ? 'fx-hit' : '',
         ko ? 'fx-ko' : '',
       ].join(' ')}
+      ref={(el) => onCombatantRef?.(c.key, el)}
       data-row={role}
       style={{ order: role === 'back' ? 0 : 1, zIndex: role === 'front' ? 12 : 10 }}
       onClick={onClick}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : -1}
-      aria-label={`${c.name} 体力${c.hp}/${c.maxHp}`}
+      aria-pressed={interactive ? !!selected : undefined}
+      aria-describedby={selected ? 'battle-action-confirm' : undefined}
+      aria-label={`${targetNumber && targetNumber > 0 ? `${targetNumber}、` : ''}${c.name} 体力${c.hp}/${c.maxHp}${selected ? '、選択中' : ''}`}
       onKeyDown={(e) => {
         if (interactive && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick() }
       }}

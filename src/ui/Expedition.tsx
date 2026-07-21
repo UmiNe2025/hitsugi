@@ -12,13 +12,14 @@ import { dungeonByRegion } from '../dungeon/maps'
 import { isAdult } from '../core/inheritance'
 import { regionQuestion } from '../core/narrative'
 import { PARTY_SIZE } from '../core/constants'
-import { ActionDock } from './layout/shell'
+import { ActionDock, Sheet } from './layout/shell'
 import { useForcedDialog } from './layout/dialogs'
 import { DepartPartyPicker } from './DepartParty'
 import { Bar, Ico, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { eventImg, gameImg, HOME_BG, regionBgR } from './img'
 import './m17_home.css'
 import './depart_m18.css'
+import './expedition_vc3.css'
 
 // ---- 夜行の絵巻 — 麓(燈ノ郷)から頂(玄冬の座)へ登る一本道の絵地図 ----
 // 40地域を tier 順の登り道として縦絵巻に配置する。位置は index から決定的に算出(データ非依存)。
@@ -57,9 +58,8 @@ function AscentMap({
       if (i >= 0) target = i
     }
     const scale = el.clientWidth / MAP_W
-    el.scrollTop = Math.max(0, posOf(target).y * scale - el.clientHeight / 2)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    el.scrollTop = Math.max(0, (H - nodePos(target).y) * scale - el.clientHeight / 2)
+  }, [H, fame, regions, selected])
 
   // 道: 隣接ノードを結ぶ点線(中点を制御点にした滑らかな曲線)
   const pts = regions.map((_, i) => posOf(i))
@@ -156,6 +156,60 @@ function AscentMap({
   )
 }
 
+function RegionList({
+  regions, fame, cleared, selected, onSelect,
+}: {
+  regions: Region[]
+  fame: number
+  cleared: string[]
+  selected: string | null
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className="depart-region-list" role="list" aria-label="行き先の文字一覧">
+      {regions.map((region) => {
+        const unlocked = fame >= region.unlockFame
+        const isCleared = cleared.includes(region.id)
+        return (
+          <div key={region.id} className="depart-region-entry" role="listitem">
+            <button
+              className={`depart-region-row ${selected === region.id ? 'is-sel' : ''}`}
+              disabled={!unlocked}
+              aria-pressed={selected === region.id}
+              onClick={() => onSelect(region.id)}
+            >
+              <span className="depart-region-row-state">{isCleared ? '鎮' : unlocked ? '灯' : '封'}</span>
+              <span><b>{region.name}</b><small>深さ{region.depth}・見立て{'★'.repeat(region.tier)}</small></span>
+              <em>{unlocked ? (region.bossId ? (isCleared ? '主討伐済' : '主あり') : '探索可') : `武功${region.unlockFame}`}</em>
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function routeShortlist(fame: number, cleared: string[], selected: string | null) {
+  const unlocked = REGIONS.filter((region) => fame >= region.unlockFame)
+  const frontier = unlocked.reduce<Region | undefined>((best, region) => (
+    !best || region.unlockFame >= best.unlockFame ? region : best
+  ), undefined)
+  const current = selected ? REGIONS.find((region) => region.id === selected) : undefined
+  const unbeaten = [...unlocked].reverse().find((region) => !!region.bossId && !cleared.includes(region.id))
+  const previous = [...unlocked].reverse().find((region) => cleared.includes(region.id))
+  const nextLocked = REGIONS.find((region) => fame < region.unlockFame)
+  const candidates: { region: Region; label: string }[] = []
+  const add = (region: Region | undefined, label: string) => {
+    if (region && !candidates.some((candidate) => candidate.region.id === region.id)) candidates.push({ region, label })
+  }
+  add(current, '選び中')
+  add(frontier, '最前線')
+  add(unbeaten, '未討伐')
+  add(previous, '前に鎮めた地')
+  add(nextLocked, '次に開く地')
+  return candidates.slice(0, 4)
+}
+
 // 前回選んだ地(localStorage) — M22 §5: 開いた瞬間から右ペインを非空にする
 const LAST_REGION_KEY = 'hitsugi_last_region_v1'
 
@@ -218,6 +272,8 @@ export function DepartScreen() {
   const departDungeon = useGame((s) => s.departDungeon)
   const [regionId, setRegionId] = useState<string | null>(() => initialRegionId(data.fame))
   const [party, setParty] = useState<string[]>([])
+  const [view, setView] = useState<'map' | 'list'>('map')
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const selectRegion = (id: string) => {
     setRegionId(id)
     try {
@@ -232,6 +288,7 @@ export function DepartScreen() {
     setParty((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < PARTY_SIZE ? [...p, id] : p))
 
   const selectedRegion = regionId ? regionById(regionId) : null
+  const shortlist = routeShortlist(data.fame, data.regionsCleared, regionId)
   // 出立不可の理由はCTA近くへ常時表示する(押してから初めて出さない — M22 §1.4)
   const dockNote = adults.length === 0
     ? '成人がいない — 幼子の成長を待つか、星契りで子を授かれ'
@@ -252,15 +309,53 @@ export function DepartScreen() {
       <h1 className="season-label" style={{ marginBottom: 14 }}>出立 — 夜藪行</h1>
       <TsuzuriLine text="行き先と、連れて行く者を選べ。四人まで。深く潜るほど実りは多いが、灯が尽きれば常夜はお前らを喰いに来る。" />
 
+      <section className="depart-route-shortlist" aria-labelledby="depart-shortlist-title">
+        <div className="depart-shortlist-head">
+          <div><span>今夜の道標</span><h2 id="depart-shortlist-title">四つまでに絞った行き先</h2></div>
+          <div className="depart-view-switch" role="group" aria-label="絵巻の表示方法">
+            <button className={view === 'map' ? 'is-sel' : ''} aria-pressed={view === 'map'} onClick={() => setView('map')}>絵地図</button>
+            <button className={view === 'list' ? 'is-sel' : ''} aria-pressed={view === 'list'} onClick={() => setView('list')}>文字一覧</button>
+          </div>
+        </div>
+        <div className="depart-shortlist-grid">
+          {shortlist.map(({ region, label }) => {
+            const unlocked = data.fame >= region.unlockFame
+            return (
+              <button
+                key={region.id}
+                className={`depart-shortlist-card ${region.id === regionId ? 'is-sel' : ''}`}
+                disabled={!unlocked}
+                aria-pressed={region.id === regionId}
+                onClick={() => selectRegion(region.id)}
+              >
+                <span className="depart-shortlist-label">{label}</span>
+                <b>{region.name}</b>
+                <small>{unlocked ? `深さ${region.depth}・${region.bossId ? '主あり' : '道中'}` : `武功${region.unlockFame}で開通`}</small>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
       <Panel title="行き先 — 夜行の絵巻">
         <div className="depart-cols">
-          <AscentMap
-            regions={REGIONS}
-            fame={data.fame}
-            cleared={data.regionsCleared}
-            selected={regionId}
-            onSelect={selectRegion}
-          />
+          {view === 'map' ? (
+            <AscentMap
+              regions={REGIONS}
+              fame={data.fame}
+              cleared={data.regionsCleared}
+              selected={regionId}
+              onSelect={selectRegion}
+            />
+          ) : (
+            <RegionList
+              regions={REGIONS}
+              fame={data.fame}
+              cleared={data.regionsCleared}
+              selected={regionId}
+              onSelect={selectRegion}
+            />
+          )}
           <div className="depart-side">
             {!selectedRegion ? (
               <div className="region-detail region-detail-empty">
@@ -363,10 +458,8 @@ export function DepartScreen() {
           className="btn btn-main"
           disabled={!regionId || party.length === 0}
           onClick={() => {
-            if (!regionId) return
-            // 歩行ダンジョン化済みの地域は新エンジンへ(段階移行)
-            if (dungeonByRegion(regionId)) departDungeon(regionId, party)
-            else depart(regionId, party)
+            if (!regionId || party.length === 0) return
+            setConfirmOpen(true)
           }}
         >
           {selectedRegion ? `${selectedRegion.name}へ` : '行き先未選択'} ／ {party.length}人 ／ 今月を使う
@@ -375,6 +468,30 @@ export function DepartScreen() {
           郷へ戻る
         </button>
       </ActionDock>
+
+      {confirmOpen && selectedRegion && (
+        <Sheet title={`出立の確かめ — ${selectedRegion.name}`} onClose={() => setConfirmOpen(false)} closeLabel="やめる">
+          <div className="depart-confirm-route">
+            <RegionArt region={selectedRegion} />
+            <p><b>行き先</b>{selectedRegion.name}・深さ{selectedRegion.depth}・見立て{'★'.repeat(selectedRegion.tier)}</p>
+            <p><b>隊</b>{party.map((id) => data.family.find((character) => character.id === id)?.name).filter(Boolean).join('、')}</p>
+            <p><b>費やすもの</b>今月を使う。灯100で発つ。</p>
+          </div>
+          <div className="confirm-actions">
+            <button className="btn btn-ghost" onClick={() => setConfirmOpen(false)}>編成へ戻る</button>
+            <button
+              className="btn btn-main"
+              onClick={() => {
+                setConfirmOpen(false)
+                if (dungeonByRegion(selectedRegion.id)) departDungeon(selectedRegion.id, party)
+                else depart(selectedRegion.id, party)
+              }}
+            >
+              この隊で今月を使い、出立する
+            </button>
+          </div>
+        </Sheet>
+      )}
     </div>
   )
 }
@@ -468,55 +585,81 @@ export function ExpeditionScreen() {
         <TsuzuriLine text="灯が尽きた! 魔性が狂気を帯びる。今すぐ帰り火を焚け、欲をかくな!" />
       )}
 
-      <Panel title="道行き">
-        {choices.length > 0 ? (
-          <>
-            <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-dim)' }}>
-              深さ {current.depth}/{region.depth} — 次の道を選べ
-            </p>
-            <div className="node-choices">
-              {choices.map((n) => (
-                <button key={n.id} className="node-btn" onClick={() => chooseNode(n.id)}>
-                  <span className="node-icon">
-                    <Ico name={NODE_META[n.type].iconImg} fb={NODE_META[n.type].icon} size={22} />
-                  </span>
-                  <span className="node-label">{NODE_META[n.type].label}</span>
-                  <div className="node-depth">深さ{n.depth}</div>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p style={{ textAlign: 'center', padding: 16 }}>
-            これより先に道はない。帰り火を焚いて郷へ戻ろう。
-          </p>
-        )}
-        <div style={{ textAlign: 'center' }}>
-          <button className="btn btn-danger" onClick={useReturnFire}>
-            帰り火を焚く(成果を持って帰還)
-          </button>
-        </div>
-      </Panel>
+      <main className="exp-scroll-surface" data-testid="expedition-scroll-surface">
+        <section className="exp-scroll-place" aria-labelledby="exp-scroll-title">
+          <RegionArt region={region} />
+          <div>
+            <span className="exp-scroll-kicker">選んだ地</span>
+            <h1 id="exp-scroll-title">{region.name}</h1>
+            <p>{region.desc}</p>
+            <small>見立て{'★'.repeat(region.tier)}・全{region.depth}層</small>
+          </div>
+        </section>
 
-      <Panel title="隊の様子">
-        <div className="exp-party">
-          {party.map((c) => (
-            <div key={c.id} className="ally-cell">
-              <div className="ally-name">{c.name}</div>
-              <Bar value={c.hp} max={c.maxHp} kind="hp" />
-              <Bar value={c.mp} max={c.maxMp} kind="mp" />
+        <section className="exp-scroll-progress" aria-label="いまいる節と次の道">
+          <div className="exp-current-node" aria-live="polite">
+            <span className="exp-path-line" aria-hidden />
+            <span className="exp-current-seal" aria-hidden>{current.depth}</span>
+            <div>
+              <span>いまいる節</span>
+              <b>{NODE_META[current.type].label}</b>
+              <small>深さ {current.depth}/{region.depth}</small>
             </div>
-          ))}
-        </div>
-      </Panel>
+          </div>
 
-      <Panel title="道中の記">
-        <div className="exp-log">
-          {exp.log.slice(-6).map((l, i) => (
-            <p key={i}>{l}</p>
-          ))}
-        </div>
-      </Panel>
+          {choices.length > 0 ? (
+            <div className="exp-branch-field">
+              <p>絵巻の先を選ぶ — 選ぶと直ちに道が進む</p>
+              <div className="node-choices">
+                {choices.map((node, index) => (
+                  <button key={node.id} className="node-btn exp-branch" onClick={() => chooseNode(node.id)}>
+                    <span className="exp-branch-no" aria-hidden>{index + 1}</span>
+                    <span className="node-icon">
+                      <Ico name={NODE_META[node.type].iconImg} fb={NODE_META[node.type].icon} size={22} />
+                    </span>
+                    <span className="node-label">{NODE_META[node.type].label}</span>
+                    <span className="node-depth">深さ{node.depth}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="exp-path-end">これより先に道はない。成果を巻き、帰り火を焚いて郷へ戻ろう。</p>
+          )}
+        </section>
+
+        <section className="exp-scroll-party" aria-labelledby="exp-party-title">
+          <div className="exp-scroll-section-head">
+            <div><span>同じ絵巻を歩く者</span><h2 id="exp-party-title">隊の様子</h2></div>
+            <small>{party.length}人・帰還時に成果を持ち帰る</small>
+          </div>
+          <div className="exp-party">
+            {party.map((character) => (
+              <div key={character.id} className="ally-cell">
+                <div className="ally-name">{character.name}</div>
+                <Bar value={character.hp} max={character.maxHp} kind="hp" />
+                <Bar value={character.mp} max={character.maxMp} kind="mp" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="exp-scroll-return" aria-labelledby="exp-return-title">
+          <div>
+            <span>ここから郷へ戻る</span>
+            <h2 id="exp-return-title">帰り火</h2>
+            <p>持ち帰り: 奉燈<b>{exp.loot.hoto}</b>・血珠<b>{exp.loot.ketsu}</b>。帰ればこの遠征を終える。</p>
+          </div>
+          <button className="btn btn-danger" onClick={useReturnFire}>帰り火を焚く(成果を持って帰還)</button>
+        </section>
+
+        <details className="exp-scroll-log">
+          <summary>道中の記を読む({Math.min(6, exp.log.length)}件)</summary>
+          <div className="exp-log">
+            {exp.log.slice(-6).map((line, index) => <p key={index}>{line}</p>)}
+          </div>
+        </details>
+      </main>
 
       <EventModal />
     </div>

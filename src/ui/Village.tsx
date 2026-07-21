@@ -1,15 +1,18 @@
 // M23(指示6): 燈ノ郷を歩く — PixiJS歩行マップ画面。
 // 歩行(WASD/矢印/タップ/D-pad)と即移動(すぐ行くバー常設)を併設し、月は消費しない(setScreenのみ)。
 // 契約: docs/POLISH_FIX_INSTRUCTIONS_CLAUDE.md §5
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../core/store'
 import type { Character, GameData, Screen } from '../core/types'
+import { resolveVillageVisualState } from '../core/data/village_visual_state'
+import { isRegionVisualV2Enabled } from '../core/feature_flags'
 import { VILLAGERS, villagerBandOf, villagerLine, villagerLineKey } from '../core/data/villagers'
 import { GOSSIP, type GossipEntry } from '../core/data/gossip'
 import { personalityById } from '../core/data/personalities'
 import { ageOf, seasonsLeft } from '../core/inheritance'
 import { getReduceMotion } from '../core/settings'
 import { VillageEngine, type VillageFocus, type VillageNpc } from '../village/engine'
+import { defaultVillageFacadeAssets, type VillageFacadeAssetSet } from '../village/render/facades'
 import { charSprite, stageOf, villagerImg, walkBasePath } from './img'
 import { MaybeImg } from './components'
 import './village.css'
@@ -33,6 +36,7 @@ const GOSSIP_VILLAGER_IDS = [
 ] as const
 
 const JOURNEY_GOSSIP_FLAG_BASE = 1000
+const DEFAULT_VILLAGE_FACADE_ASSETS = defaultVillageFacadeAssets(import.meta.env.BASE_URL)
 
 export interface VillageGossipAssignment {
   entry: GossipEntry
@@ -95,7 +99,12 @@ interface Talk {
   imgUrl?: string
 }
 
-export function VillageScreen() {
+export interface VillageScreenProps {
+  visualV2?: boolean
+  facadeAssets?: VillageFacadeAssetSet
+}
+
+export function VillageScreen({ visualV2, facadeAssets }: VillageScreenProps = {}) {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const markVillagerTalked = useGame((s) => s.markVillagerTalked)
@@ -103,6 +112,8 @@ export function VillageScreen() {
   const engineRef = useRef<VillageEngine | null>(null)
   const [focus, setFocus] = useState<VillageFocus | null>(null)
   const [talk, setTalk] = useState<Talk | null>(null)
+  const resolvedVisualV2 = visualV2 ?? isRegionVisualV2Enabled()
+  const villageVisualState = useMemo(() => resolveVillageVisualState(data), [data])
 
   const alive = data.family.filter((c) => c.alive)
   const leader = alive.find((c) => c.isHead) ?? alive[0]
@@ -143,6 +154,9 @@ export function VillageScreen() {
         npcs,
         kin,
         reduceMotion: getReduceMotion(),
+        visualV2: resolvedVisualV2,
+        visualState: villageVisualState,
+        facadeAssets: facadeAssets ?? DEFAULT_VILLAGE_FACADE_ASSETS,
       },
       { onFocus: setFocus },
     )
@@ -239,6 +253,12 @@ export function VillageScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [talk, data])
 
+  // 会話中は移動操作を見せず、押下中だったD-pad入力も必ず解放する。
+  useEffect(() => {
+    if (!talk) return
+    for (const dir of ['up', 'down', 'left', 'right'] as const) engineRef.current?.pressDir(dir, false)
+  }, [talk])
+
   const go = (s: Screen) => setScreen(s)
   const dpad = (dir: 'up' | 'down' | 'left' | 'right', label: string) => (
     <button
@@ -256,7 +276,13 @@ export function VillageScreen() {
   )
 
   return (
-    <div className="screen village-screen">
+    <div
+      className="screen village-screen"
+      data-village-visual={resolvedVisualV2 ? 'v2' : 'v1'}
+      data-village-life-state={villageVisualState.lifeState}
+      data-village-return-trace={villageVisualState.freshReturn?.kind ?? 'none'}
+      data-village-return-id={villageVisualState.freshReturn?.id ?? 'none'}
+    >
       <div className="village-head">
         <button className="btn btn-ghost" onClick={() => go({ id: 'home' })}>← 郷へ戻る</button>
         <h1 className="village-title">燈ノ郷 — 大燈籠のふもと</h1>
@@ -276,14 +302,30 @@ export function VillageScreen() {
       <div className="village-stage">
         <div className="village-host" ref={hostRef} />
 
-        {/* 近接対象 — 施設名/会話をボタンで明示(近接時のみ) */}
-        {focus && !talk && (
-          <div className="village-focus" role="status">
-            <span className="village-focus-label">{focus.label}</span>
-            <button className="btn btn-main village-focus-act" onClick={() => act(focus)}>
-              {focus.action}
-            </button>
+        <aside className="village-survey-guide" aria-label="郷の見取り案内">
+          <p className="village-survey-kicker">灯路の見取り</p>
+          <p className="village-survey-copy">中央の大燈籠から、暮らしと継承の五つの場所へ道が伸びている。</p>
+          <div className="village-survey-places">
+            <span><b>北西</b> 鍛冶と蔵</span>
+            <span><b>北</b> 星契りの祠</span>
+            <span><b>北東</b> 豆腐屋</span>
+            <span><b>中央</b> 大燈籠</span>
+            <span><b>南</b> 出立門</span>
           </div>
+          <p className="village-survey-release">指を離すと、現在地へ戻る</p>
+        </aside>
+
+        {/* 近接対象 — 対象名と動詞を一つの大buttonへ統合し、誤タップ領域を増やさない。 */}
+        {focus && !talk && (
+          <button
+            className="btn btn-main village-focus village-focus-act"
+            data-zone="village-action"
+            onClick={() => act(focus)}
+            aria-label={`${focus.label} — ${focus.action}`}
+          >
+            <span className="village-focus-label">{focus.label}</span>
+            <span className="village-focus-verb">{focus.action}</span>
+          </button>
         )}
 
         {/* 会話 — 下部の帯(モーダルにせず歩行を止めない) */}
@@ -313,17 +355,19 @@ export function VillageScreen() {
           見渡す
         </button>
 
-        <div className="dpad">
-          <div />
-          {dpad('up', '▲')}
-          <div />
-          {dpad('left', '◀')}
-          <div />
-          {dpad('right', '▶')}
-          <div />
-          {dpad('down', '▼')}
-          <div />
-        </div>
+        {!talk && (
+          <div className="dpad" data-zone="dpad">
+            <div />
+            {dpad('up', '▲')}
+            <div />
+            {dpad('left', '◀')}
+            <div />
+            {dpad('right', '▶')}
+            <div />
+            {dpad('down', '▼')}
+            <div />
+          </div>
+        )}
       </div>
 
       <p className="village-hint">移動: WASD/矢印/タップ ・ 話す/入る: Enterか近接ボタン ・ 戻る: Esc</p>

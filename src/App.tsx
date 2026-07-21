@@ -36,6 +36,7 @@ function SettingsButton() {
 let toastSeq = 1
 function Toaster() {
   const [toasts, setToasts] = useState<{ id: number; msg: string; kind: ToastKind }[]>([])
+  const dismissToast = (id: number) => setToasts((current) => current.filter((toast) => toast.id !== id))
   useEffect(() => {
     setToastSink((msg, kind) => {
       const id = toastSeq++
@@ -48,9 +49,24 @@ function Toaster() {
   }, [])
   if (toasts.length === 0) return null
   return (
-    <div className="toast-stack">
+    <div className="toast-stack" aria-label="通知">
       {toasts.map((t) => (
-        <div key={t.id} className={`toast toast-${t.kind}`}>{t.msg}</div>
+        <div
+          key={t.id}
+          className={`toast toast-${t.kind}`}
+          role={t.kind === 'error' ? 'alert' : 'status'}
+          aria-live={t.kind === 'error' ? 'assertive' : 'polite'}
+        >
+          <span className="toast-message">{t.msg}</span>
+          <button
+            type="button"
+            className="toast-dismiss"
+            aria-label={`通知「${t.msg}」を閉じる`}
+            onClick={() => dismissToast(t.id)}
+          >
+            閉じる
+          </button>
+        </div>
       ))}
     </div>
   )

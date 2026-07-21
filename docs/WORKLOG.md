@@ -1147,3 +1147,82 @@
 - **独立監査**: fresh agent最終**PASS / blocking 0**。初回の非阻害メモから再読/7日通知を補完し、再監査で見つかった日常lifeによるarchive圧迫を章・夢限定＋6件/残件展開へ修正。独立focused 55/55、mobile-360 E2E、diff-checkも再合格。
 - **Ship Check / save硬化**: ユーザーのデプロイ承認後、機械gate、秘密情報、依存、セキュリティ、独立リリースレビューを実施。破損した手動importの`narrative`入れ子と`lastReturn/resonance/metrics`を境界検証し、main正規化失敗時もBAKへ退避する回帰を追加。最終判定は**SHIP-with-notes / blocking 0**。
 - **デプロイ実行**: 実装commit `0bd19ec`、設計/URL導線commit `f144505`を`origin/main`へpush。GitHub Actions `Deploy to GitHub Pages` run `29777998428`が成功（build 58s / deploy 15s）。`https://hitsugi-game.github.io/hitsugi/`のHTML/実bundle/OGP/夢3 CGをcache-bust付きHTTP 200で確認し、bundle内の「灯の余白」「家譜に綴じた物語」も確認した。
+
+## 2026-07-21 (M35 星契り「御影台」・ローカル実装)
+
+- **報告**: 星契りで縦長の神絵が横長枠に`cover`表示され、下半身と画像下の情報札が見切れる。Homeを含む画面全体も、生成背景＋同型の半透明紺panel＋金枠の反復でAIテンプレート感が強い。
+- **原因/設計**: 神絵は全て768×1024（3:4）なのに、`.god-pane-img`が横長の可変枠へ`width/height:100% + object-fit:cover`だった。星契り固有の役割を「神名帳／御影／奉納札」に定め、PCは御影と札を横並び、820px以下は3:4御影の後に札を積む。
+- **実装**: `pact_m35.css`を後勝ちで追加。御影は`contain`中央揃え、PCの神名帳/御影台は同じ360〜420px、狭幅は御影を最大465×620pxに制御した。札を別面化し、固定CTAの既存逃げを維持した。
+- **素材是正**: 目視で`god_kaboshi`上空の金色偽文字を追加検出。built-in image editで文字領域だけを星空へ戻し、人物・灯籠・建物・流星・3:4構図を固定した`god_kaboshi_v2`を作成。旧素材は残し、data参照だけを非破壊差替え。配信JPEG SHA-256 `17C1F29B4261F9C4EF9EA517D23927F6F0F3E84A47281324D68A066BE90D33CD`。
+- **回帰**: `tests/visual/pact.spec.ts`を追加し、5幅で実画像3:4、`contain`、PC横並び/狭幅縦積み、情報札、横overflow 0、最下部scroll、dock余白を直接検証する。
+- **検証**: 星契りPlaywright 10/10（1440/1280/768/390/360px）、Vitest 23 files / 618 tests、lint、data validation（0 errors・既存の位階分布warn 1）、production build、diff-check成功。1280/390pxを目視し、偽文字0・全身像・奉納札・見立てへの連続を確認。
+- **公開境界**: ローカル実装のみ。commit/push/deployはユーザーの明示依頼まで行わない。
+
+## 2026-07-21 (AR0 操作安全・視覚契約 — /mission、ローカル実装)
+
+- **契約**: `docs/CODEX_MASTERPLAN_DRAFT.md` §17のAR0〜AR5を順番に進めるmissionを開始。既存M35 dirtyは`docs/qa/worktree-m35-handoff-20260721.md`、復元patch、untracked SHA-256、5幅10/10回帰で所有境界を固定。commit/push/deployはscope外。
+- **Home / Pact**: 一族小札をnative button化しkeyboard・focus・`aria-pressed`を追加。選択後も同一DOMを保持。既知神は奉燈不足でも詳細閲覧でき、契約CTAだけ理由付きで無効化するpolicyをunit testへ分離。
+- **Battle**: 通常攻撃を「標的選択→相性/継足/対象HPのlive予告→明示実行」へ統一。敵札tap/数字/Enter/Spaceの即時攻撃を廃止し、Escape二段復帰とfocus復元を追加。行動順・報酬・敵兆しの上端競合を5幅で解消。
+- **Village / Dungeon**: 郷は近接対象を大きな1行動buttonへ統合し、会話時はD-padと残存方向入力を解除。Dungeonは透明tap領域を廃止して可視地図button 1個、常設帰り火dock、Canvas外の短期目的/発見POI/帰還規則を追加。発見状態はengine visitedから取得する。
+- **視覚契約と証跡**: `docs/HITSUGI_VISUAL_BIBLE.md`、manifest schema/5実ID、validator、5秒質問票、所有/rollback表、欠陥台帳を追加。1280/390pxの5画面after画像10点とSHA-256を`docs/qa/ar0-after-evidence-20260721.md`へ固定。
+- **性能baseline**: 開発PCのheadless Chromium/SwiftShaderで5画面を測定し`docs/qa/ar0-performance-baseline-20260721.md`へ固定。Dungeon/Villageの余力不足をAR1制約にした。これは物理低性能端末gateの代替ではない。
+- **機械検証**: `check:visual-manifest` 5 ID、Vitest 24 files / 621 tests、oxlint、production build、diff-check成功。AR0 Playwrightは1440/1280/768/390/360pxでHome/Pact 20/20、Battle 10/10、Dungeon/Villageのblocking旅程を全幅で成功。M35 10/10も回帰なし。
+- **目視結論**: overflow/操作衝突/即時誤発火は閉じたが、Homeの同型panel、Pact初期空白、郷/Dungeonのcheckerboard・primitive、Battleの平坦暗部は残る。AR1は螢火の窪地vertical sliceのみへ限定し、量産しない。
+- **公開境界**: ローカルのみ。commit、push、GitHub Pages deployは未実施。
+- **AR0独立監査**: 初回は5画面×5幅overflow、Home/PactのTab/Space/focus、AR0単独rollbackの証拠不足でREWORK。対象だけを補完し、追加Playwright 30/30、104,709 bytesのAR0-only patch前方25/25一致・reverse・M35保護hash不変を実証。再監査は**PASS / AR1 GO**。
+
+## 2026-07-21 (AR1 コアループvisual slice — /mission、ローカル機械実装)
+
+- **vertical slice**: `Home → 郷の鍛冶 → 蛍火の窪地0層 → 1戦 → Home/郷の帰還痕`だけを実装。`regionVisualV2`は既定OFF、DEV queryでV1/V2を再現し、出立時の`DungeonRun`へversion/contractをsnapshot。GameData/save schema、map graph、collisionは不変。
+- **郷**: checkerboardを連続した濡土・環状路・轍へ置換。鍛冶/大燈籠を生成WebP＋code fallbackでfacade化し、他3施設はsilhouetteに限定。通常/血脈危機と帰還後1季の足跡・負傷布・消えた火床を既存データだけから導出。facade 2点は初回可視frame前にV2限定preloadし、後追い差替えを防止。
+- **Dungeon/Battle**: 蛍火0層の濡土、浅い黒水、水没社、root/reed前景、逆流する火の粉10、水輪3、霧2を`RegionStageContract`へ固定。Dungeonはtexture 2＋static Graphics 4＋pool済みeffect、Battleは同じasset/地面/天候を継承し旧背景を二重mountしない。他階層/他地域/V1は新asset request 0。
+- **帰還因果**: `dungeonReturn→advanceSeason`の順序に合わせ、郷のfresh条件を`lastReturn.season === seasonIndex - 1`へ固定。Home「灯の余白」の人/土地/千年三痕と、郷の地面traceを5幅旅程で接続。
+- **生成素材**: 大燈籠、鍛冶、水没社、前景root/reedの4点。初回緑fringe、edge-contract 1、約2.44MB runtimeを棄却し、edge-contract 2＋alpha保持WebPへ収束。4点合計129,602 bytes、文字/疑似文字/透かし/緑fringe 0。visual QC合格だが商用再配布確認が未完のため台帳は`rightsStatus: unverified`。
+- **目視収束**: 郷の大きな半透明光円をV2だけの小さな多層光へ変更。Dungeonの水没社を縮小し、前景を世界幅78%/alpha 0.78にしてmobile経路の遮蔽を軽減。帰還足跡へ消えた火床と残り火を追加。
+- **検証**: 全unit **27 files / 637 tests**、lint、production build、manifest validator、diff-check成功。AR1 Dungeon/Battle/V1 rollback/帰還旅程は5幅**15/15**、郷既存matrix**30/30**、最終V2 focused **5/5**、headless PC/mobile比較**2/2**。採用PC/mobile 10画像とSHA-256を`docs/qa/ar1-implementation-evidence-20260721.md`へ固定。
+- **性能の正直申告**: SwiftShader比較は郷/BattleでV2平均fps低下、Dungeonで改善という混在結果。絶対値は物理端末gateに使わず、`docs/qa/ar1-performance-telemetry-20260721.md`へ記録した。
+- **Phase停止**: 8名blind 6/8、低性能物理端末30/24/55fps、画像権利確認が未完。AR1をPASSへ昇格せず、AR2/量産へ進まない。commit、push、deployなし。
+- **独立監査**: fresh agentは **AR1機械実装PASS / Phase Exit HOLD / AR2 NO-GO**。非阻害指摘だった素材hashの対象曖昧性を解消し、manifestを生成元PNGの`source/sourceSha256`と実配信WebPの`runtimePath/runtimeSha256`へ分離。validatorでroot外escape、欠落、片側null、実hash不一致を拒否し、7/7再合格。外部3gateは未完のまま正直に保持。
+
+## 2026-07-21（全景品質・全ゲーム視覚完成masterplan改訂）
+
+- **実画面からの反証**: 郷の鍛冶facadeは単品として良い一方、同時に見える祠・豆腐屋・門はprimitive silhouette、地面はGraphics中心、人物は小さなportrait pinで、品質差そのものが貼り付け感を生んでいた。画像総数不足ではなく、同一画角の最低品質と投影・材質・接地・光の不一致を主因と判定した。
+- **現況監査**: `public/img`は2,814ファイル・約240.75MiB、神362・敵540・装備810。神のexact hashは362中361 uniqueで、全体課題を単純重複とみなさない。AR1の実配信生成WebPは4点129,602 bytes、郷facade完成2/5、Dungeon V2は40地域中1地域の0層のみ。Home/星契り/鍛冶/蔵を含む各画面は同型の紺panel依存が残る。
+- **設計判断**: 画像1点でなく一画面を`SceneFrameContract`の完成単位にする。高密度hero 1点・画面15〜30%、地面材質2、署名landmark最大3、主光源1とし、周囲は同じ投影・材質・光の抑制した接続層で閉じる。`placeholder / mismatch = 0`を次画面へ進む条件にした。
+- **主経路**: AR2の前へ`AR1R`を挿入し、`VC0現況分類 → AR1R-A郷 → AR1R-B蛍火Dungeon/Battle → Home/星契り/鍛冶/蔵 → 出立/施設/家譜/図鑑 → 4 macro biome＋12署名地点`の順に改訂。4群は「湿生の境／石祈の道／木都の残骸／骨星の荒境」。40地域一枚絵、全神・全敵一括再生成、地域別boolean増殖は行わない。
+- **画面別surface**: Home=家の座、星契り=御影台、鍛冶=身体＋作業台、蔵=棚＋包み、出立=焦げた絵巻、Dungeon/Battle=同じ地面と光、施設=建築図、家譜=綴じ本、図鑑=拓本帳へ分ける。操作はAR0の共通shellを維持する。
+- **外部根拠**: Darkest Dungeonのcreative core、Fallout 4のmodular kit、Belowの環境物語、Xbox Accessibility Guidelinesの一貫navigation、PixiJS 8のlevel bundle/shared TextureSourceを一次資料で確認し、採否規則・kit展開・操作共通化・負荷契約へ反映した。
+- **独立三視点**: UX監査は「完成画角を閉じる前の量産」を否定。ブランド監査は全画面高密度より「hero高密度＋接続層抑制」を推奨。red teamは性能退行、権利未確認、flag OFF/部分ON、40地域工数の楽観を指摘し、停止条件を追加した。
+- **次の72時間**: 6画面×1280/390を再撮影してcoverage registry化し、郷A/B mockを作る。初見5名、物理低性能端末、rightsの安価gateを閉じた後だけAR1R-A実装契約を確定する。
+- **独立計画監査と是正**: 初回はREWORK。4 biomeを2地域だけで証明していた点、二次画面/40地域のclosure不足、実行承認の曖昧さを修正。後続Forgeで22 routeのphase/成果物/工数割当不足も検出し、Title/Intro、全生涯scene、夢、Finale/Ending、Expeditionを明示phase化した。全screen/state/region ledger、4-way blind各群6/8＋混同行列、base53〜94＋P0差替え予備0〜12（合計53〜106 person-day）、VC6上限34 person-day、別途明示承認までmock/画像/コードを開始しない境界を採用した。
+- **公開境界**: 本作業は計画・正典・状態・履歴の更新のみ。runtime、画像素材、commit、push、deployは未実施。詳細は`docs/CODEX_MASTERPLAN_DRAFT.md` §18。
+
+## 2026-07-21（§18 全景品質計画Forge）
+
+- **固定rubric**: 世界/美術のHITSUGI固有性、画面別UX、Fable 5実装具体性、量産/性能/権利/工数現実性、人間の魅力を含む検収可能性の5軸を各4/5以上、客観check全green、blocking 0、最大5roundに固定した。
+- **Round 1 REWORK**: A/B/C/D/E=5/5/3/4/5。22 routeはclosure inventoryへ存在したが、Title/Intro、生涯scene、夢、Finale/Ending、Expedition等が担当phase・成果物・Exit・工数へ十分展開されていない`§18.5.1+§18.7/route-phase-gap`をblocking化した。
+- **欠陥限定修正**: VC2へTitle/Intro、VC3へExpedition、VC3Bへbirth/ceremony/jobrite/life/death/dream/dreamEp/finale/ending、VC6へchronicle/codex/facilitiesとoverlay 5群を割当てた。共有surface kit、required state、save/skip/replay互換、5幅/contrast/motion/altのExitを追加した。
+- **工数再積算**: phase base実数52.7〜93.3を丸めて53〜94 person-day、神/敵P0差替え予備0〜12、合計53〜106。VC6は18.7〜33.3、上限34。上限でclosure不能なら未完を隠さず再承認へ戻す。
+- **Round 2 PASS**: 別のfresh evaluatorがScreen 22/22、40地域、phase/Exit、工数、critical path、GDD/STATUS、AR1 HOLD、別途公開承認を直接確認。A/B/C/D/E=5/5/5/5/5、blocking 0。`git diff --check`合格。
+- **追加強化**: 灯痕連鎖、responsive/contrast/DOM代替、motion/sound文法、Asset lifecycle、closure ledger schema、制作量上限、理解と魅力を分ける盲検評価を§18へ追加した。
+- **公開境界**: 計画文書のみ。mock、画像生成、runtime実装、commit、push、deployは別途ユーザー承認まで行わない。
+
+## 2026-07-21（§18 全景品質mission ローカル実装）
+
+- **閉包基盤**: `Screen` 22、`REGIONS` 40、route外overlay 6の計68行を台帳化。必須state、repo内path、SHA-256、lifecycle、権利/人間/性能gateをvalidatorで検証し、全行を実在runtimeへ`code-integrated`として接続した。必須state×5幅×機械checkの証拠matrixがない行は`scene-integrated`へ昇格できず、`scene-ready/released`への偽昇格も0。
+- **生成画像**: 星祠、豆腐屋、出立門を新規生成し、alpha master→512×384 PNG/WebPへ処理。新規3 WebPは90,716 bytes、edge alpha 0、key-like pixel 0。既存大燈籠/鍛冶/水没社/葦根と合わせmanifest 7/7。model/license不明のためrightsは未確認、V2既定OFFを維持。
+- **入口/Home/星契り**: Titleを左綴じ表紙＋大燈籠へ再構図。セーブなし/正常/復旧可能/破損を分離し、破損Continueを禁止。Intro11頁を保持して最新行を中央へ誘導。星契りは3:4全景と奉納札を同居させ、最下部scrollを保証。
+- **郷/Dungeon/Battle**: 郷5施設を同一投影/光/接地へ統一し、近接時だけ人物情報を表示。蛍火は探索と戦闘で同じ水没社/濡土/浅水/前景を継承し、rare/boss heroとdrop由来を接続。map/collision/BFS/saveは不変。
+- **全40地域**: 湿生の境/石祈の道/木都の残骸/骨星の荒境の4 kit、12 signature、40固有の二材質/silhouette/landmark/danger/navigation/motion/soundをcode-native layerへ実装。texture 0、ambient 4〜10、navigation mark最大7、V2時のみ。専用world one-shot API不在の音はUI音で代用せずvisual-only宣言に留めた。
+- **作業/場面/記録**: 鍛冶/蔵/出立/遠征を一作業一面へ再構成。生涯5・夢2・finale/endingを3 surface kitへ統合。Chronicle/Codex/Facilities/FamilyTree/Settings/Sheetを綴じ本/拓本帳/建築図/巻物/道具箱へ分化。toastへARIA、自動消去、44px手動消去、reduced-motionを追加。
+- **presentation監査**: 実参照1,749画像はmissing 0、decoded exact duplicate group 0、dHash候補35、輝度候補4。contact sheet目視で神MAXの人格/画風連続性をP0と判定し、portrait別allowlistを空で導入。未承認MAXは通常像＋code-native縁極frameへ退避。itemは一括再生成せずinventory frame/slot/rarity/comparisonで統一する。
+- **独立監査差戻し修正**: lifecycleへ`code-integrated`を新設し、required state×5幅×機械checkの証拠matrixなしでは`scene-integrated`に昇格できないvalidator/testへ変更。68行を正直に降格した。郷は黒楕円・単純円環を短い接地影・生活路・土間へ変更し、mobile見渡しを全景＋場所案内へ再構成。蛍火は旧汎用プロップの二重描画を止め、湿地岸・短い灯杭・水面接地へ統合。鍛冶/蔵は長い棚を二次入口の後へ移し、PC/mobile証拠を保存した。
+- **検証**: Vitest **33 files / 676 tests**、oxlint、production build、closure **68/68 code-integrated**、manifest **7/7**、郷5幅 **30/30**、蛍火旅程5幅 **21合格・4意図的skip**、鍛冶/蔵修正後PC/mobile **8合格・2意図的skip**、`git diff --check`成功。buildのmain chunk 1,409.06kB warningは出荷noteとして残す。
+- **残gate**: 外部8名の魅力/理解/4-way blind、物理低性能端末、生成素材の商用再配布権利は未実施。local完成と公開可を分離し、commit、push、deployは行わない。
+- **独立監査Round 2**: ローカル`code-integrated`範囲でPASS-with-notes、blocking 0。`scene-integrated/scene-ready/released`は0。evidence MIME/寸法/viewport/hash重複の強化、main chunk 1,409.06kB、Forge mobile文字倍率200%、外部8名/4-way blind/物理端末/rightsをrelease前noteとして`docs/qa/full-visual-independent-audit-20260721.md`へ固定。
+
+## 2026-07-21（全景品質default-OFF公開承認・Ship Check）
+
+- **生成素材権利gate閉鎖**: プロジェクト所有者がOpenAI built-in `image_gen`生成7素材について、本ゲーム・公開GitHubリポジトリでの公開・商用利用を明示承認。OpenAI Terms of Use / Services Agreement、生成経路、対象ID、留保を`assets_src/visual_recovery/RIGHTS_CLEARANCE_20260721.md`へ固定し、manifest 7点を`rightsStatus: cleared / reviewStatus: accepted`へ更新した。
+- **公開の安全境界**: 外部8名blindと物理低性能端末gateは未完のため、`regionVisualV2`既定OFF、`scene-integrated/scene-ready/released = 0`、AR2 NO-GOを維持する。今回の公開はdefault-OFFコードと権利確認済み素材の配信であり、V2のproduction cohort有効化ではない。
+- **Ship Check事前結果**: 秘密情報候補0、危険API/新規外部通信0、依存脆弱性0、画像メタデータ0、100MB超ファイル0。Vitest 33 files / 676 tests、oxlint、data validation errors 0、production build、closure 68/68、manifest 7/7、`git diff --check`を合格。build main chunk 1,409.06kBとdata rank分布warn 1件は非阻害note。`tmp/`は無関係な既存ファイルとしてcommit対象外を維持する。

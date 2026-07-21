@@ -9,10 +9,12 @@ import { GODS, godUnlocked } from '../core/data/gods'
 import { isAdult, predictChild, godStatValue, pactCost } from '../core/inheritance'
 import { CharCard, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './components'
 import { GodArtFallback } from './GodArtFallback'
-import { gameImg, godMaxImg, HOME_BG } from './img'
+import { gameImg, godPresentationImg, HOME_BG } from './img'
 import { ActionDock, CompareRow, Sheet, StatusCallout } from './layout/shell'
+import { pactAvailability } from './pactPolicy'
 import './pact_m18.css'
 import './pact_m26.css' // M26 §9.5: 星契り最終確認Sheet(pact_m18.cssより後 — 後勝ち)
+import './pact_m35.css' // M35: 御影を切らず、全身像と奉納札を同時に読む星契り専用の祭壇レイアウト
 
 // 封印中の神の解放条件を一言で(unlock条件から自動生成)
 function sealHint(g: (typeof GODS)[number]): string {
@@ -215,15 +217,16 @@ export function PactScreen() {
               const sealed = !godUnlocked(g, data)
               const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
               const eff = pactCost(g, data.godAffinity[g.id] ?? 0) // 縁の割引(M12-2)
-              const affordable = data.hoto >= eff && !sealed
+              const availability = pactAvailability(!sealed, data.hoto, eff)
               const recommended = !sealed && recommendStat != null && topBias(g.statBias)[0]?.[0] === recommendStat
               return (
                 <button
                   key={g.id}
-                  className={`god-row ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''} ${recommended ? 'recommended' : ''}`}
+                  className={`god-row ${godId === g.id ? 'selected' : ''} ${sealed ? 'locked' : ''} ${!availability.contractable && availability.inspectable ? 'unaffordable' : ''} ${recommended ? 'recommended' : ''}`}
                   aria-pressed={godId === g.id}
-                  aria-disabled={!affordable}
-                  onClick={() => affordable && setGodId(g.id)}
+                  aria-disabled={!availability.inspectable}
+                  title={availability.reason ?? ''}
+                  onClick={() => availability.inspectable && setGodId(g.id)}
                 >
                   <span className={`element-badge el-${g.element} god-row-el`}>{ELEMENT_LABELS[g.element]}</span>
                   <span className="god-row-name">
@@ -242,6 +245,7 @@ export function PactScreen() {
                   <span className="god-row-cost">
                     {sealed ? '—' : eff}
                     {!sealed && eff < g.cost && <span className="god-row-base">{g.cost}</span>}
+                    {!availability.contractable && availability.inspectable && <span className="god-row-short">不足</span>}
                   </span>
                 </button>
               )
@@ -339,7 +343,7 @@ export function PactScreen() {
           <div className="ritual-ring" />
           <div className="ritual-ring ritual-ring2" />
           <MaybeImg
-            src={(data.godAffinity[god.id] ?? 0) >= GOD_MAX_AFFINITY ? godMaxImg(god.portrait) : gameImg(god.portrait)}
+            src={godPresentationImg(god.portrait, (data.godAffinity[god.id] ?? 0) >= GOD_MAX_AFFINITY)}
             className="ritual-cutin"
           />
           <p className="ritual-text">{god.name}との契り、結ばれる——</p>
@@ -371,7 +375,7 @@ function PactConfirmSheet({
         <CharCard char={parent} seasonIndex={data.seasonIndex} compact />
         <div className="pact-confirm-god">
           <MaybeImg
-            src={isMax ? godMaxImg(god.portrait) : gameImg(god.portrait)}
+            src={godPresentationImg(god.portrait, isMax)}
             className="pact-confirm-god-img"
           />
           <span className="pact-confirm-god-name">{god.name}</span>
@@ -407,27 +411,29 @@ function strongestPotential(potential: Partial<Record<StatKey, number>>): StatKe
   return entries.sort((a, b) => b[1] - a[1])[0][0]
 }
 
-// 大立ち絵パネル — 縁MAX(affinity>=5)なら第二立ち絵を優先し、god_*→炎のオーラへ静かに退避する
+// 大立ち絵パネル — 縁MAXは同一性確認済みの第二立ち絵だけを採用する。
+// 未確認MAX候補は通常像＋runtimeの縁極frameへ退避し、別人化や疑似文字を表へ出さない。
 const GOD_MAX_AFFINITY = 5
 
 function GodPortraitPane({ godId, affinity }: { godId: string; sealedHint: string | null; affinity: number }) {
   const g = GODS.find((x) => x.id === godId)!
-  // 退避連鎖: 縁MAXの第二立ち絵 → 通常立ち絵 → (全滅)属性オーラ。godIdが変われば連鎖をやり直す。
-  const candidates = affinity >= GOD_MAX_AFFINITY ? [godMaxImg(g.portrait), gameImg(g.portrait)] : [gameImg(g.portrait)]
+  const maxRite = affinity >= GOD_MAX_AFFINITY
+  // 退避連鎖: reviewed MAXまたは通常立ち絵 → (全滅)属性オーラ。
+  const candidates = [godPresentationImg(g.portrait, maxRite)]
   const [idx, setIdx] = useState(0)
-  const [lastGodId, setLastGodId] = useState(godId)
-  if (godId !== lastGodId) {
-    setLastGodId(godId)
+  const artKey = `${godId}:${maxRite ? 'max' : 'normal'}`
+  const [lastArtKey, setLastArtKey] = useState(artKey)
+  if (artKey !== lastArtKey) {
+    setLastArtKey(artKey)
     setIdx(0)
   }
   const src = idx < candidates.length ? candidates[idx] : null
-  const isMax = src !== null && idx === 0 && affinity >= GOD_MAX_AFFINITY
   return (
-    <div className="god-pane">
-      <div className={`god-pane-art el-bg-${g.element}`}>
+    <div className="god-pane" data-art-state={maxRite ? 'max-rite' : 'normal'}>
+      <div className={`god-pane-art el-bg-${g.element} ${maxRite ? 'max-rite' : ''}`}>
         {src ? (
           <img
-            className={`god-pane-img ${isMax ? 'god-max' : ''}`}
+            className={`god-pane-img ${maxRite ? 'god-max' : ''}`}
             src={src}
             alt=""
             onError={() => setIdx((i) => i + 1)}
@@ -438,6 +444,7 @@ function GodPortraitPane({ godId, affinity }: { godId: string; sealedHint: strin
         )}
       </div>
       <div className="god-pane-info">
+        <div className="god-pane-eyebrow">{maxRite ? '縁極の御影' : '契りの御影'}</div>
         <div className="god-pane-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
         <div className="god-pane-name">{g.name}</div>
         <div className="god-pane-kana">{g.kana}</div>

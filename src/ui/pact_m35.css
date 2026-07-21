@@ -1,0 +1,145 @@
+/* M35 星契り「御影台」
+   神絵はすべて3:4の縦長。横長枠へcoverして身体を切らず、PCは全身像と奉納札を横並び、
+   狭幅は御影→札の順へ積む。星契りだけの役割を持つ構図にし、汎用カードの反復を避ける。 */
+
+.pact-screen .god-list,
+.pact-screen .god-pane {
+  height: clamp(360px, 52vh, 420px);
+}
+
+.pact-screen .god-list {
+  max-height: none;
+}
+
+.pact-screen .god-stage {
+  min-height: 0;
+}
+
+.pact-screen .god-pane {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(190px, 2fr);
+  min-height: 0;
+}
+
+.pact-screen .god-pane-art {
+  min-height: 0;
+  height: 100%;
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(217, 194, 106, 0.14), transparent 48%),
+    linear-gradient(180deg, rgba(21, 29, 53, 0.92), rgba(7, 10, 22, 0.98));
+}
+
+/* 一枚の御影として縁を切る。装飾を増やさず、ここだけを画面の署名にする。 */
+.pact-screen .god-pane-art::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(201, 168, 106, 0.22);
+  box-shadow: inset 0 0 34px rgba(4, 6, 14, 0.5);
+  pointer-events: none;
+}
+
+.pact-screen .god-pane-art.max-rite::before {
+  content: '縁';
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 157, 69, .72);
+  border-radius: 50%;
+  background: rgba(5, 7, 13, .82);
+  color: var(--flame);
+  font-size: 14px;
+  box-shadow: 0 0 24px rgba(232, 163, 61, .22);
+}
+
+.pact-screen .god-pane-art.max-rite::after {
+  border-color: rgba(255, 157, 69, .5);
+  box-shadow: inset 0 0 42px rgba(232, 163, 61, .12);
+}
+
+.pact-screen .god-pane-img {
+  object-fit: contain;
+  object-position: center;
+  background: transparent;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.42));
+}
+
+.pact-screen .god-pane-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18px 16px;
+  border-top: 0;
+  border-left: 1px solid var(--panel-border);
+  background:
+    linear-gradient(90deg, rgba(201, 168, 106, 0.055), transparent 26%),
+    rgba(8, 12, 26, 0.96);
+}
+
+.pact-screen .god-pane-eyebrow {
+  width: fit-content;
+  margin-bottom: 10px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(201, 168, 106, 0.45);
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+}
+
+.pact-screen .god-pane-name {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+@media (max-width: 820px) {
+  .pact-screen .god-list {
+    height: min(38vh, 300px);
+  }
+
+  .pact-screen .god-pane {
+    display: flex;
+    height: auto;
+  }
+
+  .pact-screen .god-pane-art {
+    width: min(100%, 465px);
+    height: auto;
+    max-height: 620px;
+    aspect-ratio: 3 / 4;
+    margin-inline: auto;
+  }
+
+  .pact-screen .god-pane-info {
+    border-top: 1px solid var(--panel-border);
+    border-left: 0;
+    padding: 14px 16px 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .pact-screen .god-list {
+    height: min(34vh, 250px);
+  }
+
+  .pact-screen .god-pane-info {
+    justify-content: flex-start;
+  }
+
+  .pact-screen .god-pane-name {
+    font-size: 20px;
+    letter-spacing: 0.16em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-screen .god-pane-img {
+    animation: none;
+  }
+}

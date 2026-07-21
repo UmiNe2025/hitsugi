@@ -1,0 +1,67 @@
+diff --git a/docs/GDD_v3.md b/docs/GDD_v3.md
+index 99e4970..278cfba 100644
+--- a/docs/GDD_v3.md
++++ b/docs/GDD_v3.md
+@@ -241,3 +241,11 @@ M18後の継続改善として、強制的な日課ではなく、家族・神
+ - **N4匿名集計**: sceneの開封/完読/skip/後回し/滞在時間、未読最大数、月送り回数、月送り中断回数だけをsave内へ集計する。本文、個人情報、外部analyticsへは送らない。
+ - **受入**: 夢2〜8の順序逆転0、ch4前の汐里実名0、3branchの動詞/結果一致、固有CG7点/fallback/mobile全焦点、主要6系統以上への短い物語導線、同一月の強制scene最大1、画像/色/音なしで意味保持、三結末同格、初見4/5人が玄冬の欲求・汐里の選択・最終問いを説明。
+ - **状態**: N0〜N4を実装・公開済み。Vitest 618件、M34直接Playwright 40件（全5幅）と最終影響範囲15件、全既存specのPC/390px代表回帰91件合格・1件意図的skip、lint/build/diff-check成功。Ship Checkで破損`narrative` importとBAK復旧を追加硬化し、blocking 0。GitHub Actions run `29777998428`成功。初見理解4/5と採用前後LCP p75比較は公開版の実ユーザー/実機計測gate。
++
++### 8.14 M35 星契り「御影台」(2026-07-21 ローカル実装)
++
++- **問題**: 全神絵は3:4の縦長だが、星契りの右面を横長枠＋`cover`で埋めていたため、身体が上下で切れ、名前・奉納・人物像の札も画面下へ押し出されていた。
++- **画面固有の文法**: 星契りは汎用カード一覧ではなく「星名を探す神名帳／全身を拝する御影／契りを判断する奉納札」の三役で構成する。PCは御影と札を同時表示し、820px以下は神名帳→3:4御影→札へ積む。
++- **画像規則**: 神絵は`contain`＋中央揃えで全身を必ず見せる。画像を単なる背景へせず、御影枠一つだけを画面の署名にする。フィルター、金線、半透明panelを全要素へ重ねない。焼き込み偽文字は素材不合格とし、欠け星の童は人物・構図・色を保持した`god_kaboshi_v2`へ非破壊差替えする。
++- **快適性**: 固定`ActionDock`の96px以上の逃げを維持し、長い見立て画面を最下部まで通常scrollできる。PC/タブレット/モバイルで横overflow 0とする。
++- **受入**: 1440/1280pxは高さ422px以内で御影＋奉納札が同居、768/390/360pxは3:4全景の後に札を表示。実画像比率、`contain`、配置、最下部scroll、dock余白、横overflowをPlaywrightで固定する。
+diff --git a/docs/WORKLOG.md b/docs/WORKLOG.md
+index 62302c9..109fd1e 100644
+--- a/docs/WORKLOG.md
++++ b/docs/WORKLOG.md
+@@ -1147,3 +1147,13 @@
+ - **独立監査**: fresh agent最終**PASS / blocking 0**。初回の非阻害メモから再読/7日通知を補完し、再監査で見つかった日常lifeによるarchive圧迫を章・夢限定＋6件/残件展開へ修正。独立focused 55/55、mobile-360 E2E、diff-checkも再合格。
+ - **Ship Check / save硬化**: ユーザーのデプロイ承認後、機械gate、秘密情報、依存、セキュリティ、独立リリースレビューを実施。破損した手動importの`narrative`入れ子と`lastReturn/resonance/metrics`を境界検証し、main正規化失敗時もBAKへ退避する回帰を追加。最終判定は**SHIP-with-notes / blocking 0**。
+ - **デプロイ実行**: 実装commit `0bd19ec`、設計/URL導線commit `f144505`を`origin/main`へpush。GitHub Actions `Deploy to GitHub Pages` run `29777998428`が成功（build 58s / deploy 15s）。`https://hitsugi-game.github.io/hitsugi/`のHTML/実bundle/OGP/夢3 CGをcache-bust付きHTTP 200で確認し、bundle内の「灯の余白」「家譜に綴じた物語」も確認した。
++
++## 2026-07-21 (M35 星契り「御影台」・ローカル実装)
++
++- **報告**: 星契りで縦長の神絵が横長枠に`cover`表示され、下半身と画像下の情報札が見切れる。Homeを含む画面全体も、生成背景＋同型の半透明紺panel＋金枠の反復でAIテンプレート感が強い。
++- **原因/設計**: 神絵は全て768×1024（3:4）なのに、`.god-pane-img`が横長の可変枠へ`width/height:100% + object-fit:cover`だった。星契り固有の役割を「神名帳／御影／奉納札」に定め、PCは御影と札を横並び、820px以下は3:4御影の後に札を積む。
++- **実装**: `pact_m35.css`を後勝ちで追加。御影は`contain`中央揃え、PCの神名帳/御影台は同じ360〜420px、狭幅は御影を最大465×620pxに制御した。札を別面化し、固定CTAの既存逃げを維持した。
++- **素材是正**: 目視で`god_kaboshi`上空の金色偽文字を追加検出。built-in image editで文字領域だけを星空へ戻し、人物・灯籠・建物・流星・3:4構図を固定した`god_kaboshi_v2`を作成。旧素材は残し、data参照だけを非破壊差替え。配信JPEG SHA-256 `17C1F29B4261F9C4EF9EA517D23927F6F0F3E84A47281324D68A066BE90D33CD`。
++- **回帰**: `tests/visual/pact.spec.ts`を追加し、5幅で実画像3:4、`contain`、PC横並び/狭幅縦積み、情報札、横overflow 0、最下部scroll、dock余白を直接検証する。
++- **検証**: 星契りPlaywright 10/10（1440/1280/768/390/360px）、Vitest 23 files / 618 tests、lint、data validation（0 errors・既存の位階分布warn 1）、production build、diff-check成功。1280/390pxを目視し、偽文字0・全身像・奉納札・見立てへの連続を確認。
++- **公開境界**: ローカル実装のみ。commit/push/deployはユーザーの明示依頼まで行わない。
+diff --git a/src/core/data/gods_low.ts b/src/core/data/gods_low.ts
+index a8713ef..38350eb 100644
+--- a/src/core/data/gods_low.ts
++++ b/src/core/data/gods_low.ts
+@@ -495,7 +495,7 @@ export const GODS_LOW: God[] = [
+     personality: '欠けても輝きを失わない前向きな子',
+     desc: '玄冬に半分喰われても輝き続ける小さな星の子。「欠けてても、光るとこは光るんだ。それでいいじゃないか」',
+     pactLines: ['欠けてたっていいんだ。お前の子にも、そう教えてやりたいな。', '今夜も欠けたまま光ってる。……でも、これが俺なりの精一杯だぜ。'],
+-    portrait: 'god_kaboshi.png',
++    portrait: 'god_kaboshi_v2.png',
+   },
+   {
+     id: 'houkiboshi', name: '箒星の小娘', kana: 'ほうきぼしのこむすめ', rank: 1, element: 'star',
+diff --git a/src/ui/Pact.tsx b/src/ui/Pact.tsx
+index ba24b01..31763d4 100644
+--- a/src/ui/Pact.tsx
++++ b/src/ui/Pact.tsx
+@@ -13,6 +13,7 @@ import { gameImg, godMaxImg, HOME_BG } from './img'
+ import { ActionDock, CompareRow, Sheet, StatusCallout } from './layout/shell'
+ import './pact_m18.css'
+ import './pact_m26.css' // M26 §9.5: 星契り最終確認Sheet(pact_m18.cssより後 — 後勝ち)
++import './pact_m35.css' // M35: 御影を切らず、全身像と奉納札を同時に読む星契り専用の祭壇レイアウト
+ 
+ // 封印中の神の解放条件を一言で(unlock条件から自動生成)
+ function sealHint(g: (typeof GODS)[number]): string {
+@@ -438,6 +439,7 @@ function GodPortraitPane({ godId, affinity }: { godId: string; sealedHint: strin
+         )}
+       </div>
+       <div className="god-pane-info">
++        <div className="god-pane-eyebrow">契りの御影</div>
+         <div className="god-pane-rank">{GOD_RANK_LABELS[g.rank]} / {ELEMENT_LABELS[g.element]}の星</div>
+         <div className="god-pane-name">{g.name}</div>
+         <div className="god-pane-kana">{g.kana}</div>

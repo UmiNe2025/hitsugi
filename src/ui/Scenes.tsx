@@ -54,6 +54,40 @@ import { downloadChronicleCard } from './shareCard'
 import { MaybeImg, SceneBg } from './components'
 import { dreamImg, gameImg, prefetchGameImg } from './img'
 import './m17_scenes.css'
+import './scenes_vc3b.css'
+
+type SceneSurface = 'life-thread' | 'dream-edge' | 'flame-crossroads'
+
+const SCENE_SURFACE_LABEL: Record<SceneSurface, string> = {
+  'life-thread': '命の綴り',
+  'dream-edge': '夢の縁',
+  'flame-crossroads': '灯の岐路',
+}
+
+function SceneSurfaceHeader({
+  surface,
+  route,
+  title,
+  context,
+  titleClassName = '',
+}: {
+  surface: SceneSurface
+  route: string
+  title: string
+  context: string
+  titleClassName?: string
+}) {
+  return (
+    <header className="vc3b-surface-header" data-scene-group="identity" data-zone="scene-hero">
+      <div className="vc3b-surface-signature" data-surface-mark={surface} aria-hidden="true">
+        <i key="thread-a" /><i key="thread-b" /><i key="thread-c" />
+      </div>
+      <p className="vc3b-surface-kicker">{SCENE_SURFACE_LABEL[surface]}<span>{route}</span></p>
+      <h1 className={`scene-title ${titleClassName}`.trim()}>{title}</h1>
+      <p className="vc3b-surface-context">{context}</p>
+    </header>
+  )
+}
 
 // 章タイトル→cg_ch{n}.png の対応(CHAPTERSのtitleは固定文字列 — data/story.tsのid順と一致)
 const CHAPTER_BG: Record<string, string> = {
@@ -165,11 +199,10 @@ export function BirthScene({ charId }: { charId: string }) {
   }
 
   return (
-    <div className="scene-screen screen">
+    <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="birth">
       <SceneBg file="cg2_birth.png" />
-      <div className="birth-flame">🔥</div>
-      <h1 className="scene-title">誕生</h1>
-      <div className="scene-body">
+      <SceneSurfaceHeader surface="life-thread" route="名付け" title="誕生" context={`${char.name}の産声を、家譜の最初の一行へ。`} />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="decision">
         <p>
           {parent?.name}と{god.name}の子、生まれる。
         </p>
@@ -206,7 +239,7 @@ export function BirthScene({ charId }: { charId: string }) {
           与えられた命は八季(廿四月)。六月で成人し、隊に加われる。
         </p>
       </div>
-      <button className="btn btn-main" onClick={confirm} disabled={!name.trim()}>
+      <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={confirm} disabled={!name.trim()}>
         名を家譜に記す
       </button>
     </div>
@@ -247,11 +280,10 @@ export function DeathScene({ charId }: { charId: string }) {
   }
 
   return (
-    <div className="scene-screen screen" onClick={onBgClick}>
+    <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="death" onClick={onBgClick}>
       <SceneBg file="cg2_mitori.png" />
-      <div className="death-flame" aria-hidden>🔥</div>
-      <h1 className="scene-title">看取り</h1>
-      <div className="scene-body">
+      <SceneSurfaceHeader surface="life-thread" route="看取り" title="看取り" context={`${char.name}が遺す灯を、次の頁へ。`} />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="decision">
         <p>
           {char.name}、第{char.gen}代。八つの季節を生き、灯が尽きた。
         </p>
@@ -289,9 +321,11 @@ export function DeathScene({ charId }: { charId: string }) {
           綴「……よう生きた。あんたの八季、確かに書き留めたぞ」
         </p>
       </div>
-      <button className="btn btn-main" onClick={(e) => { e.stopPropagation(); confirm() }} disabled={!digestDone}>
-        灯を、継ぐ
-      </button>
+      {digestDone && (
+        <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={(e) => { e.stopPropagation(); confirm() }}>
+          灯を、継ぐ
+        </button>
+      )}
     </div>
   )
 }
@@ -318,10 +352,10 @@ export function LifeScene({ title, lines, bg, narrativeId }: { title: string; li
   }, [beat, lines.length, narrativeId, revealShioriName])
   const { advance, onBgClick } = useSceneAdvance(!done, advanceBeat)
   return (
-    <div className="scene-screen screen" onClick={onBgClick}>
+    <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="life" onClick={onBgClick}>
       <SceneBg file={resolvedBg} />
-      <h1 className="scene-title">{title}</h1>
-      <div className="scene-body" style={{ textAlign: 'left' }}>
+      <SceneSurfaceHeader surface="life-thread" route={narrativeId ? '章語り' : '生涯'} title={title} context="この夜の一行を、家の記憶へ綴じる。" />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="decision" style={{ textAlign: 'left' }}>
         {lines.slice(0, beat + 1).map((l, i) => (
           <p key={i} className={i === beat ? 'intro-current' : 'intro-past'}>
             {l.speaker ? (
@@ -337,7 +371,7 @@ export function LifeScene({ title, lines, bg, narrativeId }: { title: string; li
         ))}
       </div>
       {done ? (
-        <button className="btn btn-main" onClick={processNextScene}>
+        <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={processNextScene}>
           この夜を憶えておく
         </button>
       ) : (
@@ -373,11 +407,10 @@ export function CeremonyScene({ charId }: { charId: string }) {
     const gataDef = TOMOSHIGATA.find((t) => t.id === chosen)!
     const toza = tozaOf(chosen, char.element)
     return (
-      <div className="scene-screen screen">
+      <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="ceremony-result">
         <SceneBg file="cg2_seijin.png" />
-        <div className="birth-flame">🔥</div>
-        <h1 className="scene-title">成人の儀</h1>
-        <div className="scene-body">
+        <SceneSurfaceHeader surface="life-thread" route="灯型" title="成人の儀" context={`${char.name}が選んだ灯を、身体へ結ぶ。`} />
+        <div className="scene-body vc3b-scene-panel" data-scene-group="decision">
           <p style={{ fontSize: 18, color: 'var(--amber)' }}>{gataDef.ritual}</p>
           <p style={{ margin: '18px 0' }}>
             {char.name}は灯を受け取り、静かに頷いた。
@@ -389,7 +422,7 @@ export function CeremonyScene({ charId }: { charId: string }) {
             初伝「{toza.skills[0].name}」を習得。灯は月齢とともに深まり、やがて奥義に至る。
           </p>
         </div>
-        <button className="btn btn-main" onClick={() => assignTomoshigata(char.id, chosen)}>
+        <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={() => assignTomoshigata(char.id, chosen)}>
           家譜に記す
         </button>
       </div>
@@ -397,9 +430,9 @@ export function CeremonyScene({ charId }: { charId: string }) {
   }
 
   return (
-    <div className="scene-screen screen">
-      <h1 className="scene-title">成人の儀</h1>
-      <div className="scene-body">
+    <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="ceremony">
+      <SceneSurfaceHeader surface="life-thread" route="灯型" title="成人の儀" context={`${char.name}の血潮に、ひとつの灯型を結ぶ。`} />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="context">
         <p>
           {char.name}(第{char.gen}代・{p.label})、生後六月。大燈籠の前に立ち、灯型を授かる時が来た。
         </p>
@@ -408,7 +441,7 @@ export function CeremonyScene({ charId }: { charId: string }) {
           の脈)で、この子だけの灯座が決まる。
         </p>
       </div>
-      <div className="god-grid" style={{ maxWidth: 720, marginTop: 16 }}>
+      <div className="god-grid vc3b-choice-ledger" data-scene-group="decision" aria-label="灯型の候補" style={{ maxWidth: 720, marginTop: 16 }}>
         {TOMOSHIGATA.map((t) => {
           const toza = tozaOf(t.id, char.element)
           return (
@@ -451,11 +484,10 @@ export function JobRiteScene({ charId }: { charId: string }) {
   if (chosen) {
     const job = jobById(chosen)
     return (
-      <div className="scene-screen screen">
+      <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="jobrite-result">
         <SceneBg file="cg2_nariwai.png" />
-        <div className="birth-flame">🔥</div>
-        <h1 className="scene-title">生業の儀</h1>
-        <div className="scene-body">
+        <SceneSurfaceHeader surface="life-thread" route="家業" title="生業の儀" context={`${char.name}が選んだ技を、暮らしへ結ぶ。`} />
+        <div className="scene-body vc3b-scene-panel" data-scene-group="decision">
           <p style={{ fontSize: 18, color: 'var(--amber)' }}>{job.ritual}</p>
           <p style={{ margin: '18px 0' }}>
             {char.name}は道具を受け取り、深く頭を下げた。今日から{job.name}の見習いである。
@@ -467,7 +499,7 @@ export function JobRiteScene({ charId }: { charId: string }) {
             初伝「{skillById(job.skillIds[0]).name}」を習得。技は年季とともに深まり、八段の奥伝に至る。
           </p>
         </div>
-        <button className="btn btn-main" onClick={() => assignJobClass(char.id, chosen)}>
+        <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={() => assignJobClass(char.id, chosen)}>
           家譜に記す
         </button>
       </div>
@@ -475,9 +507,9 @@ export function JobRiteScene({ charId }: { charId: string }) {
   }
 
   return (
-    <div className="scene-screen screen">
-      <h1 className="scene-title">生業の儀</h1>
-      <div className="scene-body">
+    <div className="scene-screen screen vc3b-scene vc3b-life-scene" data-scene-surface="life-thread" data-scene-route="jobrite">
+      <SceneSurfaceHeader surface="life-thread" route="家業" title="生業の儀" context={`${char.name}の手に、郷で生きる技をひとつ。`} />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="context">
         <p>
           {char.name}(第{char.gen}代)、生後十二月。郷の親方衆が居並ぶ前で、家業を選ぶ時が来た。
         </p>
@@ -485,7 +517,7 @@ export function JobRiteScene({ charId }: { charId: string }) {
           灯座は星から継いだ術、家業は郷で修める技。夜藪の外にも、この子の生きる場所ができる。
         </p>
       </div>
-      <div style={{ maxWidth: 860, width: '100%', textAlign: 'left', maxHeight: '52vh', overflowY: 'auto', padding: '0 4px' }}>
+      <div className="vc3b-choice-ledger vc3b-job-ledger" data-scene-group="decision" aria-label="家業の候補" style={{ maxWidth: 860, width: '100%', textAlign: 'left', maxHeight: '52vh', overflowY: 'auto', padding: '0 4px' }}>
         {roles.map((role) => (
           <div key={role} style={{ marginBottom: 10 }}>
             <div style={{ fontSize: 13, color: 'var(--gold)', letterSpacing: '0.3em', margin: '8px 0 6px' }}>
@@ -538,7 +570,7 @@ function ScenePager({ page, total, onNext }: { page: number; total: number; onNe
   return (
     <div className="scene-pager" onClick={(e) => e.stopPropagation()}>
       <span className="scene-page-mark">頁 {page}／{total}</span>
-      <button className="btn scene-next" onClick={onNext}>次へ ▸</button>
+      <button className="btn scene-next vc3b-primary-action" data-scene-primary="true" onClick={onNext}>次へ ▸</button>
     </div>
   )
 }
@@ -602,10 +634,10 @@ export function DreamScene() {
   const done = beat >= DREAM_BEATS.length - 1
   const { advance, onBgClick } = useSceneAdvance(!done, () => setBeat((b) => b + 1))
   return (
-    <div className="scene-screen screen" onClick={onBgClick}>
+    <div className="scene-screen screen vc3b-scene vc3b-dream-scene" data-scene-surface="dream-edge" data-scene-route="dream" onClick={onBgClick}>
       <SceneBg file="cg_kiro.png" />
-      <h1 className="scene-title">夢渡り</h1>
-      <div className="scene-body">
+      <SceneSurfaceHeader surface="dream-edge" route="夢渡り" title="夢渡り" context="名のない楽士の声が、家譜の外から届く。" />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="decision">
         {DREAM_BEATS.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (
           <p key={beat - arr.length + i} className={i === arr.length - 1 ? 'intro-current' : 'intro-past'}>
             {t}
@@ -613,7 +645,7 @@ export function DreamScene() {
         ))}
       </div>
       {done ? (
-        <button className="btn btn-main" onClick={processNextScene}>
+        <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={processNextScene}>
           目を覚ます
         </button>
       ) : (
@@ -654,11 +686,11 @@ export function DreamEpScene({ epId }: { epId: string }) {
     return null
   }
   return (
-    <div className="scene-screen screen dream-episode-screen" onClick={onBgClick}>
+    <div className="scene-screen screen dream-episode-screen vc3b-scene vc3b-dream-scene" data-scene-surface="dream-edge" data-scene-route="dreamEp" onClick={onBgClick}>
       <div className="dream-episode-shell">
-        <h1 className="scene-title dream-episode-title">{ep.title}</h1>
+        <SceneSurfaceHeader surface="dream-edge" route={`夢渡り ${epIndex + 2}`} title={ep.title} context="千年前の記憶を、今代の夢の縁で受け取る。" titleClassName="dream-episode-title" />
         <DreamVisual episode={ep} />
-        <div className="scene-body dream-episode-body">
+        <div className="scene-body dream-episode-body vc3b-scene-panel" data-scene-group="decision">
           {ep.beats.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (
             <p key={beat - arr.length + i} className={i === arr.length - 1 ? 'intro-current' : 'intro-past'}>
               {t}
@@ -667,7 +699,7 @@ export function DreamEpScene({ epId }: { epId: string }) {
         </div>
         <div className="dream-episode-controls" data-zone="dream-episode-controls">
           {done ? (
-            <button className="btn btn-main" onClick={processNextScene}>
+            <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={processNextScene}>
               目を覚ます
             </button>
           ) : (
@@ -723,17 +755,17 @@ const ENDING_INHERIT = [
 export function FinaleScene() {
   const data = useGame((s) => s.data)!
   const resolveFinale = useGame((s) => s.resolveFinale)
+  const [pendingChoice, setPendingChoice] = useState<number | null>(null)
   const memories = familyFinaleEchoes(data)
   return (
-    <div className="scene-screen screen finale-screen">
+    <div className="scene-screen screen finale-screen vc3b-scene vc3b-finale-scene" data-scene-surface="flame-crossroads" data-scene-route="finale">
       <SceneBg file="cg_kiro.png" />
-      <div className="birth-flame">🔥</div>
-      <h1 className="scene-title">千年の岐路</h1>
-      <div className="scene-body finale-intro">
-        <p>汐里は楽を置き、静かにこちらを見ている。</p>
-        <p>「……ここから先は、生きている者が決めることよ」</p>
-      </div>
-      <section className="finale-memory" aria-label="一族がここまで運んだもの">
+      <SceneSurfaceHeader surface="flame-crossroads" route="千年の答え" title="千年の岐路" context="三つの灯は同格。一族が遺す答えだけを選ぶ。" />
+      <section className="finale-memory" data-scene-group="context" aria-label="一族がここまで運んだもの">
+        <div className="scene-body finale-intro">
+          <p>汐里は楽を置き、静かにこちらを見ている。</p>
+          <p>「……ここから先は、生きている者が決めることよ」</p>
+        </div>
         <p className="finale-question">今代の問い<span>{data.narrative?.generationQuestion ?? generationQuestion(data)}</span></p>
         <div className="finale-echoes">
           {memories.map((memory) => (
@@ -745,13 +777,29 @@ export function FinaleScene() {
         <p className="finale-resonance">{resonanceLine(data)}</p>
       </section>
       <p className="finale-prompt">この選択が、一族の千年の答えになる。</p>
-      <div className="finale-choices" data-zone="finale-choices">
+      <div className="finale-choices" data-zone="finale-choices" data-scene-group="decision">
         {FINALE_CHOICES.map((c, i) => (
-          <button key={c.id} className="btn finale-choice" onClick={() => resolveFinale(i)}>
+          <button
+            key={c.id}
+            className={`btn finale-choice${pendingChoice === i ? ' selected' : ''}`}
+            aria-pressed={pendingChoice === i}
+            onClick={() => setPendingChoice(i)}
+          >
             <b>{c.label}</b>
             <span>{c.desc}</span>
           </button>
         ))}
+        {pendingChoice !== null && (
+          <div className="finale-confirm" role="group" aria-label={`${FINALE_CHOICES[pendingChoice].label}の確認`}>
+            <p>「{FINALE_CHOICES[pendingChoice].label}」を、一族の答えとして家譜に閉じますか。</p>
+            <div>
+              <button className="btn btn-ghost" onClick={() => setPendingChoice(null)}>選び直す</button>
+              <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={() => resolveFinale(pendingChoice)}>
+                この答えを綴じる
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -781,10 +829,10 @@ export function EndingScene() {
   const years = Math.floor(data.seasonIndex / 4) + 1
 
   return (
-    <div className="scene-screen screen" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
+    <div className="scene-screen screen vc3b-scene vc3b-finale-scene" data-scene-surface="flame-crossroads" data-scene-route="ending" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>
       {endingBg && <SceneBg file={endingBg} />}
-      <h1 className="scene-title">{cleared ? '灯継ぎ' : '断絶'}</h1>
-      <div className="scene-body">
+      <SceneSurfaceHeader surface="flame-crossroads" route={cleared ? ENDINGS[endType].title : '断絶'} title={cleared ? '灯継ぎ' : '断絶'} context={cleared ? '選んだ灯の行方を見届け、次の家譜へ。' : '途切れた家譜にも、読まれる日を待つ頁が残る。'} />
+      <div className="scene-body vc3b-scene-panel" data-scene-group="context">
         {beats.slice(Math.max(0, beat - 2), beat + 1).map((t, i, arr) => (
           <p key={beat - arr.length + i} className={i === arr.length - 1 ? 'intro-current' : 'intro-past'}>
             {t}
@@ -792,7 +840,7 @@ export function EndingScene() {
         ))}
       </div>
       {done && (
-        <>
+        <div className="ending-actions" data-scene-group="decision">
           <div className="ending-stats">
             紡がれた世代<b>{gens}</b>代 / 逝った者<b>{fallenCount}</b>人 / 費やした歳月<b>{years}</b>年
           </div>
@@ -800,12 +848,13 @@ export function EndingScene() {
             この千年紀を一枚絵に残す(画像保存)
           </button>
           {cleared && (
-            <button className="btn btn-main" onClick={() => newLegacyGame()}>
+            <button className="btn btn-main vc3b-primary-action" data-scene-primary="true" onClick={() => newLegacyGame()}>
               新たな千年紀へ — 継承新周回(形見と血の濃さを持ち越す)
             </button>
           )}
           <button
-            className="btn btn-ghost"
+            className={`btn ${cleared ? 'btn-ghost' : 'btn-main vc3b-primary-action'}`}
+            data-scene-primary={cleared ? undefined : 'true'}
             onClick={() => {
               if (!cleared) clearSave()
               setScreen({ id: 'title' })
@@ -813,7 +862,7 @@ export function EndingScene() {
           >
             題目へ戻る
           </button>
-        </>
+        </div>
       )}
       {!done && <ScenePager page={beat + 1} total={beats.length} onNext={() => { audio.se('page'); setBeat(beat + 1) }} />}
     </div>

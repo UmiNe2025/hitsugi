@@ -14,15 +14,17 @@ import {
   RARITY_LABELS, SLOT_MARKS, SOURCE_LABELS, type ItemDiff, type RarityKey,
 } from '../core/item_axes'
 import { isAdult } from '../core/inheritance'
-import { MaybeImg, NightBackdrop, Panel } from './components'
+import { MaybeImg, NightBackdrop, Panel, Portrait } from './components'
 import { itemIcon } from './img'
 import { ScreenShell, WorkspaceTabs, Sheet, CompareRow, EmptyGuide } from './layout/shell'
 import { emitToast } from './toast'
 import './forge_m18.css'
 import './forge_m26.css' // M26 §7.3/§7.4: master/detail・血潮鍛錬の回数ステッパー(forge_m18.cssより後 — 後勝ち)
+import './forge_vc3.css'
 
 type Tab = 'buy' | 'equip' | 'reforge' | 'train' | 'shop' // shop=見世(回復薬・M28-C)
 type SlotFilter = 'all' | 'weapon' | 'armor' | 'charm'
+type StorehouseLens = 'all' | 'recent' | 'improve' | 'legacy'
 const SLOT_LABEL: Record<string, string> = { weapon: '武具', armor: '防具', charm: '御守' }
 const SLOT_ORDER: Record<string, number> = { weapon: 0, armor: 1, charm: 2 }
 const PAGE = 50 // 大量一覧は50件刻み(§7契約)
@@ -99,6 +101,16 @@ function primaryDiff(d: ItemDiff): { text: string; up: boolean } | null {
   return top ? { text: `${top[0]}${top[1] > 0 ? '+' : ''}${top[1]}`, up: top[1] > 0 } : null
 }
 
+function itemStrength(it: { atk?: number; def?: number; statBonus?: Partial<Stats> } | undefined): number {
+  if (!it) return -1
+  return (it.atk ?? 0) + (it.def ?? 0) + Object.values(it.statBonus ?? {}).reduce((sum, value) => sum + (value ?? 0), 0)
+}
+
+function diffGain(diff: ItemDiff): number {
+  return Math.max(0, diff.dAtk) + Math.max(0, diff.dDef)
+    + Object.values(diff.dStats).reduce((sum, value) => sum + Math.max(0, value), 0)
+}
+
 export function ForgeScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
@@ -115,6 +127,9 @@ export function ForgeScreen() {
   const [shown, setShown] = useState(PAGE)
   const [search, setSearch] = useState('') // 名前検索(M22 §2.2)
   const [rarF, setRarF] = useState<'all' | RarityKey>('all') // 希少度絞り込み(装備タブ)
+  const [storehouseLens, setStorehouseLens] = useState<StorehouseLens>('all')
+  const [buyCatalogueOpen, setBuyCatalogueOpen] = useState(false)
+  const [storehouseOpen, setStorehouseOpen] = useState(false)
   const [affordOnly, setAffordOnly] = useState(false) // 今買える物のみ(購うタブ)
   const [reforgeTarget, setReforgeTarget] = useState<{ it: Item; where: string } | null>(null)
   const [trainTarget, setTrainTarget] = useState<StatKey | null>(null) // M26 §7.4: 鍛錬の確認対象(即消費を廃止)
@@ -144,13 +159,41 @@ export function ForgeScreen() {
     let filtered = data.inventory.filter((it) => slotF === 'all' || it.slot === slotF)
     if (search) filtered = filtered.filter((it) => it.name.includes(search))
     if (rarF !== 'all') filtered = filtered.filter((it) => rarityOf(it).key === rarF)
+    if (storehouseLens === 'recent') {
+      const recent = new Set(data.inventory.slice(-6).map((it) => it.id))
+      filtered = filtered.filter((it) => recent.has(it.id))
+    }
+    if (storehouseLens === 'improve' && selChar) filtered = filtered.filter((it) => diffAgainst(selChar, it).strictlyBetter)
+    if (storehouseLens === 'legacy') filtered = filtered.filter((it) => !!it.legacyOf || it.generation > 0)
     return [...filtered].sort((a, b) => {
+      if (storehouseLens === 'recent') return data.inventory.indexOf(b) - data.inventory.indexOf(a)
       if (invSort === 'atk') return (b.atk ?? 0) - (a.atk ?? 0)
       if (invSort === 'def') return (b.def ?? 0) - (a.def ?? 0)
       if (invSort === 'gen') return b.generation - a.generation
       return (SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]) || (b.atk ?? 0) - (a.atk ?? 0)
     })
-  }, [data.inventory, invSort, slotF, search, rarF])
+  }, [data.inventory, invSort, slotF, search, rarF, storehouseLens, selChar])
+
+  const weakSlot = selChar
+    ? (['weapon', 'armor', 'charm'] as ItemSlot[]).reduce((weak, slot) => (
+        itemStrength(selChar.equipment[slot]) < itemStrength(selChar.equipment[weak]) ? slot : weak
+      ), 'weapon' as ItemSlot)
+    : null
+
+  const recommendations = useMemo(() => {
+    if (!selChar) return []
+    const candidates = ITEM_BASES
+      .filter((base) => base.shopTier <= shopTier)
+      .map((base) => ({ base, diff: diffAgainst(selChar, base) }))
+      .filter(({ diff }) => diff.strictlyBetter)
+      .sort((a, b) => {
+        const aWeak = a.base.slot === weakSlot ? 1 : 0
+        const bWeak = b.base.slot === weakSlot ? 1 : 0
+        const affordable = Number(b.base.price <= data.hoto) - Number(a.base.price <= data.hoto)
+        return (bWeak - aWeak) || affordable || (diffGain(b.diff) - diffGain(a.diff)) || (a.base.price - b.base.price)
+      })
+    return candidates.slice(0, 3)
+  }, [data.hoto, selChar, shopTier, weakSlot])
 
   // 打ち直し対象: 蔵の品+全員の装備
   const forgeables = useMemo(() => {
@@ -199,7 +242,12 @@ export function ForgeScreen() {
     { key: 'train', label: '鍛錬' },
     { key: 'shop', label: '見世(薬)' }, // M28-C/M32: 回復薬(消耗品)。「購う=武具/見世=薬」の区別を明示
   ]
-  const changeTab = (t: Tab) => { setTab(t); setShown(PAGE) }
+  const changeTab = (t: Tab) => {
+    setTab(t)
+    setShown(PAGE)
+    setBuyCatalogueOpen(false)
+    setStorehouseOpen(false)
+  }
 
   const doBuy = (baseId: string) => {
     const base = ITEM_BASES.find((b) => b.baseId === baseId)
@@ -249,7 +297,7 @@ export function ForgeScreen() {
     />
   )
 
-  const needsChar = tab === 'equip' || tab === 'train'
+  const needsChar = tab === 'buy' || tab === 'equip' || tab === 'train'
 
   return (
     <ScreenShell
@@ -260,6 +308,7 @@ export function ForgeScreen() {
       activeTab={tab}
     >
       <NightBackdrop />
+      <div className="forge-vc3-atmosphere" aria-hidden />
 
       {/* 選択人物の固定表示(装備/鍛錬タブ) */}
       {needsChar && (
@@ -282,8 +331,83 @@ export function ForgeScreen() {
         </div>
       )}
 
+      {selChar && (tab === 'buy' || tab === 'equip') && (
+        <section className="forge-workbench" aria-labelledby="forge-workbench-title" data-testid="forge-workbench">
+          <div className="forge-workbench-person">
+            <Portrait char={selChar} seasonIndex={data.seasonIndex} />
+            <div>
+              <p className="forge-kicker">今夜、槌を入れる一人</p>
+              <h2 id="forge-workbench-title">{selChar.name}</h2>
+              <p className="forge-weakness">
+                見立て — <b>{weakSlot ? SLOT_LABEL[weakSlot] : '装い'}</b>がいちばん弱い。比較はこの者の現在装備を基準にする。
+              </p>
+            </div>
+          </div>
+          <div className="forge-body-slots" aria-label={`${selChar.name}の三つの装備枠`}>
+            {(['weapon', 'armor', 'charm'] as ItemSlot[]).map((slot) => {
+              const item = selChar.equipment[slot]
+              return (
+                <div key={slot} className={`forge-body-slot ${slot === weakSlot ? 'is-weak' : ''}`}>
+                  <span className={`slot-mark slot-${slot}`}>{SLOT_MARKS[slot]}</span>
+                  <span><b>{SLOT_LABEL[slot]}</b>{item ? item.name : '空き'}</span>
+                  {slot === weakSlot && <small>要見直し</small>}
+                </div>
+              )
+            })}
+          </div>
+          {tab === 'buy' && (
+            <div className="forge-recommendations" aria-label="この者への薦め三品">
+              <div className="forge-recommendations-head">
+                <span>作業台の薦め</span><small>弱い枠と伸び幅から三品まで</small>
+              </div>
+              {recommendations.length === 0 ? (
+                <p className="forge-recommendations-empty">いま並ぶ品に、明らかな上積みはない。夜藪を鎮めれば新しい品が届く。</p>
+              ) : recommendations.map(({ base, diff }) => {
+                const main = primaryDiff(diff)
+                return (
+                  <button
+                    key={base.baseId}
+                    className={`forge-recommendation ${buySel === base.baseId ? 'is-sel' : ''}`}
+                    onClick={() => selectBuy(base.baseId)}
+                    aria-pressed={buySel === base.baseId}
+                  >
+                    <MaybeImg src={itemIcon(base.baseId)} className="it-ico" />
+                    <span><b>{base.name}</b><small>{SLOT_LABEL[base.slot]}{main ? `・${main.text}` : ''}</small></span>
+                    <em className={base.price > data.hoto ? 'is-lack' : ''}>{base.price}燈</em>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'buy' && !buyCatalogueOpen && !isMobile && buyDetailNode && (
+        <section className="panel forge-recommendation-detail" aria-label="薦めた品の詳しい見立て">
+          {buyDetailNode}
+        </section>
+      )}
+
+      {tab === 'buy' && (
+        <div className="forge-secondary-entry">
+          <div>
+            <b>{buyCatalogueOpen ? '全品の棚' : 'ほかの品を探す'}</b>
+            <span>{buyCatalogueOpen ? '検索と絞り込みを使える二次面。' : `薦め以外の${stock.length}品は必要な時だけ開く。`}</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            aria-expanded={buyCatalogueOpen}
+            aria-controls="forge-buy-catalogue"
+            onClick={() => setBuyCatalogueOpen((open) => !open)}
+          >
+            {buyCatalogueOpen ? '薦めへ戻る' : '全品から探す'}
+          </button>
+        </div>
+      )}
+
       {/* 絞り込み(購う/装備/打ち直し): 検索+部位+希少度+買える物のみ(M22 §2.2)。見世(shop)は絞り込み不要 */}
-      {tab !== 'train' && tab !== 'shop' && (
+      {tab !== 'train' && tab !== 'shop' && (tab !== 'buy' || buyCatalogueOpen) && (tab !== 'equip' || storehouseOpen) && (
         <div className="forge-filter-row">
           <input
             className="forge-search"
@@ -332,8 +456,8 @@ export function ForgeScreen() {
       )}
 
       {/* M26 §7.3: 購う — 一覧(代表2〜3軸)+詳細(769px以上=sticky右ペイン)。768px以下は選択でSheet。 */}
-      {tab === 'buy' && (
-        <div className="forge-md">
+      {tab === 'buy' && buyCatalogueOpen && (
+        <div className="forge-md" id="forge-buy-catalogue">
           <Panel title={`購う(あがなう) — ${stock.length}品`} className="forge-md-list">
             {stock.length === 0 && <EmptyGuide text="この見世にはまだ何も並んでいない。地の主を鎮めるほど品が増える。" actionLabel="出立へ" onAction={() => setScreen({ id: 'depart' })} />}
             <div className="item-grid">
@@ -386,6 +510,24 @@ export function ForgeScreen() {
       {/* M26 §7.3: 蔵と装い — 現在の装いは要約帯、一覧選択→詳細で交換前後(CompareRow)→装備CTA。 */}
       {tab === 'equip' && selChar && (
         <>
+          <nav className="forge-storehouse-portals" aria-label="蔵の四つの入口">
+            {([
+              ['all', 'すべての棚'],
+              ['recent', '最近得た品'],
+              ['improve', '装いを強める品'],
+              ['legacy', '形見と継承品'],
+            ] as [StorehouseLens, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                className={`forge-storehouse-portal ${storehouseLens === key ? 'is-sel' : ''}`}
+                aria-pressed={storehouseLens === key}
+                onClick={() => { setStorehouseLens(key); setShown(PAGE); setStorehouseOpen(true) }}
+              >
+                <span aria-hidden>{key === 'recent' ? '新' : key === 'improve' ? '薦' : key === 'legacy' ? '継' : '棚'}</span>
+                {label}
+              </button>
+            ))}
+          </nav>
           <Panel title={`${selChar.name}の装い`} className="equip-summary">
             {(['weapon', 'armor', 'charm'] as const).map((s) => {
               const cur = selChar.equipment[s]
@@ -409,7 +551,8 @@ export function ForgeScreen() {
               )
             })}
           </Panel>
-          <div className="forge-md">
+          {storehouseOpen && (
+          <div className="forge-md" id="forge-storehouse-shelf">
             <Panel title={`蔵の品 — ${inv.length}品`} className="forge-md-list">
               {inv.length === 0 && <EmptyGuide text="蔵は空だ。見世で購うか、夜藪から持ち帰れ。" actionLabel="購うへ" onAction={() => changeTab('buy')} />}
               <div className="item-grid">
@@ -459,6 +602,7 @@ export function ForgeScreen() {
               </div>
             )}
           </div>
+          )}
         </>
       )}
 

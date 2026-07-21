@@ -1,0 +1,345 @@
+/* VC3B — 生涯・夢・千年の終端を、同じ家譜の綴じ糸で結ぶ共有surface。 */
+
+.vc3b-scene {
+  --vc3b-surface: rgba(14, 20, 39, 0.88);
+  --vc3b-thread: #c9a86a;
+  width: 100%;
+  max-width: none;
+  padding-inline: clamp(14px, 4vw, 64px);
+  overflow-x: hidden;
+}
+
+.vc3b-scene::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  content: '';
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(5, 7, 13, 0.42), transparent 16% 84%, rgba(5, 7, 13, 0.42)),
+    radial-gradient(circle at 50% 18%, rgba(24, 34, 66, 0.72), rgba(11, 15, 30, 0.72) 54%, rgba(5, 7, 13, 0.84));
+}
+
+.vc3b-surface-header {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 760px);
+  margin: 0 auto clamp(12px, 2.2vh, 22px);
+  text-align: center;
+}
+
+.vc3b-surface-signature {
+  position: relative;
+  width: 92px;
+  height: 38px;
+  margin-bottom: 6px;
+  color: var(--vc3b-thread);
+}
+
+.vc3b-surface-signature::before,
+.vc3b-surface-signature::after,
+.vc3b-surface-signature i {
+  position: absolute;
+  display: block;
+  content: '';
+}
+
+/* 命は一本の綴じ糸、夢ではほどける縁、終端では三方へ分かれる。 */
+.vc3b-surface-signature[data-surface-mark='life-thread']::before {
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(transparent, currentColor 18% 82%, transparent);
+  box-shadow: 0 0 9px rgba(232, 163, 61, 0.28);
+}
+
+.vc3b-surface-signature[data-surface-mark='life-thread'] i {
+  left: calc(50% - 7px);
+  width: 14px;
+  height: 5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  transform: rotate(-12deg);
+}
+
+.vc3b-surface-signature[data-surface-mark='life-thread'] i:nth-child(1) { top: 5px; }
+.vc3b-surface-signature[data-surface-mark='life-thread'] i:nth-child(2) { top: 16px; transform: rotate(12deg); }
+.vc3b-surface-signature[data-surface-mark='life-thread'] i:nth-child(3) { top: 27px; }
+
+.vc3b-surface-signature[data-surface-mark='dream-edge']::before,
+.vc3b-surface-signature[data-surface-mark='dream-edge']::after {
+  inset: 4px 8px 5px;
+  border-top: 1px solid currentColor;
+  border-radius: 50%;
+  transform: rotate(-8deg);
+}
+
+.vc3b-surface-signature[data-surface-mark='dream-edge']::after {
+  inset: 15px 18px 0;
+  opacity: 0.48;
+  transform: rotate(9deg);
+}
+
+.vc3b-surface-signature[data-surface-mark='dream-edge'] i {
+  top: 6px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px rgba(239, 230, 212, 0.68);
+}
+
+.vc3b-surface-signature[data-surface-mark='dream-edge'] i:nth-child(1) { transform: translate(-31px, 7px); }
+.vc3b-surface-signature[data-surface-mark='dream-edge'] i:nth-child(2) { transform: translate(4px, -2px); }
+.vc3b-surface-signature[data-surface-mark='dream-edge'] i:nth-child(3) { transform: translate(29px, 10px); }
+
+.vc3b-surface-signature[data-surface-mark='flame-crossroads']::before {
+  top: 1px;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 17px;
+  background: currentColor;
+  box-shadow: 0 0 10px rgba(232, 163, 61, 0.42);
+}
+
+.vc3b-surface-signature[data-surface-mark='flame-crossroads'] i {
+  top: 16px;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 22px;
+  transform-origin: top;
+  background: currentColor;
+}
+
+.vc3b-surface-signature[data-surface-mark='flame-crossroads'] i:nth-child(1) { transform: rotate(48deg); }
+.vc3b-surface-signature[data-surface-mark='flame-crossroads'] i:nth-child(2) { transform: rotate(0); }
+.vc3b-surface-signature[data-surface-mark='flame-crossroads'] i:nth-child(3) { transform: rotate(-48deg); }
+
+.vc3b-surface-kicker {
+  margin: 0 0 3px;
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+}
+
+.vc3b-surface-kicker span {
+  margin-left: 0.9em;
+  color: #b8ae9d;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+}
+
+.vc3b-surface-header .scene-title {
+  margin: 0;
+  color: #efe6d4;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.35;
+  letter-spacing: 0.32em;
+  text-shadow: 0 2px 18px rgba(5, 7, 13, 0.82);
+}
+
+.vc3b-surface-context {
+  max-width: 46em;
+  margin-top: 5px;
+  color: #b8ae9d;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.vc3b-scene-panel {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 640px);
+  padding: clamp(14px, 2.2vw, 22px) clamp(14px, 3vw, 26px);
+  border: 1px solid rgba(201, 168, 106, 0.3);
+  border-left: 3px solid rgba(201, 168, 106, 0.72);
+  background:
+    linear-gradient(100deg, rgba(201, 168, 106, 0.055), transparent 22%),
+    var(--vc3b-surface);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.3);
+}
+
+.vc3b-life-scene .vc3b-scene-panel::before {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 7px;
+  width: 1px;
+  content: '';
+  background: repeating-linear-gradient(to bottom, rgba(201, 168, 106, 0.55) 0 4px, transparent 4px 10px);
+}
+
+.vc3b-choice-ledger {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 860px);
+  scrollbar-color: rgba(201, 168, 106, 0.55) rgba(11, 15, 30, 0.48);
+}
+
+.vc3b-choice-ledger .god-card {
+  min-height: 148px;
+  border-left-width: 3px;
+  background: rgba(11, 15, 30, 0.9);
+}
+
+.vc3b-choice-ledger .god-card:focus-visible,
+.finale-choice:focus-visible,
+.vc3b-primary-action:focus-visible {
+  outline: 3px solid #efe6d4;
+  outline-offset: 3px;
+}
+
+.vc3b-primary-action {
+  min-width: min(100%, 232px);
+  min-height: 48px;
+  border-color: #e8a33d;
+  background: linear-gradient(180deg, rgba(232, 163, 61, 0.25), rgba(151, 94, 24, 0.2));
+  box-shadow: 0 8px 24px rgba(5, 7, 13, 0.38), inset 0 1px rgba(255, 226, 170, 0.16);
+}
+
+.vc3b-primary-action:disabled { box-shadow: none; }
+
+.vc3b-dream-scene {
+  --vc3b-thread: #c9b7d8;
+  --vc3b-surface: rgba(13, 18, 38, 0.92);
+}
+
+.vc3b-dream-scene .dream-visual {
+  border-color: rgba(201, 183, 216, 0.56);
+  border-radius: 2px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.46), 0 0 0 5px rgba(11, 15, 30, 0.58);
+}
+
+.vc3b-dream-scene .dream-visual-description {
+  border-left: 2px solid rgba(201, 183, 216, 0.38);
+  padding-left: 10px;
+}
+
+.vc3b-finale-scene {
+  --vc3b-surface: rgba(15, 18, 33, 0.92);
+}
+
+.vc3b-finale-scene .finale-memory {
+  border-left: 3px solid rgba(201, 168, 106, 0.72);
+  border-radius: 2px;
+}
+
+.vc3b-finale-scene .finale-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 760px);
+}
+
+.vc3b-finale-scene .finale-choice {
+  min-height: 96px;
+  margin: 0;
+  border-top: 2px solid rgba(201, 168, 106, 0.6);
+  background: rgba(10, 14, 28, 0.88);
+}
+
+.vc3b-finale-scene .finale-choice.selected {
+  border-color: #e8a33d;
+  background: rgba(232, 163, 61, 0.14);
+  box-shadow: inset 0 -3px #e8a33d;
+}
+
+.finale-confirm {
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border-left: 3px solid #e8a33d;
+  background: rgba(18, 23, 43, 0.96);
+  text-align: center;
+}
+
+.finale-confirm p {
+  margin-bottom: 8px;
+  color: #efe6d4;
+  font-size: 13px;
+}
+
+.ending-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(100%, 720px);
+}
+
+.ending-actions .ending-stats { flex-basis: 100%; }
+
+/* 1280/1440: 主役・判断面・補助情報を一画面に収める密度。 */
+@media (min-width: 1100px) and (max-height: 760px) {
+  .vc3b-scene { padding-top: 12px; padding-bottom: 22px; }
+  .vc3b-surface-header { margin-bottom: 10px; }
+  .vc3b-surface-signature { height: 31px; transform: scale(0.86); transform-origin: bottom; }
+  .vc3b-surface-context { margin-top: 2px; }
+  .vc3b-scene-panel { padding-block: 12px; }
+  .vc3b-job-ledger { max-height: 48vh !important; }
+}
+
+/* 768: identityと判断面の2領域へ再編。 */
+@media (min-width: 561px) and (max-width: 900px) {
+  .vc3b-scene { padding-inline: 24px; }
+  .vc3b-choice-ledger.god-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vc3b-finale-scene .finale-choices { width: min(100%, 620px); }
+  .vc3b-finale-scene .finale-echoes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* 390/360: 主役→今決めること→結果→戻る。PC配置の縮小ではなく単列化する。 */
+@media (max-width: 560px) {
+  .vc3b-scene {
+    justify-content: flex-start;
+    padding: 12px 12px 28px;
+    overflow-y: auto;
+  }
+
+  .vc3b-surface-header { margin-bottom: 9px; }
+  .vc3b-surface-signature { height: 28px; margin-bottom: 2px; transform: scale(0.78); transform-origin: bottom; }
+  .vc3b-surface-kicker { font-size: 10px; letter-spacing: 0.24em; }
+  .vc3b-surface-kicker span { display: block; margin: 1px 0 0; }
+  .vc3b-surface-header .scene-title { font-size: 22px; letter-spacing: 0.2em; }
+  .vc3b-surface-context { max-width: 30em; font-size: 11px; line-height: 1.55; }
+
+  .vc3b-scene-panel {
+    width: 100%;
+    padding: 12px 13px 12px 17px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .vc3b-scene-panel p { margin-bottom: 8px; }
+  .vc3b-scene-panel .stat-grid { margin-block: 8px !important; }
+  .vc3b-scene-panel .scene-epitaph { margin: 12px 0; padding: 10px 6px; font-size: 17px; }
+  .vc3b-choice-ledger.god-grid { grid-template-columns: 1fr; }
+  .vc3b-choice-ledger .god-card { min-height: 0; padding: 10px; }
+  .vc3b-job-ledger { max-height: 55vh !important; }
+  .vc3b-primary-action { width: min(100%, 320px); }
+
+  .vc3b-dream-scene .dream-episode-shell { width: 100%; }
+  .vc3b-dream-scene .dream-visual-description { margin-bottom: 7px; }
+
+  .vc3b-finale-scene .finale-choices { grid-template-columns: 1fr; width: 100%; }
+  .vc3b-finale-scene .finale-choice { min-height: 68px; }
+  .vc3b-finale-scene .finale-memory { width: 100%; }
+  .finale-confirm { grid-column: 1; }
+  .finale-confirm div { display: flex; flex-direction: column-reverse; }
+  .ending-actions { flex-direction: column; align-items: stretch; }
+  .ending-actions .btn { width: 100%; margin-inline: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc3b-scene,
+  .vc3b-scene *,
+  .vc3b-scene *::before,
+  .vc3b-scene *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

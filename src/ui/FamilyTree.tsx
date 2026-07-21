@@ -83,7 +83,8 @@ export function FamilyTree({ onClose }: { onClose: () => void }) {
     const eRect = el.getBoundingClientRect()
     const targetLeft = container.scrollLeft + (eRect.left - cRect.left) - container.clientWidth / 2 + eRect.width / 2
     const targetTop = container.scrollTop + (eRect.top - cRect.top) - container.clientHeight / 2 + eRect.height / 2
-    container.scrollTo({ left: Math.max(0, targetLeft), top: Math.max(0, targetTop), behavior: 'smooth' })
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    container.scrollTo({ left: Math.max(0, targetLeft), top: Math.max(0, targetTop), behavior: reduced ? 'auto' : 'smooth' })
   }
 
   const goToHead = () => {
@@ -104,12 +105,13 @@ export function FamilyTree({ onClose }: { onClose: () => void }) {
   }, [trimmedQuery, family])
 
   return (
-    <div className="modal-back" onClick={onClose}>
+    <div className="modal-back familytree-backdrop" onClick={onClose}>
       <div
         className="modal familytree-modal familytree-fullscreen"
         role="dialog"
         aria-modal="true"
         aria-label="家系図"
+        aria-describedby="familytree-legend"
         ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
       >
@@ -147,10 +149,13 @@ export function FamilyTree({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </div>
-        <p className="familytree-legend-row" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+        <p id="familytree-legend" className="familytree-legend-row" style={{ fontSize: 12, color: 'var(--text-dim)' }}>
           <span className="tree-legend"><i className="tree-legend-swatch human" />人の親</span>
           <span className="tree-legend"><i className="tree-legend-swatch god" />星の親(縁が深いほど太く濃い)</span>
           {' '}— 家名をクリックすると詳細を見られる。
+        </p>
+        <p className="familytree-result-count" role="status" aria-live="polite">
+          {trimmedQuery ? `「${trimmedQuery}」に合う者 ${hitIds.size}人` : `全${family.length}人・${byGen.length}代`}
         </p>
         <div className="familytree-scroll" ref={containerRef}>
           <svg className="familytree-svg" width="100%" height="100%">
@@ -188,6 +193,7 @@ export function FamilyTree({ onClose }: { onClose: () => void }) {
                         else nodeRefs.current.delete(c.id)
                       }}
                       className={nodeClass}
+                      aria-pressed={selected?.id === c.id}
                       onClick={() => setSelected(c)}
                       data-testid="familytree-node"
                     >
@@ -201,7 +207,7 @@ export function FamilyTree({ onClose }: { onClose: () => void }) {
                 })}
               </div>
             ))}
-            {byGen.length === 0 && <p style={{ padding: 16 }}>まだ一人も記されていない。</p>}
+            {byGen.length === 0 && <p className="familytree-empty" role="status">まだ一人も記されていない。最初の灯が生まれると、この巻物に名が刻まれる。</p>}
           </div>
         </div>
 
@@ -217,6 +223,7 @@ export function FamilyTree({ onClose }: { onClose: () => void }) {
                 <span className="familytree-question"><b>今代の問い</b>{generationQuestion}</span>
               )}
             </span>
+            <button className="btn btn-ghost familytree-detail-close" onClick={() => setSelected(null)} aria-label="人物の詳細を閉じる">詳細を閉じる</button>
           </div>
         )}
       </div>

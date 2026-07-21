@@ -3,7 +3,7 @@
 // 内部は5層構成に刷新: ground(一括ベイク)/water/decal(揺れ草)/mid(props+影+プレイヤー, y-sort)/glow(加算光)
 // + スクリーン層: darkness(照明RT)/vignette。灯ゲージが初めて画面に現れる(松明半径連動)。
 import { Application, Container, Graphics, Sprite, Texture, Assets } from 'pixi.js'
-import type { FloorDef, TileKind } from './types'
+import type { DungeonDiscoverySnapshot, DungeonPoiKind, FloorDef, TileKind } from './types'
 import { TILE_CHARS, isWalkable } from './types'
 import { usedKey, isReusableGuardTile, sealBossKeys } from './usedTiles' // M33: 使用済みキー/ボス床の純関数(vitest固定)
 import { themeForBg, type DungeonTheme } from './render/theme'
@@ -20,6 +20,11 @@ import { CAM_MAX_SHAKE, cameraTarget, clampCamera, computeZoom, lookAheadOffset,
 import { Rng } from '../core/rng'
 import { SPECIAL_SHADE_RATE, specialShadeUsedKey } from '../core/rare_encounters'
 import { getReduceMotion } from '../core/settings'
+import type { RegionStageContract } from '../core/data/region_stage_contracts'
+import type { RegionVisualVersion } from '../core/feature_flags'
+import type { RegionExperienceProfile } from '../core/data/region_experience'
+import { buildAr1HotarubiStage, loadAr1HotarubiAssets, type Ar1HotarubiStage } from './render/ar1_hotarubi'
+import { buildRegionExperienceStage, type RegionExperienceStage } from './render/region_experience_layer'
 
 const TILE = 36 // px(44→36 に縮小: 同画面内タイル数を約1.22倍に広げつつ、プロップ/スプライトの視認性を維持)
 const MOVE_MS = 130
@@ -51,6 +56,8 @@ export interface EngineOpts {
   act?: DungeonAct // 'norm' | 'dread'(最終前) | 'seat'(ボス階)
   cleared?: boolean // 主討伐済みの再訪(鎮) — 色が緩み敵影も減る
   showLandmark?: boolean // 署名ランドマークを置く(入口フロアのみtrue)
+  stageContract?: RegionStageContract | null // AR1: session-captured renderer contract
+  visualVersion?: RegionVisualVersion // 出立時にcapture済み。active run中はlive flagを再読込しない
 }
 
 interface Shade {
@@ -88,6 +95,8 @@ export class DungeonEngine {
   private lighting: LightingSystem | null = null
   private groundData: GroundResult | null = null
   private propsData: PropsResult | null = null
+  private ar1Stage: Ar1HotarubiStage | null = null
+  private experienceStage: RegionExperienceStage | null = null
   private vignette: Sprite | null = null
 
   private theme: DungeonTheme
@@ -191,6 +200,7 @@ export class DungeonEngine {
   private landmarkKind: LandmarkKind | null = null
   private groundKind: GroundKind = 'soil' // M24 §4.7: buildGroundへ渡す地面材質
   private particleKind: ParticleKind = 'firefly' // M24 §4.7: motesの挙動分岐キー
+  private regionExperience: RegionExperienceProfile | null = null
 
   constructor(
     host: HTMLElement,
@@ -221,6 +231,7 @@ export class DungeonEngine {
     this.landmarkKind = rv.landmark
     this.groundKind = rv.groundKind
     this.particleKind = rv.particleKind
+    this.regionExperience = rv.experience
     this.used = new Set(usedKeys)
     this.parse()
     if (start) {
@@ -295,7 +306,7 @@ export class DungeonEngine {
 
   async init(): Promise<void> {
     await this.app.init({
-      background: this.theme.groundBase,
+      background: this.opts.stageContract?.palette.night ?? this.theme.groundBase,
       resizeTo: this.host,
       antialias: true,
     })
@@ -304,7 +315,8 @@ export class DungeonEngine {
 
     // M24: 地域別backdrop — マップ外の純黒を埋めるscreen固定層(worldより背面)。
     // groundBaseより明度を+12した藍で、暗さは保ちつつ「説明のない純黒面」を消す(§4.1)。
-    const bd = new Graphics().rect(0, 0, 1, 1).fill(lift(this.theme.groundBase, 12))
+    const bdColor = this.opts.stageContract?.palette.night ?? lift(this.theme.groundBase, 12)
+    const bd = new Graphics().rect(0, 0, 1, 1).fill(bdColor)
     bd.width = this.app.renderer.width
     bd.height = this.app.renderer.height
     this.backdrop = bd
@@ -317,20 +329,52 @@ export class DungeonEngine {
 
     this.registry = new TextureRegistry(this.app.renderer)
     const seed = this.opts.seed ?? (this.floorIndex + 1) * 7919
+    // V2 requests only its two reviewed kit files. If unmounted during either await, stop before
+    // touching containers; load failure itself is handled by the Graphics fallback.
+    const ar1Assets = this.opts.stageContract
+      ? await loadAr1HotarubiAssets(this.opts.stageContract, import.meta.env.BASE_URL)
+      : null
+    if (this.destroyed) return
 
-    // 地面(一括ベイク)+水面。M24 §4.7: 地域のgroundKindで局所模様を分岐
-    this.groundData = buildGround(this.grid, TILE, this.theme, seed, this.groundKind)
-    this.layerGround.addChild(this.groundData.ground)
-    if (this.groundData.water) this.layerWater.addChild(this.groundData.water)
+    // AR1 target floor exclusively mounts its batched material kit. The legacy ground/water
+    // is not constructed underneath it; OFF and non-target floors stay on the V1 path.
+    if (this.opts.stageContract) {
+      this.ar1Stage = buildAr1HotarubiStage(this.grid, TILE, this.opts.stageContract, seed, ar1Assets ?? undefined)
+      this.layerGround.addChild(this.ar1Stage.ground)
+      this.layerMid.addChild(this.ar1Stage.mid, this.ar1Stage.foreground)
+      this.layerGlow.addChild(this.ar1Stage.effects)
+    } else {
+      this.groundData = buildGround(this.grid, TILE, this.theme, seed, this.groundKind)
+      this.layerGround.addChild(this.groundData.ground)
+      if (this.groundData.water) this.layerWater.addChild(this.groundData.water)
+    }
+
+    // VC4/VC6: every captured V2 region receives a bounded code-native overlay.
+    // Hotarubi floor 0 already has its higher-fidelity AR1 stage and must not be doubled.
+    if (!this.ar1Stage && this.opts.visualVersion === 'v2' && this.regionExperience) {
+      this.experienceStage = buildRegionExperienceStage(
+        this.grid,
+        TILE,
+        this.regionExperience,
+        this.theme,
+        seed,
+        !!this.opts.showLandmark,
+        this.moteColor,
+      )
+      this.layerGround.addChild(this.experienceStage.ground)
+      this.layerMid.addChild(this.experienceStage.mid)
+      this.layerGlow.addChild(this.experienceStage.effects)
+    }
 
     // プロップ+特殊タイル標識
     this.propsData = buildProps(
       this.grid, TILE, this.theme, seed, this.registry, this.used, this.floorIndex, !!this.opts.isBossFloor,
+      { markersOnly: !!this.ar1Stage },
     )
     for (const sp of this.propsData.sprites) this.layerMid.addChild(sp)
 
     // M23: 署名ランドマーク — 入口フロアの入口近くに一度だけ置く(VISUAL §7.1)
-    if (this.landmarkKind && this.opts.showLandmark) {
+    if (!this.ar1Stage && !this.experienceStage && this.landmarkKind && this.opts.showLandmark) {
       const spot = this.findLandmarkSpot()
       if (spot) {
         const lm = buildLandmark(this.landmarkKind, this.theme, TILE)
@@ -348,7 +392,7 @@ export class DungeonEngine {
     })
     const tuftRng = new Rng(seed ^ 0x5f3759df)
     // 草むら密度: 草cellが十分あれば100、不足なら全て使う。マップの生き生きした印象が上がる
-    const grassPool = tuftRng.shuffle(this.groundData.grassCells)
+    const grassPool = this.ar1Stage ? [] : tuftRng.shuffle(this.groundData?.grassCells ?? [])
     for (const { x, y } of grassPool.slice(0, Math.min(100, grassPool.length))) {
       const sp = new Sprite(tuftTex)
       sp.anchor.set(0.5, 1)
@@ -364,7 +408,9 @@ export class DungeonEngine {
         if (isWalkable(this.grid[y][x])) walkableCells.push({ x, y })
       }
     }
-    const moteCells = tuftRng.shuffle(walkableCells).slice(0, Math.min(this.moteCount, walkableCells.length))
+    const moteCells = this.ar1Stage || this.experienceStage
+      ? []
+      : tuftRng.shuffle(walkableCells).slice(0, Math.min(this.moteCount, walkableCells.length))
     // M24 §4.7: kindごとの降下/上昇スパン(rain/ash/pollen以外は未使用の0のまま)
     const fallSpanByKind: Record<ParticleKind, number> =
       { firefly: 0, rain: MOTE_RAIN_SPAN, ash: MOTE_ASH_SPAN, fog: 0, pollen: MOTE_POLLEN_SPAN, stardust: 0 }
@@ -431,6 +477,7 @@ export class DungeonEngine {
     this.player.x = this.px * TILE
     this.player.y = this.py * TILE
     this.player.zIndex = this.player.y + TILE
+    this.ar1Stage?.setPlayerPosition(this.player.x + TILE / 2, this.player.y + TILE * 0.92)
 
     // 敵影(妖怪シルエット: 地域tierの主属性2種+稀に金の変種)
     // UX調整: フロア定義よりも実生成数を2減、下限2で快適な密度に(データは不変・要再バランス時のみ調整)
@@ -516,6 +563,7 @@ export class DungeonEngine {
       bobPhase: rng.next() * Math.PI * 2,
       alert: false,
     })
+    if (golden) this.ar1Stage?.setRareTelegraph(visual.node.x + TILE / 2, visual.node.y + TILE * 0.92, true)
   }
 
   setLight(pct: number): void {
@@ -526,6 +574,38 @@ export class DungeonEngine {
   /** フロア探索進度(0〜1)。訪問済み歩行タイル÷歩行可総数。 */
   exploreRatio(): number {
     return this.minimap?.exploreRatio() ?? 0
+  }
+
+  /** Count-only DEV/visual-test hook for the AR1 pooled motion budget. */
+  ar1VisualBudget(): Ar1HotarubiStage['budget'] | null {
+    return this.ar1Stage?.budget ?? null
+  }
+
+  /** Count-only DEV/visual-test hook for the 40-region code-native pool budget. */
+  regionExperienceVisualBudget(): RegionExperienceStage['budget'] | null {
+    return this.experienceStage?.budget ?? null
+  }
+
+  /**
+   * 発見済みPOIを、描画や永続runの使用済み状態から独立して返す。
+   * React側はこのread APIだけをpollし、`run.used`を発見済みの代用にしない。
+   */
+  discoverySnapshot(): DungeonDiscoverySnapshot {
+    const poiKinds = new Set<DungeonPoiKind>([
+      'stairs', 'entrance', 'chest', 'camp', 'shrine', 'boss', 'monument',
+    ])
+    const pois: DungeonDiscoverySnapshot['pois'] = []
+    const totals: DungeonDiscoverySnapshot['totals'] = {}
+    for (let y = 0; y < this.grid.length; y++) {
+      for (let x = 0; x < (this.grid[y]?.length ?? 0); x++) {
+        const kind = this.grid[y][x]
+        if (!poiKinds.has(kind as DungeonPoiKind)) continue
+        const poiKind = kind as DungeonPoiKind
+        totals[poiKind] = (totals[poiKind] ?? 0) + 1
+        if (this.visited.has(`${x}:${y}`)) pois.push({ kind: poiKind, x, y })
+      }
+    }
+    return { exploredRatio: this.exploreRatio(), pois, totals }
   }
 
   setPaused(p: boolean): void {
@@ -612,6 +692,8 @@ export class DungeonEngine {
           }
         }
       }
+      this.ar1Stage?.update(this.time, moteRm)
+      this.experienceStage?.update(this.time, moteRm)
     }
     if (this.groundData?.water) {
       this.waterT += dms
@@ -706,6 +788,7 @@ export class DungeonEngine {
     this.renderTapMarkers(dms)
     // プレイヤー光源の追従
     this.lighting?.setPlayerPos(this.player.x + TILE / 2, this.player.y + TILE * 0.62)
+    this.ar1Stage?.setPlayerPosition(this.player.x + TILE / 2, this.player.y + TILE * 0.92)
 
     // カメラ振動の減衰
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dms * 0.03)
@@ -714,6 +797,7 @@ export class DungeonEngine {
     // 熱狂の赤い火(frantic)中は凶暴化(M12でstore側から発火)
     const franticK = this.frantic ? 0.75 : 1
     const speedMult = (this.lightPct <= 0 ? 0.45 : this.lightPct < 40 ? 0.7 : 1) * franticK
+    let nearestDanger: { x: number; y: number; distance: number; rare: boolean } | null = null
     for (const s of this.shades) {
       // 滑らか移動
       if (s.moveT < 1) {
@@ -724,16 +808,32 @@ export class DungeonEngine {
         s.visual.node.zIndex = s.visual.node.y + TILE
       }
       s.visual.bob(this.time, s.bobPhase)
+      if (s.visual.golden) {
+        this.ar1Stage?.setRareTelegraph(s.visual.node.x + TILE / 2, s.visual.node.y + TILE * 0.92, true)
+      }
+
+      const near = dist(s.x, s.y, this.px, this.py)
+      // Keep the visual warning continuous between AI decisions. This read-only
+      // derivation does not change chase range, movement cadence, or encounters.
+      const chaseRange = Math.max(2, (this.lightPct < 40 ? 6 : 4) + (this.frantic ? 2 : 0) - (this.stealth ? 2 : 0))
+      const alerted = !s.visual.golden && near <= chaseRange + 1
+      if (s.visual.golden || alerted) {
+        if (!nearestDanger || near < nearestDanger.distance) {
+          nearestDanger = {
+            x: s.visual.node.x + TILE / 2,
+            y: s.visual.node.y + TILE * 0.92,
+            distance: near,
+            rare: s.visual.golden,
+          }
+        }
+      }
 
       s.cd -= dms
       if (s.cd > 0) continue
-      const near = dist(s.x, s.y, this.px, this.py)
       // 金の敵影は追わず逃げる(速い)。通常種は灯が細るほど遠くから追う。
-      const chaseRange = Math.max(2, (this.lightPct < 40 ? 6 : 4) + (this.frantic ? 2 : 0) - (this.stealth ? 2 : 0))
       const chase = !s.visual.golden && near <= chaseRange
       const flee = s.visual.golden && near <= 6
       // 「!」テレグラフは追跡開始の1マス前から出す(急襲の理不尽さを緩和し、moon夜目非所持でも予兆で警戒可能)
-      const alerted = !s.visual.golden && near <= chaseRange + 1
       s.cd = SHADE_BASE_MS * speedMult * (s.visual.golden ? 0.55 : chase ? 0.75 : 1) * (0.8 + Math.random() * 0.4)
       if (alerted !== s.alert) {
         s.alert = alerted
@@ -770,6 +870,12 @@ export class DungeonEngine {
         return
       }
     }
+    this.experienceStage?.setDangerTelegraph(
+      nearestDanger?.x ?? 0,
+      nearestDanger?.y ?? 0,
+      nearestDanger !== null,
+      nearestDanger?.rare ?? false,
+    )
   }
 
   // 白閃2連+振動+虹彩暗転 → after(店側でbattle遷移)。演出中は入力/AI凍結。
@@ -821,6 +927,7 @@ export class DungeonEngine {
   }
 
   private removeShade(s: Shade): void {
+    if (s.visual.golden) this.ar1Stage?.setRareTelegraph(0, 0, false)
     this.layerMid.removeChild(s.visual.node)
     s.visual.node.destroy({ children: true })
     this.shades = this.shades.filter((x) => x !== s)
@@ -888,8 +995,7 @@ export class DungeonEngine {
 
   /** 下り階段が発見済みか(短期目的表示用 — M24 §4.5)。Dungeon.tsx側から500ms間隔でpollされる想定。 */
   stairsFound(): boolean {
-    const s = this.findTile('stairs')
-    return !!s && this.visited.has(`${s.x}:${s.y}`)
+    return this.discoverySnapshot().pois.some((poi) => poi.kind === 'stairs')
   }
 
   /** ミニマップの拡大表示を切り替える(M24 §4.6)。Minimap.containerは公開フィールドのため、

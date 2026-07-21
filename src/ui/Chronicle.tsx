@@ -143,19 +143,35 @@ export function ChronicleScreen() {
         </ActionDock>
       }
     >
+      <section className={`chronicle-book chronicle-book--${tab}`} aria-label="燈守家の綴じた年代記">
+        <span className="chronicle-book-spine" aria-hidden="true" />
+        <header className="chronicle-folio-head">
+          <span className="chronicle-folio-mark" aria-hidden="true">燈</span>
+          <div>
+            <span className="chronicle-kicker">燈守家・第{Math.max(1, rec.gens)}代蔵</span>
+            <p>{tab === 'overview' ? '継いだ歳月と、まだ継げる灯。' : tab === 'titles' ? '家に刻まれた呼び名。' : tab === 'fallen' ? '欠けた席と、遺された言葉。' : '季節の順に綴られた出来事。'}</p>
+          </div>
+          <span className="chronicle-page-no">{TABS.findIndex((t) => t.key === tab) + 1} / {TABS.length}</span>
+        </header>
+
       {tab === 'overview' && (
-        <Panel title={`一族の記録 — 総合収集率 ${rec.collPct}%`}>
+        <Panel title={`一族の記録 — 総合収集率 ${rec.collPct}%`} className="chron-folio chron-overview-folio">
           {/* 命脈 — 継がれた世代を灯る節で、次代をまだ点らぬ節で結ぶ(A案署名要素) */}
           <div className="chron-thread" title={`第${rec.gens}代まで継承`}>
             <LifeThread nodes={[...Array.from({ length: Math.max(1, rec.gens) }, () => ({ lit: true })), { lit: false }]} />
           </div>
+          <div className="chronicle-hero-records" aria-label="一族の主要な記録">
+            <div><span>{rec.gens}</span><small>紡いだ世代</small></div>
+            <div><span>{rec.alive}</span><small>いま灯る命</small></div>
+            <div><span>{rec.collPct}<i>%</i></span><small>見聞の満ち</small></div>
+          </div>
+          <p className="chronicle-margin-note">余白には、まだ名のない次代のための一行が残されている。</p>
           <div className="records-grid">
-            <div className="rec-cell"><span className="rec-num">{rec.gens}</span><span className="rec-lbl">紡いだ世代</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.years}</span><span className="rec-lbl">歳月(年)</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.fame}</span><span className="rec-lbl">武功</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.kills}</span><span className="rec-lbl">討った魔性</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.exped}</span><span className="rec-lbl">夜藪行</span></div>
-            <div className="rec-cell"><span className="rec-num">{rec.alive}<small>/{rec.alive + rec.fallenN}</small></span><span className="rec-lbl">存命 / 一族</span></div>
+            <div className="rec-cell"><span className="rec-num">{rec.alive + rec.fallenN}</span><span className="rec-lbl">記された一族</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.godsPacted}</span><span className="rec-lbl">契った星神</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.familiars}</span><span className="rec-lbl">懐いた眷属</span></div>
             {rec.towerBest > 0 && <div className="rec-cell"><span className="rec-num">{rec.towerBest}<small>層</small></span><span className="rec-lbl">常夜百層 最高</span></div>}
@@ -168,7 +184,7 @@ export function ChronicleScreen() {
       )}
 
       {tab === 'titles' && (
-        <Panel title={`称号 — ${achieved.length}/${ACHIEVEMENTS.length}`}>
+        <Panel title={`称号 — ${achieved.length}/${ACHIEVEMENTS.length}`} className="chron-folio">
           <div className="titles-grid">
             {ACHIEVEMENTS.map((a) => {
               const got = a.test(rec)
@@ -185,9 +201,9 @@ export function ChronicleScreen() {
       )}
 
       {tab === 'fallen' && (
-        <Panel title="逝きし者たち">
+        <Panel title="逝きし者たち" className="chron-folio">
           <div className="chronicle-scroll">
-            {fallen.length === 0 && <p>まだ誰も欠けていない。……それがどれほど稀有なことか。</p>}
+            {fallen.length === 0 && <p className="chronicle-empty" role="status">まだ誰も欠けていない。空いた頁は、いま灯る者たちの時間だ。</p>}
             {fallen.map((c) => (
               <div key={c.id} className="fallen-card">
                 <MaybeImg src={faceImg(c)} className="fallen-face" />
@@ -212,7 +228,7 @@ export function ChronicleScreen() {
       )}
 
       {tab === 'chronicle' && (
-        <Panel title={`年代記 — ${chronFiltered.length}件`}>
+        <Panel title={`年代記 — ${chronFiltered.length}件`} className="chron-folio">
           <div className="chron-filter-row">
             {KIND_FILTERS.map((k) => (
               <button
@@ -226,7 +242,7 @@ export function ChronicleScreen() {
             ))}
           </div>
           <div className="chronicle-scroll">
-            {chronFiltered.length === 0 && <p>まだ何も記されていない。</p>}
+            {chronFiltered.length === 0 && <p className="chronicle-empty" role="status">この印に当たる記録はない。別の印を選べば、他の頁を繰れる。</p>}
             {chronFiltered.slice(0, chronShown).map((e, i) => {
               const ch = e.charId ? data.family.find((c) => c.id === e.charId) : undefined
               return (
@@ -245,6 +261,7 @@ export function ChronicleScreen() {
           )}
         </Panel>
       )}
+      </section>
 
       {showTree && <FamilyTree onClose={() => setShowTree(false)} />}
     </ScreenShell>

@@ -17,3 +17,33 @@
    ノッチ端末では背が伸びるのに、.shell.has-dock の逃げ余白は静的96pxで、末尾本文がドック裏に隠れうる
    不整合を是正(index.css:1678)。 */
 .shell.has-dock { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+/* VC6: route外overlayの共通視覚契約。背景面と判断面を分離し、全操作を44px以上にする。 */
+.sheet-back { padding: 12px; backdrop-filter: blur(3px); }
+.sheet {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(38, 30, 21, 0.34), transparent 48%),
+    var(--night);
+}
+.sheet::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(201, 168, 106, 0.1);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.sheet-head, .sheet-body { position: relative; z-index: 1; }
+.sheet .btn, .sheet button, .sheet input, .sheet select { min-height: 44px; }
+.sheet-close { padding-inline: 12px; }
+
+@media (max-width: 560px) {
+  .sheet-back { padding: 0; backdrop-filter: none; }
+  .sheet-body { overscroll-behavior: contain; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-back, .sheet { animation: none !important; }
+}

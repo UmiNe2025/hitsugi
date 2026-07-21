@@ -55,3 +55,41 @@
 - UI-ATTR-01〜05の同一task台本、回答、採否。印象語だけで「魅力が増した」と判定しない。
 - 採用画像ID、配信先path、crop、文字コントラスト、lazy-load/LCP測定、背景OFF時のfallback結果。
 - `docs/qa/`は対象pathを明示してstageする。`tests/visual/.shots/`を永続証拠として参照しない。
+
+## 2026-07-21追補: AI感・空間美術の再監査
+
+### 再現条件
+
+- 対象HEAD: `7966fa25daf5b34e5cbb829c9510d3b1f3895b77`
+- worktree: M35星契り改善の未commit差分あり。下記3画面の空間rendererとは別所有として保持。
+- 実行: `npx playwright test tests/visual/baseline.spec.ts --project=pc-1280 --project=mobile-390`
+- 結果: 6/6完走。baseline testは報告用であり、視覚品質のblocking gateではない。
+- 正本計画: `docs/CODEX_MASTERPLAN_DRAFT.md` §17。以下の新gateは、UI-ATTR-02〜04の「層数」や「画像を追加したこと」より優先する。
+
+### 平坦暗部の実測
+
+| 画面 | PC 1280 | mobile 390 | 解釈 |
+|---|---:|---:|---|
+| Dungeon | 6.7% | 3.3% | 暗部率だけでなく、床目地・primitive prop・経路反復を評価する |
+| Battle 1v2 | 45.4% | 17.5% | PCでは意味のない暗い空面が非常に大きい |
+| Village | 44.8% | 17.9% | PCでは見渡せても、施設と生活の情報を持たない暗部が大きい |
+
+純黒率はDungeon PC 6.4%、Battle PC 8.6%、Village PC 7.0%、Dungeon mobile 4.4%、Battle mobile 7.4%、Village mobile 8.6%。平坦暗部率との差は、単純な黒画面ではなく、低contrastで情報量のない面が残ることを示す。
+
+### 永続before証拠
+
+- [Battle 1v2 / PC 1280](baselines/20260721-battle-1v2-pc-1280-before.png) — `CB6647D39322E93300EE8B08672F8DC08270E9B4F0F5E232BB35BCDEB83760EC`
+- [Battle 1v2 / mobile 390](baselines/20260721-battle-1v2-mobile-390-before.png) — `8C63DF4B6678BE16626F2DEE46DC22FC5273AE72D7C4F7367EFBEACD789BD757`
+- [Dungeon / PC 1280](baselines/20260721-dungeon-pc-1280-before.png) — `2CD3559FEB78F9BAA57ACA9F7389B31F5D67A2F6F026D670BBEF9E852FAB3B11`
+- [Dungeon / mobile 390](baselines/20260721-dungeon-mobile-390-before.png) — `287B4685885B4A7E2CFD16763DE4CBA4E11CCC921F206643E79A4CF3FB7DF9FD`
+- [Village / PC 1280](baselines/20260721-village-pc-1280-before.png) — `7807ED0E449EC78D708971E1C94875B2BAD47CDB64C9A1489E5316D70F11A8CA`
+- [Village / mobile 390](baselines/20260721-village-mobile-390-before.png) — `EB80582ABFB4F7913867CDC863881F4A982702EA17F3E7A786FABD2BF7872371`
+
+### 旧gateへの反証と新gate
+
+- Dungeonは既に5層、郷は既に7層相当を持つため、「5層以上」を魅力の合格条件から外す。
+- 生成概念画をruntimeへ置いたことだけでは合格にしない。地面、境界、前景、landmark、状態、collisionへ分解し、同じ場所の操作と物語へ接続する。
+- 量産前に、`Home → 郷1施設 → Dungeon 1区画 → Battle → 帰還差分`の一本をblind A/B 8人で評価し、新版選好6/8以上を要求する。
+- 郷は文字なしで主要施設3/5を6/8が識別。Dungeon対照2地域は色を隠してもlandmarkと経路形状で6/8が区別する。
+- 低性能mobileで10分後平均30fps以上、1% low 24fps以上、100ms超jank毎分1回以下。PCは平均55fps以上。
+- 初回後の郷で即移動70%以上かつ歩行会話・landmark接触25%未満なら、歩行map拡張を止め、絵画hub + DOM hotspotへpivotする。

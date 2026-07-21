@@ -124,6 +124,7 @@ export function FacilitiesScreen() {
   const data = useGame((s) => s.data)!
   const buildFacility = useGame((s) => s.buildFacility)
   const [confirmId, setConfirmId] = useState<string | null>(null) // M26 §8.3: 確認対象(カード即実行を廃止)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const views = useMemo(
     () => buildFacilityViews(data.hoto, data.facilities),
@@ -139,6 +140,10 @@ export function FacilitiesScreen() {
     return open.reduce<FacilityView | null>((min, v) => (min === null || v.cost < min.cost ? v : min), null)
   }, [views])
 
+  // VC6: 普請図は全施設を縦に並べず、選んだ一計画だけを作業面へ載せる。
+  // 初期選択は既存dataから導く推薦(なければ先頭)で、永続dataや建設順は変えない。
+  const selected = views.find((v) => v.id === selectedId) ?? recommended ?? views[0]
+
   // 確認Sheetの実行CTAでのみbuildFacilityを呼ぶ(§8.3)
   const doBuild = (v: FacilityView) => {
     buildFacility(v.id)
@@ -152,56 +157,104 @@ export function FacilitiesScreen() {
       onBack={() => useGame.getState().setScreen({ id: 'home' })}
       resources={<>奉燈 <b>{data.hoto}</b></>}
     >
-      {recommended && (
-        <StatusCallout kind="info" title={`次のおすすめ — ${recommended.name}(${recommended.cost}燈)`}>
-          {recommended.nextEffect}
-        </StatusCallout>
-      )}
-      <div className="facility-grid">
-        {views.map((v) => (
-          <div key={v.id} className={`facility-card facility-card--${v.state}`}>
+      <section className="facility-blueprint" aria-label="郷の普請図">
+        <header className="facility-blueprint-head">
+          <div>
+            <span className="facility-kicker">郷普請図・第{Math.max(1, Math.max(...views.map((v) => v.lv)) + 1)}葉</span>
+            <h2>次の一棟を選ぶ</h2>
+            <p>奉燈を注ぐ前に、建物の段階・次の効き目・残る燈を一枚で確かめる。</p>
+          </div>
+          <div className="facility-legend" aria-label="普請図の凡例">
+            <span><i className="legend-mark is-built" />普請済</span>
+            <span><i className="legend-mark is-next" />普請可能</span>
+            <span><i className="legend-mark is-short" />奉燈不足</span>
+          </div>
+        </header>
+
+        {recommended && (
+          <StatusCallout kind="info" title={`次のおすすめ — ${recommended.name}(${recommended.cost}燈)`}>
+            {recommended.nextEffect}
+          </StatusCallout>
+        )}
+
+        <div className="facility-plan-tabs" role="tablist" aria-label="普請する施設">
+          {views.map((v) => (
+            <button
+              key={v.id}
+              id={`facility-plan-${v.id}`}
+              type="button"
+              role="tab"
+              aria-selected={selected?.id === v.id}
+              aria-controls="facility-active-plan"
+              className={`btn facility-plan-tab facility-plan-tab--${v.state}`}
+              onClick={() => setSelectedId(v.id)}
+            >
+              <span className="facility-plan-name">{v.name}</span>
+              <span className="facility-plan-state">
+                {v.maxed ? '完成' : v.shortfall > 0 ? `あと${v.shortfall}燈` : `Lv${v.lv + 1}へ`}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {selected && (
+          <div
+            id="facility-active-plan"
+            role="tabpanel"
+            aria-labelledby={`facility-plan-${selected.id}`}
+            className="facility-active-plan"
+          >
+            <div className="facility-plan-drawing" aria-hidden="true">
+              <span className="facility-plan-grid" />
+              <span className="facility-plan-silhouette">{selected.name.slice(0, 1)}</span>
+              <span className="facility-plan-measure measure-a">壱</span>
+              <span className="facility-plan-measure measure-b">参</span>
+            </div>
+            <div className={`facility-card facility-card--${selected.state}`}>
             <div className="facility-card-head">
-              <span className="facility-name">{v.name}</span>
-              <StageMark lv={v.lv} nextLv={v.lv + 1} />
+                <span className="facility-name">{selected.name}</span>
+                <StageMark lv={selected.lv} nextLv={selected.lv + 1} />
             </div>
             <div className="facility-lv-row">
-              <span className="facility-lv">Lv{v.lv}<span className="facility-lv-max">/{FACILITY_MAX_LV}</span></span>
-              {!v.maxed && (
+                <span className="facility-lv">Lv{selected.lv}<span className="facility-lv-max">/{FACILITY_MAX_LV}</span></span>
+                {!selected.maxed && (
                 <span className="facility-cost">
                   <span className="facility-cost-label">費用</span>
-                  <b>{v.cost}</b>燈
+                    <b>{selected.cost}</b>燈
                 </span>
               )}
             </div>
-            <p className="facility-desc">{v.desc}</p>
-            {v.nextEffect && (
+              <p className="facility-desc">{selected.desc}</p>
+              {selected.nextEffect && (
               <p className="facility-next">
-                <span className="facility-next-tag">次Lv</span>{v.nextEffect}
+                  <span className="facility-next-tag">次Lv</span>{selected.nextEffect}
               </p>
             )}
             <ul className="facility-effects">
-              {v.effects.map((e, i) => (
-                <li key={i} className={i < v.lv ? 'is-achieved' : 'is-pending'}>
+                {selected.effects.map((e, i) => (
+                  <li key={i} className={i < selected.lv ? 'is-achieved' : 'is-pending'}>
                   Lv{i + 1}: {e}
                 </li>
               ))}
             </ul>
-            <div className="facility-foot">
-              {v.state === 'insufficient' && (
-                <p className="facility-shortfall">奉燈があと{v.shortfall}足りない</p>
+              <div className="facility-foot" role="status">
+                {selected.state === 'insufficient' && (
+                  <p className="facility-shortfall">奉燈があと{selected.shortfall}足りない。計画は閲覧できる。</p>
               )}
-              {v.state === 'maxed' && <p className="facility-maxed-note">普請済み(最大)</p>}
+                {selected.state === 'buildable' && <p className="facility-ready-note">必要な奉燈が揃っている。</p>}
+                {selected.state === 'maxed' && <p className="facility-maxed-note">普請済み(最大)</p>}
               <button
                 className="btn facility-build-btn"
-                disabled={v.maxed}
-                onClick={() => setConfirmId(v.id)}
+                  disabled={selected.maxed}
+                  onClick={() => setConfirmId(selected.id)}
               >
-                {buildLabel(v)}
+                  {buildLabel(selected)}
               </button>
             </div>
           </div>
-        ))}
-      </div>
+          </div>
+        )}
+      </section>
 
       {confirmTarget && (
         <FacilityConfirm

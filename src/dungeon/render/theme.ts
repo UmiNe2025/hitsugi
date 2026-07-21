@@ -1,6 +1,8 @@
 // フィールド描画テーマ(品質刷新v3.1 M7a) — 背景4系統ごとの配色・プロップ・照明特性
 // region.bg(bg_forest/bg_zaka/bg_tani/bg_miyama)から解決する。
 
+import type { ExperienceMacroBiome, ValueFamily } from '../../core/data/region_experience'
+
 export type BgFamily = 'forest' | 'zaka' | 'tani' | 'miyama'
 
 export type PropKind =
@@ -11,6 +13,7 @@ export type PropKind =
 
 export interface DungeonTheme {
   family: BgFamily
+  experienceBiome: ExperienceMacroBiome
   groundBase: number // ほぼ黒の地色(系統で色味を変える)
   groundJitter: number // タイルごとのトーン揺らぎ幅(0-255スケール)
   stain: number // 大きな染みの色
@@ -28,9 +31,91 @@ export interface DungeonTheme {
   gauntletProp: PropKind // ボス参道に連ねる門
 }
 
+export interface ExperienceBiomeKit {
+  id: ExperienceMacroBiome
+  label: string
+  legacyFamily: BgFamily
+  valueFamily: ValueFamily
+  materialLanguage: readonly [string, string]
+  silhouetteLanguage: string
+  landmarkLanguage: string
+  ambientFamily: string
+  soundBed: string
+  bundleId: string
+  roleBundleIds: {
+    terrain: string
+    props: string
+    foregroundWeather: string
+    battleStage: string
+  }
+  codeNativeOnly: true
+  maxTextureCount: 0
+  maxDecodedBytes: 0
+  releasePolicy: 'on-region-exit'
+}
+
+// VC4/VC6 macro kits. They remain code-native in this implementation, so
+// entering a biome never adds a texture upload. The bundle metadata is still
+// explicit to prevent later per-region textures from leaking into startup.
+export const EXPERIENCE_BIOME_KITS: Record<ExperienceMacroBiome, ExperienceBiomeKit> = {
+  'wetland-border': {
+    id: 'wetland-border', label: '湿生の境', legacyFamily: 'forest', valueFamily: 'wet-ink-low',
+    materialLanguage: ['wet organic ground', 'shallow water or weathered timber'],
+    silhouetteLanguage: 'low canopy, drowned markers, compressed horizontal passages',
+    landmarkLanguage: 'route marks are embedded in water, roots, and roadside ritual objects',
+    ambientFamily: 'water, spores, insects, and lateral mist', soundBed: 'leaf-water-reed',
+    bundleId: 'dungeon-biome-wetland-code-v2', codeNativeOnly: true,
+    roleBundleIds: {
+      terrain: 'dungeon-wetland-terrain-code-v2', props: 'dungeon-wetland-props-code-v2',
+      foregroundWeather: 'dungeon-wetland-foreground-code-v2', battleStage: 'battle-wetland-stage-code-v2',
+    },
+    maxTextureCount: 0, maxDecodedBytes: 0, releasePolicy: 'on-region-exit',
+  },
+  'stone-prayer-road': {
+    id: 'stone-prayer-road', label: '石祈の道', legacyFamily: 'zaka', valueFamily: 'soot-amber-low',
+    materialLanguage: ['ritual stone or plaster', 'wax, timber, water, or prayer residue'],
+    silhouetteLanguage: 'stairs, gates, bridge posts, and walls that constrict sightlines',
+    landmarkLanguage: 'repeated devotional objects encode safe direction and false loops',
+    ambientFamily: 'soot, wick light, fog, and dust', soundBed: 'stone-bell-rope',
+    bundleId: 'dungeon-biome-prayer-code-v2', codeNativeOnly: true,
+    roleBundleIds: {
+      terrain: 'dungeon-prayer-terrain-code-v2', props: 'dungeon-prayer-props-code-v2',
+      foregroundWeather: 'dungeon-prayer-foreground-code-v2', battleStage: 'battle-prayer-stage-code-v2',
+    },
+    maxTextureCount: 0, maxDecodedBytes: 0, releasePolicy: 'on-region-exit',
+  },
+  'timber-city-remains': {
+    id: 'timber-city-remains', label: '木都の残骸', legacyFamily: 'tani', valueFamily: 'blue-iron-low',
+    materialLanguage: ['collapsed civic timber', 'iron, bone, field soil, or strange water'],
+    silhouetteLanguage: 'roof ribs, stalls, gantries, and house frames interrupted by relic forms',
+    landmarkLanguage: 'former work and dwelling structures reveal both route and local calamity',
+    ambientFamily: 'iron sparks, reverse rain, market dust, and low fog', soundBed: 'timber-iron-absence',
+    bundleId: 'dungeon-biome-timber-code-v2', codeNativeOnly: true,
+    roleBundleIds: {
+      terrain: 'dungeon-timber-terrain-code-v2', props: 'dungeon-timber-props-code-v2',
+      foregroundWeather: 'dungeon-timber-foreground-code-v2', battleStage: 'battle-timber-stage-code-v2',
+    },
+    maxTextureCount: 0, maxDecodedBytes: 0, releasePolicy: 'on-region-exit',
+  },
+  'bone-star-frontier': {
+    id: 'bone-star-frontier', label: '骨星の荒境', legacyFamily: 'miyama', valueFamily: 'bone-violet-low',
+    materialLanguage: ['bone, ash, or summit stone', 'star residue or final ritual surface'],
+    silhouetteLanguage: 'spines, concentric gates, impossible stairs, and terminal voids',
+    landmarkLanguage: 'cosmic remains and ritual geometry expose the final approach',
+    ambientFamily: 'star snow, upward matter, heavy fog, and orbital lamps', soundBed: 'high-wind-bone-star',
+    bundleId: 'dungeon-biome-bone-star-code-v2', codeNativeOnly: true,
+    roleBundleIds: {
+      terrain: 'dungeon-bone-star-terrain-code-v2', props: 'dungeon-bone-star-props-code-v2',
+      foregroundWeather: 'dungeon-bone-star-foreground-code-v2', battleStage: 'battle-bone-star-stage-code-v2',
+    },
+    maxTextureCount: 0, maxDecodedBytes: 0, releasePolicy: 'on-region-exit',
+  },
+}
+
 const THEMES: Record<BgFamily, DungeonTheme> = {
   forest: {
     family: 'forest',
+    experienceBiome: 'wetland-border',
     groundBase: 0x0a0f12,
     groundJitter: 7,
     stain: 0x11201a,
@@ -49,6 +134,7 @@ const THEMES: Record<BgFamily, DungeonTheme> = {
   },
   zaka: {
     family: 'zaka',
+    experienceBiome: 'stone-prayer-road',
     groundBase: 0x120d0e,
     groundJitter: 6,
     stain: 0x1e1512,
@@ -67,6 +153,7 @@ const THEMES: Record<BgFamily, DungeonTheme> = {
   },
   tani: {
     family: 'tani',
+    experienceBiome: 'timber-city-remains',
     groundBase: 0x0a0c14,
     groundJitter: 6,
     stain: 0x131829,
@@ -85,6 +172,7 @@ const THEMES: Record<BgFamily, DungeonTheme> = {
   },
   miyama: {
     family: 'miyama',
+    experienceBiome: 'bone-star-frontier',
     groundBase: 0x0d0a12,
     groundJitter: 5,
     stain: 0x191024,

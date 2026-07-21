@@ -355,6 +355,36 @@ export function hasSave(): boolean {
   )
 }
 
+export type SaveSlotStatus = 'none' | 'ready' | 'recoverable' | 'damaged'
+
+/**
+ * タイトルで「続けられる記」と「存在するが読めない記」を混同しないための
+ * 読み取り専用診断。ロードや移行、保存内容の書換えは行わない。
+ */
+export function inspectSaveSlot(): SaveSlotStatus {
+  const rawMain = localStorage.getItem(KEY)
+  const rawBak = localStorage.getItem(KEY_BAK)
+  const rawV3 = localStorage.getItem(KEY_V3)
+  const rawV1 = localStorage.getItem(KEY_V1)
+  if (rawMain === null && rawBak === null && rawV3 === null && rawV1 === null) return 'none'
+
+  if (readRaw(KEY)) return 'ready'
+  if (readRaw(KEY_BAK)) return 'recoverable'
+
+  // 旧版はcontinue時に正式なmigrationを通す。ここでは壊れたJSONを「続けられる」と
+  // 表示しないため、少なくともobjectとして読めることだけを副作用なく確認する。
+  for (const raw of [rawV3, rawV1]) {
+    if (!raw) continue
+    try {
+      const parsed: unknown = JSON.parse(raw)
+      if (isRecord(parsed)) return 'recoverable'
+    } catch {
+      // damagedへ落とす
+    }
+  }
+  return 'damaged'
+}
+
 export function clearSave(): void {
   localStorage.removeItem(KEY)
   localStorage.removeItem(KEY_BAK)

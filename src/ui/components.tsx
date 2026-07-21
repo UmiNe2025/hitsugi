@@ -124,11 +124,9 @@ export function CharCard({
   const p = personalityById(char.personalityId)
   const god = godById(char.godParentId)
   const age = ageOf(char, seasonIndex)
-  return (
-    <div
-      className={`char-card ${selected ? 'selected' : ''} ${onClick ? 'clickable' : ''} ${age < 6 ? 'child' : ''}`}
-      onClick={onClick}
-    >
+  const className = `char-card ${selected ? 'selected' : ''} ${onClick ? 'clickable' : ''} ${age < 6 ? 'child' : ''}`
+  const content = (
+    <>
       <div className="char-card-row">
         <div className="char-portrait-wrap">
           <Portrait char={char} seasonIndex={seasonIndex} size={compact ? 'sm' : undefined} />
@@ -164,8 +162,21 @@ export function CharCard({
         </div>
       </div>
       {children}
-    </div>
+    </>
   )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={className}
+        aria-pressed={Boolean(selected)}
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    )
+  }
+  return <div className={className}>{content}</div>
 }
 
 // 綴(ナビゲーター)の一言

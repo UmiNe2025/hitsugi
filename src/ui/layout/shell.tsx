@@ -3,7 +3,7 @@
 //  - クリック音: 既存クラス(.btn / .filter-tab 等)を継承する。個別のSFX配線は禁止(main.tsx委譲)。
 //  - 文言: 独立画面=「郷へ戻る」/ モーダル=「閉じる」/ 選択取消=「やめる」。
 //  - フォーカス: Sheetは開時に保存→閉時に復帰。Tabは内部循環。ESCで閉じる。背景スクロールはロック。
-import type { KeyboardEvent, ReactNode } from 'react'
+import { useId, type KeyboardEvent, type ReactNode } from 'react'
 
 // ---- フォーカス管理(useSheetBehavior/useForcedDialog)はdialogs.tsへ分離(M22) ----
 // hookはコンポーネントファイルからexportしない(Fast Refresh対象を保つ)。利用側は './layout/dialogs' から直接importする。
@@ -67,12 +67,13 @@ export function Sheet({
   children: ReactNode
 }) {
   const ref = useSheetBehavior(onClose)
+  const titleId = useId()
   return (
-    <div className="sheet-back" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} ref={ref} onClick={(e) => e.stopPropagation()}>
+    <div className="sheet-back" data-testid="sheet-backdrop" onClick={onClose}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
-          <h2 className="sheet-title">{title}</h2>
-          <button className="btn btn-ghost sheet-close" onClick={onClose}>{closeLabel}</button>
+          <h2 id={titleId} className="sheet-title">{title}</h2>
+          <button className="btn btn-ghost sheet-close" aria-label={`${title}を${closeLabel}`} onClick={onClose}>{closeLabel}</button>
         </div>
         <div className="sheet-body">{children}</div>
       </div>

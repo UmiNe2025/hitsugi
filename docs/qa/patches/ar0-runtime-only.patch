@@ -1,0 +1,2407 @@
+diff --git a/package.json b/package.json
+index 984b731..92b9e34 100644
+--- a/package.json
++++ b/package.json
+@@ -7,6 +7,7 @@
+     "dev": "vite",
+     "build": "tsc -b && vite build",
+     "lint": "oxlint",
++    "check:visual-manifest": "node scripts/validate_visual_recovery_manifest.mjs",
+     "preview": "vite preview",
+     "test": "vitest run",
+     "test:visual": "playwright test"
+diff --git a/assets_src/visual_recovery/asset-manifest.schema.json b/assets_src/visual_recovery/asset-manifest.schema.json
+new file mode 100644
+index 0000000..6b843d5
+--- /dev/null
++++ b/assets_src/visual_recovery/asset-manifest.schema.json
+@@ -0,0 +1,47 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://hitsugi-game.github.io/schema/visual-recovery-asset-manifest-v1.json",
++  "title": "HITSUGI visual recovery asset manifest",
++  "type": "array",
++  "items": {
++    "type": "object",
++    "additionalProperties": false,
++    "required": [
++      "assetId", "screen", "role", "family", "state", "requiredStates",
++      "dimensions", "alpha", "crop", "collision", "source", "generator",
++      "modelLicenseChain", "rightsStatus", "promptVersion", "reviewStatus",
++      "reviewer", "rejectReason", "sha256"
++    ],
++    "properties": {
++      "assetId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
++      "screen": { "enum": ["home", "village", "dungeon", "battle", "pact", "forge", "storehouse"] },
++      "role": { "enum": ["ground", "edge", "facade", "prop", "landmark", "foreground", "effect", "portrait", "stage"] },
++      "family": { "type": "string", "minLength": 1 },
++      "state": { "type": "string", "minLength": 1 },
++      "requiredStates": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
++      "dimensions": {
++        "type": "object", "additionalProperties": false, "required": ["width", "height"],
++        "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } }
++      },
++      "alpha": { "type": "boolean" },
++      "crop": {
++        "type": "object", "additionalProperties": false,
++        "required": ["pc", "tablet", "mobile390", "mobile360"],
++        "properties": {
++          "pc": { "type": "string", "minLength": 1 }, "tablet": { "type": "string", "minLength": 1 },
++          "mobile390": { "type": "string", "minLength": 1 }, "mobile360": { "type": "string", "minLength": 1 }
++        }
++      },
++      "collision": { "type": "string", "minLength": 1 },
++      "source": { "type": ["string", "null"] },
++      "generator": { "type": ["string", "null"] },
++      "modelLicenseChain": { "type": ["string", "null"] },
++      "rightsStatus": { "enum": ["planned", "unverified", "cleared", "rejected"] },
++      "promptVersion": { "type": "string", "minLength": 1 },
++      "reviewStatus": { "enum": ["planned", "generated", "needs-review", "accepted", "rejected"] },
++      "reviewer": { "type": ["string", "null"] },
++      "rejectReason": { "type": ["string", "null"] },
++      "sha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" }
++    }
++  }
++}
+diff --git a/assets_src/visual_recovery/asset-manifest.json b/assets_src/visual_recovery/asset-manifest.json
+new file mode 100644
+index 0000000..89b63de
+--- /dev/null
++++ b/assets_src/visual_recovery/asset-manifest.json
+@@ -0,0 +1,107 @@
++[
++  {
++    "assetId": "village_facade_great_lantern",
++    "screen": "village",
++    "role": "landmark",
++    "family": "tono_sato",
++    "state": "normal",
++    "requiredStates": ["normal", "closed", "crisis"],
++    "dimensions": { "width": 1024, "height": 1024 },
++    "alpha": true,
++    "crop": { "pc": "center fully visible", "tablet": "center fully visible", "mobile390": "outside bottom 196px controls", "mobile360": "outside bottom 196px controls" },
++    "collision": "visual only; existing L tiles and interaction coordinates remain canonical",
++    "source": null,
++    "generator": null,
++    "modelLicenseChain": null,
++    "rightsStatus": "planned",
++    "promptVersion": "HVR-1.0",
++    "reviewStatus": "planned",
++    "reviewer": null,
++    "rejectReason": null,
++    "sha256": null
++  },
++  {
++    "assetId": "village_facade_forge_storehouse",
++    "screen": "village",
++    "role": "facade",
++    "family": "tono_sato",
++    "state": "normal",
++    "requiredStates": ["normal", "closed", "crisis"],
++    "dimensions": { "width": 1024, "height": 768 },
++    "alpha": true,
++    "crop": { "pc": "entrance and chimney visible", "tablet": "entrance visible", "mobile390": "entrance clear of movement zone", "mobile360": "entrance clear of movement zone" },
++    "collision": "visual only; existing K tiles remain canonical",
++    "source": null,
++    "generator": null,
++    "modelLicenseChain": null,
++    "rightsStatus": "planned",
++    "promptVersion": "HVR-1.0",
++    "reviewStatus": "planned",
++    "reviewer": null,
++    "rejectReason": null,
++    "sha256": null
++  },
++  {
++    "assetId": "village_facade_star_shrine",
++    "screen": "village",
++    "role": "facade",
++    "family": "tono_sato",
++    "state": "normal",
++    "requiredStates": ["normal", "closed", "crisis"],
++    "dimensions": { "width": 1024, "height": 768 },
++    "alpha": true,
++    "crop": { "pc": "torii and offering light visible", "tablet": "torii visible", "mobile390": "entrance clear of controls", "mobile360": "entrance clear of controls" },
++    "collision": "visual only; existing S tiles remain canonical",
++    "source": null,
++    "generator": null,
++    "modelLicenseChain": null,
++    "rightsStatus": "planned",
++    "promptVersion": "HVR-1.0",
++    "reviewStatus": "planned",
++    "reviewer": null,
++    "rejectReason": null,
++    "sha256": null
++  },
++  {
++    "assetId": "village_facade_tofu_shop",
++    "screen": "village",
++    "role": "facade",
++    "family": "tono_sato",
++    "state": "normal",
++    "requiredStates": ["normal", "closed", "crisis"],
++    "dimensions": { "width": 1024, "height": 768 },
++    "alpha": true,
++    "crop": { "pc": "curtain and steam visible", "tablet": "curtain visible", "mobile390": "entrance clear of controls", "mobile360": "entrance clear of controls" },
++    "collision": "visual only; existing T tiles remain canonical",
++    "source": null,
++    "generator": null,
++    "modelLicenseChain": null,
++    "rightsStatus": "planned",
++    "promptVersion": "HVR-1.0",
++    "reviewStatus": "planned",
++    "reviewer": null,
++    "rejectReason": null,
++    "sha256": null
++  },
++  {
++    "assetId": "village_facade_departure_gate",
++    "screen": "village",
++    "role": "facade",
++    "family": "tono_sato",
++    "state": "normal",
++    "requiredStates": ["normal", "closed", "crisis"],
++    "dimensions": { "width": 1024, "height": 768 },
++    "alpha": true,
++    "crop": { "pc": "both posts and road visible", "tablet": "both posts visible", "mobile390": "gate opening clear of controls", "mobile360": "gate opening clear of controls" },
++    "collision": "visual only; existing G tiles remain canonical",
++    "source": null,
++    "generator": null,
++    "modelLicenseChain": null,
++    "rightsStatus": "planned",
++    "promptVersion": "HVR-1.0",
++    "reviewStatus": "planned",
++    "reviewer": null,
++    "rejectReason": null,
++    "sha256": null
++  }
++]
+diff --git a/scripts/validate_visual_recovery_manifest.mjs b/scripts/validate_visual_recovery_manifest.mjs
+new file mode 100644
+index 0000000..a1d8a86
+--- /dev/null
++++ b/scripts/validate_visual_recovery_manifest.mjs
+@@ -0,0 +1,49 @@
++import fs from 'node:fs'
++import path from 'node:path'
++import { fileURLToPath } from 'node:url'
++
++const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
++const manifestPath = path.join(root, 'assets_src', 'visual_recovery', 'asset-manifest.json')
++const entries = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
++const required = [
++  'assetId', 'screen', 'role', 'family', 'state', 'requiredStates', 'dimensions', 'alpha',
++  'crop', 'collision', 'source', 'generator', 'modelLicenseChain', 'rightsStatus',
++  'promptVersion', 'reviewStatus', 'reviewer', 'rejectReason', 'sha256',
++]
++const screens = new Set(['home', 'village', 'dungeon', 'battle', 'pact', 'forge', 'storehouse'])
++const reviewStatuses = new Set(['planned', 'generated', 'needs-review', 'accepted', 'rejected'])
++const rightsStatuses = new Set(['planned', 'unverified', 'cleared', 'rejected'])
++const ids = new Set()
++const errors = []
++
++for (const [index, entry] of entries.entries()) {
++  const at = `entry[${index}]`
++  for (const key of required) if (!(key in entry)) errors.push(`${at}: missing ${key}`)
++  if (!/^[a-z0-9_]+$/.test(entry.assetId ?? '')) errors.push(`${at}: invalid assetId`)
++  if (ids.has(entry.assetId)) errors.push(`${at}: duplicate assetId ${entry.assetId}`)
++  ids.add(entry.assetId)
++  if (!screens.has(entry.screen)) errors.push(`${at}: invalid screen ${entry.screen}`)
++  if (!reviewStatuses.has(entry.reviewStatus)) errors.push(`${at}: invalid reviewStatus`)
++  if (!rightsStatuses.has(entry.rightsStatus)) errors.push(`${at}: invalid rightsStatus`)
++  if (!Number.isInteger(entry.dimensions?.width) || entry.dimensions.width < 1 || !Number.isInteger(entry.dimensions?.height) || entry.dimensions.height < 1) errors.push(`${at}: invalid dimensions`)
++  for (const crop of ['pc', 'tablet', 'mobile390', 'mobile360']) if (!entry.crop?.[crop]) errors.push(`${at}: missing crop.${crop}`)
++  if (!Array.isArray(entry.requiredStates) || entry.requiredStates.length === 0) errors.push(`${at}: requiredStates must be non-empty`)
++  if (entry.sha256 !== null && !/^[a-f0-9]{64}$/i.test(entry.sha256)) errors.push(`${at}: invalid sha256`)
++  if (entry.reviewStatus === 'accepted') {
++    if (entry.rightsStatus !== 'cleared') errors.push(`${at}: accepted asset rights are not cleared`)
++    if (!entry.source || !entry.generator || !entry.modelLicenseChain || !entry.reviewer || !entry.sha256) errors.push(`${at}: accepted asset provenance is incomplete`)
++  }
++  if (entry.reviewStatus === 'rejected' && !entry.rejectReason) errors.push(`${at}: rejected asset needs rejectReason`)
++}
++
++const requiredVillageIds = [
++  'village_facade_great_lantern', 'village_facade_forge_storehouse', 'village_facade_star_shrine',
++  'village_facade_tofu_shop', 'village_facade_departure_gate',
++]
++for (const id of requiredVillageIds) if (!ids.has(id)) errors.push(`missing AR1 village ID ${id}`)
++
++if (errors.length) {
++  console.error(errors.join('\n'))
++  process.exit(1)
++}
++console.log(`visual manifest OK: ${entries.length} entries, ${ids.size} unique IDs`)
+diff --git a/src/dungeon/engine.ts b/src/dungeon/engine.ts
+index b98d63d..6c11919 100644
+--- a/src/dungeon/engine.ts
++++ b/src/dungeon/engine.ts
+@@ -3,7 +3,7 @@
+ // 内部は5層構成に刷新: ground(一括ベイク)/water/decal(揺れ草)/mid(props+影+プレイヤー, y-sort)/glow(加算光)
+ // + スクリーン層: darkness(照明RT)/vignette。灯ゲージが初めて画面に現れる(松明半径連動)。
+ import { Application, Container, Graphics, Sprite, Texture, Assets } from 'pixi.js'
+-import type { FloorDef, TileKind } from './types'
++import type { DungeonDiscoverySnapshot, DungeonPoiKind, FloorDef, TileKind } from './types'
+ import { TILE_CHARS, isWalkable } from './types'
+ import { usedKey, isReusableGuardTile, sealBossKeys } from './usedTiles' // M33: 使用済みキー/ボス床の純関数(vitest固定)
+ import { themeForBg, type DungeonTheme } from './render/theme'
+@@ -528,6 +528,28 @@ export class DungeonEngine {
+     return this.minimap?.exploreRatio() ?? 0
+   }
+ 
++  /**
++   * 発見済みPOIを、描画や永続runの使用済み状態から独立して返す。
++   * React側はこのread APIだけをpollし、`run.used`を発見済みの代用にしない。
++   */
++  discoverySnapshot(): DungeonDiscoverySnapshot {
++    const poiKinds = new Set<DungeonPoiKind>([
++      'stairs', 'entrance', 'chest', 'camp', 'shrine', 'boss', 'monument',
++    ])
++    const pois: DungeonDiscoverySnapshot['pois'] = []
++    const totals: DungeonDiscoverySnapshot['totals'] = {}
++    for (let y = 0; y < this.grid.length; y++) {
++      for (let x = 0; x < (this.grid[y]?.length ?? 0); x++) {
++        const kind = this.grid[y][x]
++        if (!poiKinds.has(kind as DungeonPoiKind)) continue
++        const poiKind = kind as DungeonPoiKind
++        totals[poiKind] = (totals[poiKind] ?? 0) + 1
++        if (this.visited.has(`${x}:${y}`)) pois.push({ kind: poiKind, x, y })
++      }
++    }
++    return { exploredRatio: this.exploreRatio(), pois, totals }
++  }
++
+   setPaused(p: boolean): void {
+     this.paused = p
+   }
+@@ -888,8 +910,7 @@ export class DungeonEngine {
+ 
+   /** 下り階段が発見済みか(短期目的表示用 — M24 §4.5)。Dungeon.tsx側から500ms間隔でpollされる想定。 */
+   stairsFound(): boolean {
+-    const s = this.findTile('stairs')
+-    return !!s && this.visited.has(`${s.x}:${s.y}`)
++    return this.discoverySnapshot().pois.some((poi) => poi.kind === 'stairs')
+   }
+ 
+   /** ミニマップの拡大表示を切り替える(M24 §4.6)。Minimap.containerは公開フィールドのため、
+diff --git a/src/dungeon/types.ts b/src/dungeon/types.ts
+index aad58d4..34d2263 100644
+--- a/src/dungeon/types.ts
++++ b/src/dungeon/types.ts
+@@ -6,6 +6,27 @@ export type TileKind =
+   | 'wall' | 'floor' | 'grass' | 'stairs' | 'entrance'
+   | 'chest' | 'camp' | 'shrine' | 'boss' | 'water' | 'monument'
+ 
++export type DungeonPoiKind = Extract<
++  TileKind,
++  'stairs' | 'entrance' | 'chest' | 'camp' | 'shrine' | 'boss' | 'monument'
++>
++
++export interface DiscoveredDungeonPoi {
++  kind: DungeonPoiKind
++  x: number
++  y: number
++}
++
++/**
++ * Canvas外の探索案内が読む、engine所有の発見状態。
++ * `DungeonRun.used`は「利用済み」であって「発見済み」ではないため、この契約へ混ぜない。
++ */
++export interface DungeonDiscoverySnapshot {
++  exploredRatio: number
++  pois: DiscoveredDungeonPoi[]
++  totals: Partial<Record<DungeonPoiKind, number>>
++}
++
+ export const TILE_CHARS: Record<string, TileKind> = {
+   '#': 'wall', '.': 'floor', ',': 'grass', '>': 'stairs', '<': 'entrance',
+   'C': 'chest', 'F': 'camp', 'S': 'shrine', 'B': 'boss', '~': 'water', 'M': 'monument',
+diff --git a/src/ui/Battle.tsx b/src/ui/Battle.tsx
+index 736aef3..37ac7c9 100644
+--- a/src/ui/Battle.tsx
++++ b/src/ui/Battle.tsx
+@@ -31,11 +31,47 @@ import './m17_battle.css'
+ import './battle_m24.css'
+ import './battle_m25.css'
+ 
++type TargetMenu =
++  | { kind: 'target'; skillId?: string; itemId?: string; side: 'enemy' | 'ally' }
++
++type ConfirmMenu = {
++  kind: 'confirm'
++  source: TargetMenu
++  action: BattleAction
++  actionName: string
++  targetKey: string
++}
++
+ type Menu =
+   | { kind: 'root' }
+   | { kind: 'skill' }
+   | { kind: 'item' } // M28-C: 道具(回復薬)一覧
+-  | { kind: 'target'; skillId?: string; itemId?: string; side: 'enemy' | 'ally' }
++  | TargetMenu
++  | ConfirmMenu
++
++// AR0: 対象札の操作は「選択」だけに限定し、ここでは戦闘コマンドを発火しない。
++// 通常攻撃/単体技/単体道具は必ず確認盤を経由してから実行する。
++function targetConfirmation(source: TargetMenu, targetKey: string): ConfirmMenu {
++  if (source.itemId) {
++    return {
++      kind: 'confirm', source, targetKey,
++      actionName: consumableById(source.itemId)?.name ?? '道具',
++      action: { type: 'item', itemId: source.itemId, targetKey },
++    }
++  }
++  if (source.skillId) {
++    return {
++      kind: 'confirm', source, targetKey,
++      actionName: skillById(source.skillId).name,
++      action: { type: 'skill', skillId: source.skillId, targetKey },
++    }
++  }
++  return {
++    kind: 'confirm', source, targetKey,
++    actionName: '攻撃',
++    action: { type: 'attack', targetKey },
++  }
++}
+ 
+ interface FxEvent {
+   id: number
+@@ -143,6 +179,15 @@ export function BattleScreen() {
+   const [pendingActionLabel, setPendingActionLabel] = useState<string | null>(null)
+   const stageRef = useRef<HTMLDivElement>(null)
+   const bodyRefs = useRef<Map<string, HTMLDivElement>>(new Map())
++  // AR0: 対象選択→確認→実行のフォーカス経路。対象札と実行釦へ明示的に移し、
++  // Escで一段戻った時は選択札、二段戻った時は起点コマンドへ復元する。
++  const combatantRefs = useRef<Map<string, HTMLDivElement>>(new Map())
++  const confirmButtonRef = useRef<HTMLButtonElement>(null)
++  const attackButtonRef = useRef<HTMLButtonElement>(null)
++  const skillButtonRef = useRef<HTMLButtonElement>(null)
++  const itemButtonRef = useRef<HTMLButtonElement>(null)
++  const menuOriginRef = useRef<'attack' | 'skill' | 'item' | null>(null)
++  const lastTargetKeyRef = useRef<string | null>(null)
+ 
+   const stageFamily = (() => {
+     if (!regionId) return 'forest'
+@@ -313,34 +358,57 @@ export function BattleScreen() {
+     return () => clearTimeout(t)
+   }, [])
+ 
+-  // M24 §3.5/§7.1: 対象選択中は数字キー(1〜)でも選べ、Escapeで取消せる(Tab/Enter/Spaceは
+-  // CombatantNode側のtabIndex/onKeyDownで既に対応済み)
++  // AR0: 数字/Enter/Space/タップは対象の「選択」まで。戦闘コマンドの実行は確認盤の
++  // 明示ボタンだけに限定する。Escは 確認→対象選択→起点コマンド の二段戻り。
+   useEffect(() => {
+     if (!battle) return
+-    if (menu.kind !== 'target' && menu.kind !== 'skill' && menu.kind !== 'item') return
++    if (menu.kind !== 'target' && menu.kind !== 'confirm' && menu.kind !== 'skill' && menu.kind !== 'item') return
+     const pool = menu.kind === 'target'
+       ? (menu.side === 'enemy' ? battle.enemies : battle.allies).filter((c) => c.hp > 0)
+       : []
+     const onKey = (ev: KeyboardEvent) => {
+-      // 技/道具/対象メニュー中のEscはメニューを閉じる。オート停止は auto 依存の別effectが担当(M29修正)。
+-      if (ev.key === 'Escape') { ev.preventDefault(); setMenu({ kind: 'root' }); return }
++      // オート停止は auto 依存の別effectが担当(M29修正)。
++      if (ev.key === 'Escape') {
++        ev.preventDefault()
++        if (menu.kind === 'confirm') {
++          lastTargetKeyRef.current = menu.targetKey
++          setMenu(menu.source)
++        } else {
++          setMenu({ kind: 'root' })
++          window.setTimeout(() => {
++            const origin = menuOriginRef.current === 'attack'
++              ? attackButtonRef.current
++              : menuOriginRef.current === 'skill'
++                ? skillButtonRef.current
++                : menuOriginRef.current === 'item'
++                  ? itemButtonRef.current
++                  : null
++            origin?.focus()
++          }, 0)
++        }
++        return
++      }
+       if (menu.kind !== 'target') return
+       const n = Number(ev.key)
+       if (!Number.isInteger(n) || n < 1 || n > pool.length) return
+       ev.preventDefault()
+       const target = pool[n - 1]
+-      const actionName = menu.itemId
+-        ? consumableById(menu.itemId)?.name ?? '道具'
+-        : menu.skillId ? skillById(menu.skillId).name : '攻撃'
+-      setPendingActionLabel(actionLabel(battle, actionName, target.key))
+-      battleCommand(
+-        menu.itemId
+-          ? { type: 'item', itemId: menu.itemId, targetKey: target.key }
+-          : menu.skillId
+-            ? { type: 'skill', skillId: menu.skillId, targetKey: target.key }
+-            : { type: 'attack', targetKey: target.key },
+-      )
+-      setMenu({ kind: 'root' })
++      // 回復対象は既存の高速操作を維持。AR0の誤発火防止対象は敵札から発火する攻撃経路。
++      if (menu.side === 'ally') {
++        const actionName = menu.itemId
++          ? consumableById(menu.itemId)?.name ?? '道具'
++          : menu.skillId ? skillById(menu.skillId).name : '支援'
++        setPendingActionLabel(actionLabel(battle, actionName, target.key))
++        battleCommand(
++          menu.itemId
++            ? { type: 'item', itemId: menu.itemId, targetKey: target.key }
++            : { type: 'skill', skillId: menu.skillId!, targetKey: target.key },
++        )
++        setMenu({ kind: 'root' })
++        return
++      }
++      lastTargetKeyRef.current = target.key
++      setMenu(targetConfirmation(menu, target.key))
+     }
+     window.addEventListener('keydown', onKey)
+     return () => window.removeEventListener('keydown', onKey)
+@@ -348,6 +416,21 @@ export function BattleScreen() {
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [battle, menu, battleCommand])
+ 
++  useEffect(() => {
++    if (menu.kind === 'confirm') {
++      window.requestAnimationFrame(() => confirmButtonRef.current?.focus())
++      return
++    }
++    if (menu.kind !== 'target' || !battle) return
++    const pool = (menu.side === 'enemy' ? battle.enemies : battle.allies).filter((c) => c.hp > 0)
++    const key = lastTargetKeyRef.current && pool.some((c) => c.key === lastTargetKeyRef.current)
++      ? lastTargetKeyRef.current
++      : pool[0]?.key
++    window.requestAnimationFrame(() => {
++      if (key) combatantRefs.current.get(key)?.focus()
++    })
++  }, [battle, menu])
++
+   const revealing = pending.length > 0
+   const actor = battle ? currentActor(battle) : undefined
+   const isPlayerTurn = !!battle && battle.phase === 'input' && !!actor?.isAlly && !revealing
+@@ -437,47 +520,41 @@ export function BattleScreen() {
+ 
+   const onEnemyClick = (e: Combatant) => {
+     if (!isPlayerTurn || e.hp <= 0) return
+-    // 技のターゲット選択中はそれを消化
+-    if (menu.kind === 'target' && menu.side === 'enemy') {
+-      if (menu.skillId) tryShowOugiCutin(menu.skillId)
+-      const actionName = menu.skillId ? skillById(menu.skillId).name : '攻撃'
+-      runCommand(
+-        menu.skillId ? { type: 'skill', skillId: menu.skillId, targetKey: e.key } : { type: 'attack', targetKey: e.key },
+-        actionLabel(battle, actionName, e.key),
+-      )
+-      setMenu({ kind: 'root' })
+-      return
+-    }
+-    // それ以外は敵タップ=即通常攻撃(ワンタップ攻撃)
+-    if (menu.kind === 'root') {
+-      runCommand({ type: 'attack', targetKey: e.key }, actionLabel(battle, '攻撃', e.key))
++    const source = menu.kind === 'target'
++      ? menu
++      : menu.kind === 'confirm'
++        ? menu.source
++        : null
++    if (source?.side === 'enemy') {
++      lastTargetKeyRef.current = e.key
++      setMenu(targetConfirmation(source, e.key))
+     }
+   }
+-  // 「攻撃」ボタン=chainTarget/先頭生存敵に即発火(ワンタップ攻撃)
+-  const doQuickAttack = () => {
+-    if (!battle || !isPlayerTurn) return
+-    const foes = battle.enemies.filter((e) => e.hp > 0)
+-    if (foes.length === 0) return
+-    const target = battle.chainTarget && foes.some((f) => f.key === battle.chainTarget)
+-      ? battle.chainTarget
+-      : foes[0].key
+-    runCommand({ type: 'attack', targetKey: target }, actionLabel(battle, '攻撃', target))
++  // 「攻撃」は対象選択の開始だけを行う。敵札からの即時攻撃経路は持たない。
++  const beginAttack = () => {
++    if (!isPlayerTurn) return
++    menuOriginRef.current = 'attack'
++    lastTargetKeyRef.current = battle.chainTarget ?? null
++    setMenu({ kind: 'target', side: 'enemy' })
+   }
+   const onAllyClick = (a: Combatant) => {
+     if (!isPlayerTurn || a.hp <= 0) return
+-    // M28-C: 道具(単体回復)の対象選択を消化
+-    if (menu.kind === 'target' && menu.side === 'ally' && menu.itemId) {
+-      const def = consumableById(menu.itemId)
+-      runCommand({ type: 'item', itemId: menu.itemId, targetKey: a.key }, actionLabel(battle, def?.name ?? '道具', a.key))
+-      setMenu({ kind: 'root' })
+-      return
+-    }
+-    if (menu.kind === 'target' && menu.side === 'ally' && menu.skillId) {
+-      tryShowOugiCutin(menu.skillId)
+-      runCommand(
+-        { type: 'skill', skillId: menu.skillId, targetKey: a.key },
+-        actionLabel(battle, skillById(menu.skillId).name, a.key),
+-      )
++    const source = menu.kind === 'target'
++      ? menu
++      : menu.kind === 'confirm'
++        ? menu.source
++        : null
++    if (source?.side === 'ally') {
++      if (source.itemId) {
++        const def = consumableById(source.itemId)
++        runCommand({ type: 'item', itemId: source.itemId, targetKey: a.key }, actionLabel(battle, def?.name ?? '道具', a.key))
++      } else if (source.skillId) {
++        tryShowOugiCutin(source.skillId)
++        runCommand(
++          { type: 'skill', skillId: source.skillId, targetKey: a.key },
++          actionLabel(battle, skillById(source.skillId).name, a.key),
++        )
++      }
+       setMenu({ kind: 'root' })
+     }
+   }
+@@ -509,10 +586,34 @@ export function BattleScreen() {
+     }
+   }
+ 
++  const executeConfirmed = () => {
++    if (menu.kind !== 'confirm') return
++    if (menu.source.skillId) tryShowOugiCutin(menu.source.skillId)
++    runCommand(menu.action, actionLabel(battle, menu.actionName, menu.targetKey))
++    lastTargetKeyRef.current = null
++    setMenu({ kind: 'root' })
++  }
++
++  const returnToRoot = () => {
++    lastTargetKeyRef.current = null
++    setMenu({ kind: 'root' })
++    window.setTimeout(() => {
++      const origin = menuOriginRef.current === 'attack'
++        ? attackButtonRef.current
++        : menuOriginRef.current === 'skill'
++          ? skillButtonRef.current
++          : menuOriginRef.current === 'item'
++            ? itemButtonRef.current
++            : null
++      origin?.focus()
++    }, 0)
++  }
++
+   // M24: 対象選択中の番号バッジ(1始まり。0=非表示)用に、選択可能な生存者だけの並びを求める
+-  const targetableEnemies = isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy'
++  const activeTargetMenu = menu.kind === 'target' ? menu : menu.kind === 'confirm' ? menu.source : null
++  const targetableEnemies = isPlayerTurn && activeTargetMenu?.side === 'enemy'
+     ? battle.enemies.filter((c) => c.hp > 0) : []
+-  const targetableAllies = isPlayerTurn && menu.kind === 'target' && menu.side === 'ally'
++  const targetableAllies = isPlayerTurn && activeTargetMenu?.side === 'ally'
+     ? battle.allies.filter((c) => c.hp > 0) : []
+   // M25§4.2: 主(boss)は--szに依存しない専用slotへ。残りの通常敵で1/2/3〜4体のpresetを決める。
+   const nonBossEnemies = battle.enemies.filter((e) => !e.enemyId?.startsWith('boss_'))
+@@ -520,11 +621,24 @@ export function BattleScreen() {
+   const allyGridPreset = slotPresetOf(battle.allies.length)
+   // M24 §3.4: 対象選択中は狙う技自体の属性で相性を示す(未指定時は行動者の属性のまま=既存挙動)
+   const previewElement: Element | undefined =
+-    menu.kind === 'target' && menu.skillId ? (skillById(menu.skillId).element ?? actor?.element) : actor?.element
++    activeTargetMenu?.skillId ? (skillById(activeTargetMenu.skillId).element ?? actor?.element) : actor?.element
+   const registerBodyRef = (key: string, el: HTMLDivElement | null) => {
+     if (el) bodyRefs.current.set(key, el)
+     else bodyRefs.current.delete(key)
+   }
++  const registerCombatantRef = (key: string, el: HTMLDivElement | null) => {
++    if (el) combatantRefs.current.set(key, el)
++    else combatantRefs.current.delete(key)
++  }
++  const confirmedTarget = menu.kind === 'confirm'
++    ? battle.enemies.find((c) => c.key === menu.targetKey) ?? battle.allies.find((c) => c.key === menu.targetKey)
++    : undefined
++  const confirmedMatchup = menu.kind === 'confirm' && confirmedTarget && !confirmedTarget.isAlly
++    ? matchup(previewElement, confirmedTarget.element)
++    : null
++  const confirmedMultiplier = menu.kind === 'confirm' && battle.chainTarget === menu.targetKey && battle.chain > 0
++    ? chainMultiplier(battle.chain)
++    : 1
+   // M25§4.3 手順1: 行動者/対象「以外」を暗くする。veinsから導出するだけで追加のDOM計測はしない。
+   const focusKeys = new Set(veins.flatMap((v) => [v.actorKey, v.targetKey]))
+   const isDimmed = (key: string) => focusKeys.size > 0 && !focusKeys.has(key)
+@@ -555,9 +669,12 @@ export function BattleScreen() {
+         </div>
+       )}
+ 
+-      {slotPhase === 'spin' && <LootSlot />}
+-
+-      <TurnOrderBar battle={battle} />
++      {/* AR0: 上端は行動順・報酬予告・全画面設定釦だけの予約帯。戦場と同じ
++          position層へ混ぜないため、敵兆し/敵札が上端UIへ侵入しない。 */}
++      <div className="battle-top-rail" data-zone="battle-top">
++        <TurnOrderBar battle={battle} />
++        {slotPhase === 'spin' && <LootSlot />}
++      </div>
+ 
+       <div
+         className={`battle-stage${battle.phase === 'won' ? ' stage-won' : ''}${isBossVictory ? ' stage-won-boss' : ''}`}
+@@ -598,8 +715,8 @@ export function BattleScreen() {
+                   c={bossCombatant}
+                   role="front"
+                   fx={fx[bossCombatant.key] ?? []}
+-                  targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && bossCombatant.hp > 0}
+-                  clickable={isPlayerTurn && menu.kind === 'root' && bossCombatant.hp > 0}
++                  targetable={isPlayerTurn && activeTargetMenu?.side === 'enemy' && bossCombatant.hp > 0}
++                  selected={menu.kind === 'confirm' && menu.targetKey === bossCombatant.key}
+                   chainBadge={battle.chainTarget === bossCombatant.key && battle.chain > 0 ? battle.chain + 1 : 0}
+                   leader={false}
+                   isBoss
+@@ -611,6 +728,7 @@ export function BattleScreen() {
+                   intent={isPlayerTurn ? battle.intents?.[bossCombatant.key] : undefined}
+                   onClick={() => onEnemyClick(bossCombatant)}
+                   onBodyRef={registerBodyRef}
++                  onCombatantRef={registerCombatantRef}
+                 >
+                   <EnemyVisual2 e={bossCombatant} />
+                 </CombatantNode>
+@@ -626,8 +744,8 @@ export function BattleScreen() {
+                     c={e}
+                     role={role}
+                     fx={fx[e.key] ?? []}
+-                    targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'enemy' && e.hp > 0}
+-                    clickable={isPlayerTurn && menu.kind === 'root' && e.hp > 0}
++                    targetable={isPlayerTurn && activeTargetMenu?.side === 'enemy' && e.hp > 0}
++                    selected={menu.kind === 'confirm' && menu.targetKey === e.key}
+                     chainBadge={battle.chainTarget === e.key && battle.chain > 0 ? battle.chain + 1 : 0}
+                     leader={battle.leaderKey === e.key}
+                     isBoss={false}
+@@ -639,6 +757,7 @@ export function BattleScreen() {
+                     intent={isPlayerTurn ? battle.intents?.[e.key] : undefined}
+                     onClick={() => onEnemyClick(e)}
+                     onBodyRef={registerBodyRef}
++                    onCombatantRef={registerCombatantRef}
+                   >
+                     <EnemyVisual2 e={e} />
+                   </CombatantNode>
+@@ -658,7 +777,8 @@ export function BattleScreen() {
+                     c={a}
+                     role={role}
+                     fx={fx[a.key] ?? []}
+-                    targetable={isPlayerTurn && menu.kind === 'target' && menu.side === 'ally' && a.hp > 0}
++                    targetable={isPlayerTurn && activeTargetMenu?.side === 'ally' && a.hp > 0}
++                    selected={menu.kind === 'confirm' && menu.targetKey === a.key}
+                     acting={actor?.key === a.key && battle.phase === 'input'}
+                     chainBadge={0}
+                     cardTier="normal"
+@@ -667,6 +787,7 @@ export function BattleScreen() {
+                     targetNumber={targetableAllies.indexOf(a) + 1}
+                     onClick={() => onAllyClick(a)}
+                     onBodyRef={registerBodyRef}
++                    onCombatantRef={registerCombatantRef}
+                   >
+                     <AllyVisual gata={ch?.tomoshigata ?? 'homura'} sex={ch?.sex ?? 'm'} element={a.element} />
+                   </CombatantNode>
+@@ -778,6 +899,7 @@ export function BattleScreen() {
+                   type="button"
+                   className={`cmd-auto-persist ${auto ? 'is-on' : ''}`}
+                   aria-pressed={auto}
++                  data-zone="battle-settings"
+                   // M32修正: 技/道具/対象選択中にオートONにすると、選択が宙に浮いて素攻撃が自動発火し
+                   // target-hintがチラつく回帰があった。切替時は必ずメニューをrootへ戻す。
+                   onClick={() => { setAuto(!auto); setMenu({ kind: 'root' }) }}
+@@ -789,12 +911,23 @@ export function BattleScreen() {
+                 <>
+                   {!isPlayerTurn && <p className="cmd-hint-line">{centerStatusLabel}</p>}
+                   <div className="cmd-grid">
+-                    <button className="cmd-btn cmd-main" disabled={!isPlayerTurn} data-zone="command" onClick={doQuickAttack}>攻撃</button>
+                     <button
++                      ref={attackButtonRef}
++                      className="cmd-btn cmd-main"
++                      disabled={!isPlayerTurn}
++                      data-zone="command"
++                      onClick={beginAttack}
++                    >攻撃</button>
++                    <button
++                      ref={skillButtonRef}
+                       className="cmd-btn"
+                       disabled={!isPlayerTurn}
+                       data-zone="command"
+-                      onClick={() => { setMenu({ kind: 'skill' }); setPreviewSkillId(actor?.skills[0] ?? null) }}
++                      onClick={() => {
++                        menuOriginRef.current = 'skill'
++                        setMenu({ kind: 'skill' })
++                        setPreviewSkillId(actor?.skills[0] ?? null)
++                      }}
+                     >
+                       技
+                     </button>
+@@ -802,10 +935,11 @@ export function BattleScreen() {
+                     <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'flee' }, '逃げる')}>逃げる</button>
+                     {/* M28-C: 道具(回復薬)。所持が無ければ無効表示で領域は保つ。 */}
+                     <button
++                      ref={itemButtonRef}
+                       className="cmd-btn"
+                       disabled={!isPlayerTurn || availItems.length === 0}
+                       data-zone="command"
+-                      onClick={() => setMenu({ kind: 'item' })}
++                      onClick={() => { menuOriginRef.current = 'item'; setMenu({ kind: 'item' }) }}
+                     >
+                       道具{availItems.length > 0 && <span className="sk-info">{availItems.reduce((n, x) => n + x.count, 0)}</span>}
+                     </button>
+@@ -837,7 +971,7 @@ export function BattleScreen() {
+                     })}
+                   </div>
+                   {/* 戻るはスクロール外に固定(§3.8/§5.4) */}
+-                  <button className="cmd-btn cmd-ghost skill-back" onClick={() => setMenu({ kind: 'root' })}>選ばず戻る</button>
++                  <button className="cmd-btn cmd-ghost skill-back" onClick={returnToRoot}>選ばず戻る</button>
+                 </div>
+               )}
+               {/* M28-C: 道具一覧。技盤と同じ骨格を流用(scrollは.skill-list、戻るは外固定) */}
+@@ -853,21 +987,56 @@ export function BattleScreen() {
+                       </button>
+                     ))}
+                   </div>
+-                  <button className="cmd-btn cmd-ghost skill-back" onClick={() => setMenu({ kind: 'root' })}>選ばず戻る</button>
++                  <button className="cmd-btn cmd-ghost skill-back" onClick={returnToRoot}>選ばず戻る</button>
+                 </div>
+               )}
+               {isPlayerTurn && menu.kind === 'target' && (
+                 <div className="target-hint">
+                   <p className="cmd-hint-line">{menu.side === 'enemy' ? '狙う魔性を選べ' : '授ける相手を選べ'}</p>
+-                  <p className="cmd-hint-line cmd-hint-sub">数字キー・Tabで選択/Escで取消</p>
+-                  <button className="cmd-btn cmd-ghost" onClick={() => setMenu({ kind: 'root' })}>やめる</button>
++                  <p className="cmd-hint-line cmd-hint-sub">数字キー・Tabで選択／Escで取消</p>
++                  <button className="cmd-btn cmd-ghost" onClick={returnToRoot}>やめる</button>
++                </div>
++              )}
++              {isPlayerTurn && menu.kind === 'confirm' && confirmedTarget && (
++                <div
++                  className="action-confirm"
++                  id="battle-action-confirm"
++                  role="status"
++                  aria-live="polite"
++                  aria-atomic="true"
++                >
++                  <p className="action-confirm-kicker">行動予告</p>
++                  <p className="action-confirm-title"><b>{menu.actionName}</b><span>→</span>{confirmedTarget.name}</p>
++                  <dl className="action-confirm-facts">
++                    <div><dt>相性</dt><dd>{confirmedMatchup === 'adv' ? '有利 ▲' : confirmedMatchup === 'dis' ? '不利 ▽' : confirmedMatchup === 'even' ? '互角' : '—'}</dd></div>
++                    <div><dt>継足</dt><dd>×{confirmedMultiplier.toFixed(2)}</dd></div>
++                    <div><dt>対象体力</dt><dd>{confirmedTarget.hp}/{confirmedTarget.maxHp}</dd></div>
++                  </dl>
++                  <div className="action-confirm-actions">
++                    <button
++                      ref={confirmButtonRef}
++                      type="button"
++                      className="cmd-btn cmd-main"
++                      data-zone="action-execute"
++                      onClick={executeConfirmed}
++                    >この行動を実行</button>
++                    <button
++                      type="button"
++                      className="cmd-btn cmd-ghost"
++                      onClick={() => {
++                        lastTargetKeyRef.current = menu.targetKey
++                        setMenu(menu.source)
++                      }}
++                    >標的を選び直す</button>
++                  </div>
++                  <p className="action-confirm-keys">Esc: 標的選択へ戻る</p>
+                 </div>
+               )}
+             </div>
+ 
+             {/* 右: 選択中の技の威力/属性/消費/対象範囲(§3.5)。対象相性は戦場上の相性バッジ側で示す */}
+             <div className="turnpanel-detail">
+-              <SkillDetailPanel skillId={menu.kind === 'target' ? menu.skillId : menu.kind === 'skill' ? previewSkillId : null} />
++              <SkillDetailPanel skillId={activeTargetMenu?.skillId ?? (menu.kind === 'skill' ? previewSkillId : null)} />
+             </div>
+           </>
+         )}
+@@ -897,7 +1066,13 @@ function TurnOrderBar({ battle }: { battle: NonNullable<ReturnType<typeof useGam
+         </span>
+       )}
+       {seq.map((c, i) => (
+-        <span key={`${c.key}-${i}`} className={`turn-chip ${c.isAlly ? 'is-ally' : 'is-enemy'} ${i === 0 ? 'is-now' : ''}`}>
++        <span
++          key={`${c.key}-${i}`}
++          className={`turn-chip ${c.isAlly ? 'is-ally' : 'is-enemy'} ${i === 0 ? 'is-now' : ''}`}
++          data-step={i}
++          aria-current={i === 0 ? 'step' : undefined}
++          title={`${i === 0 ? '現在' : `あと${i}手`}・${c.name}`}
++        >
+           {i === 0 && <em>今</em>}
+           <i className="turn-chip-side">{c.isAlly ? '味' : '魔'}</i>
+           {c.name}
+@@ -984,7 +1159,7 @@ const INTENT_TITLE: Record<EnemyIntent, string> = {
+ }
+ 
+ function CombatantNode({
+-  c, role, fx, targetable, clickable, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, onClick, onBodyRef, children,
++  c, role, fx, targetable, clickable, selected, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, onClick, onBodyRef, onCombatantRef, children,
+ }: {
+   c: Combatant
+   // M25§4.2: 前列/後列の役割だけを渡す。列数・行そのものはCSS(.slot-preset-*)側の責務にし、
+@@ -993,6 +1168,7 @@ function CombatantNode({
+   fx: FxEvent[]
+   targetable: boolean
+   clickable?: boolean
++  selected?: boolean // AR0: 確認盤に載っている現在の標的
+   acting?: boolean
+   chainBadge: number
+   leader?: boolean
+@@ -1005,6 +1181,7 @@ function CombatantNode({
+   intent?: EnemyIntent // M25 §5: 敵の次行動カテゴリ(生存敵・入力番のみ)
+   onClick: () => void
+   onBodyRef?: (key: string, el: HTMLDivElement | null) => void
++  onCombatantRef?: (key: string, el: HTMLDivElement | null) => void
+   children: React.ReactNode
+ }) {
+   const lunge = fx.some((f) => f.kind === 'lunge')
+@@ -1021,6 +1198,7 @@ function CombatantNode({
+         c.isAlly ? 'is-ally' : 'is-enemy',
+         c.hp <= 0 ? 'dead' : '',
+         targetable ? 'targetable' : '',
++        selected ? 'is-selected-target' : '',
+         acting ? 'acting' : '',
+         isBoss ? 'is-boss' : '',
+         dimmed ? 'stage-dim' : '',
+@@ -1028,12 +1206,15 @@ function CombatantNode({
+         hit ? 'fx-hit' : '',
+         ko ? 'fx-ko' : '',
+       ].join(' ')}
++      ref={(el) => onCombatantRef?.(c.key, el)}
+       data-row={role}
+       style={{ order: role === 'back' ? 0 : 1, zIndex: role === 'front' ? 12 : 10 }}
+       onClick={onClick}
+       role={interactive ? 'button' : undefined}
+       tabIndex={interactive ? 0 : -1}
+-      aria-label={`${c.name} 体力${c.hp}/${c.maxHp}`}
++      aria-pressed={interactive ? !!selected : undefined}
++      aria-describedby={selected ? 'battle-action-confirm' : undefined}
++      aria-label={`${targetNumber && targetNumber > 0 ? `${targetNumber}、` : ''}${c.name} 体力${c.hp}/${c.maxHp}${selected ? '、選択中' : ''}`}
+       onKeyDown={(e) => {
+         if (interactive && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick() }
+       }}
+diff --git a/src/ui/Dungeon.tsx b/src/ui/Dungeon.tsx
+index ae6bf17..83c70ae 100644
+--- a/src/ui/Dungeon.tsx
++++ b/src/ui/Dungeon.tsx
+@@ -4,8 +4,7 @@ import { regionById } from '../core/data/regions'
+ import { MONTH_NAMES } from '../core/types'
+ import { dungeonByRegion } from '../dungeon/maps'
+ import { DungeonEngine } from '../dungeon/engine'
+-import { TILE_CHARS } from '../dungeon/types'
+-import type { DungeonRun } from '../dungeon/types'
++import type { DungeonDiscoverySnapshot, DungeonPoiKind } from '../dungeon/types'
+ import { boonById } from '../core/data/boons'
+ import { Bar, MaybeImg } from './components'
+ import { Sheet } from './layout/shell'
+@@ -41,49 +40,34 @@ export function dungeonEntryEcho(regionId: string, loreFragments: number): strin
+   return (loreFragments > 0 ? intro[1] : intro[0]) ?? intro[0]
+ }
+ 
+-// M24 §4.5: 短期目的の算出(石碑の残数はfloorDef.ascii+run.usedから導出、階段発見/灯不足はengine/runから)
+-function monumentProgress(ascii: string[], floorIndex: number, used: string[]): { found: number; total: number } {
+-  const usedSet = new Set(used)
+-  let total = 0
+-  let found = 0
+-  for (let y = 0; y < ascii.length; y++) {
+-    const row = ascii[y]
+-    for (let x = 0; x < row.length; x++) {
+-      if (TILE_CHARS[row[x]] !== 'monument') continue
+-      total++
+-      if (usedSet.has(`${floorIndex}:${x}:${y}`)) found++
+-    }
+-  }
+-  return { found, total }
++const EMPTY_DISCOVERY: DungeonDiscoverySnapshot = { exploredRatio: 0, pois: [], totals: {} }
++
++const POI_LABELS: Record<DungeonPoiKind, string> = {
++  entrance: '入口',
++  stairs: '下り階段',
++  chest: '宝箱',
++  camp: '焚火',
++  shrine: '祠',
++  monument: '石碑',
++  boss: '主の座',
+ }
+ 
+-function shortTermGoal(light: number, stairsFound: boolean, m: { found: number; total: number }): string {
++const POI_ORDER: DungeonPoiKind[] = ['entrance', 'stairs', 'monument', 'camp', 'shrine', 'chest', 'boss']
++
++function shortTermGoal(light: number, discovery: DungeonDiscoverySnapshot): string {
+   if (light < 15) return '帰り火を考えよ'
+-  if (stairsFound) return '下り階段を見つけた'
+-  if (m.total > 0 && m.found < m.total) return `石碑を探す ${m.found}/${m.total}`
++  if (discovery.pois.some((poi) => poi.kind === 'stairs')) return '下り階段を見つけた'
++  const totalMonuments = discovery.totals.monument ?? 0
++  const foundMonuments = discovery.pois.filter((poi) => poi.kind === 'monument').length
++  if (totalMonuments > 0 && foundMonuments < totalMonuments) return `石碑を探す ${foundMonuments}/${totalMonuments}`
+   return '下り階段を探す'
+ }
+ 
+ // 灯籠の炎リング — 灯ゲージの視覚化(俺屍の月齢リング様式)
+ // 踏査%+短期目的を1つの帯として表示(M24 §4.5/§4.6)。engineをpollingするが500ms間隔で軽負荷。
+-function ObjectivePlate({
+-  engineRef, run, floorAscii,
+-}: {
+-  engineRef: React.MutableRefObject<{ exploreRatio(): number; stairsFound(): boolean } | null>
+-  run: DungeonRun
+-  floorAscii: string[]
+-}) {
+-  const [pct, setPct] = useState(0)
+-  const [stairs, setStairs] = useState(false)
+-  useEffect(() => {
+-    const t = setInterval(() => {
+-      setPct(Math.round((engineRef.current?.exploreRatio() ?? 0) * 100))
+-      setStairs(engineRef.current?.stairsFound() ?? false)
+-    }, 500)
+-    return () => clearInterval(t)
+-  }, [engineRef])
+-  const monuments = monumentProgress(floorAscii, run.floor, run.used)
+-  const goal = shortTermGoal(run.light, stairs, monuments)
++function ObjectivePlate({ light, discovery }: { light: number; discovery: DungeonDiscoverySnapshot }) {
++  const pct = Math.round(discovery.exploredRatio * 100)
++  const goal = shortTermGoal(light, discovery)
+   return (
+     <div className="objective-plate">
+       <span className="objective-goal" data-zone="hud-top">{goal}</span>
+@@ -92,6 +76,35 @@ function ObjectivePlate({
+   )
+ }
+ 
++function ExplorationGuide({
++  light,
++  discovery,
++  loot,
++}: {
++  light: number
++  discovery: DungeonDiscoverySnapshot
++  loot: { hoto: number; ketsu: number }
++}) {
++  const counts = new Map<DungeonPoiKind, number>()
++  for (const poi of discovery.pois) counts.set(poi.kind, (counts.get(poi.kind) ?? 0) + 1)
++  const labels = POI_ORDER.flatMap((kind) => {
++    const count = counts.get(kind) ?? 0
++    if (count === 0) return []
++    // 主の座は複数セルで一つの場所を表すため、セル数を件数として見せない。
++    return [`${POI_LABELS[kind]}${count > 1 && kind !== 'boss' ? `×${count}` : ''}`]
++  })
++  return (
++    <aside className={`exploration-guide${light < 15 ? ' is-danger' : ''}`} data-zone="exploration-guide" aria-label="探索案内">
++      <p><span>目的</span><b data-guide="objective">{shortTermGoal(light, discovery)}</b></p>
++      <p><span>発見</span><b data-guide="pois">{labels.length > 0 ? labels.join('・') : 'まだなし'}</b></p>
++      <p>
++        <span>帰還</span>
++        <b data-guide="return">いつでも可・奉燈{loot.hoto}/血珠{loot.ketsu}を確保・今月を使う</b>
++      </p>
++    </aside>
++  )
++}
++
+ // M24 §4.6: 直近一文だけを画面下中央へ3〜5秒(3行常設をやめる)。履歴は小休止から読む。
+ function RecentLog({ log }: { log: string[] }) {
+   const last = log[log.length - 1]
+@@ -175,6 +188,7 @@ function DungeonFloor() {
+   const hostRef = useRef<HTMLDivElement>(null)
+   const engineRef = useRef<DungeonEngine | null>(null)
+   const [confirm, setConfirm] = useState<Confirm>(null)
++  const [discovery, setDiscovery] = useState<DungeonDiscoverySnapshot>(EMPTY_DISCOVERY)
+   // M29+: ダンジョン描画(PixiJS)の初期化失敗を握りつぶさず可視化する。WebGLコンテキスト取得失敗や
+   // 素材読込失敗で init() が例外を投げると、従来は void で無視され「真っ暗な空キャンバス」になっていた。
+   const [renderFailed, setRenderFailed] = useState(false)
+@@ -243,6 +257,7 @@ function DungeonFloor() {
+       },
+     )
+     engineRef.current = engine
++    setDiscovery(engine.discoverySnapshot())
+     if (import.meta.env.DEV) {
+       ;(window as unknown as { __dungeon?: unknown }).__dungeon = engine
+     }
+@@ -259,6 +274,17 @@ function DungeonFloor() {
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [run.floor])
+ 
++  // Canvas内の霧開けを、DOMの探索案内へ同期する。発見状態はengineのread APIが唯一の情報源。
++  useEffect(() => {
++    const update = () => {
++      const next = engineRef.current?.discoverySnapshot()
++      if (next) setDiscovery(next)
++    }
++    update()
++    const timer = window.setInterval(update, 400)
++    return () => window.clearInterval(timer)
++  }, [run.floor])
++
+   // 地域の環境音(M10): 探索中だけ地域系統の音を敷き、離脱で止める
+   useEffect(() => {
+     audio.startAmbience(AMBIENCE_BY_BG[region.bg] ?? 'none')
+@@ -352,7 +378,7 @@ function DungeonFloor() {
+             <span className="hud-region-name">{region.name}</span>
+             <span className="hud-floor-num">地下{run.floor + 1}層</span>
+           </div>
+-          <ObjectivePlate engineRef={engineRef} run={run} floorAscii={floorDef.ascii} />
++          <ObjectivePlate light={run.light} discovery={discovery} />
+         </div>
+         <div className="hud-band-spacer" />
+         <span className="hud-calendar">
+@@ -369,28 +395,19 @@ function DungeonFloor() {
+         >
+           ☰ 小休止
+         </button>
+-        {/* M25 §3.2 row2: モバイルの2段目に置く可視ミニマップ拡大ボタン(既存の不可視tap-zoneと併存) */}
++        {/* AR0: 地図入口は、全幅で見えるこのbutton一つだけにする。Canvasを覆う透明tap-zoneは置かない。 */}
+         <button
+           className="btn btn-ghost hud-minimap-btn"
+-          data-zone="hud-top"
++          data-zone="minimap"
+           aria-label="地図を拡大表示する"
+           title="地図を拡大"
+           onClick={() => engineRef.current?.toggleMinimapZoom()}
+         >
+-          🗺
+-        </button>
+-        <button className="btn btn-danger hud-return-btn" data-zone="return-fire" onClick={() => setConfirm({ kind: 'return' })}>
+-          帰り火
++          地図
+         </button>
+       </div>
+ 
+-      {/* M24 §4.6: ミニマップ(Pixi描画)の上に重ねる不可視タップ域 — 拡大トグル */}
+-      <button
+-        className="minimap-tap-zone"
+-        data-zone="minimap"
+-        aria-label="地図の拡大表示を切り替える"
+-        onClick={() => engineRef.current?.toggleMinimapZoom()}
+-      />
++      <ExplorationGuide light={run.light} discovery={discovery} loot={run.loot} />
+ 
+       <FirstActIntro />
+ 
+@@ -420,6 +437,13 @@ function DungeonFloor() {
+         <div />
+       </div>
+ 
++      {/* AR0: 安全行動を隠さない。1回目で確認Sheet、2回目でのみ月消費を確定する。 */}
++      <div className="dungeon-return-dock">
++        <button className="btn btn-danger hud-return-btn" data-zone="return-fire" onClick={() => setConfirm({ kind: 'return' })}>
++          帰り火 — 今回の実りを持って郷へ戻る
++        </button>
++      </div>
++
+       {/* 特殊床/帰還の確認 — 中央モーダルでなく下部の短い選択面(§5.3。SheetはPC=中央小窓/モバイル=下から) */}
+       {confirm && confirm.kind === 'pause' && (
+         <Sheet title="小休止" onClose={() => setConfirm(null)} closeLabel="探索に戻る">
+@@ -438,8 +462,6 @@ function DungeonFloor() {
+             灯が細るほど魔性は狂暴になる。深追いは禁物。
+           </p>
+           <div className="confirm-actions">
+-            {/* M25: 帰り火は小休止→本ボタンの2操作で到達できる導線 */}
+-            <button className="btn btn-danger" data-zone="return-fire" onClick={() => { setConfirm({ kind: 'return' }) }}>帰り火を焚く(郷へ)</button>
+             <button className="btn btn-main" onClick={() => setConfirm(null)}>探索に戻る</button>
+           </div>
+         </Sheet>
+diff --git a/src/ui/Home.tsx b/src/ui/Home.tsx
+index e127ee5..d366920 100644
+--- a/src/ui/Home.tsx
++++ b/src/ui/Home.tsx
+@@ -391,15 +391,24 @@ function FamilyBoard({ data, onGo }: { data: GameData; onGo: (a: ActionKind) =>
+   }
+   const head = c.alive.find((x) => x.isHead) ?? c.alive[0]
+   const sel = c.alive.find((x) => x.id === selId) ?? head
+-  const smalls = c.alive.filter((x) => x.id !== sel.id)
++  // 小札は詳細表示の選択後も同じDOMを残す。選択した札を配列から外すと、
++  // キーボードフォーカスが失われ「次の人物」へ続けて移れなくなるため。
++  const smalls = c.alive
+   return (
+     <div className="family-board">
+       <div className="family-main">
+         <CharCard char={sel} seasonIndex={data.seasonIndex} />
+-        {smalls.length > 0 && (
++        {smalls.length > 1 && (
+           <div className="family-smalls">
+             {smalls.map((ch) => (
+-              <CharCard key={ch.id} char={ch} seasonIndex={data.seasonIndex} compact onClick={() => setSelId(ch.id)} />
++              <CharCard
++                key={ch.id}
++                char={ch}
++                seasonIndex={data.seasonIndex}
++                compact
++                selected={sel.id === ch.id}
++                onClick={() => setSelId(ch.id)}
++              />
+             ))}
+           </div>
+         )}
+diff --git a/src/ui/Pact.tsx b/src/ui/Pact.tsx
+index 31763d4..dbe934d 100644
+--- a/src/ui/Pact.tsx
++++ b/src/ui/Pact.tsx
+@@ -11,6 +11,7 @@ import { CharCard, MaybeImg, NightBackdrop, Panel, TsuzuriLine } from './compone
+ import { GodArtFallback } from './GodArtFallback'
+ import { gameImg, godMaxImg, HOME_BG } from './img'
+ import { ActionDock, CompareRow, Sheet, StatusCallout } from './layout/shell'
++import { pactAvailability } from './pactPolicy'
+ import './pact_m18.css'
+ import './pact_m26.css' // M26 §9.5: 星契り最終確認Sheet(pact_m18.cssより後 — 後勝ち)
+ import './pact_m35.css' // M35: 御影を切らず、全身像と奉納札を同時に読む星契り専用の祭壇レイアウト
+@@ -216,15 +217,16 @@ export function PactScreen() {
+               const sealed = !godUnlocked(g, data)
+               const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
+               const eff = pactCost(g, data.godAffinity[g.id] ?? 0) // 縁の割引(M12-2)
+-              const affordable = data.hoto >= eff && !sealed
++              const availability = pactAvailability(!sealed, data.hoto, eff)
+               const recommended = !sealed && recommendStat != null && topBias(g.statBias)[0]?.[0] === recommendStat
+               return (
+                 <button
+                   key={g.id}
+-                  className={`god-row ${godId === g.id ? 'selected' : ''} ${!affordable ? 'locked' : ''} ${recommended ? 'recommended' : ''}`}
++                  className={`god-row ${godId === g.id ? 'selected' : ''} ${sealed ? 'locked' : ''} ${!availability.contractable && availability.inspectable ? 'unaffordable' : ''} ${recommended ? 'recommended' : ''}`}
+                   aria-pressed={godId === g.id}
+-                  aria-disabled={!affordable}
+-                  onClick={() => affordable && setGodId(g.id)}
++                  aria-disabled={!availability.inspectable}
++                  title={availability.reason ?? ''}
++                  onClick={() => availability.inspectable && setGodId(g.id)}
+                 >
+                   <span className={`element-badge el-${g.element} god-row-el`}>{ELEMENT_LABELS[g.element]}</span>
+                   <span className="god-row-name">
+@@ -243,6 +245,7 @@ export function PactScreen() {
+                   <span className="god-row-cost">
+                     {sealed ? '—' : eff}
+                     {!sealed && eff < g.cost && <span className="god-row-base">{g.cost}</span>}
++                    {!availability.contractable && availability.inspectable && <span className="god-row-short">不足</span>}
+                   </span>
+                 </button>
+               )
+diff --git a/src/ui/Village.tsx b/src/ui/Village.tsx
+index e5d30c3..2f4727c 100644
+--- a/src/ui/Village.tsx
++++ b/src/ui/Village.tsx
+@@ -239,6 +239,12 @@ export function VillageScreen() {
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [talk, data])
+ 
++  // 会話中は移動操作を見せず、押下中だったD-pad入力も必ず解放する。
++  useEffect(() => {
++    if (!talk) return
++    for (const dir of ['up', 'down', 'left', 'right'] as const) engineRef.current?.pressDir(dir, false)
++  }, [talk])
++
+   const go = (s: Screen) => setScreen(s)
+   const dpad = (dir: 'up' | 'down' | 'left' | 'right', label: string) => (
+     <button
+@@ -276,14 +282,17 @@ export function VillageScreen() {
+       <div className="village-stage">
+         <div className="village-host" ref={hostRef} />
+ 
+-        {/* 近接対象 — 施設名/会話をボタンで明示(近接時のみ) */}
++        {/* 近接対象 — 対象名と動詞を一つの大buttonへ統合し、誤タップ領域を増やさない。 */}
+         {focus && !talk && (
+-          <div className="village-focus" role="status">
++          <button
++            className="btn btn-main village-focus village-focus-act"
++            data-zone="village-action"
++            onClick={() => act(focus)}
++            aria-label={`${focus.label} — ${focus.action}`}
++          >
+             <span className="village-focus-label">{focus.label}</span>
+-            <button className="btn btn-main village-focus-act" onClick={() => act(focus)}>
+-              {focus.action}
+-            </button>
+-          </div>
++            <span className="village-focus-verb">{focus.action}</span>
++          </button>
+         )}
+ 
+         {/* 会話 — 下部の帯(モーダルにせず歩行を止めない) */}
+@@ -313,17 +322,19 @@ export function VillageScreen() {
+           見渡す
+         </button>
+ 
+-        <div className="dpad">
+-          <div />
+-          {dpad('up', '▲')}
+-          <div />
+-          {dpad('left', '◀')}
+-          <div />
+-          {dpad('right', '▶')}
+-          <div />
+-          {dpad('down', '▼')}
+-          <div />
+-        </div>
++        {!talk && (
++          <div className="dpad" data-zone="dpad">
++            <div />
++            {dpad('up', '▲')}
++            <div />
++            {dpad('left', '◀')}
++            <div />
++            {dpad('right', '▶')}
++            <div />
++            {dpad('down', '▼')}
++            <div />
++          </div>
++        )}
+       </div>
+ 
+       <p className="village-hint">移動: WASD/矢印/タップ ・ 話す/入る: Enterか近接ボタン ・ 戻る: Esc</p>
+diff --git a/src/ui/battle_m25.css b/src/ui/battle_m25.css
+index 5444804..7874846 100644
+--- a/src/ui/battle_m25.css
++++ b/src/ui/battle_m25.css
+@@ -330,7 +330,7 @@
+ .cmd-auto-persist {
+   width: 100%;
+   min-height: 40px;
+-  margin-bottom: 8px;
++  margin-bottom: 14px; /* 呼吸/scaleアニメの外接矩形を含めても最低2px離す */
+   padding: 8px 14px;
+   border-radius: 8px;
+   border: 1px solid rgba(201, 168, 106, 0.7);
+@@ -532,3 +532,202 @@
+     font-size: 10.5px;
+   }
+ }
++
++/* ============================================================
++   AR0: 上端予約帯と「選択→予告→明示実行」の操作契約。
++   行動順/報酬を通常フローの同一railへ収め、右上の全画面設定釦(44px)ぶんを予約する。
++   ============================================================ */
++.battle-top-rail {
++  position: relative;
++  z-index: 24;
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  min-width: 0;
++  min-height: 0;
++  padding-right: 64px;
++  overflow: hidden;
++  background: linear-gradient(180deg, rgba(6, 8, 16, 0.96), rgba(6, 8, 16, 0.72));
++  border-bottom: 1px solid rgba(201, 168, 106, 0.22);
++}
++/* index.cssのphone向け.screen padding(12px 10px)より後勝ちし、固定戦闘面をviewportへ戻す。 */
++.screen.battle-screen { padding: 0; }
++.battle-top-rail .turn-order {
++  flex: 1 1 auto;
++  min-width: 0;
++  height: 100%;
++  max-height: 100%;
++  box-sizing: border-box;
++  flex-wrap: nowrap;
++  overflow: hidden;
++  background: transparent;
++}
++.battle-top-rail .turn-chip {
++  flex: 0 1 auto;
++  min-width: 0;
++  max-width: 11em;
++  overflow: hidden;
++  text-overflow: ellipsis;
++}
++.battle-top-rail .loot-slot {
++  position: relative;
++  inset: auto;
++  flex: 0 0 auto;
++  transform: none;
++  margin-right: 2px;
++}
++.battle-top-rail .loot-slot .slot-reel { flex-shrink: 0; }
++
++/* 選択中の札は太枠と菱形印で示し、色だけに頼らない。カードのクリックは再選択であり実行ではない。 */
++.combatant.is-selected-target .battle-art-frame {
++  outline: 3px solid var(--sel);
++  outline-offset: 3px;
++  box-shadow: 0 0 0 1px rgba(11, 15, 30, 0.92), 0 0 20px rgba(255, 157, 69, 0.58);
++}
++.combatant.is-selected-target::after {
++  content: '◆ 選択';
++  position: absolute;
++  z-index: 16;
++  top: -17px;
++  left: 50%;
++  transform: translateX(-50%);
++  padding: 1px 6px;
++  border-radius: 8px;
++  background: var(--sel);
++  color: var(--night-deep);
++  font-size: 9.5px;
++  font-weight: 800;
++  white-space: nowrap;
++  pointer-events: none;
++}
++.combatant[role='button']:focus-visible .battle-art-frame {
++  outline: 3px solid var(--amber);
++  outline-offset: 4px;
++}
++
++/* 敵兆しは全幅で札の前に1行を予約する。旧absolute top:-10は札の呼吸上昇と最大22px交差した。 */
++.combatant.is-enemy .enemy-intent {
++  position: relative;
++  inset: auto;
++  transform: translateY(-6px);
++  flex: 0 0 auto;
++  margin-bottom: 8px;
++}
++@media (prefers-reduced-motion: no-preference) {
++  .combatant.is-enemy .enemy-intent { animation: intentFlowIn 220ms ease-out; }
++}
++@keyframes intentFlowIn {
++  from { opacity: 0; transform: translateY(-3px); }
++  to { opacity: 1; transform: translateY(-6px); }
++}
++
++.action-confirm {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr) auto;
++  grid-template-areas:
++    'kicker actions'
++    'title actions'
++    'facts actions'
++    'keys actions';
++  column-gap: 10px;
++  align-items: center;
++  min-width: 0;
++  height: 100%;
++  padding: 3px 5px;
++  border-left: 3px solid var(--sel);
++  background: linear-gradient(90deg, rgba(255, 157, 69, 0.12), transparent 72%);
++}
++.action-confirm-kicker {
++  grid-area: kicker;
++  margin: 0;
++  color: var(--gold);
++  font-size: 10px;
++  letter-spacing: 0.16em;
++}
++.action-confirm-title {
++  grid-area: title;
++  display: flex;
++  align-items: baseline;
++  gap: 6px;
++  min-width: 0;
++  margin: 1px 0 3px;
++  overflow: hidden;
++  color: var(--text);
++  font-size: 14px;
++  white-space: nowrap;
++  text-overflow: ellipsis;
++}
++.action-confirm-title b { color: var(--sel); }
++.action-confirm-facts {
++  grid-area: facts;
++  display: flex;
++  gap: 5px;
++  min-width: 0;
++  margin: 0;
++  font-variant-numeric: tabular-nums;
++}
++.action-confirm-facts > div {
++  display: flex;
++  gap: 4px;
++  min-width: 0;
++  padding: 2px 5px;
++  border: 1px solid rgba(201, 168, 106, 0.3);
++  border-radius: 4px;
++  background: rgba(11, 15, 30, 0.5);
++  font-size: 10.5px;
++  white-space: nowrap;
++}
++.action-confirm-facts dt { color: var(--text-dim); }
++.action-confirm-facts dd { margin: 0; color: var(--text); font-weight: 700; }
++.action-confirm-actions {
++  grid-area: actions;
++  display: grid;
++  gap: 4px;
++  width: min(24vw, 210px);
++}
++.action-confirm-actions .cmd-btn {
++  min-height: 44px;
++  padding-inline: 8px;
++  font-size: 12px;
++  letter-spacing: 0.08em;
++}
++.action-confirm-keys {
++  grid-area: keys;
++  margin: 2px 0 0;
++  color: var(--text-dim);
++  font-size: 9.5px;
++}
++
++@media (max-width: 560px) {
++  .battle-screen { grid-template-rows: 58px minmax(0, 1fr) clamp(220px, 42vh, 420px); }
++  .battle-top-rail { gap: 4px; padding-right: 60px; }
++  .battle-top-rail .turn-order { gap: 3px; padding: 5px 6px; }
++  .battle-top-rail .turn-order-turn { margin-right: 1px; font-size: 10.5px; letter-spacing: 0.08em; }
++  .battle-top-rail .turn-chip {
++    max-width: 68px;
++    padding: 2px 5px;
++    font-size: 10.5px;
++  }
++  .battle-top-rail .turn-chip[data-step='3'],
++  .battle-top-rail .turn-chip[data-step='4'],
++  .battle-top-rail .turn-chip[data-step='5'] { display: none; }
++  .battle-top-rail .turn-chip-side { display: none; }
++  .battle-top-rail .turn-chain-mult { padding: 2px 5px; margin-right: 0; font-size: 9.5px; }
++  .battle-top-rail .loot-slot { padding: 3px 5px; }
++  .battle-top-rail .loot-slot .slot-label { display: none; }
++  /* 兆しを絶対配置から敵帯の通常フローへ移し、札とも上端railとも交差させない。 */
++  .enemy-side { padding: 24px 4px 2px; }
++
++  .action-confirm {
++    grid-template-columns: 1fr;
++    grid-template-areas: 'kicker' 'title' 'facts' 'actions' 'keys';
++    gap: 4px;
++    height: auto;
++    padding: 7px 8px;
++  }
++  .action-confirm-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
++  .action-confirm-facts > div { display: grid; gap: 1px; text-align: center; }
++  .action-confirm-actions { width: 100%; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
++  .action-confirm-title { font-size: 13px; }
++  .action-confirm-keys { text-align: center; }
++}
+diff --git a/src/ui/components.tsx b/src/ui/components.tsx
+index e156ce3..d26f6f3 100644
+--- a/src/ui/components.tsx
++++ b/src/ui/components.tsx
+@@ -124,11 +124,9 @@ export function CharCard({
+   const p = personalityById(char.personalityId)
+   const god = godById(char.godParentId)
+   const age = ageOf(char, seasonIndex)
+-  return (
+-    <div
+-      className={`char-card ${selected ? 'selected' : ''} ${onClick ? 'clickable' : ''} ${age < 6 ? 'child' : ''}`}
+-      onClick={onClick}
+-    >
++  const className = `char-card ${selected ? 'selected' : ''} ${onClick ? 'clickable' : ''} ${age < 6 ? 'child' : ''}`
++  const content = (
++    <>
+       <div className="char-card-row">
+         <div className="char-portrait-wrap">
+           <Portrait char={char} seasonIndex={seasonIndex} size={compact ? 'sm' : undefined} />
+@@ -164,8 +162,21 @@ export function CharCard({
+         </div>
+       </div>
+       {children}
+-    </div>
++    </>
+   )
++  if (onClick) {
++    return (
++      <button
++        type="button"
++        className={className}
++        aria-pressed={Boolean(selected)}
++        onClick={onClick}
++      >
++        {content}
++      </button>
++    )
++  }
++  return <div className={className}>{content}</div>
+ }
+ 
+ // 綴(ナビゲーター)の一言
+diff --git a/src/ui/dungeon_m24.css b/src/ui/dungeon_m24.css
+index 3a567a3..89546bc 100644
+--- a/src/ui/dungeon_m24.css
++++ b/src/ui/dungeon_m24.css
+@@ -100,34 +100,11 @@
+   .dungeon-hud-band .lantern-ring { width: 38px; height: 38px; }
+ }
+ 
+-/* ---- ミニマップ拡大トグル(§4.6) — Pixi描画の上に重ねる不可視タップ域 ----
+-   minimap.ts は非所有のため位置/寸法はおおよその重なりを狙った近似値(実機未検証)。 */
+-.minimap-tap-zone {
+-  position: absolute;
+-  top: 50px;
+-  right: 4px;
+-  width: 145px;
+-  height: 100px;
+-  z-index: 6;
+-  background: transparent;
+-  border: 1px solid transparent;
+-  border-radius: 8px;
+-  cursor: pointer;
+-}
+-.minimap-tap-zone:hover,
+-.minimap-tap-zone:focus-visible {
+-  border-color: rgba(201, 168, 106, 0.4);
+-  outline: none;
+-}
+-@media (max-width: 560px) {
+-  .minimap-tap-zone { width: 100px; height: 78px; top: 44px; }
+-}
+-
+ /* ---- 隊員HP: 左下の短い横札。1人でも横に伸ばさない(§4.6) ---- */
+ .dungeon-hud-party {
+   position: absolute;
+   left: calc(10px + env(safe-area-inset-left, 0px));
+-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
++  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+   z-index: 5;
+   display: flex;
+   flex-direction: row;
+@@ -153,7 +130,7 @@
+ .dungeon-log-line {
+   position: absolute;
+   left: 50%;
+-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
++  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+   transform: translateX(-50%);
+   z-index: 5;
+   max-width: min(72vw, 480px);
+@@ -178,20 +155,20 @@
+   .dungeon-log-line { animation: none; }
+ }
+ @media (max-width: 560px) {
+-  .dungeon-log-line { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-width: 84vw; }
++  .dungeon-log-line { bottom: calc(206px + env(safe-area-inset-bottom, 0px)); max-width: 84vw; }
+ }
+ 
+-/* ---- D-pad: タッチ環境だけ強調し、マウス/キーボード環境では控えめに(§4.6) ----
++/* ---- D-pad: Dungeon内だけに適用。Villageの操作帯へ漏らさない(§4.6/AR0) ----
+    index.cssの `@media(min-width:900px){.dpad{opacity:.35}}` は画面幅基準で誤判定しうるため、
+    pointer種別基準の本ルールで実質的に上書きする(後勝ち)。 */
+-.dpad {
++.dungeon-screen .dpad {
+   right: calc(14px + env(safe-area-inset-right, 0px));
+-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
++  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+ }
+ @media (pointer: coarse) {
+-  .dpad { opacity: 0.9; }
++  .dungeon-screen .dpad { opacity: 0.9; }
+ }
+ @media (pointer: fine) {
+-  .dpad { opacity: 0.28; }
+-  .dpad:hover, .dpad:focus-within { opacity: 0.7; }
++  .dungeon-screen .dpad { opacity: 0.28; }
++  .dungeon-screen .dpad:hover, .dungeon-screen .dpad:focus-within { opacity: 0.7; }
+ }
+diff --git a/src/ui/dungeon_m25.css b/src/ui/dungeon_m25.css
+index edf00e6..2ec6fb2 100644
+--- a/src/ui/dungeon_m25.css
++++ b/src/ui/dungeon_m25.css
+@@ -1,13 +1,14 @@
+ /* M25 §3.2: モバイル(390px級)ダンジョンHUDの一枚化(docs/BATTLE_DUNGEON_M25_VISUAL_QA_AND_REFINEMENT.md)。
+    src/index.css は編集しない方針のため、dungeon_m23/m24.css より後に Dungeon.tsx から import し、
+    同名セレクタを「後勝ち」で上書きする。PC(769px以上)は現行配置を維持し、390px幅だけを2段gridへ再編する。
+-   実測フック: data-zone="hud-top|minimap|dpad|party|return-fire" を対象要素へ付与済み(Dungeon.tsx側)。 */
++   実測フック: data-zone="hud-top|minimap|dpad|party|return-fire|exploration-guide" を対象要素へ付与済み(Dungeon.tsx側)。 */
+ 
+-/* ---- ミニマップ拡大ボタン(§3.2 row2) — 既定は非表示。モバイルの2段目にだけ現れる。
+-   Pixi描画を覆う不可視tap-zone(.minimap-tap-zone)と役割は同じ(toggleMinimapZoom)だが、
+-   HUDの文字列に並ぶ可視の操作導線として別に持たせる(二重導線として併存させる)。 ---- */
++/* ---- AR0: ミニマップ拡大は全幅で見える単一のbutton。透明tap-zoneは廃止。 ---- */
+ .hud-minimap-btn {
+-  display: none;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  min-width: 54px;
+ }
+ 
+ /* ---- 小休止sheet内: 暦・今回の実りを表示(§3.2-2)。帰り火ボタンは既存のconfirm-actions側にある ---- */
+@@ -24,18 +25,56 @@
+ }
+ 
+ /* ---- D-pad: 48px以上を保証(§3.2要件5)。index.cssの46px定義を上書きする ---- */
+-.dpad {
++.dungeon-screen .dpad {
+   grid-template-columns: repeat(3, 48px);
+   grid-auto-rows: 48px;
+ }
+ 
+-/* ---- ミニマップの不可視tap-zone — 通常表示はPC128pxを目安に近似(§3.2要件4)。
+-   minimap.ts は非所有のため実際のPixi描画寸法とは独立した近似値(M24既存コメントの方針を継承)。 ---- */
+-.minimap-tap-zone {
+-  top: calc(64px + env(safe-area-inset-top, 0px));
+-  right: calc(8px + env(safe-area-inset-right, 0px));
+-  width: 128px;
+-  height: 128px;
++/* ---- Canvas外の探索案内。短期目的・発見済みPOI・帰還条件を常時DOMで読める。 ---- */
++.exploration-guide {
++  position: absolute;
++  top: calc(76px + env(safe-area-inset-top, 0px));
++  left: calc(10px + env(safe-area-inset-left, 0px));
++  z-index: 5;
++  width: min(236px, calc(100vw - 156px));
++  padding: 7px 9px;
++  border: 1px solid rgba(201, 168, 106, 0.24);
++  border-left: 3px solid rgba(201, 168, 106, 0.65);
++  border-radius: 7px;
++  background: rgba(7, 10, 22, 0.82);
++  pointer-events: none;
++}
++.exploration-guide p {
++  display: grid;
++  grid-template-columns: 38px minmax(0, 1fr);
++  gap: 5px;
++  margin: 0;
++  font-size: 10.5px;
++  line-height: 1.45;
++}
++.exploration-guide p + p { margin-top: 2px; }
++.exploration-guide span { color: var(--text-dim); }
++.exploration-guide b { color: var(--text); font-weight: 600; }
++.exploration-guide.is-danger {
++  border-left-color: var(--ember);
++  background: rgba(35, 10, 13, 0.88);
++}
++
++/* ---- 帰り火は画面下端の全幅dock。押下は確認Sheetを開くだけで、確定はSheet内の2操作目。 ---- */
++.dungeon-return-dock {
++  position: absolute;
++  left: 0;
++  right: 0;
++  bottom: 0;
++  z-index: 8;
++  padding: 6px calc(10px + env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) calc(10px + env(safe-area-inset-left, 0px));
++  background: linear-gradient(180deg, rgba(6, 8, 18, 0.2), rgba(6, 8, 18, 0.96) 38%);
++}
++.dungeon-return-dock .hud-return-btn {
++  width: 100%;
++  min-height: 48px;
++  margin: 0;
++  letter-spacing: 0.05em;
+ }
+ 
+ /* ================= 390px級モバイル ================= */
+@@ -80,18 +119,16 @@
+   /* 暦・今回の実り・帰り火は小休止sheetへ寄せる(§3.2-2)。帰り火は「小休止→sheet内ボタン」の2操作で到達する */
+   .dungeon-hud-band .hud-band-spacer,
+   .dungeon-hud-band .hud-calendar,
+-  .dungeon-hud-band .hud-resource-chip,
+-  .dungeon-hud-band .hud-return-btn {
++  .dungeon-hud-band .hud-resource-chip {
+     display: none;
+   }
+ 
+-  /* ---- ミニマップ通常表示: モバイル104pxを目安に、2段HUDの下へ配置する ---- */
+-  .minimap-tap-zone {
+-    top: calc(104px + env(safe-area-inset-top, 0px));
+-    right: calc(8px + env(safe-area-inset-right, 0px));
+-    width: 104px;
+-    height: 104px;
++  .exploration-guide {
++    top: calc(94px + env(safe-area-inset-top, 0px));
++    width: min(222px, calc(100vw - 126px));
++    padding: 6px 8px;
+   }
++  .exploration-guide p { font-size: 10px; grid-template-columns: 34px minmax(0, 1fr); }
+ 
+   /* ---- 隊員札はD-padと8px以上離す(§3.2要件5)。
+      62vw(≈242px)のままだとD-pad(48px×3+gap=148px、right 14px+inset起点)と競合しうるため、固定px上限で確実に隙間を作る。 ---- */
+diff --git a/src/ui/m17_home.css b/src/ui/m17_home.css
+index c6e8750..2fe1d92 100644
+--- a/src/ui/m17_home.css
++++ b/src/ui/m17_home.css
+@@ -108,11 +108,41 @@
+ /* ==== M18 P2: 郷ホーム再設計(血脈診断/推奨/帳/アンカー/月送り確認) ==== */
+ 
+ /* 一族欄二面化 — 左=大札+小札 / 右=血脈診断 */
+-.family-board { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr); gap: 14px; align-items: start; }
+-.family-smalls { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; }
+-.family-smalls .char-card { flex: 0 0 auto; min-width: 168px; }
++.family-board { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr); gap: 14px; align-items: start; min-width: 0; }
++.family-main { min-width: 0; }
++.family-smalls { display: flex; gap: 8px; width: 100%; max-width: 100%; margin-top: 8px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 2px 6px; }
++.char-card.clickable { width: auto; font: inherit; color: inherit; text-align: left; }
++.family-smalls .char-card { flex: 0 0 min(168px, calc(100vw - 58px)); min-width: 0; text-align: left; }
++.family-smalls .char-card:focus-visible { scroll-margin-inline: 8px; }
+ @media (max-width: 640px) { .family-board { grid-template-columns: 1fr; } }
+ 
++/* 狭幅では、長い固有名や資源値がグリッドの最小内容幅を押し広げない。 */
++.home-screen,
++.home-screen .panel,
++.home-screen .panel > *,
++.home-header,
++.resource-strip,
++.narrative-now,
++.action-cards,
++.ledger { min-width: 0; max-width: 100%; }
++.home-screen .char-name,
++.home-screen .ledger-value,
++.home-screen .action-card-title,
++.home-screen .action-card-desc { overflow-wrap: anywhere; }
++@media (max-width: 560px) {
++  .home-header { align-items: flex-start; gap: 8px; }
++  .resource-strip { justify-content: flex-end; gap: 5px; }
++  .resource { min-width: 0; padding-inline: 8px; }
++  .resource .res-label { display: none; }
++  .narrative-now { flex-wrap: wrap; }
++  .narrative-now > div { min-width: 0; }
++}
++
++/* 奉燈不足の星は閲覧可能。封印の半透明・禁止カーソルとは明確に分ける。 */
++.god-row.unaffordable { box-shadow: inset 3px 0 0 rgba(232, 163, 61, 0.45); }
++.god-row.unaffordable .god-row-cost { color: var(--text-dim); }
++.god-row-short { display: block; font-size: 10px; color: var(--ember-text); font-weight: 700; }
++
+ /* 血脈診断 — 状態を説明できる空白 */
+ .blood-diag {
+   border: 1px solid var(--panel-border); border-radius: 6px;
+diff --git a/src/ui/village.css b/src/ui/village.css
+index 096e154..108d2ab 100644
+--- a/src/ui/village.css
++++ b/src/ui/village.css
+@@ -64,16 +64,21 @@
+ .village-focus {
+   position: absolute;
+   left: 50%;
+-  bottom: 14px;
++  bottom: 20px;
+   transform: translateX(-50%);
+   display: flex;
+   align-items: center;
+-  gap: 10px;
+-  padding: 8px 14px;
++  justify-content: space-between;
++  gap: 14px;
++  width: min(360px, calc(100% - 190px));
++  min-height: 52px;
++  margin: 0;
++  padding: 8px 16px;
+   border: 1px solid var(--gold);
+-  border-radius: 20px;
++  border-radius: 12px;
+   background: rgba(10, 14, 29, 0.88);
+   z-index: 5;
++  text-align: left;
+ }
+ .village-focus-label {
+   font-size: 13.5px;
+@@ -82,8 +87,11 @@
+ }
+ .village-focus-act {
+   margin: 0;
+-  min-height: 36px;
+-  padding: 6px 16px;
++}
++.village-focus-verb {
++  color: var(--amber);
++  font-weight: 700;
++  white-space: nowrap;
+ }
+ 
+ /* 会話帯 — 歩行を止めないrole=statusの帯 */
+@@ -128,6 +136,8 @@
+   right: 12px;
+   bottom: 12px;
+   z-index: 5;
++  grid-template-columns: repeat(3, 48px);
++  grid-auto-rows: 48px;
+ }
+ 
+ @media (max-width: 640px) {
+@@ -135,3 +145,20 @@
+   .village-hint { display: none; }
+   .village-talk-img { width: 44px; height: 56px; }
+ }
++
++/* 狭幅は近接行動を移動帯の上へ予約し、D-padと矩形が交差しないようにする。 */
++@media (max-width: 760px) {
++  .village-focus {
++    left: 12px;
++    right: 12px;
++    bottom: 174px;
++    transform: none;
++    width: auto;
++    max-width: none;
++  }
++  .village-stage .dpad {
++    left: 12px;
++    right: auto;
++  }
++  .village-stage .village-focus { animation: none; }
++}
+diff --git a/src/ui/pactPolicy.ts b/src/ui/pactPolicy.ts
+new file mode 100644
+index 0000000..1240a39
+--- /dev/null
++++ b/src/ui/pactPolicy.ts
+@@ -0,0 +1,22 @@
++export interface PactAvailability {
++  inspectable: boolean
++  contractable: boolean
++  reason?: string
++}
++
++/**
++ * 星神の閲覧権と契約権を分離する。
++ * 封印だけが詳細閲覧を妨げ、奉燈不足は契約CTAだけを止める。
++ */
++export function pactAvailability(unlocked: boolean, hoto: number, cost: number): PactAvailability {
++  if (!unlocked) return { inspectable: false, contractable: false, reason: 'この星はまだ封印されている' }
++  const shortfall = Math.max(0, cost - hoto)
++  if (shortfall > 0) {
++    return {
++      inspectable: true,
++      contractable: false,
++      reason: `奉燈があと${shortfall}足りない`,
++    }
++  }
++  return { inspectable: true, contractable: true }
++}
+diff --git a/tests/pact_policy.test.ts b/tests/pact_policy.test.ts
+new file mode 100644
+index 0000000..58af86a
+--- /dev/null
++++ b/tests/pact_policy.test.ts
+@@ -0,0 +1,24 @@
++import { describe, expect, it } from 'vitest'
++import { pactAvailability } from '../src/ui/pactPolicy'
++
++describe('星契りの閲覧・契約可否', () => {
++  it('封印解除済みなら奉燈不足でも詳細を閲覧できる', () => {
++    expect(pactAvailability(true, 40, 100)).toEqual({
++      inspectable: true,
++      contractable: false,
++      reason: '奉燈があと60足りない',
++    })
++  })
++
++  it('奉燈が足りれば閲覧も契約もできる', () => {
++    expect(pactAvailability(true, 100, 100)).toEqual({ inspectable: true, contractable: true })
++  })
++
++  it('封印中は奉燈に関係なく閲覧できない', () => {
++    expect(pactAvailability(false, 999, 100)).toEqual({
++      inspectable: false,
++      contractable: false,
++      reason: 'この星はまだ封印されている',
++    })
++  })
++})
+diff --git a/tests/visual/ar0_after_evidence.spec.ts b/tests/visual/ar0_after_evidence.spec.ts
+new file mode 100644
+index 0000000..03a0a29
+--- /dev/null
++++ b/tests/visual/ar0_after_evidence.spec.ts
+@@ -0,0 +1,53 @@
++import { test, expect, type Page } from '@playwright/test'
++import path from 'node:path'
++import { gotoBattle, gotoDungeon, gotoVillage } from './helpers'
++
++interface DebugGame {
++  reset: () => void
++  screen: (id: string) => void
++}
++
++const evidenceProjects = new Set(['pc-1280', 'mobile-390'])
++
++async function gotoScreen(page: Page, screen: 'home' | 'pact'): Promise<void> {
++  await page.goto('/')
++  await page.waitForFunction(() => '__game' in window, null, { timeout: 15_000 })
++  await page.evaluate((id) => {
++    const game = (window as unknown as { __game: DebugGame }).__game
++    game.reset()
++    game.screen(id)
++  }, screen)
++  await page.locator(`.${screen}-screen`).waitFor({ state: 'visible' })
++  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
++}
++
++async function verifyScreen(page: Page, screen: string, project: string): Promise<void> {
++  if (evidenceProjects.has(project)) {
++    const target = path.join(process.cwd(), 'docs', 'qa', 'baselines', `20260721-${screen}-${project}-after-ar0.png`)
++    await page.screenshot({ path: target, fullPage: true })
++  }
++  const overflow = await page.evaluate(() => ({
++    clientWidth: document.documentElement.clientWidth,
++    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
++  }))
++  expect(overflow.scrollWidth, `${screen} ${project} horizontal overflow`).toBeLessThanOrEqual(overflow.clientWidth)
++}
++
++test('AR0 five-screen after evidence', async ({ page }, info) => {
++  test.setTimeout(120_000)
++
++  await gotoScreen(page, 'home')
++  await verifyScreen(page, 'home', info.project.name)
++
++  await gotoScreen(page, 'pact')
++  await verifyScreen(page, 'pact', info.project.name)
++
++  await gotoVillage(page)
++  await verifyScreen(page, 'village', info.project.name)
++
++  await gotoDungeon(page, { regionId: 'yoi_forest', floor: 0, party: 1 })
++  await verifyScreen(page, 'dungeon', info.project.name)
++
++  await gotoBattle(page, { allies: 1, enemies: 2 })
++  await verifyScreen(page, 'battle-1v2', info.project.name)
++})
+diff --git a/tests/visual/ar0_home_pact.spec.ts b/tests/visual/ar0_home_pact.spec.ts
+new file mode 100644
+index 0000000..0d965d4
+--- /dev/null
++++ b/tests/visual/ar0_home_pact.spec.ts
+@@ -0,0 +1,143 @@
++import { expect, test, type Locator, type Page } from '@playwright/test'
++
++interface UiGameWindow {
++  __game: {
++    reset: () => void
++    screen: (id: string) => void
++    store: {
++      getState: () => { data: { family: Array<Record<string, unknown>>; hoto: number } }
++      setState: (next: unknown) => void
++    }
++  }
++}
++
++async function boot(page: Page, screen: 'home' | 'pact'): Promise<void> {
++  await page.goto('/')
++  await page.waitForFunction(() => '__game' in window, null, { timeout: 15_000 })
++  await page.evaluate((screenId) => {
++    const game = (window as unknown as UiGameWindow).__game
++    game.reset()
++    game.screen(screenId)
++  }, screen)
++  await page.locator(`.${screen}-screen`).waitFor({ state: 'visible' })
++}
++
++async function tabTo(page: Page, target: Locator, maxTabs = 180): Promise<void> {
++  for (let i = 0; i < maxTabs; i++) {
++    await page.keyboard.press('Tab')
++    if (await target.evaluate((node) => node === document.activeElement)) return
++  }
++  throw new Error(`Tabで対象へ到達できない: ${await target.getAttribute('class')}`)
++}
++
++async function expectVisibleKeyboardFocus(target: Locator): Promise<void> {
++  await expect(target).toBeFocused()
++  const focus = await target.evaluate((node) => {
++    const style = getComputedStyle(node)
++    return { outlineStyle: style.outlineStyle, outlineWidth: Number.parseFloat(style.outlineWidth) }
++  })
++  expect(focus.outlineStyle).not.toBe('none')
++  expect(focus.outlineWidth).toBeGreaterThanOrEqual(2)
++}
++
++test('郷: 全5幅でページ横overflowを発生させない', async ({ page }, info) => {
++  await boot(page, 'home')
++  await page.waitForTimeout(100)
++  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
++  expect(overflow, `横overflow (${info.project.name})`).toBeLessThanOrEqual(0)
++})
++
++test('郷: 一族小札はTab到達・Space実行・focus可視で、選択後も同じDOMとfocusを保つ', async ({ page }) => {
++  await boot(page, 'home')
++  await page.evaluate(() => {
++    const game = (window as unknown as UiGameWindow).__game
++    const current = game.store.getState().data
++    const head = current.family[0]
++    const sibling = { ...head, id: `${String(head.id)}__focus`, name: '焦点を継ぐ者', isHead: false }
++    game.store.setState({ data: { ...current, family: [head, sibling] } })
++  })
++
++  const cards = page.locator('.family-smalls button.char-card.clickable')
++  await expect(cards).toHaveCount(2)
++  const target = cards.nth(1)
++  const identity = await target.evaluate((node) => {
++    const key = 'ar0NodeIdentity'
++    ;(node as HTMLElement).dataset[key] = 'kept'
++    return (node as HTMLElement).dataset[key]
++  })
++  expect(identity).toBe('kept')
++
++  await tabTo(page, target)
++  await expectVisibleKeyboardFocus(target)
++  await page.keyboard.press('Space')
++  await expect(target).toHaveAttribute('aria-pressed', 'true')
++  await expect(page.locator('.family-main > .char-card').first()).toContainText('焦点を継ぐ者')
++  await expectVisibleKeyboardFocus(target)
++  expect(await target.getAttribute('data-ar0-node-identity')).toBe('kept')
++})
++
++test('星契り: 奉燈不足でもTab/Spaceで詳細閲覧でき、契約CTAだけを理由付きで止める', async ({ page }) => {
++  await boot(page, 'pact')
++  await page.evaluate(() => {
++    const game = (window as unknown as UiGameWindow).__game
++    const current = game.store.getState().data
++    game.store.setState({ data: { ...current, hoto: 0 } })
++  })
++
++  const parent = page.locator('.exp-party button.char-card.clickable').first()
++  await tabTo(page, parent)
++  await expectVisibleKeyboardFocus(parent)
++  await page.keyboard.press('Space')
++  await expect(parent).toHaveAttribute('aria-pressed', 'true')
++  const insufficient = page.locator('.god-row.unaffordable').first()
++  await expect(insufficient).toBeVisible()
++  await expect(insufficient).toHaveAttribute('aria-disabled', 'false')
++  await tabTo(page, insufficient)
++  await expectVisibleKeyboardFocus(insufficient)
++  await page.keyboard.press('Space')
++  await expect(insufficient).toHaveAttribute('aria-pressed', 'true')
++  await expectVisibleKeyboardFocus(insufficient)
++  await expect(page.locator('.god-stage .god-pane')).toBeVisible()
++  await expect(page.locator('.action-dock')).toContainText(/奉燈があと\d+足りない/)
++  await expect(page.locator('.action-dock .btn-main')).toBeDisabled()
++})
++
++test('星契り: 確認SheetをEscapeで閉じると契りCTAへfocusが戻る', async ({ page }) => {
++  await boot(page, 'pact')
++  await page.evaluate(() => {
++    const game = (window as unknown as UiGameWindow).__game
++    const current = game.store.getState().data
++    game.store.setState({ data: { ...current, hoto: 9_999 } })
++  })
++
++  const parent = page.locator('.exp-party button.char-card.clickable').first()
++  await tabTo(page, parent)
++  await page.keyboard.press('Space')
++  const god = page.locator('.god-row:not(.locked)').first()
++  await tabTo(page, god)
++  await page.keyboard.press('Space')
++
++  const trigger = page.locator('.action-dock .btn-main')
++  await expect(trigger).toBeEnabled()
++  // Dock直前の戻るbuttonから実Tabで到達できることを固定する。神名帳は最大120行あり、
++  // 先頭からの総当たりTabでは証明に不要な反復と実行時間だけが増えるため、隣接順を検査する。
++  await page.getByRole('button', { name: '郷へ戻る' }).focus()
++  await page.keyboard.press('Tab')
++  await expectVisibleKeyboardFocus(trigger)
++  await page.keyboard.press('Space')
++  await expect(page.getByRole('dialog', { name: '星契り、最後の確かめ' })).toBeVisible()
++  await page.keyboard.press('Escape')
++  await expect(page.getByRole('dialog', { name: '星契り、最後の確かめ' })).toHaveCount(0)
++  await expectVisibleKeyboardFocus(trigger)
++})
++
++test('星契り: 封印中の星は選択して詳細を開けない', async ({ page }) => {
++  await boot(page, 'pact')
++  const sealed = page.locator('.god-row.locked').first()
++  await expect(sealed).toBeVisible()
++  await expect(sealed).toHaveAttribute('aria-disabled', 'true')
++  // aria-disabledにより通常操作はブラウザ側で止まる。強制dispatchでもhandlerが詳細を開かないことを確認する。
++  await sealed.dispatchEvent('click')
++  await expect(sealed).toHaveAttribute('aria-pressed', 'false')
++  await expect(page.locator('.god-stage-empty')).toBeVisible()
++})
+diff --git a/tests/visual/ar0_performance_baseline.spec.ts b/tests/visual/ar0_performance_baseline.spec.ts
+new file mode 100644
+index 0000000..4b0d747
+--- /dev/null
++++ b/tests/visual/ar0_performance_baseline.spec.ts
+@@ -0,0 +1,121 @@
++import { test, expect, type Page } from '@playwright/test'
++
++interface DebugGame {
++  reset: () => void
++  screen: (id: string) => void
++  village: () => void
++  dungeon: (opts?: unknown) => void
++  battle: (opts?: unknown) => void
++}
++
++interface FrameTelemetry {
++  averageFps: number
++  onePercentLowFps: number
++  longFramesOver100ms: number
++  estimatedLongFramesPerMinute: number
++  sampleMs: number
++}
++
++async function boot(page: Page): Promise<void> {
++  await page.goto('/')
++  await page.waitForFunction(() => '__game' in window, null, { timeout: 15_000 })
++  await page.evaluate(() => (window as unknown as { __game: DebugGame }).__game.reset())
++}
++
++async function settle(page: Page): Promise<void> {
++  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
++}
++
++async function sampleFrames(page: Page, sampleMs = 4_000): Promise<FrameTelemetry> {
++  return page.evaluate((duration) => new Promise<FrameTelemetry>((resolve) => {
++    const deltas: number[] = []
++    let previous = performance.now()
++    const start = previous
++    const tick = (now: number) => {
++      deltas.push(now - previous)
++      previous = now
++      if (now - start < duration) {
++        requestAnimationFrame(tick)
++        return
++      }
++      const sorted = [...deltas].sort((a, b) => a - b)
++      const mean = deltas.reduce((sum, value) => sum + value, 0) / Math.max(1, deltas.length)
++      const p99 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.99))] ?? 1_000
++      const longFrames = deltas.filter((value) => value > 100).length
++      const elapsed = now - start
++      resolve({
++        averageFps: Number((1_000 / Math.max(mean, 0.001)).toFixed(1)),
++        onePercentLowFps: Number((1_000 / Math.max(p99, 0.001)).toFixed(1)),
++        longFramesOver100ms: longFrames,
++        estimatedLongFramesPerMinute: Number((longFrames * 60_000 / Math.max(elapsed, 1)).toFixed(1)),
++        sampleMs: Math.round(elapsed),
++      })
++    }
++    requestAnimationFrame(tick)
++  }), sampleMs)
++}
++
++async function resourceTelemetry(page: Page) {
++  return page.evaluate(() => {
++    const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[]
++    const byType = (suffixes: string[]) => resources
++      .filter((entry) => suffixes.some((suffix) => new URL(entry.name).pathname.endsWith(suffix)))
++      .reduce((sum, entry) => sum + (entry.transferSize || entry.encodedBodySize || 0), 0)
++    const memory = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory
++    return {
++      jsBytes: byType(['.js', '.tsx', '.ts']),
++      cssBytes: byType(['.css']),
++      imageBytes: byType(['.png', '.jpg', '.jpeg', '.webp', '.avif']),
++      usedJsHeapBytes: memory?.usedJSHeapSize ?? null,
++      resourceCount: resources.length,
++    }
++  })
++}
++
++test('AR0 reproducible performance telemetry', async ({ page }, info) => {
++  test.setTimeout(120_000)
++  const cdp = await page.context().newCDPSession(page)
++  const mobileProxy = info.project.name.startsWith('mobile-')
++  if (mobileProxy) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
++
++  const cases: Array<{ id: string; ready: string }> = [
++    { id: 'home', ready: '.home-screen' },
++    { id: 'pact', ready: '.pact-screen' },
++    { id: 'village', ready: '.village-screen canvas' },
++    { id: 'dungeon', ready: '.dungeon-screen canvas' },
++    { id: 'battle', ready: '.battle-screen' },
++  ]
++
++  const results = []
++  for (const item of cases) {
++    await boot(page)
++    const started = performance.now()
++    await page.evaluate((id) => {
++      const game = (window as unknown as { __game: DebugGame }).__game
++      if (id === 'village') game.village()
++      else if (id === 'dungeon') game.dungeon({ regionId: 'yoi_forest', floor: 0, party: 1 })
++      else if (id === 'battle') game.battle({ allies: 1, enemies: 2 })
++      else game.screen(id)
++    }, item.id)
++    await page.locator(item.ready).first().waitFor({ state: 'visible', timeout: 15_000 })
++    await settle(page)
++    const readyMs = performance.now() - started
++    const frames = await sampleFrames(page)
++    const resources = await resourceTelemetry(page)
++    results.push({ screen: item.id, readyMs: Number(readyMs.toFixed(1)), frames, resources })
++  }
++
++  if (mobileProxy) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
++  const payload = {
++    project: info.project.name,
++    cpuThrottle: mobileProxy ? 4 : 1,
++    browser: info.project.use.browserName ?? 'chromium',
++    results,
++  }
++  console.log(`[ar0-perf] ${JSON.stringify(payload)}`)
++  await info.attach('ar0-performance-baseline.json', {
++    body: Buffer.from(JSON.stringify(payload, null, 2)),
++    contentType: 'application/json',
++  })
++  expect(results).toHaveLength(5)
++})
+diff --git a/tests/visual/battle_target_confirm.spec.ts b/tests/visual/battle_target_confirm.spec.ts
+new file mode 100644
+index 0000000..a36579e
+--- /dev/null
++++ b/tests/visual/battle_target_confirm.spec.ts
+@@ -0,0 +1,93 @@
++import { expect, test } from '@playwright/test'
++import { boxesOf, crossings, gotoBattle } from './helpers'
++
++test('戦闘上端: 行動順・設定・報酬予告・敵兆し・敵札が競合せず行動順は一行内に収まる', async ({ page }) => {
++  await gotoBattle(page, { allies: 1, enemies: 2 })
++
++  const [rail, turn, settings, reward, intents, enemyCards] = await Promise.all([
++    boxesOf(page, '[data-zone="battle-top"]'),
++    boxesOf(page, '[data-zone="turnorder"]'),
++    boxesOf(page, '.mute-btn'),
++    boxesOf(page, '[data-zone="reward"]'),
++    boxesOf(page, '.enemy-intent'),
++    boxesOf(page, '[data-zone="enemy-card"]'),
++  ])
++  expect(rail).toHaveLength(1)
++  expect(turn).toHaveLength(1)
++  expect(settings).toHaveLength(1)
++
++  for (const [a, b, label] of [
++    [turn, settings, '行動順×設定'],
++    [turn, reward, '行動順×報酬予告'],
++    [reward, settings, '報酬予告×設定'],
++    [turn, intents, '行動順×敵兆し'],
++    [turn, enemyCards, '行動順×敵札'],
++    [reward, intents, '報酬予告×敵兆し'],
++    [reward, enemyCards, '報酬予告×敵札'],
++    [settings, intents, '設定×敵兆し'],
++    [settings, enemyCards, '設定×敵札'],
++    [intents, enemyCards, '敵兆し×敵札'],
++  ] as const) {
++    expect(crossings(a, b), label).toEqual([])
++  }
++
++  const turnLayout = await page.locator('[data-zone="turnorder"]').evaluate((el) => {
++    const style = getComputedStyle(el)
++    return {
++      flexWrap: style.flexWrap,
++      scrollWidth: el.scrollWidth,
++      clientWidth: el.clientWidth,
++      railRight: el.parentElement?.getBoundingClientRect().right ?? 0,
++      turnRight: el.getBoundingClientRect().right,
++    }
++  })
++  expect(turnLayout.flexWrap).toBe('nowrap')
++  expect(turnLayout.scrollWidth, '行動順の内容が親から溢れない').toBeLessThanOrEqual(turnLayout.clientWidth)
++  expect(turnLayout.turnRight).toBeLessThanOrEqual(turnLayout.railRight)
++})
++
++test('通常攻撃: 対象選択と予告だけでは発火せず明示実行だけが戦闘を進める', async ({ page }) => {
++  await gotoBattle(page, { allies: 1, enemies: 2 })
++
++  const attack = page.getByRole('button', { name: '攻撃', exact: true })
++  const firstEnemy = page.locator('.combatant.is-enemy').filter({ has: page.locator('[data-zone="enemy-card"]') }).first()
++  const hpOf = async () => (await firstEnemy.getAttribute('aria-label'))?.match(/体力(\d+\/\d+)/)?.[1]
++  const hpBefore = await hpOf()
++
++  // root状態の敵札は操作対象ではなく、クリックしても即攻撃しない。
++  await firstEnemy.click()
++  expect(await hpOf()).toBe(hpBefore)
++  await expect(attack).toBeEnabled()
++
++  await attack.click()
++  const target = page.locator('.combatant.is-enemy[role="button"]').first()
++  await expect(target).toBeFocused()
++  await target.press('Enter')
++
++  const confirm = page.locator('#battle-action-confirm')
++  const execute = page.getByRole('button', { name: 'この行動を実行' })
++  await expect(confirm).toBeVisible()
++  await expect(confirm).toContainText('攻撃')
++  await expect(confirm).toContainText('相性')
++  await expect(confirm).toContainText('継足')
++  await expect(confirm).toContainText('対象体力')
++  await expect(target).toHaveAttribute('aria-pressed', 'true')
++  await expect(execute).toBeFocused()
++  expect(await hpOf()).toBe(hpBefore)
++
++  // 一段目Escは確認→標的選択、二段目Escは起点の攻撃釦へ戻す。
++  await page.keyboard.press('Escape')
++  await expect(confirm).toBeHidden()
++  await expect(target).toBeFocused()
++  await page.keyboard.press('Escape')
++  await expect(attack).toBeFocused()
++
++  // 数字キーも選択止まり。最後の明示実行でだけ手番が進む。
++  await attack.click()
++  await page.keyboard.press('1')
++  await expect(confirm).toBeVisible()
++  expect(await hpOf()).toBe(hpBefore)
++  await execute.click()
++  await expect(confirm).toBeHidden()
++  await expect(attack).toBeDisabled()
++})
+diff --git a/tests/visual/gate.spec.ts b/tests/visual/gate.spec.ts
+index ef77009..e30387a 100644
+--- a/tests/visual/gate.spec.ts
++++ b/tests/visual/gate.spec.ts
+@@ -77,6 +77,58 @@ test('ダンジョン: D-pad は48px以上・画面端から12px以上・隊員
+   }
+ })
+ 
++test('ダンジョン: 地図入口は可視button一つ、透明tap-zoneは0', async ({ page }) => {
++  await gotoDungeon(page)
++  const mapButton = page.locator('[data-zone="minimap"]')
++  await expect(mapButton).toHaveCount(1)
++  await expect(mapButton).toBeVisible()
++  await expect(mapButton).toHaveRole('button')
++  await expect(mapButton).toContainText('地図')
++  await expect(page.locator('.minimap-tap-zone')).toHaveCount(0)
++})
++
++test('ダンジョン: 探索案内はengineの発見状態・短期目的・帰還条件をDOMで示す', async ({ page }) => {
++  await gotoDungeon(page)
++  const guide = page.locator('[data-zone="exploration-guide"]')
++  await expect(guide).toBeVisible()
++  await expect(guide.locator('[data-guide="pois"]')).toContainText('入口')
++  await expect(guide.locator('[data-guide="objective"]')).toHaveText('石碑を探す 0/1')
++  await expect(guide.locator('[data-guide="return"]')).toContainText('いつでも可')
++  await expect(guide.locator('[data-guide="return"]')).toContainText('今月を使う')
++
++  // 未発見の石碑をrun.usedへ混ぜても、発見済みとして数えてはならない。
++  await page.evaluate(() => {
++    const game = (window as never as { __game: { store: { getState: () => { dungeonRun: { used: string[] } | null }; setState: (v: unknown) => void } } }).__game
++    const run = game.store.getState().dungeonRun
++    if (run) game.store.setState({ dungeonRun: { ...run, used: ['0:1:19'] } })
++  })
++  await expect(guide.locator('[data-guide="objective"]')).toHaveText('石碑を探す 0/1')
++  await expect(guide.locator('[data-guide="pois"]')).not.toContainText('石碑')
++})
++
++test('ダンジョン: 灯10%では帰還判断を促し、帰り火は全幅常設→確認→確定の2操作', async ({ page }) => {
++  await gotoDungeon(page)
++  await page.evaluate(() => {
++    const game = (window as never as { __game: { store: { getState: () => { dungeonRun: ({ light: number } & Record<string, unknown>) | null }; setState: (v: unknown) => void } } }).__game
++    const run = game.store.getState().dungeonRun
++    if (run) game.store.setState({ dungeonRun: { ...run, light: 10 } })
++  })
++  await expect(page.locator('[data-guide="objective"]')).toHaveText('帰り火を考えよ')
++
++  const returnButton = page.locator('.dungeon-return-dock [data-zone="return-fire"]')
++  await expect(returnButton).toBeVisible()
++  const box = await returnButton.boundingBox()
++  expect(box).toBeTruthy()
++  expect(box!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 24)
++
++  await returnButton.click()
++  await expect(page.getByText('帰り火を焚く', { exact: true })).toBeVisible()
++  const stillRunning = await page.evaluate(() => Boolean((window as never as { __game: { store: { getState: () => { dungeonRun: unknown } } } }).__game.store.getState().dungeonRun))
++  expect(stillRunning, '1操作目は確認だけで帰還を確定しない').toBe(true)
++  await page.getByRole('button', { name: '帰還する', exact: true }).click()
++  await expect.poll(() => page.evaluate(() => Boolean((window as never as { __game: { store: { getState: () => { dungeonRun: unknown } } } }).__game.store.getState().dungeonRun))).toBe(false)
++})
++
+ // ---------- ③④ 戦闘(味方1対敵2) ----------
+ 
+ test('戦闘 1対2: 生存札の相互重なりが12%以下', async ({ page }, info) => {
+diff --git a/tests/visual/village.spec.ts b/tests/visual/village.spec.ts
+index 273cefc..98c3dc1 100644
+--- a/tests/visual/village.spec.ts
++++ b/tests/visual/village.spec.ts
+@@ -1,6 +1,6 @@
+ // M8 / M26 §6: 郷の追従カメラ受入。ユーザー報告バグ(NPCが金色の立ち絵札で豆粒・盤面に見える)の是正確認。
+ import { expect, test } from '@playwright/test'
+-import { boxesOf, gotoVillage, snapshot } from './helpers'
++import { boxesOf, crossings, gotoVillage, snapshot } from './helpers'
+ 
+ // 主人公スプライトの world 高さ(engine の V_PLAYER_H = V_TILE*1.15)
+ const V_PLAYER_H = 46 * 1.15
+@@ -36,3 +36,25 @@ test('郷: D-pad各方向にaria-labelがある(§6.4)', async ({ page }) => {
+   expect(labels.length).toBeGreaterThanOrEqual(4)
+   expect(labels.every((l) => l && /上|下|左|右/.test(l))).toBe(true)
+ })
++
++test('郷: 近接対象は一つの大buttonで、D-padとの矩形交差が0', async ({ page }) => {
++  await gotoVillage(page)
++  const action = page.locator('[data-zone="village-action"]')
++  await expect(action).toBeVisible()
++  await expect(action).toHaveRole('button')
++  const [actions, dpad] = await Promise.all([
++    boxesOf(page, '[data-zone="village-action"]'),
++    boxesOf(page, '[data-zone="dpad"]'),
++  ])
++  expect(actions).toHaveLength(1)
++  expect(dpad).toHaveLength(1)
++  expect(actions[0].height).toBeGreaterThanOrEqual(48)
++  expect(crossings(actions, dpad), '近接行動×D-pad').toEqual([])
++})
++
++test('郷: 会話中はD-padを非表示にして誤移動を防ぐ', async ({ page }) => {
++  await gotoVillage(page)
++  await page.getByRole('button', { name: '豆腐屋', exact: true }).click()
++  await expect(page.locator('.village-talk')).toBeVisible()
++  await expect(page.locator('[data-zone="dpad"]')).toHaveCount(0)
++})

@@ -108,10 +108,40 @@
 /* ==== M18 P2: 郷ホーム再設計(血脈診断/推奨/帳/アンカー/月送り確認) ==== */
 
 /* 一族欄二面化 — 左=大札+小札 / 右=血脈診断 */
-.family-board { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr); gap: 14px; align-items: start; }
-.family-smalls { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; }
-.family-smalls .char-card { flex: 0 0 auto; min-width: 168px; }
+.family-board { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr); gap: 14px; align-items: start; min-width: 0; }
+.family-main { min-width: 0; }
+.family-smalls { display: flex; gap: 8px; width: 100%; max-width: 100%; margin-top: 8px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 2px 6px; }
+.char-card.clickable { width: auto; font: inherit; color: inherit; text-align: left; }
+.family-smalls .char-card { flex: 0 0 min(168px, calc(100vw - 58px)); min-width: 0; text-align: left; }
+.family-smalls .char-card:focus-visible { scroll-margin-inline: 8px; }
 @media (max-width: 640px) { .family-board { grid-template-columns: 1fr; } }
+
+/* 狭幅では、長い固有名や資源値がグリッドの最小内容幅を押し広げない。 */
+.home-screen,
+.home-screen .panel,
+.home-screen .panel > *,
+.home-header,
+.resource-strip,
+.narrative-now,
+.action-cards,
+.ledger { min-width: 0; max-width: 100%; }
+.home-screen .char-name,
+.home-screen .ledger-value,
+.home-screen .action-card-title,
+.home-screen .action-card-desc { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .home-header { align-items: flex-start; gap: 8px; }
+  .resource-strip { justify-content: flex-end; gap: 5px; }
+  .resource { min-width: 0; padding-inline: 8px; }
+  .resource .res-label { display: none; }
+  .narrative-now { flex-wrap: wrap; }
+  .narrative-now > div { min-width: 0; }
+}
+
+/* 奉燈不足の星は閲覧可能。封印の半透明・禁止カーソルとは明確に分ける。 */
+.god-row.unaffordable { box-shadow: inset 3px 0 0 rgba(232, 163, 61, 0.45); }
+.god-row.unaffordable .god-row-cost { color: var(--text-dim); }
+.god-row-short { display: block; font-size: 10px; color: var(--ember-text); font-weight: 700; }
 
 /* 血脈診断 — 状態を説明できる空白 */
 .blood-diag {

@@ -1,0 +1,261 @@
+/* VC2: 入口は「巨大な灯を右に残した綴り表紙」。汎用panelを足さず、画像の余白をUIにする。 */
+.title-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(5, 7, 13, .92) 0%, rgba(5, 7, 13, .7) 32%, rgba(5, 7, 13, .08) 68%),
+    linear-gradient(0deg, rgba(5, 7, 13, .86) 0%, transparent 36%);
+}
+
+.title-screen {
+  align-items: flex-start;
+  padding-left: clamp(28px, 8vw, 124px);
+  text-align: left;
+}
+
+.title-main {
+  width: min(560px, calc(100vw - 48px));
+}
+
+.title-menu {
+  width: min(390px, calc(100vw - 48px));
+}
+
+.title-kicker {
+  margin: 0 0 6px 4px;
+  color: var(--gold);
+  font: 600 11px/1.4 'Yu Gothic UI', 'Meiryo UI', sans-serif;
+  letter-spacing: .32em;
+}
+
+.title-main .game-title {
+  font-size: clamp(68px, 10vw, 124px);
+}
+
+.title-menu {
+  min-width: 0;
+  margin-top: clamp(22px, 5vh, 44px);
+  padding-left: 18px;
+  border-left: 2px solid rgba(201, 168, 106, .72);
+}
+
+.title-menu .btn {
+  position: relative;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 14px 10px 20px;
+  border: 0;
+  border-bottom: 1px solid rgba(201, 168, 106, .26);
+  border-radius: 0;
+  background: linear-gradient(90deg, rgba(11, 15, 30, .86), rgba(11, 15, 30, .22));
+  text-align: left;
+  box-shadow: none;
+}
+
+.title-menu .btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 1px;
+  background: currentColor;
+  opacity: .65;
+}
+
+.title-menu .btn-main {
+  color: var(--flame);
+  background: linear-gradient(90deg, rgba(232, 163, 61, .18), rgba(11, 15, 30, .18));
+}
+
+.title-menu .btn:hover:not(:disabled),
+.title-menu .btn:focus-visible {
+  transform: translateX(4px);
+  border-color: rgba(201, 168, 106, .52);
+  box-shadow: none;
+}
+
+.title-save-state {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0 0 8px;
+  color: var(--text-dim);
+  font: 500 11px/1.5 'Yu Gothic UI', 'Meiryo UI', sans-serif;
+  letter-spacing: .12em;
+}
+
+.title-save-state strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.title-save-state span {
+  grid-column: 1 / -1;
+  max-width: 34em;
+  letter-spacing: .04em;
+}
+
+.title-save-state[data-state='damaged'] strong {
+  color: var(--ember-text);
+}
+
+.title-ver {
+  left: clamp(28px, 8vw, 124px);
+  z-index: 2;
+}
+
+/* 導入は消えた過去行をDOMから捨てず、一冊の可逆な頁として読めるようにする。 */
+.intro-screen {
+  max-width: none;
+  padding: clamp(72px, 10vh, 110px) clamp(22px, 10vw, 150px) 96px;
+  align-items: flex-start;
+}
+
+.intro-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(5, 7, 13, .9), rgba(11, 15, 30, .55) 58%, rgba(5, 7, 13, .18));
+}
+
+.intro-screen::before {
+  content: '';
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: min(15vw, 180px);
+  height: min(13vh, 100px);
+  pointer-events: none;
+  background: radial-gradient(ellipse at 100% 100%, rgba(5, 7, 13, 1) 0 44%, rgba(5, 7, 13, .98) 58%, transparent 82%);
+}
+
+.intro-spine {
+  position: absolute;
+  z-index: 2;
+  left: clamp(18px, 5vw, 72px);
+  top: 12vh;
+  bottom: 16vh;
+  width: 1px;
+  background: linear-gradient(var(--gold), rgba(201, 168, 106, .08));
+}
+
+.intro-spine span {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: .3em;
+  writing-mode: vertical-rl;
+}
+
+.intro-text {
+  position: relative;
+  z-index: 2;
+  width: min(680px, calc(100vw - 72px));
+  min-height: 0;
+  max-height: min(58vh, 560px);
+  margin: 0;
+  padding: 4px 24px min(24vh, 180px) 0;
+  overflow-y: auto;
+  scrollbar-color: rgba(201, 168, 106, .5) transparent;
+  mask-image: linear-gradient(to bottom, transparent 0, black 4%, black 96%, transparent 100%);
+}
+
+.intro-text p {
+  max-width: 38em;
+  margin-bottom: 18px;
+}
+
+.intro-text .intro-past {
+  color: rgba(232, 225, 205, .64);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .72);
+}
+
+.intro-text .intro-current {
+  position: relative;
+  padding-left: 18px;
+  color: #fff2d2;
+  font-size: clamp(17px, 2vw, 21px);
+  font-weight: 600;
+  scroll-margin-block: min(24vh, 180px);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .86);
+}
+
+.intro-text .intro-current::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: .7em;
+  width: 7px;
+  height: 1px;
+  background: var(--flame);
+  box-shadow: 0 0 8px rgba(255, 157, 69, .5);
+}
+
+.intro-screen .scene-pager {
+  z-index: 3;
+}
+
+@media (max-width: 600px) {
+  .title-screen {
+    justify-content: flex-end;
+    padding: 44px 22px 62px;
+  }
+  .title-screen::after {
+    background: linear-gradient(0deg, rgba(5, 7, 13, .96) 0%, rgba(5, 7, 13, .62) 64%, rgba(5, 7, 13, .16));
+  }
+  .title-art-img {
+    object-position: 62% center;
+  }
+  .title-main .game-title {
+    font-size: clamp(62px, 21vw, 86px);
+  }
+  .title-copy {
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  .title-menu {
+    margin-top: 18px;
+  }
+  .title-ver {
+    display: none;
+  }
+  .intro-screen {
+    padding: 86px 20px 100px 54px;
+  }
+  .intro-spine {
+    left: 24px;
+  }
+  .intro-text {
+    width: 100%;
+    max-height: 62vh;
+    padding-right: 8px;
+  }
+  .intro-text p {
+    font-size: 14px;
+    letter-spacing: .06em;
+  }
+  .intro-text .intro-current {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-menu .btn,
+  .intro-text {
+    scroll-behavior: auto;
+  }
+  .title-menu .btn:hover:not(:disabled),
+  .title-menu .btn:focus-visible {
+    transform: none;
+  }
+}

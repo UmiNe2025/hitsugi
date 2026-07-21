@@ -330,7 +330,7 @@
 .cmd-auto-persist {
   width: 100%;
   min-height: 40px;
-  margin-bottom: 8px;
+  margin-bottom: 14px; /* 呼吸/scaleアニメの外接矩形を含めても最低2px離す */
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid rgba(201, 168, 106, 0.7);
@@ -531,4 +531,203 @@
     width: 92vw;
     font-size: 10.5px;
   }
+}
+
+/* ============================================================
+   AR0: 上端予約帯と「選択→予告→明示実行」の操作契約。
+   行動順/報酬を通常フローの同一railへ収め、右上の全画面設定釦(44px)ぶんを予約する。
+   ============================================================ */
+.battle-top-rail {
+  position: relative;
+  z-index: 24;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding-right: 64px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(6, 8, 16, 0.96), rgba(6, 8, 16, 0.72));
+  border-bottom: 1px solid rgba(201, 168, 106, 0.22);
+}
+/* index.cssのphone向け.screen padding(12px 10px)より後勝ちし、固定戦闘面をviewportへ戻す。 */
+.screen.battle-screen { padding: 0; }
+.battle-top-rail .turn-order {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  background: transparent;
+}
+.battle-top-rail .turn-chip {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 11em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.battle-top-rail .loot-slot {
+  position: relative;
+  inset: auto;
+  flex: 0 0 auto;
+  transform: none;
+  margin-right: 2px;
+}
+.battle-top-rail .loot-slot .slot-reel { flex-shrink: 0; }
+
+/* 選択中の札は太枠と菱形印で示し、色だけに頼らない。カードのクリックは再選択であり実行ではない。 */
+.combatant.is-selected-target .battle-art-frame {
+  outline: 3px solid var(--sel);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 1px rgba(11, 15, 30, 0.92), 0 0 20px rgba(255, 157, 69, 0.58);
+}
+.combatant.is-selected-target::after {
+  content: '◆ 選択';
+  position: absolute;
+  z-index: 16;
+  top: -17px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--sel);
+  color: var(--night-deep);
+  font-size: 9.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.combatant[role='button']:focus-visible .battle-art-frame {
+  outline: 3px solid var(--amber);
+  outline-offset: 4px;
+}
+
+/* 敵兆しは全幅で札の前に1行を予約する。旧absolute top:-10は札の呼吸上昇と最大22px交差した。 */
+.combatant.is-enemy .enemy-intent {
+  position: relative;
+  inset: auto;
+  transform: translateY(-6px);
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .combatant.is-enemy .enemy-intent { animation: intentFlowIn 220ms ease-out; }
+}
+@keyframes intentFlowIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(-6px); }
+}
+
+.action-confirm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'kicker actions'
+    'title actions'
+    'facts actions'
+    'keys actions';
+  column-gap: 10px;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  padding: 3px 5px;
+  border-left: 3px solid var(--sel);
+  background: linear-gradient(90deg, rgba(255, 157, 69, 0.12), transparent 72%);
+}
+.action-confirm-kicker {
+  grid-area: kicker;
+  margin: 0;
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+}
+.action-confirm-title {
+  grid-area: title;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 1px 0 3px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.action-confirm-title b { color: var(--sel); }
+.action-confirm-facts {
+  grid-area: facts;
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.action-confirm-facts > div {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  padding: 2px 5px;
+  border: 1px solid rgba(201, 168, 106, 0.3);
+  border-radius: 4px;
+  background: rgba(11, 15, 30, 0.5);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.action-confirm-facts dt { color: var(--text-dim); }
+.action-confirm-facts dd { margin: 0; color: var(--text); font-weight: 700; }
+.action-confirm-actions {
+  grid-area: actions;
+  display: grid;
+  gap: 4px;
+  width: min(24vw, 210px);
+}
+.action-confirm-actions .cmd-btn {
+  min-height: 44px;
+  padding-inline: 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.action-confirm-keys {
+  grid-area: keys;
+  margin: 2px 0 0;
+  color: var(--text-dim);
+  font-size: 9.5px;
+}
+
+@media (max-width: 560px) {
+  .battle-screen { grid-template-rows: 58px minmax(0, 1fr) clamp(220px, 42vh, 420px); }
+  .battle-top-rail { gap: 4px; padding-right: 60px; }
+  .battle-top-rail .turn-order { gap: 3px; padding: 5px 6px; }
+  .battle-top-rail .turn-order-turn { margin-right: 1px; font-size: 10.5px; letter-spacing: 0.08em; }
+  .battle-top-rail .turn-chip {
+    max-width: 68px;
+    padding: 2px 5px;
+    font-size: 10.5px;
+  }
+  .battle-top-rail .turn-chip[data-step='3'],
+  .battle-top-rail .turn-chip[data-step='4'],
+  .battle-top-rail .turn-chip[data-step='5'] { display: none; }
+  .battle-top-rail .turn-chip-side { display: none; }
+  .battle-top-rail .turn-chain-mult { padding: 2px 5px; margin-right: 0; font-size: 9.5px; }
+  .battle-top-rail .loot-slot { padding: 3px 5px; }
+  .battle-top-rail .loot-slot .slot-label { display: none; }
+  /* 兆しを絶対配置から敵帯の通常フローへ移し、札とも上端railとも交差させない。 */
+  .enemy-side { padding: 24px 4px 2px; }
+
+  .action-confirm {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'kicker' 'title' 'facts' 'actions' 'keys';
+    gap: 4px;
+    height: auto;
+    padding: 7px 8px;
+  }
+  .action-confirm-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .action-confirm-facts > div { display: grid; gap: 1px; text-align: center; }
+  .action-confirm-actions { width: 100%; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+  .action-confirm-title { font-size: 13px; }
+  .action-confirm-keys { text-align: center; }
 }

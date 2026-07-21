@@ -8,9 +8,15 @@
 - **リポジトリ**: https://github.com/hitsugi-game/hitsugi (public、`UmiNe2025`からOrganizationへ移管済み)
 - **v0.1.0 タグ**: https://github.com/hitsugi-game/hitsugi/releases/tag/v0.1.0
 - **M34公開実装HEAD**: `f144505c5a70e784fb2e8a7980b3469e0fb2dd77`（実装`0bd19ec`＋設計/導線`f144505`）。GitHub Actions run `29777998428`成功。旧Pages URLは404。
-- **次の実装単位**: `docs/CODEX_MASTERPLAN_DRAFT.md`のUI Phase 0へ進む。
+- **全景品質mission（ローカルcode統合完了・独立監査PASS-with-notes・外部gate待ち）**: 全22 route、全40地域、route外overlay 6件を台帳68行へ`code-integrated`として接続。required state×5幅証拠のない行は`scene-integrated`へ昇格しない。Title/Intro/Home/星契り、郷5施設、蛍火Dungeon/Battle、鍛冶/蔵/出立/遠征、生涯/夢/終端、家譜/図鑑/普請/家系図/設定/通知を画面固有surfaceへ再構成した。Vitest 676、lint、build、closure 68/68、manifest 7/7に加え、郷5幅30/30、蛍火旅程5幅21合格・4意図的skip、鍛冶/蔵PC・mobile証拠8合格・2意図的skip。Round 2 blocking 0。commit/push/deployは未実施。
+- **地域拡張の安全境界**: 4 macro biome・全40地域の固有二材質/silhouette/landmark/danger/navigation/motion/soundをcode-native runtimeへ実装したが、`regionVisualV2`は既定OFF。生成7素材は2026-07-21に公開・商用利用承認を取得済み。外部4-way blindと物理低性能端末gateが閉じるまでV2をproduction cohortへ昇格しない。
+- **生成素材・神画像方針**: 郷の星祠・豆腐屋・出立門3点を追加生成・透過処理し、既存4点と合わせmanifest 7件へ統合。実参照1,749画像は欠落0/exact重複0だが、神MAXの人格・画風連続性が不足するため承認allowlistは空。未承認MAXは通常立ち絵を置換せず、コード演出だけを重ねる。
+- **全体gate/概算**: 全22 routeをprimary phaseへ割り当て、全40地域・overlay・required stateをclosure ledgerで追う。完了時`placeholder/mismatch/未分類/未確認=0`、4 biomeは4-way blindで各群6/8。base 53〜94 person-day＋神/敵P0差替え予備0〜12、合計53〜106。量産VC6は34 person-day上限とし、超過予測時はbespoke assetを止める。
+- **全景計画Forge**: Round 1で未割当route/工数を検出し、VC3Bを追加して全22 routeを閉鎖。Round 2のfresh評価はA/B/C/D/E=5/5/5/5/5、blocking 0でPASS。現在はローカル実装と機械gateまで完了し、公開・外部魅力評価・権利判断を分離している。
 - **UI v2基準画像（実装前）**: `docs/visuals/ui-v2/`にHome・戦闘・Dungeon・郷・鍛冶の5点とmanifestを追加。Phase 0のlayout合格後、画面別に採用・分解・性能検証する。配信コードへの組込みは未実施。
 - **M34物語・画像統合（公開済み）**: 夢順序/永続scene queue/汐里名開示migration、Home「灯の余白」と章・夢の進行不変再読/7日一度通知、出立〜郷の短い残響、形見/家系図/Finale個人化、匿名体験集計、夢固有CG7点を実装。夢3は疑似文字を除去。Vitest 618、M34 E2E全5幅40＋最終影響範囲15、全既存spec PC/390px代表回帰91合格・1意図的skip。Ship Checkはblocking 0、run `29777998428`で公開済み。
+- **AR0操作安全・視覚契約（ローカル・独立監査PASS）**: Home/Pactのsemantic操作、Battleの標的選択→予告→実行、郷の操作帯分離、Dungeonの可視地図/帰り火/DOM案内、HVR-1.0 style bible、manifestを実装。5画面×5幅overflowとkeyboard/focusを30/30、Vitest 621、lint/build/diff-check、AR0単独reverse/M35保全で検証。目視で郷/DungeonのcheckerboardとBattleの平坦暗部はAR1課題として残る。commit/push/deploy未実施。
+- **AR1コアループvisual slice（機械実装・生成素材権利確認完了／人間・実機gate待ち）**: `regionVisualV2`既定OFFで、郷の連続地面・5施設facade・通常/危機/帰還痕、蛍火0層の水没社/前景/濡土/浅水/天候、同じcontractを継ぐBattle、Home帰還三痕を実装。採用7画像は220,318 bytes、visual QC合格、OpenAI利用条件と所有者承認を記録して`cleared / accepted`。外部8名と物理端末gateが残るためPhase Exit HOLD / AR2 NO-GO、V2既定OFFを維持する。
 
 ## 直近のマイルストーン(v3.1 M13以降)
 
@@ -49,7 +55,7 @@
 
 ## ユーザー承認が必要な残作業
 
-1. **UI再設計Phase 0の実装と検収** — 現在は計画・before証拠のみ。
+1. **AI感解消AR1の人間/実機検収** — 機械実装と生成7素材の公開・商用利用承認は完了。blind 8人と低性能物理端末gateは未実施。
 2. **X告知**: `docs/MARKETING.md` の文面をコピペ投稿。
 3. **itch.io登録**: 英語ストア文面も同ファイルに用意済み。
 4. **フリーゲームポータル登録**(ふりーむ!等)。

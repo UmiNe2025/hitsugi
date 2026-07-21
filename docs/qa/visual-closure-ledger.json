@@ -1,0 +1,3454 @@
+{
+  "schemaVersion": 1,
+  "purpose": "VC0 visual closure inventory. Statuses are intentionally honest: source-code presence is not scene readiness.",
+  "lifecycleStatusSource": "docs/CODEX_MASTERPLAN_DRAFT.md#1843-asset-lifecycleと採用権限",
+  "entries": [
+    {
+      "kind": "route",
+      "sceneId": "title",
+      "parentSurface": "entrance",
+      "stateId": [
+        "new",
+        "continue",
+        "save-none",
+        "save-present",
+        "save-corrupt",
+        "reduced-motion"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "A single book-cover title field, restrained crest, and one dominant lantern establish the first promise.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/vc2_entry.css",
+        "sha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Title.tsx",
+        "sourceSha256": "4ebe3b3fe25f6777eec43365e68991b5bdebb4a91057142e3e1a8aac8c868430",
+        "runtimePath": "src/ui/vc2_entry.css",
+        "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/title",
+      "evidence": [
+        "src/ui/Title.tsx",
+        "src/ui/vc2_entry.css",
+        "tests/visual/title_vc2.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "intro",
+      "parentSurface": "entrance",
+      "stateId": [
+        "first-run",
+        "skip",
+        "reduced-motion"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The prologue keeps the current beat dominant while the complete eleven-beat record remains reachable.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/vc2_entry.css",
+        "sha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Title.tsx",
+        "sourceSha256": "4ebe3b3fe25f6777eec43365e68991b5bdebb4a91057142e3e1a8aac8c868430",
+        "runtimePath": "src/ui/vc2_entry.css",
+        "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/intro",
+      "evidence": [
+        "src/ui/Title.tsx",
+        "src/ui/vc2_entry.css",
+        "tests/visual/title_vc2.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "home",
+      "parentSurface": "monthly-life",
+      "stateId": [
+        "normal",
+        "bloodline-crisis",
+        "fresh-return",
+        "empty",
+        "disabled"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The family card and bloodline diagnosis form the monthly-life focal pair.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/m17_home.css",
+        "sha256": "5e0dfcc0dc234bb975f44438bda5474fbf121c1b26c3667a839f80652e831f88"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Home.tsx",
+        "sourceSha256": "8321278fa31da6c9b5e5610da08bc271c952fd74b341e7bfe8d070a8eb0d1a62",
+        "runtimePath": "src/ui/m17_home.css",
+        "runtimeSha256": "5e0dfcc0dc234bb975f44438bda5474fbf121c1b26c3667a839f80652e831f88",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/home",
+      "evidence": [
+        "src/ui/Home.tsx",
+        "src/ui/m17_home.css",
+        "tests/visual/ar0_home_pact.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "village",
+      "parentSurface": "monthly-life",
+      "stateId": [
+        "normal",
+        "bloodline-crisis",
+        "fresh-return",
+        "empty",
+        "disabled"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Five grounded facilities, nearby residents, and crisis variants turn the village into a readable place.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/village.css",
+        "sha256": "a86b362063f3c3fb9bfd7d9f8476e8416b3c8dd7db9c0cc36d74ffbc407ca35b"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Village.tsx",
+        "sourceSha256": "b160339922947ae4ab251c1865a92097c0431c3cd51d62b9cc4b9f585289a9c5",
+        "runtimePath": "src/ui/village.css",
+        "runtimeSha256": "a86b362063f3c3fb9bfd7d9f8476e8416b3c8dd7db9c0cc36d74ffbc407ca35b",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/village",
+      "evidence": [
+        "src/ui/Village.tsx",
+        "src/ui/village.css",
+        "tests/visual/village.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "pact",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "eligible",
+        "ineligible",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The selected deity remains the sole visual hero; unreviewed MAX art cannot replace its identity.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/pact_m35.css",
+        "sha256": "06ee4f018c57ab3d1f6882d818047be3a1f6726565f0c19cd1d9a2528059ec17"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Pact.tsx",
+        "sourceSha256": "0890d2f81306d878282e753f3639a37388d9d2e85bf690576bb023408bde60b8",
+        "runtimePath": "src/ui/pact_m35.css",
+        "runtimeSha256": "06ee4f018c57ab3d1f6882d818047be3a1f6726565f0c19cd1d9a2528059ec17",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/pact",
+      "evidence": [
+        "src/ui/Pact.tsx",
+        "src/ui/pact_m35.css",
+        "tests/visual/pact.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "birth",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Birth is staged as a page in the family chronicle with character identity held in the foreground.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/birth",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "ceremony",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The coming-of-age rite uses the chronicle frame and a single ceremonial decision.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/ceremony",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "jobrite",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The vocation rite keeps the heir and the life-changing selection in one visual field.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/jobrite",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "life",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Life events read as authored chronicle leaves rather than generic modal cards.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/life",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "death",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Death closes a life as an elegiac chronicle page with the inherited consequence visible.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/death",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "dream",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Dream scenes use their own liminal edge treatment and preserve Shiori narrative continuity.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/dream",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/dream_visuals.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "dreamEp",
+      "parentSurface": "life-ritual",
+      "stateId": [
+        "pending",
+        "completed",
+        "skip",
+        "replay",
+        "missing-image-fallback"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Archived dream episodes keep the liminal visual grammar and replay affordance.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/dreamEp",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/narrative_m34.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "depart",
+      "parentSurface": "expedition",
+      "stateId": [
+        "locked",
+        "selected",
+        "map",
+        "list"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Destination art, route list, and up to four party candidates remain synchronized before confirmation.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/depart_m18.css",
+        "sha256": "4164aa1f8da56d27403c1546a88b9c00ca51418522198a482aae9115001eee66"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Expedition.tsx",
+        "sourceSha256": "a99cd78ffe987cd4dfb7926d687dc14eff7225fb3932a36e7767a42562708fdd",
+        "runtimePath": "src/ui/depart_m18.css",
+        "runtimeSha256": "4164aa1f8da56d27403c1546a88b9c00ca51418522198a482aae9115001eee66",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/depart",
+      "evidence": [
+        "src/ui/Expedition.tsx",
+        "src/ui/depart_m18.css",
+        "tests/visual/vc3_work_surfaces.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "expedition",
+      "parentSurface": "expedition",
+      "stateId": [
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Region, current segment, branch, party, and return decision fit one expedition workspace.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/expedition_vc3.css",
+        "sha256": "d2748f54fbdc1a4b62215a1fafc3769e8b3d325ee681e239b1f6a4a39510dd7d"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Expedition.tsx",
+        "sourceSha256": "a99cd78ffe987cd4dfb7926d687dc14eff7225fb3932a36e7767a42562708fdd",
+        "runtimePath": "src/ui/expedition_vc3.css",
+        "runtimeSha256": "d2748f54fbdc1a4b62215a1fafc3769e8b3d325ee681e239b1f6a4a39510dd7d",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/expedition",
+      "evidence": [
+        "src/ui/Expedition.tsx",
+        "src/ui/expedition_vc3.css",
+        "tests/visual/vc3_work_surfaces.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "dungeon",
+      "parentSurface": "expedition",
+      "stateId": [
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The walking field combines authored region materials, landmarks, route glyphs, and danger telegraphs.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Dungeon.tsx",
+        "sourceSha256": "ba218d1147709f75afc2547dd81e2b596fcadf752c1daab42db2970271df114d",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/dungeon",
+      "evidence": [
+        "src/ui/Dungeon.tsx",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/visual/ar1_dungeon_battle.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "battle",
+      "parentSurface": "expedition",
+      "stateId": [
+        "rare",
+        "boss",
+        "victory",
+        "retreat"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Shared contact mattes and one rare-or-boss hero clarify combatants, threat, action, and reward provenance.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/battle_ar1.css",
+        "sha256": "81fd8a7f1c8e1a3b1f562695359174ac0ee70eb67a35536e60a707aca2e80160"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Battle.tsx",
+        "sourceSha256": "31461efbde1b107daae1d6a9bb0c177bbfd32436cc926a4ccdb2430102883898",
+        "runtimePath": "src/ui/battle_ar1.css",
+        "runtimeSha256": "81fd8a7f1c8e1a3b1f562695359174ac0ee70eb67a35536e60a707aca2e80160",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/battle",
+      "evidence": [
+        "src/ui/Battle.tsx",
+        "src/ui/battle_ar1.css",
+        "tests/visual/ar1_dungeon_battle.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "forge",
+      "parentSurface": "records-and-craft",
+      "stateId": [
+        "empty",
+        "populated",
+        "filtered",
+        "selected",
+        "affordable",
+        "unaffordable",
+        "confirm",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "Person, three equipment slots, weakness, and three recommendations precede the full inventory.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/forge_vc3.css",
+        "sha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Forge.tsx",
+        "sourceSha256": "800ffb2c528f2ce43c88126879713986d609a28e18539bb58ac139776121d61c",
+        "runtimePath": "src/ui/forge_vc3.css",
+        "runtimeSha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/forge",
+      "evidence": [
+        "src/ui/Forge.tsx",
+        "src/ui/forge_vc3.css",
+        "tests/visual/vc3_work_surfaces.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "chronicle",
+      "parentSurface": "records-and-craft",
+      "stateId": [
+        "empty",
+        "populated",
+        "filtered",
+        "selected",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The family record is presented as a bound book with selected life detail.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/chronicle_m18.css",
+        "sha256": "b5448f39800336bc29a199a52def8967d0b7e739978bbf6ddbca852dd03bb68c"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Chronicle.tsx",
+        "sourceSha256": "94b95163ef4d80a7bb1bfd5fcf20f7fdbaa0dd2d9bad8b4683ca277472fbf171",
+        "runtimePath": "src/ui/chronicle_m18.css",
+        "runtimeSha256": "b5448f39800336bc29a199a52def8967d0b7e739978bbf6ddbca852dd03bb68c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/chronicle",
+      "evidence": [
+        "src/ui/Chronicle.tsx",
+        "src/ui/chronicle_m18.css",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "codex",
+      "parentSurface": "records-and-craft",
+      "stateId": [
+        "empty",
+        "populated",
+        "filtered",
+        "selected",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The rubbing-inspired codex makes collection, filter, selection, and mobile detail order explicit.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/codex_m18.css",
+        "sha256": "b71ff4bf512dc5243d059f2e35b93dc3cecd92cddab57759d693c4a33770c47e"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Codex.tsx",
+        "sourceSha256": "5c2f79b2b90eb1ce85233ccee91f928a807c7a844d9c19d05daff2da43635482",
+        "runtimePath": "src/ui/codex_m18.css",
+        "runtimeSha256": "b71ff4bf512dc5243d059f2e35b93dc3cecd92cddab57759d693c4a33770c47e",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/codex",
+      "evidence": [
+        "src/ui/Codex.tsx",
+        "src/ui/codex_m18.css",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "facilities",
+      "parentSurface": "records-and-craft",
+      "stateId": [
+        "empty",
+        "populated",
+        "selected",
+        "affordable",
+        "unaffordable",
+        "confirm",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "One active construction plan keeps cost, effect, affordability, and confirmation together.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/facilities.css",
+        "sha256": "7e52e592f2fb85052163425a1508061c18494c102fef16964d0181ff23da3e63"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Facilities.tsx",
+        "sourceSha256": "653c525c6652b0553e0e885385e4fe7c569bd9045099f1258efbb7ffd97feb34",
+        "runtimePath": "src/ui/facilities.css",
+        "runtimeSha256": "7e52e592f2fb85052163425a1508061c18494c102fef16964d0181ff23da3e63",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/facilities",
+      "evidence": [
+        "src/ui/Facilities.tsx",
+        "src/ui/facilities.css",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "finale",
+      "parentSurface": "millennium-end",
+      "stateId": [
+        "choice",
+        "confirm"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The final divergence is staged as a deliberate fork with a second confirmation.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/finale",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "route",
+      "sceneId": "ending",
+      "parentSurface": "millennium-end",
+      "stateId": [
+        "ending-cut",
+        "ending-save",
+        "ending-inherit",
+        "new-cycle",
+        "return-title"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "The ending sequence exposes closure, inheritance, new cycle, and return without collapsing them into one button.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/scenes_vc3b.css",
+        "sha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Scenes.tsx",
+        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "runtimePath": "src/ui/scenes_vc3b.css",
+        "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/ending",
+      "evidence": [
+        "src/ui/Scenes.tsx",
+        "src/ui/scenes_vc3b.css",
+        "tests/visual/scenes_vc3b.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "yoi_forest",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "yoi_forest has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/yoi_forest",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "hotarubi_no_kubochi",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "hotarubi_no_kubochi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/hotarubi_no_kubochi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "nureen_no_tsuji",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "nureen_no_tsuji has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/nureen_no_tsuji",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "nemurijizou_no_michi",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "nemurijizou_no_michi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/nemurijizou_no_michi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "karasu_no_sato",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "karasu_no_sato has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/karasu_no_sato",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "tourou_kuzure_michi",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "tourou_kuzure_michi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/tourou_kuzure_michi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "mushishigure_michi",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "mushishigure_michi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/mushishigure_michi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "karita_no_bourei",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "karita_no_bourei has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/karita_no_bourei",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "yaregasa_douhyou",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "yaregasa_douhyou has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/yaregasa_douhyou",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "minomushi_no_kairou",
+      "parentSurface": "expedition/wetland-boundary",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "minomushi_no_kairou has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/minomushi_no_kairou",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "chochin_zaka",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "chochin_zaka has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/chochin_zaka",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "haikyo_goten",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "haikyo_goten has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/haikyo_goten",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "nurikabe_koji",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "nurikabe_koji has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/nurikabe_koji",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "kare_numa",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "kare_numa has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/kare_numa",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "oboro_bashi",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "oboro_bashi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/oboro_bashi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "kuchinawa_no_hotoke",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "kuchinawa_no_hotoke has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/kuchinawa_no_hotoke",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "usugiri_no_watashiba",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "usugiri_no_watashiba has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/usugiri_no_watashiba",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "suzuriishi_no_saka",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "suzuriishi_no_saka has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/suzuriishi_no_saka",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "rousoku_kashi",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "rousoku_kashi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/rousoku_kashi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "kagami_ga_fuchi",
+      "parentSurface": "expedition/stone-prayer-road",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "kagami_ga_fuchi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/kagami_ga_fuchi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "hoshimukuro_tani",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "hoshimukuro_tani has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/hoshimukuro_tani",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "hisui_no_sawa",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "hisui_no_sawa has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/hisui_no_sawa",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "kageboushi_no_oka",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "kageboushi_no_oka has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/kageboushi_no_oka",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "kaji_ato",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "kaji_ato has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/kaji_ato",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "nakiotoko_no_hara",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "nakiotoko_no_hara has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/nakiotoko_no_hara",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "kottou_zaka",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "kottou_zaka has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/kottou_zaka",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "sabigatana_no_haka",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "sabigatana_no_haka has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/sabigatana_no_haka",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "hyakki_yakou_no_tsuji",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "hyakki_yakou_no_tsuji has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/hyakki_yakou_no_tsuji",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "yumemaboroshi_no_yakata",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "yumemaboroshi_no_yakata has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/yumemaboroshi_no_yakata",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "hakkotsu_bayashi",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "hakkotsu_bayashi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/hakkotsu_bayashi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "tokoyami_no_kairou",
+      "parentSurface": "expedition/wood-city-remains",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "tokoyami_no_kairou has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/tokoyami_no_kairou",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "hoshikui_no",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "hoshikui_no has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/hoshikui_no",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "maboroshi_no_sandou",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "maboroshi_no_sandou has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/maboroshi_no_sandou",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "mouja_machi",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "mouja_machi has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/mouja_machi",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "nakiryuu_no_mine",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "nakiryuu_no_mine has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/nakiryuu_no_mine",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "gentou_zentei",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "gentou_zentei has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/gentou_zentei",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "todome_no_kaidan",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "todome_no_kaidan has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/todome_no_kaidan",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "gentou_no_zenya",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "gentou_no_zenya has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/gentou_no_zenya",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "akashi_miyama",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare",
+        "boss"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "akashi_miyama has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/akashi_miyama",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "region",
+      "sceneId": "tokoyo_tou",
+      "parentSurface": "expedition/bone-star-wilds",
+      "stateId": [
+        "normal",
+        "locked",
+        "selected",
+        "visited",
+        "rare"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "tokoyo_tou has an authored region profile with a unique landmark, silhouette, danger shape, and navigation rule.",
+      "support": "The profile combines exactly two tactile ground materials with a macro-biome value family and bounded ambient population.",
+      "groundContact": "The code-native layer paints material marks beneath route glyphs, entrance landmark, gather points, player, and danger telegraphs.",
+      "depth": "Macro-biome floor, unique silhouette/landmark, route marks, actors, and restrained ambient particles form separate readable planes.",
+      "people": "The party marker remains above ground contact and below route-critical overlays; no decorative portrait or nameplate is added to the walking field.",
+      "ui": "Visited, selected, locked, rare, and boss meaning remains encoded by state and shape, not palette alone; navigation mechanics are unchanged.",
+      "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
+      "runtimeBundle": {
+        "path": "src/dungeon/render/region_experience_layer.ts",
+        "sha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c"
+      },
+      "provenance": {
+        "sourcePath": "src/core/data/region_experience.ts",
+        "sourceSha256": "7674cbe75d3db10bd1969b724ae6e5de374fe7bcd7e1bc11817c17826cb8fd53",
+        "runtimePath": "src/dungeon/render/region_experience_layer.ts",
+        "runtimeSha256": "994f761d6fe37f60dc32d4b6996976b66342bc035347aa1036a2e145c8190a7c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/region/tokoyo_tou",
+      "evidence": [
+        "src/core/data/region_experience.ts",
+        "src/dungeon/render/region_experience_layer.ts",
+        "tests/region_experience.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "overlay",
+      "sceneId": "family-tree",
+      "parentSurface": "home",
+      "stateId": [
+        "open",
+        "close",
+        "outside-click",
+        "escape",
+        "focus-return",
+        "empty",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "family-tree keeps one task, message, or decision as the overlay focal point.",
+      "support": "Supporting copy and secondary controls are grouped inside the same material frame without becoming another full page.",
+      "groundContact": "The overlay edge, shadow, and scrim or fixed toast stack separate it from the world while preserving context.",
+      "depth": "World context remains behind the interaction plane; focusable controls and alerts stay on the top readable layer.",
+      "people": "Portraits appear only when they are part of the task; decorative people are not inserted into utility overlays.",
+      "ui": "Open, close, outside click, Escape, focus return, empty, and error states follow the shared dialog or sheet contract.",
+      "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
+      "runtimeBundle": {
+        "path": "src/ui/familytree_m18.css",
+        "sha256": "5c449ae7a49cfd5f984852205f9f4041a6b47c5c5ac60fb83746b826bb7eb88d"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/FamilyTree.tsx",
+        "sourceSha256": "b130069ed7bb324ef9bf1cb1d13ef868e391481c2841d6c36f90a5968e7e40d3",
+        "runtimePath": "src/ui/familytree_m18.css",
+        "runtimeSha256": "5c449ae7a49cfd5f984852205f9f4041a6b47c5c5ac60fb83746b826bb7eb88d",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/overlay/family-tree",
+      "evidence": [
+        "src/ui/FamilyTree.tsx",
+        "src/ui/familytree_m18.css",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "overlay",
+      "sceneId": "storehouse-tab",
+      "parentSurface": "forge",
+      "stateId": [
+        "open",
+        "close",
+        "outside-click",
+        "escape",
+        "focus-return",
+        "empty",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "storehouse-tab keeps one task, message, or decision as the overlay focal point.",
+      "support": "Supporting copy and secondary controls are grouped inside the same material frame without becoming another full page.",
+      "groundContact": "The overlay edge, shadow, and scrim or fixed toast stack separate it from the world while preserving context.",
+      "depth": "World context remains behind the interaction plane; focusable controls and alerts stay on the top readable layer.",
+      "people": "Portraits appear only when they are part of the task; decorative people are not inserted into utility overlays.",
+      "ui": "Open, close, outside click, Escape, focus return, empty, and error states follow the shared dialog or sheet contract.",
+      "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
+      "runtimeBundle": {
+        "path": "src/ui/forge_vc3.css",
+        "sha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Forge.tsx",
+        "sourceSha256": "800ffb2c528f2ce43c88126879713986d609a28e18539bb58ac139776121d61c",
+        "runtimePath": "src/ui/forge_vc3.css",
+        "runtimeSha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/overlay/storehouse-tab",
+      "evidence": [
+        "src/ui/Forge.tsx",
+        "src/ui/forge_vc3.css",
+        "tests/visual/vc3_work_surfaces.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "overlay",
+      "sceneId": "settings-help",
+      "parentSurface": "title/home",
+      "stateId": [
+        "open",
+        "close",
+        "outside-click",
+        "escape",
+        "focus-return",
+        "empty",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "settings-help keeps one task, message, or decision as the overlay focal point.",
+      "support": "Supporting copy and secondary controls are grouped inside the same material frame without becoming another full page.",
+      "groundContact": "The overlay edge, shadow, and scrim or fixed toast stack separate it from the world while preserving context.",
+      "depth": "World context remains behind the interaction plane; focusable controls and alerts stay on the top readable layer.",
+      "people": "Portraits appear only when they are part of the task; decorative people are not inserted into utility overlays.",
+      "ui": "Open, close, outside click, Escape, focus return, empty, and error states follow the shared dialog or sheet contract.",
+      "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
+      "runtimeBundle": {
+        "path": "src/ui/settings_vc6.css",
+        "sha256": "5ce9e9997eb005efe37a3d02c61206a809e27e7c44f34d4dbeab75d10f9cd94c"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Settings.tsx",
+        "sourceSha256": "a5006fb3a6619215f3179ec28b6d7e000d2755be910867285dcfb0bfc5f99eb0",
+        "runtimePath": "src/ui/settings_vc6.css",
+        "runtimeSha256": "5ce9e9997eb005efe37a3d02c61206a809e27e7c44f34d4dbeab75d10f9cd94c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/overlay/settings-help",
+      "evidence": [
+        "src/ui/Settings.tsx",
+        "src/ui/settings_vc6.css",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "overlay",
+      "sceneId": "save-import-export",
+      "parentSurface": "settings-help",
+      "stateId": [
+        "open",
+        "close",
+        "outside-click",
+        "escape",
+        "focus-return",
+        "empty",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "save-import-export keeps one task, message, or decision as the overlay focal point.",
+      "support": "Supporting copy and secondary controls are grouped inside the same material frame without becoming another full page.",
+      "groundContact": "The overlay edge, shadow, and scrim or fixed toast stack separate it from the world while preserving context.",
+      "depth": "World context remains behind the interaction plane; focusable controls and alerts stay on the top readable layer.",
+      "people": "Portraits appear only when they are part of the task; decorative people are not inserted into utility overlays.",
+      "ui": "Open, close, outside click, Escape, focus return, empty, and error states follow the shared dialog or sheet contract.",
+      "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
+      "runtimeBundle": {
+        "path": "src/ui/settings_vc6.css",
+        "sha256": "5ce9e9997eb005efe37a3d02c61206a809e27e7c44f34d4dbeab75d10f9cd94c"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/Settings.tsx",
+        "sourceSha256": "a5006fb3a6619215f3179ec28b6d7e000d2755be910867285dcfb0bfc5f99eb0",
+        "runtimePath": "src/ui/settings_vc6.css",
+        "runtimeSha256": "5ce9e9997eb005efe37a3d02c61206a809e27e7c44f34d4dbeab75d10f9cd94c",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/overlay/save-import-export",
+      "evidence": [
+        "src/ui/Settings.tsx",
+        "src/ui/settings_vc6.css",
+        "tests/visual/title_vc2.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "overlay",
+      "sceneId": "sheet-modal",
+      "parentSurface": "route-dependent",
+      "stateId": [
+        "open",
+        "close",
+        "outside-click",
+        "escape",
+        "focus-return",
+        "empty",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "sheet-modal keeps one task, message, or decision as the overlay focal point.",
+      "support": "Supporting copy and secondary controls are grouped inside the same material frame without becoming another full page.",
+      "groundContact": "The overlay edge, shadow, and scrim or fixed toast stack separate it from the world while preserving context.",
+      "depth": "World context remains behind the interaction plane; focusable controls and alerts stay on the top readable layer.",
+      "people": "Portraits appear only when they are part of the task; decorative people are not inserted into utility overlays.",
+      "ui": "Open, close, outside click, Escape, focus return, empty, and error states follow the shared dialog or sheet contract.",
+      "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
+      "runtimeBundle": {
+        "path": "src/ui/layout/dialogs.ts",
+        "sha256": "58768c2b7bfc4f03858aaa6e8a42413c53f42e91d236f989f1269951a5feca5f"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/layout/dialogs.ts",
+        "sourceSha256": "58768c2b7bfc4f03858aaa6e8a42413c53f42e91d236f989f1269951a5feca5f",
+        "runtimePath": "src/ui/layout/dialogs.ts",
+        "runtimeSha256": "58768c2b7bfc4f03858aaa6e8a42413c53f42e91d236f989f1269951a5feca5f",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/overlay/sheet-modal",
+      "evidence": [
+        "src/ui/layout/dialogs.ts",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    },
+    {
+      "kind": "overlay",
+      "sceneId": "toast",
+      "parentSurface": "global",
+      "stateId": [
+        "open",
+        "close",
+        "auto-dismiss",
+        "manual-dismiss",
+        "empty",
+        "error"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "toast keeps one task, message, or decision as the overlay focal point.",
+      "support": "Supporting copy and secondary controls are grouped inside the same material frame without becoming another full page.",
+      "groundContact": "The overlay edge, shadow, and scrim or fixed toast stack separate it from the world while preserving context.",
+      "depth": "World context remains behind the interaction plane; focusable controls and alerts stay on the top readable layer.",
+      "people": "Portraits appear only when they are part of the task; decorative people are not inserted into utility overlays.",
+      "ui": "Non-modal notices announce status, auto-dismiss, and expose a 44px manual close target without stealing focus.",
+      "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
+      "runtimeBundle": {
+        "path": "src/index.css",
+        "sha256": "fd6291a8f8cb22e154d22f7ead0d209b73a3516c5a57606e8201180e32d98385"
+      },
+      "provenance": {
+        "sourcePath": "src/App.tsx",
+        "sourceSha256": "5d4182a5728e92f6f358a2f758267e42b2fc9aacd3038328c335958b5681627d",
+        "runtimePath": "src/index.css",
+        "runtimeSha256": "fd6291a8f8cb22e154d22f7ead0d209b73a3516c5a57606e8201180e32d98385",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/overlay/toast",
+      "evidence": [
+        "src/App.tsx",
+        "src/index.css",
+        "tests/visual/vc6_records_overlays.spec.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
+    }
+  ],
+  "promotion": {
+    "date": "2026-07-21",
+    "target": "code-integrated",
+    "note": "Local source/runtime integration only. No row becomes scene-integrated until every required state, all five canonical viewports, and mechanical checks have repository evidence."
+  }
+}

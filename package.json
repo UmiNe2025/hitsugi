@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "check:visual-closure": "node scripts/validate_visual_closure.mjs",
+    "check:visual-manifest": "node scripts/validate_visual_recovery_manifest.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:visual": "playwright test"

@@ -7,6 +7,8 @@ import {
   regionIdentityOf, regionVisualOf,
   type GroundKind, type LandmarkKind, type ParticleKind,
 } from '../../core/data/region_visuals'
+import { regionExperienceOf, type RegionExperienceProfile } from '../../core/data/region_experience'
+import { regionBundlePlan, type RegionBundlePlan } from './region_bundles'
 
 export type DungeonAct = 'norm' | 'dread' | 'seat' // 幕: 通常 / 畏(最終前) / 座(ボス階)
 
@@ -17,6 +19,8 @@ export interface ResolvedVisual {
   landmark: LandmarkKind | null
   groundKind: GroundKind // M24 §4.7: 地面材質(未指定地域は'soil'=現状維持)
   particleKind: ParticleKind // M24 §4.7: 空気粒子の挙動(未指定地域は'firefly'=現状維持)
+  experience: RegionExperienceProfile | null
+  bundlePlan: RegionBundlePlan | null
 }
 
 // 0xRRGGBB同士のチャンネル線形補間
@@ -37,6 +41,7 @@ export function resolveRegionVisual(
 ): ResolvedVisual {
   const p = regionId ? regionVisualOf(regionId) : null
   const identity = regionId ? regionIdentityOf(regionId) : null
+  const experience = regionId ? regionExperienceOf(regionId) : null
   const theme: DungeonTheme = { ...base }
   if (p) {
     if (p.ground !== undefined) theme.groundBase = p.ground
@@ -86,7 +91,9 @@ export function resolveRegionVisual(
     moteCount,
     landmark: p?.landmark ?? null,
     // M24 §4.7: 材質/粒子は幕(act)や鎮(cleared)で変調しない — 色のみが四幕の担当(既存契約を壊さない)
-    groundKind: p?.groundKind ?? 'soil',
-    particleKind: p?.particleKind ?? 'firefly',
+    groundKind: experience?.render.groundKind ?? p?.groundKind ?? 'soil',
+    particleKind: experience?.render.particleKind ?? p?.particleKind ?? 'firefly',
+    experience,
+    bundlePlan: regionId ? regionBundlePlan(regionId) : null,
   }
 }

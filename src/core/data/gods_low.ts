@@ -495,7 +495,7 @@ export const GODS_LOW: God[] = [
     personality: '欠けても輝きを失わない前向きな子',
     desc: '玄冬に半分喰われても輝き続ける小さな星の子。「欠けてても、光るとこは光るんだ。それでいいじゃないか」',
     pactLines: ['欠けてたっていいんだ。お前の子にも、そう教えてやりたいな。', '今夜も欠けたまま光ってる。……でも、これが俺なりの精一杯だぜ。'],
-    portrait: 'god_kaboshi.png',
+    portrait: 'god_kaboshi_v2.png',
   },
   {
     id: 'houkiboshi', name: '箒星の小娘', kana: 'ほうきぼしのこむすめ', rank: 1, element: 'star',

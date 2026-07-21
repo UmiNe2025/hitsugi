@@ -95,6 +95,17 @@ export const bossBgImg = (regionId: string) => gameImg(`bossbg_${regionId}.png`)
 export const cutinImg = (name: string) => gameImg(`cutin_${name}.png`)
 // 星神・縁MAXの第二立ち絵
 export const godMaxImg = (portrait: string) => gameImg(portrait.replace(/\.png$/, '_max.png'))
+
+// VC5: MAX候補は全180点揃っているが、通常像との同一性・疑似文字・画風を独立確認するまで
+// 自動採用しない。承認済みportraitだけを明示的に足し、それ以外は通常像＋runtimeの縁極frameで
+// identityを守る。画像が存在することとscene-readyであることを分離するための境界。
+const REVIEWED_GOD_MAX_PORTRAITS = new Set<string>()
+export function isGodMaxArtReviewed(portrait: string): boolean {
+  return REVIEWED_GOD_MAX_PORTRAITS.has(portrait)
+}
+export function godPresentationImg(portrait: string, preferMax: boolean): string {
+  return preferMax && isGodMaxArtReviewed(portrait) ? godMaxImg(portrait) : gameImg(portrait)
+}
 export const eventImg = (eventId: string) => gameImg(`ev_${eventId}.png`)
 export const dailyImg = (index: number) => gameImg(`life_daily_${String(index % 20).padStart(2, '0')}.png`)
 export const villagerImg = (id: string, band: number) => gameImg(`vil_${id}_${band}.png`)

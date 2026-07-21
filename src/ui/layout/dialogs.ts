@@ -39,6 +39,8 @@ function trapTabWithin(e: KeyboardEvent, root: HTMLElement | null) {
 
 export function useSheetBehavior(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
   useEffect(() => {
     activeSheetCount += 1
     if (activeSheetCount > 1) {
@@ -53,8 +55,9 @@ export function useSheetBehavior(onClose: () => void) {
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault()
         e.stopPropagation()
-        onClose()
+        onCloseRef.current()
         return
       }
       trapTabWithin(e, ref.current)
@@ -64,7 +67,7 @@ export function useSheetBehavior(onClose: () => void) {
       activeSheetCount -= 1
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
-      opener?.focus() // 呼び出し元へフォーカス復帰
+      if (opener?.isConnected) opener.focus() // 呼び出し元へフォーカス復帰
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -78,6 +81,7 @@ export function useSheetBehavior(onClose: () => void) {
 export function useForcedDialog() {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     firstFocusable(ref.current)?.focus()
@@ -86,6 +90,7 @@ export function useForcedDialog() {
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
+      if (opener?.isConnected) opener.focus()
     }
   }, [])
   return ref
