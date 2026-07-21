@@ -159,5 +159,61 @@
     "sourceSha256": "39813fc097a2b1603e705fb2731b5b7d81e5067e49bb0ec3d84397a97f32a247",
     "runtimePath": "public/img/visual-recovery/hotarubi/foreground-root-reed-hvr1-v1.webp",
     "runtimeSha256": "27f790842e974254962a58d28d9a5794bcc2668229ad10b8bfc5217ebb753644"
+  },
+  {
+    "assetId": "village_environment_lantern_hub_map",
+    "screen": "village",
+    "role": "ground",
+    "family": "tono_sato",
+    "state": "normal",
+    "requiredStates": ["normal", "crisis"],
+    "dimensions": { "width": 1440, "height": 810 },
+    "alpha": false,
+    "crop": {
+      "pc": "full map plate inside the existing 22 by 11 walk world; center lantern and five approach roads visible",
+      "tablet": "follow camera crop; center lantern remains the orientation anchor",
+      "mobile390": "follow camera crop; survey mode reveals full plate without covering action or d-pad reserves",
+      "mobile360": "follow camera crop; survey mode reveals full plate without covering action or d-pad reserves"
+    },
+    "collision": "visual-only environment plate; existing MAP tiles, BFS, facility focus, and interaction coordinates remain canonical",
+    "source": "docs/visuals/ui-v2/village-lantern-hub-map.jpg",
+    "generator": "OpenAI built-in image_gen tool; Pillow 2026-07-21 runtime WebP encode",
+    "modelLicenseChain": "OpenAI built-in image_gen; underlying model identifier not exposed; project owner approved use in the game, public GitHub repository, and commercial distribution on 2026-07-21",
+    "rightsStatus": "cleared",
+    "promptVersion": "VIS-VILLAGE-01-runtime-v2",
+    "reviewStatus": "accepted",
+    "reviewer": "Codex visual QC accepted 2026-07-21; project owner approved public repository and commercial use 2026-07-21",
+    "rejectReason": null,
+    "sourceSha256": "ba87c3e4255bbca1e23adf4d783e9c433e1c9f4073fdc45d9f4fcb884791d73d",
+    "runtimePath": "public/img/visual-recovery/village/village-lantern-hub-map-v2.webp",
+    "runtimeSha256": "31c49637c6afc7761f106e107256ad6f1d10a470791a05d9818df01a258b45e5"
+  },
+  {
+    "assetId": "depart_expedition_emakimono_map",
+    "screen": "depart",
+    "role": "stage",
+    "family": "night_road_world_map",
+    "state": "normal",
+    "requiredStates": ["locked", "unlocked", "selected"],
+    "dimensions": { "width": 941, "height": 1672 },
+    "alpha": false,
+    "crop": {
+      "pc": "full-width vertical map inside a scroll viewport; village and summit remain at opposite ends",
+      "tablet": "full-width vertical map inside a scroll viewport; selected DOM waypoint is centered on entry",
+      "mobile390": "full-width vertical map inside a scroll viewport; labels alternate around the route without horizontal overflow",
+      "mobile360": "full-width vertical map inside a scroll viewport; labels alternate around the route without horizontal overflow"
+    },
+    "collision": "not applicable; image is a visual map bed and DOM buttons own all selection and accessibility semantics",
+    "source": "assets_src/visual_recovery/generated/m38/expedition-emakimono-v2.png",
+    "generator": "OpenAI built-in image_gen tool; style reference VIS-VILLAGE-01; Pillow 2026-07-21 runtime WebP encode",
+    "modelLicenseChain": "OpenAI built-in image_gen; underlying model identifier not exposed; project owner approved use in the game, public GitHub repository, and commercial distribution on 2026-07-21",
+    "rightsStatus": "cleared",
+    "promptVersion": "HVR-M38-EXPEDITION-v2",
+    "reviewStatus": "accepted",
+    "reviewer": "Codex visual QC accepted 2026-07-21; project owner approved public repository and commercial use 2026-07-21",
+    "rejectReason": null,
+    "sourceSha256": "6cb9214a362eeb17452a7fdaf38ef62456fdfc2d020d889a0ccad1c2ff79ae42",
+    "runtimePath": "public/img/visual-recovery/world/expedition-emakimono-v2.webp",
+    "runtimeSha256": "3e9677ce4971edc7815b7c22b2e8f6ba7bedcc125a1f674029f8de4eb72bc72c"
   }
 ]

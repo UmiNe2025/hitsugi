@@ -14,11 +14,22 @@ import {
 } from '../src/village/render/facades'
 import { VILLAGE_FOREGROUND_OCCLUDERS } from '../src/village/render/foreground'
 import { VILLAGE_V2_GROUND_MARKER } from '../src/village/render/ground'
+import {
+  defaultVillageEnvironmentAsset,
+  VILLAGE_RASTER_ENVIRONMENT_MARKER,
+} from '../src/village/render/environment'
 
 describe('AR1R-A 郷complete-frame contract', () => {
   it('V2 ground hookは一続きのmaterial patchを宣言し、格子目地を名乗らない', () => {
     expect(VILLAGE_V2_GROUND_MARKER).toBe('continuous-dirt-stone-wet')
     expect(VILLAGE_V2_GROUND_MARKER).not.toMatch(/checker|grid|cell|seam/i)
+  })
+
+  it('V2の通常表示は家・灯籠・池を一枚のラスター環境画へ統一する', () => {
+    expect(VILLAGE_RASTER_ENVIRONMENT_MARKER).toBe('raster-painted-village')
+    expect(defaultVillageEnvironmentAsset('/hitsugi/')).toBe(
+      '/hitsugi/img/visual-recovery/village/village-lantern-hub-map-v2.webp',
+    )
   })
 
   it('鍛冶Kと大燈籠Lの座標・focus・collisionはV1正典のまま', () => {

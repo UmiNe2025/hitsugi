@@ -3,7 +3,7 @@
 // 契約: docs/POLISH_FIX_INSTRUCTIONS_CLAUDE.md §5
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../core/store'
-import type { Character, GameData, Screen } from '../core/types'
+import type { Character, GameData, Screen, Tomoshigata } from '../core/types'
 import { resolveVillageVisualState } from '../core/data/village_visual_state'
 import { isRegionVisualV2Enabled } from '../core/feature_flags'
 import { VILLAGERS, villagerBandOf, villagerLine, villagerLineKey } from '../core/data/villagers'
@@ -13,7 +13,8 @@ import { ageOf, seasonsLeft } from '../core/inheritance'
 import { getReduceMotion } from '../core/settings'
 import { VillageEngine, type VillageFocus, type VillageNpc } from '../village/engine'
 import { defaultVillageFacadeAssets, type VillageFacadeAssetSet } from '../village/render/facades'
-import { charSprite, stageOf, villagerImg, walkBasePath } from './img'
+import { defaultVillageEnvironmentAsset } from '../village/render/environment'
+import { charSprite, spriteUrl, stageOf, villagerImg, walkBasePath } from './img'
 import { MaybeImg } from './components'
 import './village.css'
 import './village_m26.css' // M26 §6: 追従カメラUI(village.cssより後 — 後勝ち)
@@ -27,6 +28,13 @@ const NPC_SPOTS: Record<string, [number, number]> = {
   matsukichi: [12, 8],
 }
 
+const NPC_WALK_SPRITES: Record<string, { gata: Tomoshigata; sex: 'm' | 'f' }> = {
+  tetsuzo: { gata: 'iwao', sex: 'm' },
+  kosuzu: { gata: 'nagi', sex: 'f' },
+  tane: { gata: 'sumi', sex: 'f' },
+  matsukichi: { gata: 'homura', sex: 'm' },
+}
+
 // M34 N2: 各郷の声を、歩行マップに実在する一人へ預ける。
 // 綴や名のない声も「伝え聞いた話」として郷人が運ぶため、画面外の架空話者を増やさない。
 const GOSSIP_VILLAGER_IDS = [
@@ -37,6 +45,7 @@ const GOSSIP_VILLAGER_IDS = [
 
 const JOURNEY_GOSSIP_FLAG_BASE = 1000
 const DEFAULT_VILLAGE_FACADE_ASSETS = defaultVillageFacadeAssets(import.meta.env.BASE_URL)
+const DEFAULT_VILLAGE_ENVIRONMENT_ASSET = defaultVillageEnvironmentAsset(import.meta.env.BASE_URL)
 
 export interface VillageGossipAssignment {
   entry: GossipEntry
@@ -102,9 +111,10 @@ interface Talk {
 export interface VillageScreenProps {
   visualV2?: boolean
   facadeAssets?: VillageFacadeAssetSet
+  environmentAsset?: string
 }
 
-export function VillageScreen({ visualV2, facadeAssets }: VillageScreenProps = {}) {
+export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: VillageScreenProps = {}) {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const markVillagerTalked = useGame((s) => s.markVillagerTalked)
@@ -134,6 +144,9 @@ export function VillageScreen({ visualV2, facadeAssets }: VillageScreenProps = {
         x: NPC_SPOTS[v.id]?.[0] ?? 8,
         y: NPC_SPOTS[v.id]?.[1] ?? 6,
         imgUrl: villagerImg(v.id, band),
+        spriteUrl: NPC_WALK_SPRITES[v.id]
+          ? spriteUrl(NPC_WALK_SPRITES[v.id].gata, NPC_WALK_SPRITES[v.id].sex)
+          : undefined,
         news: !normalLineWasHeard(flag, lineKey)
           || !!(hasLatestGossip && !villageGossipWasHeard(flag, latestGossip.ordinal)),
       }
@@ -157,6 +170,7 @@ export function VillageScreen({ visualV2, facadeAssets }: VillageScreenProps = {
         visualV2: resolvedVisualV2,
         visualState: villageVisualState,
         facadeAssets: facadeAssets ?? DEFAULT_VILLAGE_FACADE_ASSETS,
+        environmentAsset: environmentAsset ?? DEFAULT_VILLAGE_ENVIRONMENT_ASSET,
       },
       { onFocus: setFocus },
     )

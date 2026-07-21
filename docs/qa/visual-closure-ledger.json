@@ -180,7 +180,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Village.tsx",
-        "sourceSha256": "1e0f433acb3f777aadda53862c99c6a1b67df308a85d834c2a8da9db264058ee",
+        "sourceSha256": "9fb1341e57bebcac80ccaebd78e24a96f5439d957e804225db3c98dd9a63d91f",
         "runtimePath": "src/ui/village.css",
         "runtimeSha256": "a86b362063f3c3fb9bfd7d9f8476e8416b3c8dd7db9c0cc36d74ffbc407ca35b",
         "rightsStatus": "pending",
@@ -627,7 +627,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Expedition.tsx",
-        "sourceSha256": "a9829faa3821f04bac8511b765c9462c25f9d9128bce0d14977e650b7cca3491",
+        "sourceSha256": "990e4a2c53acedd5a861b44cc80012684a879b512855b8e6dd57968751de2dde",
         "runtimePath": "src/ui/depart_m18.css",
         "runtimeSha256": "a766d981dc72097725db1b7e2c9868b81db014977c5fa54ffad8b7612871fef8",
         "rightsStatus": "pending",
@@ -676,7 +676,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Expedition.tsx",
-        "sourceSha256": "a9829faa3821f04bac8511b765c9462c25f9d9128bce0d14977e650b7cca3491",
+        "sourceSha256": "990e4a2c53acedd5a861b44cc80012684a879b512855b8e6dd57968751de2dde",
         "runtimePath": "src/ui/expedition_vc3.css",
         "runtimeSha256": "d2748f54fbdc1a4b62215a1fafc3769e8b3d325ee681e239b1f6a4a39510dd7d",
         "rightsStatus": "pending",
@@ -3419,13 +3419,13 @@
       "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
       "runtimeBundle": {
         "path": "src/index.css",
-        "sha256": "1a7ca05a73ba188e98f1d51062a3f5017a6c933cf5f1816202086e95efd0c4c7"
+        "sha256": "75c034dca26496df68f3bcf05095a9f05ef041e3987833f7cc17ba1ff6173843"
       },
       "provenance": {
         "sourcePath": "src/App.tsx",
         "sourceSha256": "5d4182a5728e92f6f358a2f758267e42b2fc9aacd3038328c335958b5681627d",
         "runtimePath": "src/index.css",
-        "runtimeSha256": "1a7ca05a73ba188e98f1d51062a3f5017a6c933cf5f1816202086e95efd0c4c7",
+        "runtimeSha256": "75c034dca26496df68f3bcf05095a9f05ef041e3987833f7cc17ba1ff6173843",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },

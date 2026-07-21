@@ -69,13 +69,15 @@ test('蔵: 人物と三枠の後に目的入口を出し、選ぶまで長い棚
   await expectNoHorizontalOverflow(page)
 })
 
-test('出立: 四候補とmap/listが同じ選択を共有し、確定前にSheetを挟む', async ({ page }) => {
+test('出立: 四候補とmap/listが同じ選択を共有し、確定前にSheetを挟む', async ({ page }, info) => {
   await boot(page, 'depart')
   const candidates = page.locator('.depart-shortlist-card')
   expect(await candidates.count()).toBeLessThanOrEqual(4)
   const artMap = page.locator('.ascent-wrap')
   await expect(artMap.locator('svg')).toHaveCount(0)
-  await expect(artMap.locator('.asc-place-art img')).toHaveCount(40)
+  await expect(artMap.locator('.ascent-map-art')).toHaveCount(1)
+  await expect(artMap.locator('.ascent-entry')).toHaveCount(40)
+  await expect(artMap.locator('.asc-place-art img')).toHaveCount(0)
   const selectedArt = artMap.locator('.asc-place.is-sel')
   await expect(selectedArt).toHaveCount(1)
   const selectedWithinScroll = await selectedArt.evaluate((node) => {
@@ -86,6 +88,16 @@ test('出立: 四候補とmap/listが同じ選択を共有し、確定前にShee
     return itemRect.top >= scrollRect.top - 1 && itemRect.bottom <= scrollRect.bottom + 1
   })
   expect(selectedWithinScroll).toBe(true)
+  expect(await artMap.evaluate((node) => node.scrollTop)).toBeGreaterThan(0)
+  if (info.project.name === 'pc-1280' || info.project.name === 'mobile-390') {
+    await page.screenshot({
+      path: path.join(process.cwd(), 'docs', 'qa', 'baselines', `20260721-m38-depart-emakimono-${info.project.name}.png`),
+      fullPage: true,
+    })
+    await artMap.screenshot({
+      path: path.join(process.cwd(), 'docs', 'qa', 'baselines', `20260721-m38-depart-map-${info.project.name}.png`),
+    })
+  }
   await page.getByRole('button', { name: '文字一覧' }).click()
   const firstOpen = page.locator('.depart-region-row:not(:disabled)').first()
   await firstOpen.click()

@@ -21,9 +21,20 @@ import './m17_home.css'
 import './depart_m18.css'
 import './expedition_vc3.css'
 
-// ---- 夜行の絵巻 — 40地域の実景を連ねた一本道の道標 ----
-// 世界を示す場所では簡易SVG風景を使わず、既存の地域画そのものを選択面にする。
+// ---- 夜行の絵巻 — 一枚の国絵図に40地域の道標を重ねる ----
+// 風景はラスター絵巻、地名・開通状態・選択はDOMが担い、絵に情報を焼き込まない。
 const TIER_NAMES: Record<number, string> = { 1: '山麓', 2: '中腹', 3: '奥山', 4: '山頂' }
+const EXPEDITION_EMAKIMONO = `${import.meta.env.BASE_URL}img/visual-recovery/world/expedition-emakimono-v2.webp`
+
+function routePoint(index: number, total: number): { top: string; left: string; side: 'east' | 'west' } {
+  const progress = total <= 1 ? 0 : index / (total - 1)
+  const x = 51 + Math.sin(progress * Math.PI * 5.2) * 10 + Math.sin(progress * Math.PI * 1.7) * 5
+  return {
+    top: `${94 - progress * 88}%`,
+    left: `${x}%`,
+    side: x <= 51 ? 'east' : 'west',
+  }
+}
 
 function AscentMap({
   regions, fame, cleared, selected, onSelect,
@@ -35,7 +46,6 @@ function AscentMap({
   onSelect: (id: string) => void
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const visualRegions = [...regions].reverse()
 
   // 初回表示: 選択中の地(なければ最前線)を視界の中央へ
   useEffect(() => {
@@ -55,48 +65,57 @@ function AscentMap({
 
   return (
     <div className="ascent-wrap" ref={wrapRef} role="list" aria-label="行き先の絵地図">
-      <div className="ascent-summit" aria-hidden>
-        <span>玄冬の座</span>
-        <small>常夜の頂</small>
-      </div>
-      <div className="ascent-road" aria-hidden />
-      {visualRegions.map((r, i) => {
+      <div className="ascent-map-canvas">
+        <img className="ascent-map-art" src={EXPEDITION_EMAKIMONO} alt="" aria-hidden loading="lazy" decoding="async" />
+        <div className="ascent-summit" aria-hidden>
+          <span>玄冬の座</span>
+          <small>常夜の頂</small>
+        </div>
+        {[1, 2, 3, 4].map((tier) => {
+          const first = regions.findIndex((region) => region.tier === tier)
+          if (first < 0) return null
+          const point = routePoint(first, regions.length)
+          return (
+            <div key={tier} className="ascent-tier" style={{ top: point.top }} aria-hidden>
+              <span>{TIER_NAMES[tier] ?? '道中'}</span>
+              <small>{'★'.repeat(tier)}</small>
+            </div>
+          )
+        })}
+        {regions.map((r, i) => {
           const unlocked = fame >= r.unlockFame
           const isCleared = cleared.includes(r.id)
           const isSel = selected === r.id
-          const tierChanged = i === 0 || r.tier !== visualRegions[i - 1].tier
+          const point = routePoint(i, regions.length)
           return (
-            <div key={r.id} className="ascent-entry" role="listitem">
-              {tierChanged && (
-                <div className="ascent-tier" aria-hidden>
-                  <span>{TIER_NAMES[r.tier] ?? '道中'}</span>
-                  <small>{'★'.repeat(r.tier)}</small>
-                </div>
-              )}
+            <div
+              key={r.id}
+              className={`ascent-entry is-${point.side}`}
+              style={{ top: point.top, left: point.left }}
+              role="listitem"
+            >
               <button
                 type="button"
                 data-region-id={r.id}
-                className={`asc-place ${i % 2 === 0 ? 'is-east' : 'is-west'} ${unlocked ? 'is-open' : 'is-locked'} ${isSel ? 'is-sel' : ''}`}
+                className={`asc-place ${unlocked ? 'is-open' : 'is-locked'} ${isSel ? 'is-sel' : ''}`}
                 disabled={!unlocked}
                 aria-pressed={isSel}
                 aria-label={`${r.name}${unlocked ? '' : `(武功${r.unlockFame}で開通)`}${isCleared ? '・主討伐済' : ''}`}
                 onClick={() => onSelect(r.id)}
               >
-                <span className="asc-place-art" aria-hidden>
-                  <img src={regionBgR(r.id)} alt="" loading="lazy" decoding="async" />
-                </span>
+                <span className="asc-place-seal" aria-hidden>{isCleared ? '鎮' : unlocked ? '灯' : '封'}</span>
                 <span className="asc-place-copy">
                   <b>{r.name}</b>
                   <small>{unlocked ? (isCleared ? '鎮め済み' : r.bossId ? '主の気配あり' : '探索できる') : `武功${r.unlockFame}で開く`}</small>
                 </span>
-                <span className="asc-place-seal" aria-hidden>{isCleared ? '鎮' : unlocked ? '灯' : '封'}</span>
               </button>
             </div>
           )
         })}
-      <div className="ascent-village" aria-hidden>
-        <span>燈ノ郷</span>
-        <small>帰るべき灯</small>
+        <div className="ascent-village" aria-hidden>
+          <span>燈ノ郷</span>
+          <small>帰るべき灯</small>
+        </div>
       </div>
     </div>
   )

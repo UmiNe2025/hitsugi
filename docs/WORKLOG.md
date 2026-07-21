@@ -1249,3 +1249,12 @@
 - **目視**: 1280px実画面でTitle、出立の絵巻、宵の森Dungeonを確認。出立の初回scroll不良を実測して修正し、Dungeonの地域画を覆う床格子を再調整した。
 - **検証**: Vitest **34 files / 681 tests**、oxlint、production build、data validation **0 errors / 既存rank分布warn 1**、visual manifest **7/7**、visual closure **22 routes / 40 regions / 6 overlays / 68 entries**、`git diff --check`に合格。PlaywrightはTitle PC/mobile **4/4**、出立PC/mobile **2/2**、Dungeon/Battle PC/mobile **9 passed / 1 intended 1600px skip**。
 - **公開境界**: 新規画像生成0。commit/push/deployは未実施。
+
+## 2026-07-21（M38 郷ラスター環境画・出立国絵図 — ローカル実装）
+
+- **実画面再診断**: 郷は主要5施設だけがラスターで、家、灯籠、井戸、池、植栽、地面、郷人がPixi Graphicsのまま残り、同一画面の品質差が未完成感を作っていた。出立はM37の実景サムネイル札が地図ではなくカード列として読まれ、土地の広がりと旅程が弱かった。
+- **郷**: `VIS-VILLAGE-01`を1440×810 WebPへ変換し、視覚専用environment plateとしてV2歩行面へ接続。取得成功時は図形ground/props/foreground/5facadeの重ね置きを止め、MAP/collision/BFS/focusを独立維持。失敗時は従来V2へ決定論的に縮退する。4郷人は既存歩行ラスターへ割当てた。
+- **出立**: built-in `image_gen`で941×1672の縦長国絵図を生成。燈ノ郷、湿地、石祈、木都残骸、骨星山頂を一筆道で接続した。40地点は画像へ焼き込まず、絶対配置したDOM buttonで封/灯/鎮、選択、aria、keyboardを維持。文字一覧、四候補、地域詳細、確定Sheetは従来stateを共有する。
+- **素材**: source PNG/JPEGとruntime WebP、prompt、寸法、hash、QCを`assets_src/visual_recovery/M38_PROMPTS_QC_20260721.md`とmanifestへ記録。runtime合計618,038 bytes。追加2素材は2026-07-21に所有者が本ゲーム、公開GitHubリポジトリ、GitHub Pages、商用利用を明示承認し、`cleared / accepted`へ昇格した。
+- **検証**: 最終状態でVitest **34 files / 682 tests**、oxlint、production build、visual manifest **9/9**、visual closure **22 routes / 40 regions / 6 overlays / 68 entries**、`git diff --check`に合格。PC 1280/mobile 390の郷/出立 focused Playwright **6/6**、出立単独 **2/2**。選択地のscrollTop>0とviewport内表示、横overflow 0、郷action×D-pad交差0を確認。
+- **公開境界**: commit/push/deployなし。追加2素材の権利gateは解除済み。push=公開のため、ユーザーの明示deploy依頼は引き続き必要。

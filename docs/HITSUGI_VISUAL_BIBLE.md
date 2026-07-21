@@ -80,7 +80,7 @@ If the pair remains distinguishable only by hue, neither is approved for expansi
 
 ## Runtime asset decomposition
 
-No generated concept sheet is shipped as a complete playable space. It is decomposed into `ground`, `edge`, `facade/prop`, `landmark`, `foreground`, and `effect`; collision and navigation remain code/data owned. Source files live under `assets_src/`; reviewed delivery files alone live under `public/`.
+Generated concept sheets are normally decomposed into `ground`, `edge`, `facade/prop`, `landmark`, `foreground`, and `effect`. A reviewed raster environment plate may instead own the complete visible world layer when partial decomposition would reintroduce mixed materials. Even then collision, navigation, focus, state, labels, and accessibility remain code/data owned; geometry alignment and a deterministic fallback are required. Source files live under `assets_src/` or the reviewed visual-direction archive; reviewed delivery files alone live under `public/`.
 
 ## Acceptance and rejection
 

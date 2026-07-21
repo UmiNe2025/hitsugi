@@ -12,6 +12,10 @@ import {
 } from './render/facades'
 import { buildVillageForegroundV2, buildVillageReturnTraceV2 } from './render/foreground'
 import { buildVillageGroundV2, VILLAGE_V2_GROUND_MARKER } from './render/ground'
+import {
+  buildVillageEnvironmentV2,
+  VILLAGE_RASTER_ENVIRONMENT_MARKER,
+} from './render/environment'
 
 export const V_TILE = 46
 
@@ -73,6 +77,7 @@ export interface VillageNpc {
   x: number
   y: number
   imgUrl: string
+  spriteUrl?: string
   news: boolean // 新しい話がある(頭上印)
 }
 
@@ -90,6 +95,7 @@ export interface VillageEngineOpts {
   visualV2: boolean
   visualState: VillageVisualState
   facadeAssets?: VillageFacadeAssetSet
+  environmentAsset?: string
 }
 
 export interface VillageEvents {
@@ -123,6 +129,8 @@ export class VillageEngine {
   private destroyed = false
   private player!: Container
   private playerSprite: Sprite | null = null
+  private environmentTexture: Texture | null = null
+  private npcTextures = new Map<string, Texture>()
   private textures: Record<'down' | 'up' | 'left', Texture[]> | null = null
   private px = 11.5 * V_TILE // ピクセル座標(足元)
   private py = 8.2 * V_TILE
@@ -157,33 +165,64 @@ export class VillageEngine {
     await this.app.init({ background: 0x0a0e1d, resizeTo: this.host, antialias: true })
     if (this.destroyed) return // init中に破棄された(dungeon engineと同じレース対策)
     if (this.opts.visualV2) {
-      // facadeを後追い差し替えにすると、低速回線ではfallback→生成画像のちらつきが見える。
-      // 5施設を同じframe契約で先にcacheし、解決済み/placeholderを決定論的に公開する。
-      const state = this.opts.visualState.lifeState
-      const assets = this.opts.facadeAssets ?? {}
-      const entries = villageFacadeAssetUrls(assets, state)
-      const resolvedUrls = new Set<string>()
-      await Promise.all(entries.map(async ({ url }) => {
-        if (!url) return
+      // 生活景を一枚で閉じた環境画を最初に解決する。成功時は図形の家・灯籠・井戸を重ねない。
+      if (this.opts.environmentAsset) {
         try {
-          await Assets.load(url)
-          resolvedUrls.add(url)
+          this.environmentTexture = await Assets.load(this.opts.environmentAsset)
         } catch {
-          // code-native facadeへ縮退。coverage datasetではplaceholderとして残す。
+          this.environmentTexture = null
+        }
+      }
+      if (this.destroyed) return
+      this.host.dataset.environmentMaterial = this.environmentTexture
+        ? VILLAGE_RASTER_ENVIRONMENT_MARKER
+        : 'code-fallback'
+
+      // 環境画が取得できない場合だけ、従来の5施設ラスター＋code-native地面へ縮退する。
+      if (!this.environmentTexture) {
+        const state = this.opts.visualState.lifeState
+        const assets = this.opts.facadeAssets ?? {}
+        const entries = villageFacadeAssetUrls(assets, state)
+        const resolvedUrls = new Set<string>()
+        await Promise.all(entries.map(async ({ url }) => {
+          if (!url) return
+          try {
+            await Assets.load(url)
+            resolvedUrls.add(url)
+          } catch {
+            // code-native facadeへ縮退。coverage datasetではplaceholderとして残す。
+          }
+        }))
+        if (this.destroyed) return
+        const coverage = resolveVillageSceneCoverage(assets, state, resolvedUrls)
+        this.host.dataset.facadeTotal = String(coverage.total)
+        this.host.dataset.facadeResolved = String(coverage.resolved)
+        this.host.dataset.facadePlaceholder = String(coverage.placeholder)
+        this.host.dataset.facadeMismatch = String(coverage.mismatch)
+        this.host.dataset.facadeCoverage = coverage.ready ? 'complete' : 'fallback'
+      } else {
+        this.host.dataset.facadeTotal = '0'
+        this.host.dataset.facadeResolved = '0'
+        this.host.dataset.facadePlaceholder = '0'
+        this.host.dataset.facadeMismatch = '0'
+        this.host.dataset.facadeCoverage = 'environment-plate'
+      }
+
+      await Promise.all(this.opts.npcs.map(async (npc) => {
+        if (!npc.spriteUrl) return
+        try {
+          this.npcTextures.set(npc.id, await Assets.load(npc.spriteUrl))
+        } catch {
+          // 個別の歩行絵が壊れた時だけ、接地した低密度figureへ縮退する。
         }
       }))
       if (this.destroyed) return
-      const coverage = resolveVillageSceneCoverage(assets, state, resolvedUrls)
-      this.host.dataset.facadeTotal = String(coverage.total)
-      this.host.dataset.facadeResolved = String(coverage.resolved)
-      this.host.dataset.facadePlaceholder = String(coverage.placeholder)
-      this.host.dataset.facadeMismatch = String(coverage.mismatch)
-      // rights/物理性能/人間gateを含まないため sceneReady とは呼ばない。
-      this.host.dataset.facadeCoverage = coverage.ready ? 'complete' : 'fallback'
     }
     this.host.appendChild(this.app.canvas)
     this.host.dataset.villageVisual = this.opts.visualV2 ? 'v2' : 'v1'
-    this.host.dataset.groundPattern = this.opts.visualV2 ? VILLAGE_V2_GROUND_MARKER : 'tile-grid'
+    this.host.dataset.groundPattern = this.opts.visualV2
+      ? (this.environmentTexture ? VILLAGE_RASTER_ENVIRONMENT_MARKER : VILLAGE_V2_GROUND_MARKER)
+      : 'tile-grid'
     this.host.dataset.returnTrace = this.opts.visualState.freshReturn?.kind ?? 'none'
     this.host.dataset.cameraMode = 'follow'
     if (this.opts.visualV2) {
@@ -194,7 +233,9 @@ export class VillageEngine {
 
     this.app.stage.addChild(this.world)
     // z順(bottom→top): 地面 → 平面デカール → 池グリント → mid(y-sort) → 煙(normal) → 灯り(add) → 蛍/火の粉(add)
-    this.world.addChild(this.opts.visualV2 ? this.buildGroundV2() : this.buildGround())
+    this.world.addChild(this.opts.visualV2 && this.environmentTexture
+      ? this.buildEnvironmentV2()
+      : this.opts.visualV2 ? this.buildGroundV2() : this.buildGround())
     this.world.addChild(this.gDecal)
     if (this.opts.visualV2) this.gDecal.addChild(buildVillageReturnTraceV2(V_TILE, this.opts.visualState))
     this.gWater.addChild(this.waterG)
@@ -205,13 +246,16 @@ export class VillageEngine {
     this.world.addChild(this.gGlow)
     this.world.addChild(this.gParticles)
     this.world.addChild(this.gForeground)
-    if (this.opts.visualV2) this.buildBuildingsV2()
-    else this.buildBuildings()
-    this.buildProps()
+    if (this.opts.visualV2) {
+      if (!this.environmentTexture) this.buildBuildingsV2()
+    } else {
+      this.buildBuildings()
+    }
+    if (!this.opts.visualV2 || !this.environmentTexture) this.buildProps()
     this.buildWater()
     if (!this.opts.visualV2) this.buildParticles()
     this.buildSmoke()
-    if (this.opts.visualV2) {
+    if (this.opts.visualV2 && !this.environmentTexture) {
       this.gForeground.addChild(buildVillageForegroundV2(
         V_TILE,
         this.opts.visualState.lifeState === 'bloodline-crisis',
@@ -566,6 +610,16 @@ export class VillageEngine {
     })
   }
 
+  private buildEnvironmentV2(): Sprite {
+    this.pond = MAP.flatMap((row, y) => [...row].map((ch, x) => (ch === '~' ? [x, y] : null)).filter(Boolean)) as [number, number][]
+    return buildVillageEnvironmentV2(
+      this.environmentTexture!,
+      COLS * V_TILE,
+      ROWS * V_TILE,
+      this.opts.visualState.lifeState === 'bloodline-crisis',
+    )
+  }
+
   private buildBuildings(): void {
     const put = (node: Container, tx: number, ty: number) => {
       node.x = tx * V_TILE
@@ -694,7 +748,16 @@ export class VillageEngine {
       node.addChild(shadow)
       const pin = new Container()
       if (this.opts.visualV2) {
-        node.addChild(this.groundedVillagerFigure(n))
+        const texture = this.npcTextures.get(n.id)
+        if (texture) {
+          const sprite = new Sprite(texture)
+          sprite.anchor.set(0.5, 1)
+          sprite.scale.set((V_TILE * 1.05) / Math.max(1, sprite.height))
+          sprite.y = 4
+          node.addChild(sprite)
+        } else {
+          node.addChild(this.groundedVillagerFigure(n))
+        }
         pin.y = -V_TILE * 1.22
         pin.visible = false
         pin.addChild(new Graphics()

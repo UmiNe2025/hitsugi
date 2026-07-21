@@ -14,7 +14,7 @@
     ],
     "properties": {
       "assetId": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-      "screen": { "enum": ["home", "village", "dungeon", "battle", "pact", "forge", "storehouse"] },
+      "screen": { "enum": ["home", "village", "dungeon", "battle", "pact", "forge", "storehouse", "depart"] },
       "role": { "enum": ["ground", "edge", "facade", "prop", "landmark", "foreground", "effect", "portrait", "stage"] },
       "family": { "type": "string", "minLength": 1 },
       "state": { "type": "string", "minLength": 1 },

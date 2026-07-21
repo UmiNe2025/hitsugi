@@ -3,7 +3,7 @@
 - 生成日: 2026-07-20 JST
 - 生成経路: Codex built-in `image_gen`
 - 画風基準: `public/img/title_key.jpg`を主参照。既存の藍夜、和紙、墨線、金の灯を維持。
-- 状態: 実装基準画像。Home/Battle/Forgeは背景候補、Dungeon/Villageは歩行geometryと同期させるためのvisual-directionであり、そのまま床画像へ差し替えない。
+- 状態: 実装基準画像。Home/Battle/Forgeは背景候補、Dungeonは歩行geometryへ分解するvisual-direction。VillageはM38で視覚専用environment plateとして採用し、collision/navigation/focusは従来データ所有のまま分離した。
 - 禁止: 画像内文字をUI情報として使う、画像だけで床/壁判定する、モバイルcropで主焦点を隠す、5枚を無条件に同時preloadする。
 
 ## 共通アートディレクション
@@ -23,7 +23,7 @@
 | `VIS-HOME-01` | [home-decision-stage.jpg](home-decision-stage.jpg) | Home「今月の決断台」hero候補 | 祖霊灯と四つの空席を一つの物語焦点にする。文字を中央へ直置きしない | PCは上段/右側hero、390pxは160〜220px crop。主CTAは独立panel |
 | `VIS-BATTLE-01` | [battle-firefly-shrine.jpg](battle-firefly-shrine.jpg) | 戦闘stage背景候補 | 左敵/右一族の光を分け、中央を空ける | 1v2/4v4で人物silhouetteと兆しが読める |
 | `VIS-DUNGEON-01` | [dungeon-firefly-hollow-map.jpg](dungeon-firefly-hollow-map.jpg) | 蛍火の窪地visual-direction | 床/水/壁、分岐、中央landmark、帰り火の形を定義 | 実engine geometryへ分解し、BFS/contrast/POI test緑 |
-| `VIS-VILLAGE-01` | [village-lantern-hub-map.jpg](village-lantern-hub-map.jpg) | 郷歩行visual-direction | 大灯籠を方位anchor、5施設を建築silhouetteで識別 | 衝突mapと一致し、施設5件をlabelなしでも4/5識別 |
+| `VIS-VILLAGE-01` | [village-lantern-hub-map.jpg](village-lantern-hub-map.jpg) | 郷歩行environment plate原本 | 大灯籠を方位anchor、家・池・灯籠・生活路を同一画材化 | collision/focusはcode所有、PC/mobile見渡し、画像失敗fallback、追加権利承認 |
 | `VIS-FORGE-01` | [forge-heirloom-workshop.jpg](forge-heirloom-workshop.jpg) | 鍛冶と蔵背景候補 | 左=鍛える、右=継ぐ、中央=選択品 | 詳細paneの文字contrast、mobile 360で主焦点保持 |
 
 ## Dimensions and hashes
@@ -43,7 +43,7 @@
 | `VIS-HOME-01` | 条件付き採用 | 灯籠と空席の物語性は強いが、promptで求めた中央下の静域には焦点物が残った。全面背景ではなくheroとして使い、本文を直置きしない |
 | `VIS-BATTLE-01` | 採用 | 中央の戦闘面、上端、下端に十分な余白がある。左右の温度差はUI側の味方/敵配置と同期させる |
 | `VIS-DUNGEON-01` | 設計参照として採用 | 歩行面、深水、POIが明瞭。画像を直貼りせずengine geometryへ再構成する |
-| `VIS-VILLAGE-01` | 設計参照として採用 | 大灯籠と施設silhouetteが強い。実mapでは下端/right controlsの安全域を別途確保する |
+| `VIS-VILLAGE-01` | M38ローカル採用 | 大灯籠と家並みを一枚の視覚層へ採用。`MAP`のcollision/focusとDOM操作帯は独立維持し、下端/right controlsの安全域をPlaywrightで確認する |
 | `VIS-FORGE-01` | 採用 | 中央に比較面、左右に製作/継承の物語差がある。中央maskの濃度は文字contrast測定で決める |
 
 ## Final prompt set

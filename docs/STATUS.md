@@ -4,6 +4,7 @@
 
 ## ローカル実装・公開待ち
 
+- **M38 郷ラスター環境画・出立国絵図**: 郷V2の地面・家・灯籠・井戸・池・植栽を一枚の高品質ラスター環境画へ統一し、簡易図形propを通常経路から撤去。collision/BFS/focusは既存`MAP`が所有し、画像取得失敗時は従来V2へ縮退する。郷人も既存歩行スプライトへ置換。出立は40地域サムネイル札の列から、燈ノ郷→4風土→玄冬の座を一筆で結ぶ縦長国絵図＋DOM道標へ変更し、map/list同期・locked/selected/cleared・初期中央scrollを維持。追加2素材は2026-07-21に公開・商用利用承認済み。ローカル実装済み・deploy待ち。
 - **M37 画材境界の統一**: 世界絵をラスター、SVG/Pixi Graphicsを情報層へ限定。Title/NightBackdrop/出立地図/神・敵・地域fallbackから簡易風景・シルエットSVGを撤去。出立は40地域の実景道標へ変更し、選択地の初期中央表示を確認。Dungeonは地域画を常設し、床格子を補助層へ下げ、擬似材質/ランドマークを撤去した。新規画像0・ゲームロジック変更0。Vitest 34 files / 681 tests、lint、build、closure 68/68、Title 4/4、出立2/2、Dungeon/Battle 9 passed / 1 intended skip。commit/push/deployは未実施。
 
 ## 🎉 リリース済み・稼働中
