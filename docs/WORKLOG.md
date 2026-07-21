@@ -1333,3 +1333,4 @@
 - **修正**: `.title-main .game-title:focus { outline: none; }`を追加。見出しへのプログラムfocusと読み上げ順は維持する。`.game-title`は`tabIndex=-1`で操作対象ではないため、キーボード操作の現在地表示は失わない。button等の`:focus-visible`は変更しない。
 - **回帰**: Title E2Eへ見出しがfocusedかつcomputed `outline-style: none`を追加。PC1440/mobile360のTitle/Intro **4/4**、oxlint、production build、visual closure **23 routes / 40 regions / 6 overlays / 69 entries**、validator 8/8、diff-checkに合格。
 - **公開境界**: ローカル修正のみ。push=本番のため、commit/push/deployは別の明示依頼を待つ。
+- **公開完了**: ユーザーの明示依頼を受け、対象5ファイルだけをcommit `7ff1997`としてmainへpush。Actions run `29876069814`はLinux上のlint、データ検証、Vitest、production build、Pages deployまで成功した。公開URLはHTTP 200で、配信CSS `assets/index-DXXd6C6Z.css`に`.title-main .game-title:focus{outline:none}`が含まれることをキャッシュ回避取得で確認。既存baseline PNG 9点、`tmp/`、未追跡M40/M42文書は引き続き対象外として保護した。

@@ -2,9 +2,9 @@
 
 **2026-07-22 runtime実測**: 神180柱・敵579体（通常基礎180＋若/老変異＋主39）・装備810・辞世1370・事件282・地域40・配信画像2825点。**次の制約は物量でなく、初回30分・戦闘の対処差・初代継承・実利用計測・公開前検証**。M42監査の正本は`docs/PRODUCT_IMPROVEMENT_AUDIT_M42_20260722.md`。
 
-## ローカル修正・未公開
+## 直近の公開修正
 
-- **M44 タイトル見出しの異形focus枠**: 画面進入時の読み上げ用`h1` focusにブラウザ標準outlineが付き、`灯継ぎ`の複数spanを段差状に囲んでいた。読み上げfocusは維持し、Tab対象でない`.game-title`だけoutlineを無効化。PC1440/mobile360のTitle/Intro 4/4、lint、build、closure 23/40/6/69に合格。commit/push/deployは未実施。
+- **M44 タイトル見出しの異形focus枠**: 画面進入時の読み上げ用`h1` focusにブラウザ標準outlineが付き、`灯継ぎ`の複数spanを段差状に囲んでいた。読み上げfocusは維持し、Tab対象でない`.game-title`だけoutlineを無効化。PC1440/mobile360のTitle/Intro 4/4、lint、build、closure 23/40/6/69に合格。実装commit `7ff1997`、Actions run `29876069814`でPages公開成功。公開CSS `assets/index-DXXd6C6Z.css`への反映とHTTP 200を確認済み。
 
 ## 履歴（M38/M37は後続リリースへ統合済み）
 
