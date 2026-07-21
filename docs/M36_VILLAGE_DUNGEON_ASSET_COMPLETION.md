@@ -46,4 +46,9 @@
 
 ## 公開境界
 
-このM36はローカル実装まで。`main`へのpushはGitHub Pages公開と同義のため、ユーザーの明示承認までcommit/push/deployしない。
+初回実装時はローカル止め。2026-07-21 18:03 +09:00のユーザー明示依頼「デプロイしてください」により公開境界を解除し、実装commit `87c830745b3d058b45df59e0b123d22c2ff94469` を `origin/main` へpushした。
+
+- GitHub Actions run `29816722591` — build/deploy成功。
+- 公開URL `https://hitsugi-game.github.io/hitsugi/` — HTTP 200。
+- 配信bundle `assets/index-C9rnTugR.js` — HTTP 200。
+- rollbackは `git revert 87c830745b3d058b45df59e0b123d22c2ff94469` 後に `main` へpush。

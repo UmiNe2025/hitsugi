@@ -1236,4 +1236,4 @@
 - **実装**: `regionVisualV2`を既定ONへ変更。出立時に`DungeonRun.visualVersion='v2'`をsnapshotし、蛍火0層は既存画像backed stage、他39地域は`REGION_EXPERIENCES`のcode-native kitを通常プレイへ出す。旧表示は明示env/queryで維持する。
 - **PC幅**: `ScreenShell`系の作業画面をPC 1180px以上でshell最大1160px、本文最大1040pxへ制限。`god/codex/records/titles/train/facility`系の反復gridはカード最大280pxへ抑え、1件だけの横伸びを防ぐ。Dungeon/Battle/Villageの没入画面は広さを残す。
 - **検証**: Vitest **33 files / 678 tests**、oxlint、production build、data validation **0 errors / 既存rank分布warn 1**、visual manifest **7/7**、visual closure **22 routes / 40 regions / 6 overlays / 68 ledger entries** 合格。対象PlaywrightはDungeon/Battle PC+mobile **9 passed / 1 intended skip**、郷PC+mobile **14 passed**、PC幅 **1 passed**。3 visual files一括実行は180秒timeoutしたため、分割実行で証拠を取得。
-- **公開境界**: ローカル実装のみ。commit/push/deployは未実施。`tmp/`は既存未追跡として保持。
+- **公開境界とデプロイ**: 初回実装はローカル止め。ユーザーの明示依頼「デプロイしてください」を受け、commit `87c830745b3d058b45df59e0b123d22c2ff94469` をmainへpush。GitHub Actions run `29816722591`でbuild/deploy成功。公開URL `https://hitsugi-game.github.io/hitsugi/` と配信bundle `assets/index-C9rnTugR.js` はHTTP 200。`tmp/`は既存未追跡として保持。

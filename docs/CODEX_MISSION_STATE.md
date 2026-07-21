@@ -39,10 +39,11 @@
 - 検証: `npx playwright test tests/visual/village.spec.ts --project=pc-1280 --project=mobile-390` => 14 passed。
 - 検証: `npx playwright test tests/visual/shell_width.spec.ts --project=pc-1280` => 1 passed。
 - 注意: 3 visual filesを一括実行したコマンドは180秒でtimeoutしたため、対象別に分割して成功証拠を取得した。
+- 2026-07-21 18:05 +09:00: ユーザーの明示依頼「デプロイしてください」により公開境界を解除。commit `87c830745b3d058b45df59e0b123d22c2ff94469` を `origin/main` へpushし、GitHub Actions run `29816722591` がbuild/deploy成功。公開URL `https://hitsugi-game.github.io/hitsugi/` はHTTP 200、配信bundle `assets/index-C9rnTugR.js` もHTTP 200。
 
 ## ④保留リスト
 
-- 公開・push: ユーザー明示承認まで行わない。
+- 公開・push: 2026-07-21 18:03 +09:00にユーザーが明示承認。実装commit `87c8307` は公開済み。
 - 新規AI生成画像の公開権利: 今回は新規生成せず、既存権利クリア済み7素材とcode-native kitを接続した。今後追加生成する場合はmanifestへ未公開/未承認として分離する。
 
 ## ⑤質問キュー
@@ -55,10 +56,11 @@
 - M36-1: 素材棚卸しと通常導線接続を実装。`regionVisualV2` default ON、全40地域V2 code-native kit接続、郷5施設coverageを記録。
 - M36-2: PC読み幅を抑制。作業画面shell/body/cardの最大幅を追加し、没入画面は広さを維持。
 - M36-3: 検証完了。unit/lint/build/data/manifest/closure/target visualが合格。
+- M36-4: ユーザー承認後にdeploy完了。Actions run `29816722591` 成功、公開URL HTTP 200。
 
 ## ⑦次の一手
 
-- ユーザー確認後、必要ならcommit/push/deployへ進む。未確認のまま公開しない。
+- 次の一手は公開版の実機目視確認。問題があれば `git revert 87c8307` でM36実装を戻し、再pushする。
 
 ## ⑧最終監査表
 
@@ -68,8 +70,9 @@
 - ✅ C. ダンジョン全40地域へ素材キット接続: `check:visual-closure` 40 regions OK、`ar1_dungeon_battle.spec.ts` 9 passed / 1 intended skip。
 - ✅ D. PCカラム幅を制御: `shell_width.spec.ts` 1 passed、本文1042px以下・カード282px以下を検証。
 - ✅ E. 機械検証と記録: `npm run test` 678 passed、lint/build/data/manifest/closure passed。GDD/STATUS/WORKLOG更新済み。
-- ✅ 権限境界: commit/push/deployは未実施。`tmp/`は保持。
+- ✅ 権限境界: 初回missionではcommit/push/deployを止めた。後続ユーザー明示依頼によりcommit/push/deploy実施。`tmp/`は保持。
+- ✅ Deploy: Actions run `29816722591` build/deploy成功。公開URLとbundle HTTP 200。
 
 ## ⑨terminal印
 
-達成 — 2026-07-21 16:16 +09:00。ローカル実装・検証・記録まで完了。公開はユーザー明示承認待ち。
+達成 — 2026-07-21 18:05 +09:00。ローカル実装・検証・記録・ユーザー承認後の公開まで完了。
