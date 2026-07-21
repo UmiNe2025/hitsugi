@@ -110,9 +110,47 @@
 /* 一族欄二面化 — 左=大札+小札 / 右=血脈診断 */
 .family-board { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr); gap: 14px; align-items: start; min-width: 0; }
 .family-main { min-width: 0; }
-.family-smalls { display: flex; gap: 8px; width: 100%; max-width: 100%; margin-top: 8px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 2px 6px; }
+.family-smalls {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline proximity;
+  scrollbar-gutter: stable;
+  padding: 2px 2px 8px;
+}
 .char-card.clickable { width: auto; font: inherit; color: inherit; text-align: left; }
-.family-smalls .char-card { flex: 0 0 min(168px, calc(100vw - 58px)); min-width: 0; text-align: left; }
+.family-smalls .char-card {
+  /* M41: 小札を縮小アイコンにせず、氏名・世代・八季の灯を一息で読める家譜札にする。 */
+  flex: 0 0 min(286px, calc(100vw - 58px));
+  min-width: min(248px, calc(100vw - 58px));
+  min-height: 86px;
+  padding: 10px;
+  text-align: left;
+  scroll-snap-align: start;
+}
+.family-smalls .char-card-row { align-items: center; gap: 10px; }
+.family-smalls .char-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px;
+}
+.home-screen .family-smalls .char-name {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+.family-smalls .char-gen { margin-left: 0; white-space: nowrap; }
+.family-smalls .head-mark { display: inline-block; margin-right: 4px; }
+.family-smalls .life-flames { max-width: 100%; white-space: nowrap; }
+.family-smalls .child-note { line-height: 1.4; }
 .family-smalls .char-card:focus-visible { scroll-margin-inline: 8px; }
 @media (max-width: 640px) { .family-board { grid-template-columns: 1fr; } }
 

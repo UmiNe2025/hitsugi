@@ -1292,3 +1292,11 @@
 - **独立監査とShip Check**: Round 1で帰還時収集反映、legacy初遭遇、疎bit代表画像、戦闘コマンド見切れを検出して全件修正。live通知/停止導線とradioキーボード操作も補完し、Round 2は**PASS / blocking 0**。依存脆弱性、秘密情報、100MB超ファイルは0。結論は**SHIP-with-notes**（main chunk 1.42MB、既存rank分布warn 1）。
 - **公開境界**: ユーザーが本依頼で実装とデプロイを明示承認。`tmp/`とテスト実行で更新されたM38/VC3 baseline PNGは除外し、選択的commit、main push、GitHub Actions・公開URLを確認する。
 - **公開完了**: 実装commit `2e86a9d2cbebb5c6f94c4b90e86293eed044d2d8`をmainへpush。GitHub Actions run `29840283003`でlint、data validation、701 tests、production build、Pages deployが全成功。`https://hitsugi-game.github.io/hitsugi/`はHTTP 200、公開`assets/index-B_V4tnw1.js`と`assets/index-mEc4m8Cz.css`はローカルbuild名と一致し、JS内の「宝具系譜録」「ここで止める」も確認した。
+
+## 2026-07-22（M41 郷・一族小札レイアウト修正）
+
+- **症状と原因**: 公開画面で一族小札の内部が縦書き状に崩れた。小札を168pxへ縮めたまま通常札と同じ当主印・属性・氏名・世代・寿命炎を収め、ホーム全体の`overflow-wrap:anywhere`が氏名にも適用されていたことが原因。
+- **修正**: 小札を286px基準・最小248pxの横送り家譜札へ変更。氏名は`word-break:keep-all / overflow-wrap:normal`、見出しは属性・氏名・世代の3列gridとし、PCは2札、mobileは1札を可読表示する。3人以上はscroll-snap付き横送りで同じDOM・focusを維持する。
+- **回帰固定**: 修正前にPC 1280/mobile 390で168pxを検出して失敗する実画面testを追加。修正後は全5幅のホーム/星契りとPC読み幅で**34 passed / 6 intended skip**。Vitest **701/701**、oxlint、production build、data validation **0 errors / 既存warn 1**、visual closure **68/68**、manifest **9/9**、diff-check合格。PC/mobileの家族欄を画像で目視確認した。
+- **ステージング現況**: GitHub APIとrepo workflowを照合し、Environmentは`github-pages`のみ、branchは`main`のみ、Pages sourceもmain workflowのみ。共有URLを持つstagingは未構築で、`npm run dev`のローカル検証だけがある。
+- **公開境界**: ユーザーが修正とデプロイを明示承認。テストで更新された既存baseline PNG 9点と`tmp/`は除外し、対象だけをmainへ公開する。

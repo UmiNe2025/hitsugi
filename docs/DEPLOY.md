@@ -8,6 +8,12 @@
 - リポジトリ: https://github.com/hitsugi-game/hitsugi
 - ワークフロー: `.github/workflows/deploy.yml`(既存)
 
+## ステージング環境
+
+現在、共有URLを持つステージング環境はない。GitHub上のEnvironmentは`github-pages`のみ、branchは`main`のみで、mainへのpushがそのまま本番公開になる。`npm run dev`による`http://localhost:5173`は開発者PC内の確認用であり、ステージングではない。
+
+本番前の共有確認を分離する場合は、別branchから別Pages projectへ出すpreview workflowか、Cloudflare Pages等のpreview deploymentを新設する。現行workflowへstagingを追加しただけでは、本番URLと分離されない点に注意する。
+
 ## アクセス解析(GoatCounter)
 
 **GoatCounter** を採用。理由:

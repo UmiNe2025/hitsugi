@@ -126,13 +126,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/ui/m17_home.css",
-        "sha256": "5e0dfcc0dc234bb975f44438bda5474fbf121c1b26c3667a839f80652e831f88"
+        "sha256": "3316b6fad8f7d55fff42993c9cb058617408fae0933b50bcda21975857492f5a"
       },
       "provenance": {
         "sourcePath": "src/ui/Home.tsx",
         "sourceSha256": "b4327176defa164b4db938a9ef5c56db5ab9503f294f27dd0c351dfce372b03c",
         "runtimePath": "src/ui/m17_home.css",
-        "runtimeSha256": "5e0dfcc0dc234bb975f44438bda5474fbf121c1b26c3667a839f80652e831f88",
+        "runtimeSha256": "3316b6fad8f7d55fff42993c9cb058617408fae0933b50bcda21975857492f5a",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
