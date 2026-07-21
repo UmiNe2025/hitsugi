@@ -31,19 +31,24 @@
   .pact-step { font-size: 12px; }
 }
 
-/* ================================================================
-   M22 P0-3 — 神絵欠落の御影フォールバック(POLISH_FIX §3)
-   共通✦を廃し、属性別シルエット+神名焼き込み+「絵姿準備中」。
-   .god-pane-fallback を継承するため属性オーラ(index.css)はそのまま効く。 */
+/* 神絵欠落時は簡易立ち絵を描かず、属性印と状態説明だけを残す。 */
 .god-fallback {
   flex-direction: column;
   overflow: hidden;
 }
-.god-fallback-svg {
-  width: min(62%, 210px);
-  height: auto;
+.god-fallback-mark {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
   z-index: 1;
-  filter: drop-shadow(0 0 18px rgba(10, 14, 29, 0.8));
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--gold);
+  background: rgba(10, 14, 29, .78);
+  box-shadow: 0 0 24px rgba(10, 14, 29, .9), inset 0 0 0 6px rgba(201, 168, 106, .04);
+  font: 600 24px/1 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  letter-spacing: 0;
 }
 .god-fallback-name {
   z-index: 1;
@@ -76,6 +81,6 @@
   min-height: 150px;
 }
 .god-fallback.is-fallback { overflow: hidden; }
-.god-fallback-sm .god-fallback-svg { width: 96px; }
+.god-fallback-sm .god-fallback-mark { width: 54px; height: 54px; font-size: 18px; }
 .god-fallback-sm .god-fallback-name { font-size: 15px; letter-spacing: 0.2em; }
 .god-fallback-sm .god-fallback-note { font-size: 11.5px; margin-top: 5px; }

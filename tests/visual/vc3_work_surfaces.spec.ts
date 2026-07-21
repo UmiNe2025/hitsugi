@@ -73,6 +73,19 @@ test('出立: 四候補とmap/listが同じ選択を共有し、確定前にShee
   await boot(page, 'depart')
   const candidates = page.locator('.depart-shortlist-card')
   expect(await candidates.count()).toBeLessThanOrEqual(4)
+  const artMap = page.locator('.ascent-wrap')
+  await expect(artMap.locator('svg')).toHaveCount(0)
+  await expect(artMap.locator('.asc-place-art img')).toHaveCount(40)
+  const selectedArt = artMap.locator('.asc-place.is-sel')
+  await expect(selectedArt).toHaveCount(1)
+  const selectedWithinScroll = await selectedArt.evaluate((node) => {
+    const scroll = node.closest('.ascent-wrap')
+    if (!scroll) return false
+    const itemRect = node.getBoundingClientRect()
+    const scrollRect = scroll.getBoundingClientRect()
+    return itemRect.top >= scrollRect.top - 1 && itemRect.bottom <= scrollRect.bottom + 1
+  })
+  expect(selectedWithinScroll).toBe(true)
   await page.getByRole('button', { name: '文字一覧' }).click()
   const firstOpen = page.locator('.depart-region-row:not(:disabled)').first()
   await firstOpen.click()

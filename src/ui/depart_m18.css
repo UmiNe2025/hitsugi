@@ -428,7 +428,7 @@
   transform: rotate(-8deg);
 }
 
-/* 地域画404の墨絵シルエット — 地域名で必ず識別できる */
+/* 地域画404 — 別画風の代替絵を作らず、地誌の状態だけを示す */
 .region-art-fallback {
   position: relative;
   height: 150px;
@@ -437,12 +437,12 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-}
-.region-art-fallback svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(201, 168, 106, .2);
+  background:
+    linear-gradient(90deg, rgba(102, 70, 43, .15), transparent 10% 90%, rgba(102, 70, 43, .15)),
+    repeating-linear-gradient(0deg, rgba(232,225,205,.018) 0 1px, transparent 1px 4px),
+    #0b0f1e;
 }
 .region-art-name {
   z-index: 1;

@@ -307,6 +307,7 @@ export class DungeonEngine {
   async init(): Promise<void> {
     await this.app.init({
       background: this.opts.stageContract?.palette.night ?? this.theme.groundBase,
+      backgroundAlpha: 0,
       resizeTo: this.host,
       antialias: true,
     })
@@ -316,7 +317,10 @@ export class DungeonEngine {
     // M24: 地域別backdrop — マップ外の純黒を埋めるscreen固定層(worldより背面)。
     // groundBaseより明度を+12した藍で、暗さは保ちつつ「説明のない純黒面」を消す(§4.1)。
     const bdColor = this.opts.stageContract?.palette.night ?? lift(this.theme.groundBase, 12)
-    const bd = new Graphics().rect(0, 0, 1, 1).fill(bdColor)
+    const backdropAlpha = this.opts.visualVersion === 'v2'
+      ? this.opts.stageContract ? 0.42 : 0.22
+      : 1
+    const bd = new Graphics().rect(0, 0, 1, 1).fill({ color: bdColor, alpha: backdropAlpha })
     bd.width = this.app.renderer.width
     bd.height = this.app.renderer.height
     this.backdrop = bd
@@ -364,6 +368,11 @@ export class DungeonEngine {
       this.layerGround.addChild(this.experienceStage.ground)
       this.layerMid.addChild(this.experienceStage.mid)
       this.layerGlow.addChild(this.experienceStage.effects)
+      // 地域ラスター画を世界の主役にし、タイル描画は歩ける範囲を読む補助へ下げる。
+      // キャラクター、敵影、操作情報は不透明のまま保つ。
+      this.layerGround.alpha = 0.48
+      this.layerWater.alpha = 0.68
+      this.layerDecal.alpha = 0.78
     }
 
     // プロップ+特殊タイル標識

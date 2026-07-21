@@ -21,17 +21,9 @@ import './m17_home.css'
 import './depart_m18.css'
 import './expedition_vc3.css'
 
-// ---- 夜行の絵巻 — 麓(燈ノ郷)から頂(玄冬の座)へ登る一本道の絵地図 ----
-// 40地域を tier 順の登り道として縦絵巻に配置する。位置は index から決定的に算出(データ非依存)。
-const MAP_W = 440
-const STEP_Y = 56
+// ---- 夜行の絵巻 — 40地域の実景を連ねた一本道の道標 ----
+// 世界を示す場所では簡易SVG風景を使わず、既存の地域画そのものを選択面にする。
 const TIER_NAMES: Record<number, string> = { 1: '山麓', 2: '中腹', 3: '奥山', 4: '山頂' }
-
-function nodePos(i: number): { x: number; y: number } {
-  // 麓が下・頂が上。x は正弦の蛇行+小さな揺らぎ(決定的)
-  const x = 220 + Math.round(Math.sin(i * 1.9) * 84) + ((i * 37) % 24) - 12
-  return { x, y: 150 + i * STEP_Y }
-}
 
 function AscentMap({
   regions, fame, cleared, selected, onSelect,
@@ -43,115 +35,69 @@ function AscentMap({
   onSelect: (id: string) => void
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const H = 150 + regions.length * STEP_Y + 130
-  // y は上下反転(配列先頭=麓=下端)
-  const posOf = (i: number) => { const p = nodePos(i); return { x: p.x, y: H - p.y } }
+  const visualRegions = [...regions].reverse()
 
   // 初回表示: 選択中の地(なければ最前線)を視界の中央へ
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return
-    let target = 0
-    regions.forEach((r, i) => { if (fame >= r.unlockFame) target = i })
-    if (selected) {
-      const i = regions.findIndex((r) => r.id === selected)
-      if (i >= 0) target = i
+    const targetId = selected
+      ?? regions.reduce<Region | null>((best, region) => (
+        fame >= region.unlockFame && (!best || region.unlockFame >= best.unlockFame) ? region : best
+      ), null)?.id
+    if (!targetId) return
+    const target = el.querySelector<HTMLElement>(`[data-region-id="${targetId}"]`)
+    if (target) {
+      const targetTop = target.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop
+      el.scrollTop = Math.max(0, targetTop - el.clientHeight / 2 + target.offsetHeight / 2)
     }
-    const scale = el.clientWidth / MAP_W
-    el.scrollTop = Math.max(0, (H - nodePos(target).y) * scale - el.clientHeight / 2)
-  }, [H, fame, regions, selected])
-
-  // 道: 隣接ノードを結ぶ点線(中点を制御点にした滑らかな曲線)
-  const pts = regions.map((_, i) => posOf(i))
-  const path = pts.map((p, i) => {
-    if (i === 0) return `M ${p.x} ${p.y}`
-    const prev = pts[i - 1]
-    const mx = (prev.x + p.x) / 2
-    return `Q ${prev.x} ${(prev.y + p.y) / 2} ${mx} ${(prev.y + p.y) / 2} T ${p.x} ${p.y}`
-  }).join(' ')
-
-  // 帯(tier)の境界線
-  const tierBounds: { y: number; label: string }[] = []
-  regions.forEach((r, i) => {
-    if (i === 0 || r.tier !== regions[i - 1].tier) {
-      tierBounds.push({ y: posOf(i).y + STEP_Y * 0.7, label: `${TIER_NAMES[r.tier] ?? ''} ${'★'.repeat(r.tier)}` })
-    }
-  })
+  }, [fame, regions, selected])
 
   return (
-    <div className="ascent-wrap" ref={wrapRef}>
-      <svg className="ascent-svg" viewBox={`0 0 ${MAP_W} ${H}`} role="list" aria-label="行き先の絵地図">
-        {/* 空〜山肌のグラデ地 */}
-        <defs>
-          <linearGradient id="ascSky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0a0a1c" />
-            <stop offset="45%" stopColor="#0f1630" />
-            <stop offset="100%" stopColor="#182242" />
-          </linearGradient>
-          <radialGradient id="ascLamp" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ffd98a" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#e8a33d" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <rect width={MAP_W} height={H} fill="url(#ascSky)" />
-        {/* 星(高所ほど濃く) */}
-        {Array.from({ length: 70 }, (_, i) => (
-          <circle key={i} cx={(i * 167.3) % MAP_W} cy={(i * 97.7) % (H * 0.75)} r={0.5 + (i % 3) * 0.4} fill="#e9debe" opacity={0.14 + (i % 5) * 0.07} />
-        ))}
-        {/* 帯境界 */}
-        {tierBounds.map((b, i) => (
-          <g key={i}>
-            <line x1={16} x2={MAP_W - 16} y1={b.y} y2={b.y} stroke="rgba(201,168,106,0.22)" strokeDasharray="2 6" />
-            <text x={MAP_W - 20} y={b.y - 6} textAnchor="end" fontSize={11} fill="rgba(201,168,106,0.55)" letterSpacing={2}>{b.label}</text>
-          </g>
-        ))}
-        {/* 頂 — 玄冬の座 */}
-        <circle cx={220} cy={46} r={30} fill="#0d0a18" stroke="#4a3d6b" strokeWidth={1.4} opacity={0.95} />
-        <circle cx={220} cy={46} r={37} fill="none" stroke="#6b5a96" strokeWidth={0.7} opacity={0.5} />
-        <text x={220} y={100} textAnchor="middle" fontSize={11} fill="#9b8fc0" letterSpacing={4}>玄冬の座</text>
-        {/* 道 */}
-        <path d={path} fill="none" stroke="rgba(233,222,190,0.35)" strokeWidth={2} strokeDasharray="1 7" strokeLinecap="round" />
-        {/* 麓 — 燈ノ郷 */}
-        <ellipse cx={pts[0].x} cy={H - 44} rx={70} ry={26} fill="url(#ascLamp)" opacity={0.5} />
-        <text x={pts[0].x} y={H - 26} textAnchor="middle" fontSize={12} fill="var(--gold)" letterSpacing={4}>燈ノ郷</text>
-        {/* 地域ノード */}
-        {regions.map((r, i) => {
-          const p = posOf(i)
+    <div className="ascent-wrap" ref={wrapRef} role="list" aria-label="行き先の絵地図">
+      <div className="ascent-summit" aria-hidden>
+        <span>玄冬の座</span>
+        <small>常夜の頂</small>
+      </div>
+      <div className="ascent-road" aria-hidden />
+      {visualRegions.map((r, i) => {
           const unlocked = fame >= r.unlockFame
           const isCleared = cleared.includes(r.id)
           const isSel = selected === r.id
-          const left = p.x > 220 // ラベルは山道の外側へ
-          const tx = left ? p.x + 15 : p.x - 15
+          const tierChanged = i === 0 || r.tier !== visualRegions[i - 1].tier
           return (
-            <g
-              key={r.id}
-              className={`asc-node ${unlocked ? 'is-open' : 'is-locked'} ${isSel ? 'is-sel' : ''}`}
-              onClick={() => unlocked && onSelect(r.id)}
-              onKeyDown={(e) => { if (unlocked && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(r.id) } }}
-              tabIndex={unlocked ? 0 : -1}
-              role="listitem"
-              aria-label={`${r.name}${unlocked ? '' : `(武功${r.unlockFame}で開通)`}${isCleared ? '・主討伐済' : ''}`}
-            >
-              {isSel && <circle cx={p.x} cy={p.y} r={15} fill="none" stroke="var(--sel)" strokeWidth={2} />}
-              {unlocked && !isCleared && <circle cx={p.x} cy={p.y} r={13} fill="url(#ascLamp)" opacity={0.55} />}
-              <circle
-                cx={p.x} cy={p.y} r={7.5}
-                fill={isCleared ? '#c9a86a' : unlocked ? '#e8a33d' : '#2a3252'}
-                stroke={unlocked ? '#efe6d4' : '#4a5378'} strokeWidth={1.2}
-              />
-              {isCleared && <text x={p.x} y={p.y + 3.4} textAnchor="middle" fontSize={9} fill="#101830" fontWeight={700}>鎮</text>}
-              <text x={tx} y={p.y + 1} textAnchor={left ? 'start' : 'end'} fontSize={12.5} letterSpacing={1}
-                fill={isSel ? 'var(--sel)' : unlocked ? '#efe6d4' : '#5d668c'} fontWeight={isSel ? 700 : 500}>
-                {r.name}
-              </text>
-              <text x={tx} y={p.y + 15} textAnchor={left ? 'start' : 'end'} fontSize={9.5}
-                fill={unlocked ? (isCleared ? 'rgba(201,168,106,0.8)' : 'var(--ember-text)') : '#5d668c'}>
-                {unlocked ? (isCleared ? '主討伐済' : r.bossId ? '★主あり' : '') : `武功${r.unlockFame}`}
-              </text>
-            </g>
+            <div key={r.id} className="ascent-entry" role="listitem">
+              {tierChanged && (
+                <div className="ascent-tier" aria-hidden>
+                  <span>{TIER_NAMES[r.tier] ?? '道中'}</span>
+                  <small>{'★'.repeat(r.tier)}</small>
+                </div>
+              )}
+              <button
+                type="button"
+                data-region-id={r.id}
+                className={`asc-place ${i % 2 === 0 ? 'is-east' : 'is-west'} ${unlocked ? 'is-open' : 'is-locked'} ${isSel ? 'is-sel' : ''}`}
+                disabled={!unlocked}
+                aria-pressed={isSel}
+                aria-label={`${r.name}${unlocked ? '' : `(武功${r.unlockFame}で開通)`}${isCleared ? '・主討伐済' : ''}`}
+                onClick={() => onSelect(r.id)}
+              >
+                <span className="asc-place-art" aria-hidden>
+                  <img src={regionBgR(r.id)} alt="" loading="lazy" decoding="async" />
+                </span>
+                <span className="asc-place-copy">
+                  <b>{r.name}</b>
+                  <small>{unlocked ? (isCleared ? '鎮め済み' : r.bossId ? '主の気配あり' : '探索できる') : `武功${r.unlockFame}で開く`}</small>
+                </span>
+                <span className="asc-place-seal" aria-hidden>{isCleared ? '鎮' : unlocked ? '灯' : '封'}</span>
+              </button>
+            </div>
           )
         })}
-      </svg>
+      <div className="ascent-village" aria-hidden>
+        <span>燈ノ郷</span>
+        <small>帰るべき灯</small>
+      </div>
     </div>
   )
 }
@@ -228,7 +174,7 @@ function initialRegionId(fame: number): string | null {
   return unlocked.reduce((a, b) => (b.unlockFame >= a.unlockFame ? b : a)).id
 }
 
-// 地域画 — 404時は同じ森へ黙って差し替えず、地域名入りの墨絵シルエット+「遠見が利かぬ」(M22 §5)
+// 地域画 — 404時は別の土地の絵や簡易SVGへ差し替えず、情報だけを静かに残す。
 function RegionArt({ region }: { region: Region }) {
   const [ok, setOk] = useState(true)
   const [lastId, setLastId] = useState(region.id)
@@ -237,20 +183,10 @@ function RegionArt({ region }: { region: Region }) {
     setOk(true)
   }
   if (!ok) {
-    // 地域idから決定的に山影をずらす(欠落した地同士が同一に見えないように+名前で必ず識別)
-    const h = [...region.id].reduce((a, ch) => a + ch.charCodeAt(0), 0)
-    const dx = h % 60
-    const mx = 50 + (h % 200)
     return (
       <div className="region-art-fallback">
-        <svg viewBox="0 0 320 130" preserveAspectRatio="xMidYMax slice" aria-hidden>
-          <circle cx={mx} cy={34} r={16} fill="#b9c4e8" opacity={0.5} />
-          <path d={`M0 130 L${58 + dx} 62 L${118 + dx} 104 L${182 + dx} 54 L${248 + dx} 102 L320 66 L320 130 Z`} fill="#141b36" />
-          <path d={`M0 130 L${34 + dx} 96 L${96 + dx} 118 L${170 + dx} 88 L320 116 L320 130 Z`} fill="#0d1226" />
-          <rect x={0} y={96} width={320} height={20} fill="#a9b7d8" opacity={0.12} />
-        </svg>
         <span className="region-art-name">{region.name}</span>
-        <span className="region-art-note">遠見が利かぬ — 絵姿準備中</span>
+        <span className="region-art-note">遠見が利かぬ — 地誌を確認してください</span>
       </div>
     )
   }

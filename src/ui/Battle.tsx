@@ -1389,31 +1389,27 @@ function AllyVisual({ gata, sex, element }: { gata: string; sex: string; element
   )
 }
 
-// 敵の見た目v2 — 実画像→無ければSVGシルエット妖怪(属性オーラ+眼+呼吸)
-const SPECIES_BY_ELEMENT: Record<string, 'beast' | 'wisp' | 'oni' | 'float'> = {
-  fire: 'wisp', moon: 'float', star: 'float', water: 'float', wind: 'beast', earth: 'oni',
-}
-
-// M17: variantsOf()が_w/_o専用絵を付与するため、退避連鎖は「変異絵→基礎種絵→SVG」の3段
+// M17: variantsOf()が_w/_o専用絵を付与するため、退避連鎖は「変異絵→基礎種絵→状態説明」の3段。
+// 欠落時に別画風の簡易SVG妖怪を差し込まず、誤った外見を見せない。
 function baseSpriteOf(sprite: string): string | null {
   return /_[wo]\.png$/.test(sprite) ? sprite.replace(/_[wo]\.png$/, '.png') : null
 }
 
 function EnemyVisual2({ e }: { e: Combatant }) {
   const def = e.enemyId ? enemyById(e.enemyId) : null
-  const [stage, setStage] = useState<'primary' | 'base' | 'svg'>('primary')
+  const [stage, setStage] = useState<'primary' | 'base' | 'missing'>('primary')
   const key = e.enemyId ?? def?.sprite ?? e.key
   const [lastKey, setLastKey] = useState(key)
   if (key !== lastKey) {
     setLastKey(key)
     setStage('primary')
   }
-  if (def && stage !== 'svg') {
+  if (def && stage !== 'missing') {
     const baseSprite = baseSpriteOf(def.sprite)
     const src = stage === 'base' && baseSprite ? gameImg(baseSprite) : gameImg(def.sprite)
     const onError = () => {
       if (stage === 'primary' && baseSprite) setStage('base')
-      else setStage('svg')
+      else setStage('missing')
     }
     return (
       <span className="enemy-sprite2">
@@ -1421,48 +1417,10 @@ function EnemyVisual2({ e }: { e: Combatant }) {
       </span>
     )
   }
-  const tier = def?.tier ?? 1
-  const species = SPECIES_BY_ELEMENT[e.element] ?? 'beast'
-  const scale = 0.9 + tier * 0.14
   return (
-    <span className={`enemy-sprite2 silhouette sp-${species}`} data-el={e.element} style={{ ['--sc' as string]: scale }}>
-      <svg viewBox="-30 -56 60 60" width={76 * scale} height={76 * scale}>
-        <ellipse cx="0" cy="-18" rx="26" ry="22" className="aura" />
-        {species === 'beast' && (
-          <g className="body">
-            <ellipse cx="0" cy="-10" rx="15" ry="11" />
-            <ellipse cx="-11" cy="-17" rx="5.5" ry="6.5" />
-            <path d="M-16,-21 L-13,-30 L-9,-22 Z" />
-            <path d="M-9,-23 L-6,-29 L-3,-22 Z" />
-            <path d="M14,-12 Q24,-19 20,-5 Q16,-9 13,-8 Z" />
-          </g>
-        )}
-        {species === 'wisp' && (
-          <g className="body">
-            <path d="M0,-34 Q12,-24 9,-10 Q7,-1 0,0 Q-7,-1 -9,-10 Q-12,-24 0,-34 Z" />
-            <path d="M8,-26 Q15,-31 12,-19 Z" />
-            <path d="M-8,-28 Q-14,-33 -11,-20 Z" />
-          </g>
-        )}
-        {species === 'oni' && (
-          <g className="body">
-            <ellipse cx="0" cy="-12" rx="14" ry="13" />
-            <rect x="-10" y="-5" width="20" height="5" />
-            <path d="M-8,-22 L-5,-30 L-2,-22 Z" />
-            <path d="M2,-22 L5,-30 L8,-22 Z" />
-          </g>
-        )}
-        {species === 'float' && (
-          <g className="body">
-            <circle cx="0" cy="-18" r="12" />
-            <path d="M9,-13 Q19,-8 14,-1 Q10,-6 6,-8 Z" />
-            <path d="M-9,-14 Q-17,-7 -12,-2 Q-9,-6 -5,-9 Z" />
-          </g>
-        )}
-        <circle cx="-4.5" cy="-18" r="2.4" className="eye" />
-        <circle cx="4.5" cy="-18" r="2.4" className="eye" />
-        {tier >= 3 && <circle cx="0" cy="-24" r="2" className="eye" />}
-      </svg>
+    <span className="enemy-sprite2 enemy-art-missing" data-el={e.element} role="img" aria-label={`${e.name}の絵姿を読み込めませんでした`}>
+      <span aria-hidden>影</span>
+      <small>{e.name}</small>
     </span>
   )
 }

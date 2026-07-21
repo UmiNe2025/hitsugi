@@ -1237,3 +1237,15 @@
 - **PC幅**: `ScreenShell`系の作業画面をPC 1180px以上でshell最大1160px、本文最大1040pxへ制限。`god/codex/records/titles/train/facility`系の反復gridはカード最大280pxへ抑え、1件だけの横伸びを防ぐ。Dungeon/Battle/Villageの没入画面は広さを残す。
 - **検証**: Vitest **33 files / 678 tests**、oxlint、production build、data validation **0 errors / 既存rank分布warn 1**、visual manifest **7/7**、visual closure **22 routes / 40 regions / 6 overlays / 68 ledger entries** 合格。対象PlaywrightはDungeon/Battle PC+mobile **9 passed / 1 intended skip**、郷PC+mobile **14 passed**、PC幅 **1 passed**。3 visual files一括実行は180秒timeoutしたため、分割実行で証拠を取得。
 - **公開境界とデプロイ**: 初回実装はローカル止め。ユーザーの明示依頼「デプロイしてください」を受け、commit `87c830745b3d058b45df59e0b123d22c2ff94469` をmainへpush。GitHub Actions run `29816722591`でbuild/deploy成功。公開URL `https://hitsugi-game.github.io/hitsugi/` と配信bundle `assets/index-C9rnTugR.js` はHTTP 200。`tmp/`は既存未追跡として保持。
+
+## 2026-07-21（M37 画材境界の統一 — ローカル実装）
+
+- **判断**: 問題をSVG拡張子そのものではなく、世界絵と情報図の混在として再定義。世界の風景・人物・敵・神はラスター、SVG/Pixi Graphicsは関係・計器・経路・危険予告・粒子に限定した。
+- **Title/Common**: `TitleArt`と`NightBackdrop`の簡易SVG風景を撤去。タイトルキー画、郷の季節画/標準画だけを主景にし、画像欠落は色面へ静かに退避する。
+- **出立**: 40地域の点線SVG地図を、既存`bg_r_*`を用いた交互配置の実景道標へ置換。現在選択地が絵巻中央へ来る初期scroll、locked/selected/cleared、文字一覧同期を維持した。
+- **Fallback**: 神・敵・地域の画像欠落時に簡易SVG立ち絵/山影を差し込む処理を撤去。名前・属性・読み込み失敗を伝える状態面だけにした。
+- **Dungeon**: V2で地域実景を常設背面へ接続し、Pixi背景alphaと床層alphaを下げた。code-native材質模様と擬似ランドマークを削除し、Graphicsをnavigation/danger/ambientへ限定。探索ロジック、当たり判定、遭遇、saveは不変。
+- **回帰防止**: `tests/visual_media_boundary.test.ts`を追加。世界画SVGの再侵入と配信SVG増加をallowlistで検知する。
+- **目視**: 1280px実画面でTitle、出立の絵巻、宵の森Dungeonを確認。出立の初回scroll不良を実測して修正し、Dungeonの地域画を覆う床格子を再調整した。
+- **検証**: Vitest **34 files / 681 tests**、oxlint、production build、data validation **0 errors / 既存rank分布warn 1**、visual manifest **7/7**、visual closure **22 routes / 40 regions / 6 overlays / 68 entries**、`git diff --check`に合格。PlaywrightはTitle PC/mobile **4/4**、出立PC/mobile **2/2**、Dungeon/Battle PC/mobile **9 passed / 1 intended 1600px skip**。
+- **公開境界**: 新規画像生成0。commit/push/deployは未実施。

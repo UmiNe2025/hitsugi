@@ -151,7 +151,7 @@
 .combatant .enemy-sprite2 { width: 100%; height: 100%; max-width: none; max-height: none; }
 .combatant .enemy-sprite2 { display: flex; align-items: center; justify-content: center; }
 .combatant .enemy-img,
-.combatant .enemy-sprite2.silhouette svg,
+.combatant .enemy-art-missing,
 .combatant .ally-pose,
 .combatant .ally-stand {
   width: 100%; height: 100%; max-width: none; max-height: none;
@@ -161,6 +161,19 @@
   transform-origin: 50% 100%;
 }
 .combatant .ally-flame { font-size: 42px; } /* まれな最終退避経路(顔絵/歩行絵も無い場合)。--szに依存しない固定寸 */
+
+.enemy-art-missing {
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid rgba(201, 168, 106, .35);
+  border-radius: 50% 50% 10% 10%;
+  background: radial-gradient(circle at 50% 38%, rgba(201,168,106,.15), rgba(5,7,13,.9) 62%);
+  color: var(--text-dim);
+  text-align: center;
+}
+.enemy-art-missing > span { color: var(--gold); font: 600 28px/1 'Yu Mincho', 'Hiragino Mincho ProN', serif; }
+.enemy-art-missing > small { max-width: 100%; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 名札の縦寸を切り詰める — 状態異常が無い時は.status-icons(空span)が行高だけ食っていたぶんを畳む。
    モバイルで札+名札が帯の高さ予算に収まらずログ帯へ滲み出ていた実測不具合の是正(§9.2)。 */

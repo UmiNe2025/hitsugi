@@ -130,59 +130,6 @@ function navigationPath(grid: TileKind[][]): { x: number; y: number }[] {
   return reversed.reverse()
 }
 
-function findLandmarkSpot(grid: TileKind[][]): { x: number; y: number } | null {
-  const entrance = findTile(grid, ['entrance'])
-  if (!entrance) return null
-  for (let radius = 2; radius <= 5; radius++) {
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        const x = entrance.x + dx
-        const y = entrance.y + dy
-        if (grid[y]?.[x] !== 'wall') continue
-        const open = [[0, 1], [1, 0], [0, -1], [-1, 0]].filter(
-          ([ox, oy]) => isWalkable(grid[y + oy]?.[x + ox] ?? 'wall'),
-        ).length
-        if (open >= 2) return { x, y }
-      }
-    }
-  }
-  return entrance
-}
-
-function drawMaterialMark(
-  graphic: Graphics,
-  x: number,
-  y: number,
-  tile: number,
-  pattern: number,
-  color: number,
-): void {
-  const variant = pattern % 7
-  if (variant === 0) {
-    graphic.moveTo(x - tile * 0.28, y).quadraticCurveTo(x, y - tile * 0.12, x + tile * 0.28, y)
-      .stroke({ color, width: 1, alpha: 0.18 })
-  } else if (variant === 1) {
-    graphic.circle(x - 4, y, 2.3).circle(x + 3, y - 2, 1.6).circle(x + 5, y + 3, 1.2)
-      .fill({ color, alpha: 0.13 })
-  } else if (variant === 2) {
-    graphic.moveTo(x - tile * 0.32, y - 3).lineTo(x + tile * 0.32, y - 3)
-      .moveTo(x - tile * 0.24, y + 4).lineTo(x + tile * 0.26, y + 4)
-      .stroke({ color, width: 1.2, alpha: 0.18 })
-  } else if (variant === 3) {
-    graphic.moveTo(x - 7, y - 5).lineTo(x + 3, y - 8).lineTo(x + 8, y + 1).lineTo(x - 2, y + 7).closePath()
-      .stroke({ color, width: 1, alpha: 0.16 })
-  } else if (variant === 4) {
-    graphic.moveTo(x - 8, y + 4).quadraticCurveTo(x - 2, y - 7, x + 1, y + 3)
-      .quadraticCurveTo(x + 5, y - 5, x + 8, y + 4)
-      .stroke({ color, width: 1.4, alpha: 0.18 })
-  } else if (variant === 5) {
-    graphic.moveTo(x - 8, y + 5).lineTo(x - 2, y - 5).lineTo(x + 1, y + 2).lineTo(x + 8, y - 3)
-      .stroke({ color, width: 1.2, alpha: 0.18 })
-  } else {
-    graphic.ellipse(x, y, tile * 0.26, tile * 0.07).stroke({ color, width: 1, alpha: 0.16 })
-  }
-}
-
 function drawNavigationGlyph(
   graphic: Graphics,
   x: number,
@@ -215,54 +162,6 @@ function drawNavigationGlyph(
       .fill({ color, alpha: 0.32 })
     graphic.moveTo(x, y).lineTo(x + forwardX, y + forwardY).stroke({ color, width: 1, alpha: 0.3 })
   }
-}
-
-function buildLandmarkSilhouette(
-  profile: RegionExperienceProfile,
-  recipe: RegionPrimitiveRecipe,
-  theme: DungeonTheme,
-  tile: number,
-): Container {
-  const node = new Container()
-  const shadow = new Graphics().ellipse(0, 3, tile * 1.25, tile * 0.25)
-    .fill({ color: 0x05070d, alpha: 0.62 })
-  const body = new Graphics()
-  const dark = theme.family === 'forest' ? 0x111c1a : theme.family === 'zaka' ? 0x191315 : theme.family === 'tani' ? 0x111520 : 0x130f1a
-  const accent = theme.lanternTint
-  const height = tile * (1.25 + recipe.silhouetteVariant * 0.15)
-  const half = tile * (0.62 + recipe.silhouetteTeeth * 0.04)
-
-  if (profile.macroBiome === 'wetland-border') {
-    body.moveTo(-half, 0).quadraticCurveTo(-half * 0.8, -height, 0, -height * 0.78)
-      .quadraticCurveTo(half * 0.8, -height, half, 0)
-      .stroke({ color: dark, width: tile * 0.22, alpha: 0.98 })
-    body.ellipse(0, 1, half * 0.9, tile * 0.13).fill({ color: theme.waterDeep, alpha: 0.9 })
-  } else if (profile.macroBiome === 'stone-prayer-road') {
-    body.moveTo(-half, 0).lineTo(-half * 0.72, -height).lineTo(half * 0.72, -height).lineTo(half, 0)
-      .stroke({ color: dark, width: tile * 0.2, alpha: 0.98 })
-    body.moveTo(-half, -height * 0.72).lineTo(half, -height * 0.72)
-      .stroke({ color: accent, width: 1.4, alpha: 0.38 })
-  } else if (profile.macroBiome === 'timber-city-remains') {
-    body.moveTo(-half, -height * 0.7).lineTo(0, -height).lineTo(half, -height * 0.62)
-      .lineTo(half * 0.72, 0).moveTo(-half * 0.72, 0).lineTo(-half, -height * 0.7)
-      .stroke({ color: dark, width: tile * 0.19, alpha: 0.98 })
-    body.moveTo(-half * 0.7, -height * 0.38).lineTo(half * 0.72, -height * 0.38)
-      .stroke({ color: theme.stain, width: tile * 0.12, alpha: 0.92 })
-  } else {
-    body.moveTo(0, 0).lineTo(0, -height)
-      .moveTo(0, -height * 0.82).lineTo(-half, -height * 0.5)
-      .moveTo(0, -height * 0.68).lineTo(half, -height * 0.38)
-      .stroke({ color: dark, width: tile * 0.2, alpha: 0.98 })
-    body.circle(0, -height, tile * 0.18).stroke({ color: accent, width: 1.6, alpha: 0.5 })
-  }
-
-  for (let i = 0; i < recipe.silhouetteTeeth; i++) {
-    const x = (i - (recipe.silhouetteTeeth - 1) / 2) * (half * 1.45 / Math.max(1, recipe.silhouetteTeeth - 1))
-    const top = -height * (0.25 + ((i + recipe.silhouetteVariant) % 3) * 0.11)
-    body.moveTo(x, 0).lineTo(x, top).stroke({ color: dark, width: 2.2, alpha: 0.9 })
-  }
-  node.addChild(shadow, body)
-  return node
 }
 
 function drawDangerGlyph(graphic: Graphics, tile: number, variant: number, color: number): void {
@@ -317,16 +216,9 @@ export function buildRegionExperienceStage(
   const height = grid.length * tile
   const recipe = resolveRegionPrimitiveRecipe(profile)
   const rand = seeded(seed ^ hashText(recipe.structuralKey))
-  const walkable = collectWalkable(grid)
   const ground = new Container()
   const mid = new Container()
   const effects = new Container()
-
-  const material = new Graphics()
-  const sampled = [...walkable].sort((a, b) => ((a.x * 31 + a.y * 17 + seed) % 97) - ((b.x * 31 + b.y * 17 + seed) % 97))
-  for (const cell of sampled.slice(0, Math.min(72, sampled.length))) {
-    drawMaterialMark(material, (cell.x + 0.5) * tile, (cell.y + 0.68) * tile, tile, recipe.materialPattern, theme.grass)
-  }
 
   const navGraphic = new Graphics()
   const path = navigationPath(grid)
@@ -347,20 +239,12 @@ export function buildRegionExperienceStage(
       theme.lanternTint,
     )
   }
-  ground.addChild(material, navGraphic)
+  ground.addChild(navGraphic)
 
-  let landmarks = 0
-  if (showLandmark) {
-    const spot = findLandmarkSpot(grid)
-    if (spot) {
-      const landmark = buildLandmarkSilhouette(profile, recipe, theme, tile)
-      landmark.position.set((spot.x + 0.5) * tile, (spot.y + 1) * tile)
-      landmark.zIndex = landmark.y
-      mid.zIndex = landmark.y
-      mid.addChild(landmark)
-      landmarks = 1
-    }
-  }
+  // 地域の風景・材質・ランドマークは背面の地域ラスター画が担う。
+  // Graphicsは経路、危険予告、環境粒子という操作情報にだけ限定する。
+  void showLandmark
+  const landmarks = 0
 
   const ambient: PooledMark[] = []
   for (let i = 0; i < recipe.ambientPool; i++) {
@@ -431,7 +315,7 @@ export function buildRegionExperienceStage(
     setDangerTelegraph,
     update,
     budget: {
-      staticGraphics: 2 + landmarks,
+      staticGraphics: 1,
       textures: 0,
       landmarks,
       navigationMarks: navigationMarks.length,

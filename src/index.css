@@ -125,12 +125,6 @@ button {
   overflow: hidden;
   max-width: none;
 }
-.title-art {
-  position: fixed; inset: 0;
-  width: 100%; height: 100%;
-  z-index: 0;
-  opacity: 0.85;
-}
 .title-art-img {
   position: fixed; inset: 0;
   width: 100%; height: 100%;
@@ -1425,7 +1419,24 @@ button {
   max-width: none; padding: 0;
   overflow: hidden;
 }
-.dungeon-canvas { position: absolute; inset: 0; }
+.dungeon-canvas { position: absolute; inset: 0; z-index: 1; }
+.dungeon-region-backdrop {
+  position: absolute;
+  inset: -3%;
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+  filter: saturate(.72) contrast(1.08) brightness(.52);
+  transform: scale(1.04);
+}
+.dungeon-region-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(8,11,19,.04) 0 28%, rgba(8,11,19,.58) 84%),
+    linear-gradient(180deg, rgba(5,7,13,.26), rgba(5,7,13,.08) 48%, rgba(5,7,13,.5));
+}
 .dungeon-hud-top {
   position: absolute; top: 8px; right: 10px; z-index: 5;
   display: flex; align-items: center; gap: 10px;
@@ -1641,17 +1652,26 @@ button {
 .tree-face { width: 26px; height: 26px; object-fit: cover; object-position: top center; border-radius: 50%; border: 1px solid var(--gold); margin-right: 4px; vertical-align: middle; flex-shrink: 0; }
 
 /* ---- 画面奥の一枚絵(背景) ---- */
-.backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.backdrop-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.72; }
+.backdrop {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background: #090d19;
+}
+.backdrop-base {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 72% 38%, rgba(190, 132, 54, .14), transparent 30%),
+    linear-gradient(145deg, #11182c, #080b16 62%, #120e1c);
+}
 .backdrop-photo {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; opacity: 0;
   animation: artIn 1.6s ease 0.15s forwards;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85));
 }
 .backdrop-veil {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(11,15,30,0.5) 0%, rgba(11,15,30,0.16) 42%, rgba(11,15,30,0.55) 100%);
+  background:
+    linear-gradient(180deg, rgba(7,10,19,.28), rgba(7,10,19,.1) 42%, rgba(7,10,19,.58)),
+    linear-gradient(90deg, rgba(7,10,19,.3), transparent 28% 72%, rgba(7,10,19,.28));
 }
 
 /* ---- 行いカード(郷の行動) ---- */
@@ -1861,17 +1881,65 @@ input:focus-visible {
   .dmg-pop.crit::before, .burst, .burst::after, .victory-scroll::before { display: none !important; }
 }
 
-/* ---- 夜行の絵巻(出立の絵地図) ---- */
+/* ---- 夜行の絵巻(出立の実景道標) ---- */
 .depart-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr); gap: 14px; align-items: start; }
 .ascent-wrap {
-  overflow-y: auto; max-height: 56vh; border: 1px solid var(--panel-border); border-radius: 6px;
-  background: #0a0a1c; scrollbar-width: thin;
+  position: relative; overflow-y: auto; max-height: 56vh; padding: 18px 14px 22px;
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgba(89, 57, 35, .2), transparent 8% 92%, rgba(89, 57, 35, .2)),
+    linear-gradient(165deg, #171620, #090d18 58%, #13101a);
+  scrollbar-width: thin; isolation: isolate;
 }
-.ascent-svg { display: block; width: 100%; height: auto; }
-.asc-node { cursor: default; outline: none; }
-.asc-node.is-open { cursor: pointer; }
-.asc-node.is-open:hover circle { filter: brightness(1.25); }
-.asc-node:focus-visible circle { stroke: var(--amber); stroke-width: 2.4; }
+.ascent-road {
+  position: absolute; z-index: -1; top: 74px; bottom: 70px; left: 50%; width: 2px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(to bottom, rgba(201,168,106,.38) 0 3px, transparent 3px 10px);
+  box-shadow: 0 0 18px rgba(232,163,61,.12);
+}
+.ascent-summit, .ascent-village {
+  display: grid; justify-items: center; gap: 2px; margin: 0 auto 18px; color: var(--gold); letter-spacing: .22em;
+}
+.ascent-village { margin: 20px auto 0; }
+.ascent-summit::before, .ascent-village::before {
+  content: ''; width: 15px; height: 15px; border: 1px solid rgba(201,168,106,.7); border-radius: 50%;
+  background: radial-gradient(circle, #ffe3a2 0 14%, #e8a33d 15% 38%, #17131c 42%);
+  box-shadow: 0 0 16px rgba(232,163,61,.4);
+}
+.ascent-summit small, .ascent-village small { color: var(--text-dim); font-size: 10px; letter-spacing: .12em; }
+.ascent-entry { position: relative; margin: 0 0 10px; }
+.ascent-tier {
+  display: flex; align-items: center; gap: 8px; margin: 18px 0 9px; color: var(--amber); font-size: 10px; letter-spacing: .18em;
+}
+.ascent-tier::after { content: ''; flex: 1; border-top: 1px solid rgba(201,168,106,.2); }
+.ascent-tier small { color: rgba(201,168,106,.62); letter-spacing: .08em; }
+.asc-place {
+  position: relative; display: grid; grid-template-columns: 96px minmax(0, 1fr) 30px; align-items: center; gap: 10px;
+  width: calc(50% + 18px); min-height: 72px; padding: 7px; overflow: hidden;
+  border: 1px solid rgba(201,168,106,.3); border-radius: 5px;
+  background: rgba(7,10,19,.86); color: var(--text); text-align: left; cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+}
+.asc-place.is-east { margin-left: calc(50% - 18px); }
+.asc-place.is-west { margin-right: calc(50% - 18px); grid-template-columns: 30px minmax(0, 1fr) 96px; }
+.asc-place.is-west .asc-place-art { grid-column: 3; }
+.asc-place.is-west .asc-place-copy { grid-column: 2; grid-row: 1; }
+.asc-place.is-west .asc-place-seal { grid-column: 1; grid-row: 1; }
+.asc-place-art { display: block; height: 56px; overflow: hidden; border-radius: 3px; background: #080b14; }
+.asc-place-art img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.82) contrast(1.04) brightness(.82); }
+.asc-place-copy { min-width: 0; }
+.asc-place-copy b, .asc-place-copy small { display: block; }
+.asc-place-copy b { overflow: hidden; color: var(--gold); font-size: 12.5px; letter-spacing: .08em; text-overflow: ellipsis; white-space: nowrap; }
+.asc-place-copy small { margin-top: 4px; color: var(--text-dim); font-size: 10.5px; }
+.asc-place-seal {
+  display: grid; place-items: center; width: 27px; height: 27px; border: 1px solid rgba(201,168,106,.62); border-radius: 50%;
+  color: var(--gold); font-size: 10px; background: rgba(15,17,28,.9);
+}
+.asc-place.is-open:hover { border-color: var(--amber); background: rgba(35,25,27,.92); transform: translateY(-1px); }
+.asc-place.is-sel { border-color: var(--sel); box-shadow: 0 0 0 1px rgba(255,157,69,.22), 0 8px 24px rgba(0,0,0,.28); }
+.asc-place:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.asc-place:disabled { cursor: not-allowed; opacity: .48; }
+.asc-place:disabled .asc-place-art img { filter: grayscale(.72) brightness(.48); }
 .depart-side { position: sticky; top: 10px; }
 .region-detail {
   border: 1px solid var(--panel-border); border-radius: 6px; padding: 12px 14px;
@@ -1890,6 +1958,11 @@ input:focus-visible {
 @media (max-width: 640px) {
   .depart-cols { grid-template-columns: 1fr; }
   .ascent-wrap { max-height: 46vh; }
+  .asc-place, .asc-place.is-west { width: calc(100% - 26px); margin-left: 26px; margin-right: 0; grid-template-columns: 80px minmax(0, 1fr) 28px; }
+  .asc-place.is-west .asc-place-art { grid-column: 1; }
+  .asc-place.is-west .asc-place-copy { grid-column: 2; }
+  .asc-place.is-west .asc-place-seal { grid-column: 3; }
+  .ascent-road { left: 20px; }
   .depart-side { position: static; }
 }
 

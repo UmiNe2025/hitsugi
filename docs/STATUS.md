@@ -2,6 +2,10 @@
 
 **v3.1目標にほぼ到達**: 神180柱・敵147基礎+変異(_w/_o)・装備810・辞世1370・事件270・地域40・画像2107枚。**キャラアニメ強化**(呼吸2重/lunge3段/victoryJump段階化/待機時歩行コマ循環)完了。**変異絵promptEn 147基礎種全カバー**(nova誤読対策の英語外見記述、変異は自動継承)。
 
+## ローカル実装・公開待ち
+
+- **M37 画材境界の統一**: 世界絵をラスター、SVG/Pixi Graphicsを情報層へ限定。Title/NightBackdrop/出立地図/神・敵・地域fallbackから簡易風景・シルエットSVGを撤去。出立は40地域の実景道標へ変更し、選択地の初期中央表示を確認。Dungeonは地域画を常設し、床格子を補助層へ下げ、擬似材質/ランドマークを撤去した。新規画像0・ゲームロジック変更0。Vitest 34 files / 681 tests、lint、build、closure 68/68、Title 4/4、出立2/2、Dungeon/Battle 9 passed / 1 intended skip。commit/push/deployは未実施。
+
 ## 🎉 リリース済み・稼働中
 
 - **公開URL**: https://hitsugi-game.github.io/hitsugi/ (2026-07-21 M34配信をHTTP 200・実bundle・OGP・夢CGで確認)

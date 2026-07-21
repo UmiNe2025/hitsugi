@@ -20,6 +20,8 @@ test('VC2 Title: five widths, first-start and damaged-save states remain actiona
   await page.reload()
   await expect(page.locator('.title-save-state')).toContainText('まだない')
   await expect(page.getByRole('button', { name: 'はじめから' })).toBeVisible()
+  await expect(page.locator('.title-screen svg.title-art')).toHaveCount(0)
+  expect(await page.locator('.title-art-img').evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)
 
   await page.evaluate(() => {
     localStorage.setItem('hitsugi_save_v4', '{broken')

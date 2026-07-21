@@ -32,7 +32,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Title.tsx",
-        "sourceSha256": "4ebe3b3fe25f6777eec43365e68991b5bdebb4a91057142e3e1a8aac8c868430",
+        "sourceSha256": "cba9d7a90584744f389254af5584e67ef8c4d1971b0288226d38400adccc816a",
         "runtimePath": "src/ui/vc2_entry.css",
         "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
         "rightsStatus": "pending",
@@ -80,7 +80,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Title.tsx",
-        "sourceSha256": "4ebe3b3fe25f6777eec43365e68991b5bdebb4a91057142e3e1a8aac8c868430",
+        "sourceSha256": "cba9d7a90584744f389254af5584e67ef8c4d1971b0288226d38400adccc816a",
         "runtimePath": "src/ui/vc2_entry.css",
         "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
         "rightsStatus": "pending",
@@ -623,13 +623,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/ui/depart_m18.css",
-        "sha256": "4164aa1f8da56d27403c1546a88b9c00ca51418522198a482aae9115001eee66"
+        "sha256": "a766d981dc72097725db1b7e2c9868b81db014977c5fa54ffad8b7612871fef8"
       },
       "provenance": {
         "sourcePath": "src/ui/Expedition.tsx",
-        "sourceSha256": "a99cd78ffe987cd4dfb7926d687dc14eff7225fb3932a36e7767a42562708fdd",
+        "sourceSha256": "a9829faa3821f04bac8511b765c9462c25f9d9128bce0d14977e650b7cca3491",
         "runtimePath": "src/ui/depart_m18.css",
-        "runtimeSha256": "4164aa1f8da56d27403c1546a88b9c00ca51418522198a482aae9115001eee66",
+        "runtimeSha256": "a766d981dc72097725db1b7e2c9868b81db014977c5fa54ffad8b7612871fef8",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -676,7 +676,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Expedition.tsx",
-        "sourceSha256": "a99cd78ffe987cd4dfb7926d687dc14eff7225fb3932a36e7767a42562708fdd",
+        "sourceSha256": "a9829faa3821f04bac8511b765c9462c25f9d9128bce0d14977e650b7cca3491",
         "runtimePath": "src/ui/expedition_vc3.css",
         "runtimeSha256": "d2748f54fbdc1a4b62215a1fafc3769e8b3d325ee681e239b1f6a4a39510dd7d",
         "rightsStatus": "pending",
@@ -720,13 +720,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/ui/Dungeon.tsx",
-        "sourceSha256": "dba4377cc1f98322ff70d4a43b9548a2686ca802a86f49fb69eee125263d63a4",
+        "sourceSha256": "7119b977c8bc7a06669ecf69a3b5100584b3e8eea1e55c2eb8e4dfc813d828bf",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -769,13 +769,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/ui/battle_ar1.css",
-        "sha256": "81fd8a7f1c8e1a3b1f562695359174ac0ee70eb67a35536e60a707aca2e80160"
+        "sha256": "5a6e83aedf7df4c1a5a27ac3b67abe982b740d2c85771279cc7f015b596756b6"
       },
       "provenance": {
         "sourcePath": "src/ui/Battle.tsx",
-        "sourceSha256": "bbd30b9a2def9c3f9c807bc9f2f1276aa6ececcf373f3172fe895429bd2e2390",
+        "sourceSha256": "1d5a3ac4a5d6f23535ebe8b589435c24791e6f3838d2eabb559865ee40f96ca1",
         "runtimePath": "src/ui/battle_ar1.css",
-        "runtimeSha256": "81fd8a7f1c8e1a3b1f562695359174ac0ee70eb67a35536e60a707aca2e80160",
+        "runtimeSha256": "5a6e83aedf7df4c1a5a27ac3b67abe982b740d2c85771279cc7f015b596756b6",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1121,13 +1121,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1172,13 +1172,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1223,13 +1223,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1274,13 +1274,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1325,13 +1325,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1376,13 +1376,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1427,13 +1427,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1478,13 +1478,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1529,13 +1529,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1580,13 +1580,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1631,13 +1631,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1682,13 +1682,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1733,13 +1733,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1784,13 +1784,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1835,13 +1835,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1886,13 +1886,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1937,13 +1937,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -1988,13 +1988,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2039,13 +2039,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2090,13 +2090,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2141,13 +2141,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2192,13 +2192,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2243,13 +2243,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2294,13 +2294,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2345,13 +2345,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2396,13 +2396,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2447,13 +2447,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2498,13 +2498,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2549,13 +2549,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2600,13 +2600,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2651,13 +2651,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2702,13 +2702,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2753,13 +2753,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2804,13 +2804,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2855,13 +2855,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2906,13 +2906,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -2957,13 +2957,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -3008,13 +3008,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -3059,13 +3059,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -3109,13 +3109,13 @@
       "motionSound": "Each profile declares bounded ambient motion plus a world-sound family; reduced-motion and no-safe-one-shot fallbacks avoid misleading UI audio.",
       "runtimeBundle": {
         "path": "src/dungeon/render/region_experience_layer.ts",
-        "sha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452"
+        "sha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46"
       },
       "provenance": {
         "sourcePath": "src/core/data/region_experience.ts",
         "sourceSha256": "29b3a608b170ed8acf5e38164a76b1fc214aceb65650fb6d76bce43674221245",
         "runtimePath": "src/dungeon/render/region_experience_layer.ts",
-        "runtimeSha256": "8172d8d897525db0fea8d78e00eaa5e9cf84ac4426a9216ab65a5c5fa5422452",
+        "runtimeSha256": "9b779a9edb7086fd7a0d1f3cb6b2e8e8f6bf9b17f9d709750a6cd14372339b46",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -3419,13 +3419,13 @@
       "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
       "runtimeBundle": {
         "path": "src/index.css",
-        "sha256": "fd6291a8f8cb22e154d22f7ead0d209b73a3516c5a57606e8201180e32d98385"
+        "sha256": "1a7ca05a73ba188e98f1d51062a3f5017a6c933cf5f1816202086e95efd0c4c7"
       },
       "provenance": {
         "sourcePath": "src/App.tsx",
         "sourceSha256": "5d4182a5728e92f6f358a2f758267e42b2fc9aacd3038328c335958b5681627d",
         "runtimePath": "src/index.css",
-        "runtimeSha256": "fd6291a8f8cb22e154d22f7ead0d209b73a3516c5a57606e8201180e32d98385",
+        "runtimeSha256": "1a7ca05a73ba188e98f1d51062a3f5017a6c933cf5f1816202086e95efd0c4c7",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },

@@ -378,6 +378,14 @@ function DungeonFloor() {
       data-stage-danger-cue={stageContract?.dangerCue.id ?? regionExperience?.danger.cueId}
       data-stage-sound-cue={regionAudio?.soundCueId}
     >
+      {run.visualVersion === 'v2' && (
+        <div
+          className="dungeon-region-backdrop"
+          data-region-art={region.id}
+          style={{ backgroundImage: `url(${regionBgR(region.id)})` }}
+          aria-hidden
+        />
+      )}
       <div className="dungeon-canvas" ref={hostRef} />
 
       {/* M29+: 描画初期化に失敗した時だけ、沈黙の空画面でなく手立てを示す */}

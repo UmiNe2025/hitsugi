@@ -31,15 +31,15 @@
   width: auto;
 }
 .combatant .ally-flame { font-size: calc(46px * var(--sz, 1)); }
-.combatant .enemy-sprite2.silhouette svg {
+.combatant .enemy-art-missing {
   width: calc(150px * var(--sz, 1));
   height: calc(150px * var(--sz, 1));
 }
 
-/* ボス専用スケール — 画像経路(.enemy-img)とSVG退避経路(silhouette svg)の両方に通す。--szの人数式は使わない */
+/* ボス専用スケール — 画像経路と欠落状態の両方に通す。--szの人数式は使わない */
 .combatant.is-boss .enemy-img,
 .combatant.is-boss .enemy-sprite2 .enemy-img,
-.combatant.is-boss .enemy-sprite2.silhouette svg {
+.combatant.is-boss .enemy-art-missing {
   width: 260px;
   height: 260px;
   max-height: none;
@@ -226,7 +226,7 @@
 
   .combatant.is-boss .enemy-img,
   .combatant.is-boss .enemy-sprite2 .enemy-img,
-  .combatant.is-boss .enemy-sprite2.silhouette svg {
+  .combatant.is-boss .enemy-art-missing {
     width: auto; height: auto; max-height: 52vh; max-width: 70vw;
   }
   .boss-hp-bar { width: min(94vw, 360px); }

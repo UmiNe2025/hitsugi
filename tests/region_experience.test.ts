@@ -218,12 +218,13 @@ describe('VC6 code-native stage integration', () => {
     expect(new Set(keys).size).toBe(40)
   })
 
-  it('builds every region with one landmark, bounded navigation/motion pools, two telegraphs, and no textures', () => {
+  it('keeps code-native drawing to bounded navigation/motion/telegraphs and leaves world art to raster', () => {
     for (const region of REGIONS) {
       const profile = REGION_EXPERIENCES[region.id]
       const stage = buildRegionExperienceStage(grid, 36, profile, themeForBg(region.bg), 417, true, 0xffd990)
       expect(stage.budget.textures, region.id).toBe(0)
-      expect(stage.budget.landmarks, region.id).toBe(1)
+      expect(stage.budget.staticGraphics, region.id).toBe(1)
+      expect(stage.budget.landmarks, region.id).toBe(0)
       expect(stage.budget.navigationMarks, region.id).toBeGreaterThan(0)
       expect(stage.budget.navigationMarks, region.id).toBeLessThanOrEqual(7)
       expect(stage.budget.telegraphs, region.id).toBe(2)

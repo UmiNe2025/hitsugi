@@ -218,7 +218,7 @@
   background: linear-gradient(180deg, rgba(16, 24, 48, .1), rgba(11, 24, 34, .38));
 }
 .battle-visual-v2 .combatant .enemy-img,
-.battle-visual-v2 .combatant .enemy-sprite2.silhouette svg,
+.battle-visual-v2 .combatant .enemy-art-missing,
 .battle-visual-v2 .combatant .ally-pose,
 .battle-visual-v2 .combatant .ally-stand {
   object-fit: contain;

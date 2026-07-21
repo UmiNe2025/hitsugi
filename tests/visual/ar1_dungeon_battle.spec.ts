@@ -156,8 +156,9 @@ test('V2 gate keeps OFF on V1 and gives non-AR1 floors/regions a code-native reg
   await expect(page.locator('.dungeon-screen')).toHaveAttribute('data-visual-version', 'v2')
   expect(await page.evaluate(() => (window as unknown as Ar1GameWindow).__dungeon?.ar1VisualBudget())).toBeNull()
   expect(await page.evaluate(() => (window as unknown as Ar1GameWindow).__dungeon?.regionExperienceVisualBudget())).toMatchObject({
-    textures: 0, landmarks: 1, telegraphs: 2,
+    textures: 0, landmarks: 0, telegraphs: 2,
   })
+  await expect(page.locator('.dungeon-region-backdrop[data-region-art="yoi_forest"]')).toBeVisible()
   expect(kitRequests).toEqual([])
 })
 
