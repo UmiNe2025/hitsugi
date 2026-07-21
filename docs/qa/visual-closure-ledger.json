@@ -28,13 +28,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/ui/vc2_entry.css",
-        "sha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f"
+        "sha256": "fdbe6a0c551c9b1859f3aa3b39ddf01370db3a6652db97a19b5e4b3a1de3795e"
       },
       "provenance": {
         "sourcePath": "src/ui/Title.tsx",
         "sourceSha256": "aee1be492426c1fd2729276466937c14e81a03402eb7309727ca20fbeddbaf1b",
         "runtimePath": "src/ui/vc2_entry.css",
-        "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
+        "runtimeSha256": "fdbe6a0c551c9b1859f3aa3b39ddf01370db3a6652db97a19b5e4b3a1de3795e",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -76,13 +76,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/ui/vc2_entry.css",
-        "sha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f"
+        "sha256": "fdbe6a0c551c9b1859f3aa3b39ddf01370db3a6652db97a19b5e4b3a1de3795e"
       },
       "provenance": {
         "sourcePath": "src/ui/Title.tsx",
         "sourceSha256": "aee1be492426c1fd2729276466937c14e81a03402eb7309727ca20fbeddbaf1b",
         "runtimePath": "src/ui/vc2_entry.css",
-        "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
+        "runtimeSha256": "fdbe6a0c551c9b1859f3aa3b39ddf01370db3a6652db97a19b5e4b3a1de3795e",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },

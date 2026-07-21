@@ -1326,3 +1326,10 @@
 - **公開境界**: ローカル実装のみ。外部初見8名、一世代5名、物理低性能端末、analytics providerは別gate。既存baseline PNG 9点と`tmp/`は保護し、commit/push/deployなし。
 - **公開とCI自己修復**: ユーザーの明示依頼を受け、対象48ファイルだけを実装commit `dbe2968`へまとめてmainへpush。初回Actions run `29875031774`は、末尾空行整理後の`StarLottery.tsx`とclosure台帳SHA-256がずれたためVitestで停止し、deployは未実行。正規化promotion scriptで台帳1件を再生成し、focused 8/8とclosure 23/40/6/69を確認して`6ef7d4a`をpushした。
 - **公開完了**: Actions run `29875134003`でnpm ci、lint、data validation、Linux全Vitest、production build、artifact upload、Pages deployが成功。`https://hitsugi-game.github.io/hitsugi/`はHTTP 200、公開JS `assets/index-9Rbl6Hir.js`は星籤とcommit `6ef7d4a`を含み、CSS `assets/index-Bg1TF1DE.css`も星籤styleを含むことを直接確認した。基準画像9点、`tmp/`、既存未追跡M40/M42文書はcommit対象外のまま保護した。
+
+## 2026-07-22（M44 タイトル見出しfocus枠 — ローカル修正）
+
+- **原因**: M43の画面遷移時`h1` focusは読み始めを伝えるため必要だが、タイトルの`.game-title`へブラウザ標準の白いoutlineが出た。二つのinline spanを囲むoutline形状が段差状になり、ロゴ周囲の異物に見えていた。
+- **修正**: `.title-main .game-title:focus { outline: none; }`を追加。見出しへのプログラムfocusと読み上げ順は維持する。`.game-title`は`tabIndex=-1`で操作対象ではないため、キーボード操作の現在地表示は失わない。button等の`:focus-visible`は変更しない。
+- **回帰**: Title E2Eへ見出しがfocusedかつcomputed `outline-style: none`を追加。PC1440/mobile360のTitle/Intro **4/4**、oxlint、production build、visual closure **23 routes / 40 regions / 6 overlays / 69 entries**、validator 8/8、diff-checkに合格。
+- **公開境界**: ローカル修正のみ。push=本番のため、commit/push/deployは別の明示依頼を待つ。
