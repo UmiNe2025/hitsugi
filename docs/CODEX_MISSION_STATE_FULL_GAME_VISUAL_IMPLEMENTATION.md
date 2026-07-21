@@ -44,7 +44,7 @@
 - VC6記録/overlay: 家譜=綴じ本、図鑑=拓本帳、普請=単一建築図、家系図/設定/共通Sheet/toastを再構成。toastは非modal通知として読上げ、自動/44px手動消去を持つ。5幅50件の入口・星契り・記録/overlay回帰をPASS。
 - VC5: 実参照1,749画像をdecoded hash/dHash/比率/輝度/contact sheetで監査。欠落0、exact重複0だが、神MAXは人格・画風連続性が弱いため承認allowlistを空で導入し、未承認MAXは通常像を置換しない。装備は一括再生成せず、slot/rarity/比較surfaceで統一する。
 - AR1R追加画像: 星祠、豆腐屋、出立門のsource/alpha/runtimeを生成・透過処理し、既存4点と合わせmanifest 7/7へ統合。新規3 WebPは合計90,716 bytes。権利は未確認のままdefault-OFF経路へ隔離。
-- VC7機械gate: Vitest 33 files / 676 tests、oxlint、production build、visual closure 68/68、asset manifest 7/7、`git diff --check`をPASS。郷5幅30/30、蛍火旅程5幅21合格・4意図的skip、鍛冶/蔵修正後PC/mobile 8合格・2意図的skip。入口/星契り/記録/overlayの既存5幅50件もPASS。
+- VC7機械gate: Vitest 33 files / 677 tests、oxlint、production build、visual closure 68/68、asset manifest 7/7をPASS。郷5幅30/30、蛍火旅程5幅21合格・4意図的skip、鍛冶/蔵修正後PC/mobile 8合格・2意図的skip。入口/星契り/記録/overlayの既存5幅50件もPASS。Linux/Windows間のtext hashをLF正規化する回帰testを含む。
 - 独立監査Round 1はREWORK。過剰な`scene-integrated`宣言、郷mobileの巨大余白と黒楕円/円環、蛍火の旧プロップ二重描画、Playwright集約timeoutをblockingとした。すべてをcode/schema/画面/分割実行で是正し、同じauditorへRound 2を依頼する。
 - 独立監査Round 2はローカル`code-integrated`範囲でPASS-with-notes、blocking 0。`scene-integrated/scene-ready/released`は0を維持し、外部8名、4-way blind、物理性能、rights、chunk分割、Forge文字倍率200%をrelease前HOLDとした。監査記録は`docs/qa/full-visual-independent-audit-20260721.md`。
 

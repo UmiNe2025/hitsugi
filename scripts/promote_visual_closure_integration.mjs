@@ -5,6 +5,9 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const ledgerPath = path.join(root, 'docs', 'qa', 'visual-closure-ledger.json')
+const TEXT_HASH_EXTENSIONS = new Set([
+  '.css', '.html', '.js', '.json', '.jsx', '.md', '.mjs', '.ts', '.tsx', '.txt', '.yaml', '.yml',
+])
 
 const routeBundles = {
   title: ['src/ui/Title.tsx', 'src/ui/vc2_entry.css', 'tests/visual/title_vc2.spec.ts', 'A single book-cover title field, restrained crest, and one dominant lantern establish the first promise.'],
@@ -43,7 +46,11 @@ const overlayBundles = {
 function sha256(relativePath) {
   const absolutePath = path.join(root, relativePath)
   if (!fs.existsSync(absolutePath)) throw new Error(`closure file missing: ${relativePath}`)
-  return crypto.createHash('sha256').update(fs.readFileSync(absolutePath)).digest('hex')
+  const content = fs.readFileSync(absolutePath)
+  const hashable = TEXT_HASH_EXTENSIONS.has(path.extname(absolutePath).toLowerCase())
+    ? content.toString('utf8').replace(/\r\n?/g, '\n')
+    : content
+  return crypto.createHash('sha256').update(hashable).digest('hex')
 }
 
 function integrate(entry, sourcePath, runtimePath, evidence, owner) {

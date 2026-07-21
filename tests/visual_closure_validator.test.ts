@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -86,6 +87,29 @@ describe('visual closure ledger validator', () => {
     })
     expect(result.errors).toContain('entries[0].evidence[0]: escapes repository root')
     expect(result.errors).toContain('entries[0].runtimeBundle.sha256: does not match package.json')
+  })
+
+  it('treats LF and CRLF text as the same closure artifact', () => {
+    const fixtureName = `.visual-closure-eol-${process.pid}-${Date.now()}.ts`
+    const fixture = path.join(root, fixtureName)
+    try {
+      fs.writeFileSync(fixture, 'const first = 1\r\nconst second = 2\r\n', 'utf8')
+      const normalizedHash = crypto.createHash('sha256').update('const first = 1\nconst second = 2\n').digest('hex')
+      const result = validateMutation((ledger) => {
+        const title = ledger.entries.find((entry) => entry.kind === 'route' && entry.sceneId === 'title')!
+        title.runtimeBundle = { path: fixtureName, sha256: normalizedHash }
+        title.provenance = {
+          ...title.provenance,
+          sourcePath: fixtureName,
+          sourceSha256: normalizedHash,
+          runtimePath: fixtureName,
+          runtimeSha256: normalizedHash,
+        }
+      })
+      expect(result.errors.filter((error) => error.includes(fixtureName))).toEqual([])
+    } finally {
+      fs.rmSync(fixture, { force: true })
+    }
   })
 
   it.each(['scene-ready', 'released'])('rejects unverified %s claims', (status) => {

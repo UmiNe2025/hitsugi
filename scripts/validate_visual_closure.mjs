@@ -62,6 +62,15 @@ const REQUIRED_VIEWPORTS = ['1280x720', '390x844']
 const SCENE_EVIDENCE_VIEWPORTS = ['1440x900', '1280x720', '768x1024', '390x844', '360x800']
 const KIND_VALUES = ['route', 'region', 'overlay']
 const SHA256 = /^[a-f\d]{64}$/i
+const TEXT_HASH_EXTENSIONS = new Set([
+  '.css', '.html', '.js', '.json', '.jsx', '.md', '.mjs', '.ts', '.tsx', '.txt', '.yaml', '.yml',
+])
+
+function hashableFileContent(absolutePath) {
+  const content = fs.readFileSync(absolutePath)
+  if (!TEXT_HASH_EXTENSIONS.has(path.extname(absolutePath).toLowerCase())) return content
+  return content.toString('utf8').replace(/\r\n?/g, '\n')
+}
 
 function addSetDiff(errors, label, actual, expected) {
   const missing = [...expected].filter((id) => !actual.has(id)).sort()
@@ -121,7 +130,7 @@ function validateHashedFile(root, value, pathField, hashField, at, errors) {
     return
   }
   if (!absolutePath) return
-  const actualHash = crypto.createHash('sha256').update(fs.readFileSync(absolutePath)).digest('hex')
+  const actualHash = crypto.createHash('sha256').update(hashableFileContent(absolutePath)).digest('hex')
   if (actualHash !== expectedHash.toLowerCase()) errors.push(`${at}.${hashField}: does not match ${value[pathField]}`)
 }
 
