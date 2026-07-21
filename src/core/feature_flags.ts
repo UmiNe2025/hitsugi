@@ -19,11 +19,12 @@ function parseBooleanFlag(value: unknown): boolean | null {
 }
 
 /**
- * AR1 visual renderer gate. The environment value is the production contract;
- * a query override exists only in DEV so Playwright can reproduce both paths.
+ * M36 visual renderer gate. The authored village facades and all 40 code-native
+ * dungeon kits are now the default presentation; an explicit env/query OFF path
+ * remains so QA can compare the legacy renderer and roll back without touching saves.
  */
 export function isRegionVisualV2Enabled(input: RegionVisualFlagInput = {}): boolean {
-  const envEnabled = parseBooleanFlag(input.envValue ?? import.meta.env.VITE_REGION_VISUAL_V2) ?? false
+  const envEnabled = parseBooleanFlag(input.envValue ?? import.meta.env.VITE_REGION_VISUAL_V2) ?? true
   const dev = input.dev ?? import.meta.env.DEV
   if (!dev) return envEnabled
 

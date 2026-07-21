@@ -47,3 +47,44 @@
 @media (prefers-reduced-motion: reduce) {
   .sheet-back, .sheet { animation: none !important; }
 }
+
+/* M36: PCの作業画面が横へ伸び切り、1カラムや詳細ペインが読みづらくなる問題を共通で止める。
+   Dungeon/Battle/Village/Scenes系の没入画面は独自screenを使うため、ScreenShell配下だけを対象にする。 */
+@media (min-width: 1180px) {
+  .screen.shell {
+    width: min(calc(100vw - 48px), 1160px);
+    max-width: 1160px;
+  }
+
+  .shell-body {
+    width: 100%;
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+
+  .shell-head,
+  .ws-tabs,
+  .action-dock {
+    max-width: 1160px;
+  }
+}
+
+/* 一覧が1件だけでもカードが全幅に伸びないよう、反復カード系の上限をPCだけ締める。 */
+@media (min-width: 1180px) {
+  .shell .god-grid,
+  .shell .codex-grid,
+  .shell .records-grid,
+  .shell .titles-grid,
+  .shell .train-grid,
+  .shell .facility-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+    justify-content: start;
+  }
+
+  .screen.shell .chronicle-book .records-grid,
+  .screen.shell .chronicle-book .titles-grid,
+  .screen.shell .codex-register .codex-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+    justify-content: start;
+  }
+}

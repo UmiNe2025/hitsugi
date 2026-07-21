@@ -53,10 +53,12 @@ beforeEach(() => {
 })
 
 describe('regionVisualV2 feature flag', () => {
-  it('defaults OFF and accepts only explicit environment enablement', () => {
-    expect(isRegionVisualV2Enabled({ envValue: '', dev: false, search: '' })).toBe(false)
+  it('defaults ON after M36 and still accepts explicit environment control', () => {
+    expect(isRegionVisualV2Enabled({ envValue: undefined, dev: false, search: '' })).toBe(true)
+    expect(isRegionVisualV2Enabled({ envValue: '', dev: false, search: '' })).toBe(true)
     expect(captureRegionVisualVersion({ envValue: 'true', dev: false })).toBe('v2')
-    expect(captureRegionVisualVersion({ envValue: 'garbage', dev: false })).toBe('v1')
+    expect(captureRegionVisualVersion({ envValue: 'garbage', dev: false })).toBe('v2')
+    expect(captureRegionVisualVersion({ envValue: 'false', dev: false })).toBe('v1')
   })
 
   it('allows query override only in DEV, including a reproducible forced OFF path', () => {
@@ -119,6 +121,16 @@ describe('AR1 session-only capture', () => {
     expect(persistedPayload).not.toContain('visualVersion')
     expect(persistedPayload).not.toContain('stageContractId')
     expect(persistedPayload).not.toContain('dungeonRun')
+  })
+
+  it('captures the default M36 V2 presentation for non-AR1 regions without forcing a special image contract', () => {
+    useGame.getState().departDungeon('yoi_forest', ['c1'])
+    expect(useGame.getState().dungeonRun).toMatchObject({
+      visualVersion: 'v2',
+      regionId: 'yoi_forest',
+      floor: 0,
+    })
+    expect(useGame.getState().dungeonRun?.stageContractId).toBeUndefined()
   })
 
   it('captures V1 for a new run when the flag is OFF', () => {

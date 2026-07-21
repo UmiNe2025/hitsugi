@@ -12,9 +12,9 @@ test('郷: 主人公の見た目高さが56〜88px(§6.5) — 全景fitの豆粒
     if (request.url().includes('/visual-recovery/village/')) recoveryRequests.push(request.url())
   })
   await gotoVillage(page)
-  await expect(page.locator('.village-screen')).toHaveAttribute('data-village-visual', 'v1')
-  await expect(page.locator('.village-host')).toHaveAttribute('data-ground-pattern', 'tile-grid')
-  expect(recoveryRequests).toEqual([])
+  await expect(page.locator('.village-screen')).toHaveAttribute('data-village-visual', 'v2')
+  await expect(page.locator('.village-host')).toHaveAttribute('data-ground-pattern', 'continuous-dirt-stone-wet')
+  expect(recoveryRequests.length).toBeGreaterThanOrEqual(5)
   await snapshot(page, `village-${info.project.name}`)
   // canvas内スプライトは boundingBox で測れないため、engine が host に公開した実scaleから算出する。
   const scale = await page.locator('.village-host').evaluate(
@@ -24,6 +24,24 @@ test('郷: 主人公の見た目高さが56〜88px(§6.5) — 全景fitの豆粒
   info.annotations.push({ type: 'measure', description: `主人公 ${playerPx.toFixed(1)}px (scale ${scale.toFixed(3)})` })
   expect(playerPx).toBeGreaterThanOrEqual(56)
   expect(playerPx).toBeLessThanOrEqual(88)
+})
+
+test('郷: 明示OFFなら旧表示に戻り、visual-recovery素材を要求しない', async ({ page }) => {
+  const recoveryRequests: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('/visual-recovery/village/')) recoveryRequests.push(request.url())
+  })
+  await page.goto('/?regionVisualV2=0')
+  await page.waitForFunction(() => '__game' in window, null, { timeout: 15_000 })
+  await page.evaluate(() => {
+    type Hook = { reset: () => void; screen: (id: string) => void }
+    const game = (window as unknown as { __game: Hook }).__game
+    game.reset()
+    game.screen('village')
+  })
+  await expect(page.locator('.village-screen')).toHaveAttribute('data-village-visual', 'v1')
+  await expect(page.locator('.village-host')).toHaveAttribute('data-ground-pattern', 'tile-grid')
+  expect(recoveryRequests).toEqual([])
 })
 
 test('郷: 「見渡す」ボタンが44px以上(§15.3)でaria-labelを持つ', async ({ page }) => {

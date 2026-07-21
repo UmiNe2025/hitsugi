@@ -1,80 +1,75 @@
-# Codex Mission State — M34 物語・画像統合実装
-
-最終更新: 2026-07-20 JST
+# CODEX MISSION STATE — M36 village/dungeon asset completion
 
 ## ①契約
 
-- Definition of Done: `docs/NARRATIVE_VISUAL_INTEGRATION_PLAN.md`のN0〜N4を実装し、夢順序・scene queue・汐里名開示/migration・固有CG7点・主要旅程の残響・家族史Finale・A11y/性能をunit/visual/build/実画面で合格させる。
-- Scope外: `CODEX_MASTERPLAN_DRAFT.md`の物語lane以外のUI Phase、既存7夢の全面改稿、全180神/全270事件/全40地域への長文本編追加、commit、push、公開。
-- 制約: `docs/GDD_v3.md`を正典とし、開始時dirtyのdocs/visualsと未追跡`tmp/`を保持する。既存save v1/v3/v4と内部ending ID `cut/save/inherit`を壊さない。
-- 権限境界: ローカルのコード、テスト、配信画像copy、文書更新まで。commit/push/公開、既存dirtyの破棄はユーザー承認が必要。
-- エスカレーション: セーブ互換または三結末互換を維持できない、もしくは正典変更が必要な場合だけ停止して相談する。
-- 監査クラス: independent audit。ゲーム進行、セーブ、Finale、主要画面へまたがる重要変更のため。
-- 主観項目の受入: 360/390/768/1280pxの主要scene、物語を読む/読まない旅程、画像焦点、家族史Finaleを実画面/DOM証拠と独立評価で判定する。
+- Definition of done: 郷とダンジョンの素材不足を現行データから数で洗い出し、全施設・全40地域へ見た目の固有性が出る実装を接続し、PCの横長カラム読みづらさを改善する。`npm run lint`、`npm run test`、`npm run build`、関連検証を通す。
+- Out of scope: push、公開デプロイ、外部投稿、課金、既存ユーザー変更の破棄、未承認生成画像の公開昇格。
+- Constraints: `docs/GDD_v3.md` を正典とし、`WORKLOG.md`へ記録する。`main`へのpushは公開と同義のため行わない。`tmp/`など既存dirtyは保持する。
+- Permission boundary: 新規ファイル追加と可逆なコード変更は実施可。公開・push・権利未確認素材のreleased扱いはユーザー承認が必要。
+- Audit class: self audit。理由はローカル実装・非公開であり、公開/課金を含まないため。
+- Subjective acceptance: 「中途半端に見える」点は、施設/地域ごとの素材役割、画面内の固有シルエット、PC読み幅、実画面テストの証拠で確認する。
 
 ## ②作業分解
 
-| 項目 | 依存 | 実行経路 | 受入確認 | 状態 |
+| Item | Dependency | Execution path | Acceptance check | Status |
 |---|---|---|---|---|
-| M0 契約・baseline | なし | 指揮側 | git境界、変更前lint/test/build | 完了 |
-| N0 順序・queue・開示・migration | M0 | store/data/scene + unit | 境界fixture、reload、legacy/post-M34 save | 完了 |
-| N1 夢CG7点 | N0 | assets/data/scene/CSS + visual | 7固有画像、fallback、16:9 contain、A11y | 完了 |
-| N2 主要旅程の残響 | N0 | Home/出立/Dungeon/Battle/Return/Village | 主要6系統以上、強制scene増加0 | 完了 |
-| N3 家譜/Finale | N0 | store/Forge/FamilyTree/Finale + unit | 固有名/形見/地域、3branch因果・同格 | 完了 |
-| N4 統合検証 | N0-N3 | lint/test/build/Playwright/実画面 | 全gate緑、性能/A11y/skip旅程 | 完了 |
-| M5 正典同期・独立監査 | N4 | docs + 新規監査agent | 契約全項✅、blocking 0 | 完了 |
+| A. 不足素材の数と内容を棚卸し | repo docs/data | docs追加、manifest/region/village照合 | 郷・ダンジョン・PC幅の不足数が明記される | completed |
+| B. 郷素材の全施設状態を強化 | A | 既存5facade + code-native state cue/coverage | normal/crisis両状態でplaceholder 0、5施設識別 | completed |
+| C. ダンジョン全40地域へ素材キット接続 | A | `RegionExperience`を全地域V2表示へ接続 | 全40地域がV2 experience stage対象 | completed |
+| D. PCカラム幅を制御 | A | shell/CSS幅上限と読字段落幅 | wide PCで読み幅が制限され横伸びしない | completed |
+| E. 機械検証と記録 | B-D | lint/test/build/visual checks、WORKLOG/GDD更新 | 全コマンド結果を記録 | completed |
 
 ## ③完了済み
 
-- M34計画pack自体は`docs/CODEX_FORGE_STATE.md`でRound 4 PASS（5/5/5/4/4、blocking 0）。実装は本missionで行う。
-- 開始HEAD `478be96241124aa5c530acac2b768c8e1d9a7824`、branch `main`。開始時にruntime sourceのdirtyは0。
-- 変更前baseline: `npm run lint`成功、`npm test` 19 files / 565 tests成功、`npm run build`成功。既知の非blocking警告は500kB超chunkのみ。
-- N0実装: `NarrativeProgress`へactive/deferred/completedを永続化し、強制sceneを優先度最大1件へ制限。初回夢→連作の厳密順、ch4最終頁/skipだけの実名開示、gsp12 gate、旧save sentinel migration、途中reload回収、Home「灯の余白」を追加。
-- N0直接検証: focused Vitest 4 files / 56 tests成功、全体Vitestは追加前時点で20 files / 589 tests成功、production build成功。
-- N1実装: 夢2〜8へ固有CG7点、60〜90字alt、16:9 contain、欠損fallback、次篇1枚だけのidle preloadを接続。夢3の左端疑似文字は限定編集で除去し、配信/正典JPEGを1672×941・SHA-256一致へ更新。
-- N2実装: Home「今月の物語」「灯の余白」、出立の問い、Dungeon入場、主の願い、勝利鎮魂、帰還三痕、郷の実NPC会話を接続。追加の操作停止sceneは0。
-- N3実装: 一代の問い、形見の最初の持ち主/戦果/辞世、家系図、Finaleの実save由来最大3件・非誘導resonance・同格三択・結末固有1文を接続。
-- N4実装: scene開封/完読/skip/後回し/時間、未読最大数、月送り/中断を外部送信なしでsaveへ匿名集計。旧saveは0初期値で移行する。
-- 最終直接検証: Vitest 23 files / 618 tests、lint、production build、diff-check成功。M34直接Playwrightは全5幅40/40、最終補完の影響範囲15/15。全20 visual specはPC 1280px/390px代表幅で91合格・1意図的skip。
-- 出荷完了: ユーザーの2026-07-21明示承認後、Ship Checkで破損import/BAK経路を硬化。実装`0bd19ec`＋設計/導線`f144505`をpushし、GitHub Actions run `29777998428`成功。公開HTML、実bundle、OGP、夢3 CGをHTTP 200で確認。
-- 全230 visual testの一括実行は実行上限内に終わらなかったため、M34必須3specを全5幅、全20specを代表2幅へ分割して完走した。
+- 2026-07-21 15:46 +09:00: mission contract created at `docs/CODEX_MISSION_STATE.md`.
+- 2026-07-21 16:16 +09:00: 素材棚卸しを `docs/M36_VILLAGE_DUNGEON_ASSET_COMPLETION.md` に固定。郷facade 5/5、郷normal/crisis cue 10/10、地域背景40/40、ボス背景39/39、ボス立ち絵39/39、ダンジョン地域kit 40/40。
+- 2026-07-21 16:16 +09:00: `src/core/feature_flags.ts` で `regionVisualV2` を既定ONへ昇格。`VITE_REGION_VISUAL_V2=0` とDEV query `?regionVisualV2=0` で旧表示へ明示rollback可能。
+- 2026-07-21 16:16 +09:00: `src/core/data/region_stage_contracts.ts` の運用コメントを更新し、蛍火0層の画像backed stageと、その他M36 V2地域のcode-native kitを区別。
+- 2026-07-21 16:16 +09:00: `src/ui/layout/shell_fix_m29.css` にPC幅制御を追加。1180px以上で `.screen.shell` 最大1160px、`.shell-body` 最大1040px、主要反復gridカード最大280px。
+- 2026-07-21 16:16 +09:00: `tests/ar1_region_stage.test.ts` をdefault-ON契約へ更新し、非AR1地域もM36 V2 code-native layerになることを検証。
+- 2026-07-21 16:16 +09:00: `tests/visual/village.spec.ts` をdefault-ON/明示OFFの両方へ更新。`tests/visual/shell_width.spec.ts` を追加し、PC作業画面の読み幅とカード幅を回帰検証。
+- 2026-07-21 16:16 +09:00: `docs/GDD_v3.md` §8.19、`docs/STATUS.md`、`docs/WORKLOG.md` へローカル実装と非公開境界を記録。
+- 検証: `npm run test` => 33 files / 678 tests passed。
+- 検証: `npm run lint` => passed。
+- 検証: `npm run build` => passed。main chunk 1,409.06 kB warningとplugin timing warningは非阻害。
+- 検証: `node scripts/validate_data.mjs` => 0 errors / 1 existing rank distribution warn。
+- 検証: `npm run check:visual-manifest` => 7 entries / 7 unique IDs OK。
+- 検証: `npm run check:visual-closure` => 22 routes / 40 regions / 6 overlays / 68 ledger entries OK。
+- 検証: `npx playwright test tests/visual/ar1_dungeon_battle.spec.ts --project=pc-1280 --project=mobile-390` => 9 passed / 1 intended mobile 1600px skip。
+- 検証: `npx playwright test tests/visual/village.spec.ts --project=pc-1280 --project=mobile-390` => 14 passed。
+- 検証: `npx playwright test tests/visual/shell_width.spec.ts --project=pc-1280` => 1 passed。
+- 注意: 3 visual filesを一括実行したコマンドは180秒でtimeoutしたため、対象別に分割して成功証拠を取得した。
 
 ## ④保留リスト
 
-- なし。実装・監査・公開まで完了。
+- 公開・push: ユーザー明示承認まで行わない。
+- 新規AI生成画像の公開権利: 今回は新規生成せず、既存権利クリア済み7素材とcode-native kitを接続した。今後追加生成する場合はmanifestへ未公開/未承認として分離する。
 
 ## ⑤質問キュー
 
-- 解決済み: ユーザーがデプロイを明示承認し、公開確認まで完了。
+- なし。必要判断はローカル改善として進める。
 
 ## ⑥マイルストーン履歴
 
-- M0完了: 契約、正典、開始dirty境界を固定。変更前lint/test/buildは全て成功。
-- N0完了: queue時既読化を廃止し、完読/skip transaction、legacy/post-M34 save、夢の飛越し防止をunitで固定。
-- N1完了: 固有CG7点をruntimeへ採用し、全5幅の全景/操作非交差/fallback/preloadをPlaywrightで固定。
-- N2完了: Homeから郷まで短文の問い/願い/鎮魂/三痕を接続し、代表幅の既存操作回帰を通過。
-- N3完了: 家族史をFinale前後へ返し、三択の同順・同class・全enabledを全5幅で固定。
-- N4完了: 匿名集計、A11y/keyboard、画像負荷、既存画面回帰をunit/Playwright/buildで確認。
-- M5完了: fresh独立監査の初回PASS-with-notes後、再読/7日通知を補完。再監査で日常lifeによるarchive圧迫を1件検出し、章・夢限定＋初期6件/残件展開へ限定修正。最終PASS、blocking 0。
+- M36-0: 稼働開始。現行は `tmp/` が未追跡として存在するため保持する。
+- M36-1: 素材棚卸しと通常導線接続を実装。`regionVisualV2` default ON、全40地域V2 code-native kit接続、郷5施設coverageを記録。
+- M36-2: PC読み幅を抑制。作業画面shell/body/cardの最大幅を追加し、没入画面は広さを維持。
+- M36-3: 検証完了。unit/lint/build/data/manifest/closure/target visualが合格。
 
 ## ⑦次の一手
 
-M34は完了。次は`docs/CODEX_MASTERPLAN_DRAFT.md`のUI Phase 0を別missionとして開始する。
+- ユーザー確認後、必要ならcommit/push/deployへ進む。未確認のまま公開しない。
 
 ## ⑧最終監査表
 
-監査種別: independent audit（実装完了後に実施）
-
-| 契約項目 | 判定 | 証拠 |
-|---|---|---|
-| N0 順序/queue/開示/migration | ✅ | focused 4 files / 56 tests、全体589 tests、build成功。E2EはN4で再確認 |
-| N1 固有CG/mobile/fallback | ✅ | JPEG 7点/hash一致、M34 Playwright全5幅35件の一部で全景/fallback/1枚preload合格 |
-| N2 主要旅程の残響 | ✅ | `narrative_journey_m34.test.ts`、代表幅全visual spec回帰91合格・1意図的skip |
-| N3 家族史/三結末 | ✅ | unit branch契約、Finale Playwright全5幅で同格三択/固有名/scroll到達合格 |
-| N4 A11y/性能/回帰 | ✅ | Vitest 618、lint/build/diff-check、M34全5幅40＋最終影響範囲15、全spec代表2幅91+1skip |
-| 独立監査 | ✅ | fresh agent最終PASS。再読archiveの限定修正後、focused 55/55、mobile-360 E2E、diff-checkを独立再確認。blocking 0 |
-| Ship Check / 公開 | ✅ | セキュリティ・リリース独立レビューblocking 0、run `29777998428`成功、公開資産HTTP 200 |
+- self audit — 2026-07-21 16:16 +09:00
+- ✅ A. 不足素材の数と内容を棚卸し: `docs/M36_VILLAGE_DUNGEON_ASSET_COMPLETION.md` に必要数/充足数を記録。
+- ✅ B. 郷素材の全施設状態を強化: `tests/visual/village.spec.ts` 14 passed、facade 5/5とnormal/crisis cue 10/10を記録。
+- ✅ C. ダンジョン全40地域へ素材キット接続: `check:visual-closure` 40 regions OK、`ar1_dungeon_battle.spec.ts` 9 passed / 1 intended skip。
+- ✅ D. PCカラム幅を制御: `shell_width.spec.ts` 1 passed、本文1042px以下・カード282px以下を検証。
+- ✅ E. 機械検証と記録: `npm run test` 678 passed、lint/build/data/manifest/closure passed。GDD/STATUS/WORKLOG更新済み。
+- ✅ 権限境界: commit/push/deployは未実施。`tmp/`は保持。
 
 ## ⑨terminal印
 
-完了
+達成 — 2026-07-21 16:16 +09:00。ローカル実装・検証・記録まで完了。公開はユーザー明示承認待ち。

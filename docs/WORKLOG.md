@@ -1228,3 +1228,12 @@
 - **Ship Check事前結果**: 秘密情報候補0、危険API/新規外部通信0、依存脆弱性0、画像メタデータ0、100MB超ファイル0。Vitest 33 files / 677 tests、oxlint、data validation errors 0、production build、closure 68/68、manifest 7/7を合格。build main chunk 1,409.06kBとdata rank分布warn 1件は非阻害note。`tmp/`は無関係な既存ファイルとしてcommit対象外を維持する。
 - **CI自己修復**: 初回push `08dde9a` のActions run `29802309755`はLinux上のclosure hash不一致で停止し、deploy未実行。原因はWindows CRLFの作業tree bytesを台帳hashへ記録していたこと。validatorとpromotion scriptでtext artifactをLFへ正規化してからSHA-256を計算し、CRLF fixtureの回帰testを追加。677 tests、lint、closure 68/68、manifest 7/7、buildを再合格した。patch証拠ファイル内の意図的な空白はpayload hash維持のため一般diff-check対象外とし、それ以外のstaged diffはwhitespace error 0。
 - **公開完了**: 修正HEAD `91d54ca78f554a866c3b0ef09adbed3cfb557eea`をmainへpush。Actions run `29802506479`でnpm ci、lint、data validation、Linux 677 tests、production build、artifact upload、Pages deployが全成功。`https://hitsugi-game.github.io/hitsugi/`はHTTP 200、公開bundle `index-HjaRAptd.js`がローカルbuildと一致し、生成素材WebPもHTTP 200 / 29,812 bytesで取得できた。詳細とrollbackを`docs/qa/release-shipcheck-20260721.md`へ固定。
+
+## 2026-07-21（M36 郷・ダンジョン素材充実 — /mission、ローカル実装）
+
+- **契約**: 郷とダンジョンの素材が中途半端に見える問題を、素材不足数の棚卸し、通常導線への接続、PC読み幅の抑制で解く。push/deploy、新規未承認AI画像公開、既存dirtyの破棄は範囲外。
+- **素材棚卸し**: 郷facade 5/5、郷normal/crisis cue 10/10、地域背景40/40、ボス背景39/39、ボス立ち絵39/39、ダンジョン地域kit 40/40。ボス39はボスなしの宵の森を除いた必要数。詳細は`docs/M36_VILLAGE_DUNGEON_ASSET_COMPLETION.md`。
+- **実装**: `regionVisualV2`を既定ONへ変更。出立時に`DungeonRun.visualVersion='v2'`をsnapshotし、蛍火0層は既存画像backed stage、他39地域は`REGION_EXPERIENCES`のcode-native kitを通常プレイへ出す。旧表示は明示env/queryで維持する。
+- **PC幅**: `ScreenShell`系の作業画面をPC 1180px以上でshell最大1160px、本文最大1040pxへ制限。`god/codex/records/titles/train/facility`系の反復gridはカード最大280pxへ抑え、1件だけの横伸びを防ぐ。Dungeon/Battle/Villageの没入画面は広さを残す。
+- **検証**: Vitest **33 files / 678 tests**、oxlint、production build、data validation **0 errors / 既存rank分布warn 1**、visual manifest **7/7**、visual closure **22 routes / 40 regions / 6 overlays / 68 ledger entries** 合格。対象PlaywrightはDungeon/Battle PC+mobile **9 passed / 1 intended skip**、郷PC+mobile **14 passed**、PC幅 **1 passed**。3 visual files一括実行は180秒timeoutしたため、分割実行で証拠を取得。
+- **公開境界**: ローカル実装のみ。commit/push/deployは未実施。`tmp/`は既存未追跡として保持。

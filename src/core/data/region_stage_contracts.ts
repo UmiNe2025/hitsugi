@@ -108,7 +108,7 @@ export interface RegionStageLookup {
   stageContractId?: string
 }
 
-/** Strict resolver: v2 is intentionally limited to Hotarubi floor 0 in AR1. */
+/** Strict resolver: bespoke image-backed stages stay limited; other M36 V2 regions use code-native kits. */
 export function resolveRegionStageContract(lookup: RegionStageLookup): RegionStageContract | null {
   if (lookup.visualVersion !== 'v2') return null
   const resolved = REGION_STAGE_CONTRACTS.find(
