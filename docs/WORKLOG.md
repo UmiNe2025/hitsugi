@@ -1300,3 +1300,4 @@
 - **回帰固定**: 修正前にPC 1280/mobile 390で168pxを検出して失敗する実画面testを追加。修正後は全5幅のホーム/星契りとPC読み幅で**34 passed / 6 intended skip**。Vitest **701/701**、oxlint、production build、data validation **0 errors / 既存warn 1**、visual closure **68/68**、manifest **9/9**、diff-check合格。PC/mobileの家族欄を画像で目視確認した。
 - **ステージング現況**: GitHub APIとrepo workflowを照合し、Environmentは`github-pages`のみ、branchは`main`のみ、Pages sourceもmain workflowのみ。共有URLを持つstagingは未構築で、`npm run dev`のローカル検証だけがある。
 - **公開境界**: ユーザーが修正とデプロイを明示承認。テストで更新された既存baseline PNG 9点と`tmp/`は除外し、対象だけをmainへ公開する。
+- **公開完了**: commit `ac903fae162233ea85adc8fe8c888da378983fd7`をmainへpush。GitHub Actions run `29862456965`のbuild/deployが成功。公開HTML、`assets/index-CxttKBp1.css`、`assets/index-B0HgjgmB.js`はHTTP 200でローカルbuild名と一致し、公開CSS内に286px幅、`word-break:keep-all`、scroll-snapを確認した。
