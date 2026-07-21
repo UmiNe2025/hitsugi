@@ -1258,3 +1258,10 @@
 - **素材**: source PNG/JPEGとruntime WebP、prompt、寸法、hash、QCを`assets_src/visual_recovery/M38_PROMPTS_QC_20260721.md`とmanifestへ記録。runtime合計618,038 bytes。追加2素材は2026-07-21に所有者が本ゲーム、公開GitHubリポジトリ、GitHub Pages、商用利用を明示承認し、`cleared / accepted`へ昇格した。
 - **検証**: 最終状態でVitest **34 files / 682 tests**、oxlint、production build、visual manifest **9/9**、visual closure **22 routes / 40 regions / 6 overlays / 68 entries**、`git diff --check`に合格。PC 1280/mobile 390の郷/出立 focused Playwright **6/6**、出立単独 **2/2**。選択地のscrollTop>0とviewport内表示、横overflow 0、郷action×D-pad交差0を確認。
 - **公開境界**: commit/push/deployなし。追加2素材の権利gateは解除済み。push=公開のため、ユーザーの明示deploy依頼は引き続き必要。
+
+## 2026-07-21（M39 郷ホームPC読み幅 — 公開対応）
+
+- **診断**: 一族欄と今月の決断の外枠が広幅PCの画面端まで伸び、情報量に対して横方向の空白が不足し、視線移動が長くなっていた。
+- **実装**: `home_polish_m29.css`で960px以上の`.screen.home-screen`を中央寄せ・最大1320pxに固定し、viewportに応じた左右余白を確保。背景は全幅を維持し、panel内側余白と節間だけを整えた。モバイル/state/handlerは不変。
+- **回帰検証**: `shell_width.spec.ts`へPC初期幅と1920pxの実測契約を追加。本文幅、左右余白、panelの内包、横overflowを数値で監視し、`docs/qa/baselines/20260721-m39-home-wide-pc-1920.png`へ実画面証拠を保存する。
+- **公開境界**: 2026-07-21の明示deploy依頼を受け、対象ファイルのみをcommitし、main pushによるGitHub Pages自動公開へ進める。`tmp/`は未追跡のまま除外。

@@ -6,6 +6,23 @@
    色は既存トークン(--gold/--amber/--sel/--text/--text-dim等)のみ再利用。
    ============================================================ */
 
+/* ---- M39: PCの家の座 — 背景の中へ本文を一段内側に綴じる ----
+   画面端まで枠が続くと、家譜ではなく管理表に見え、左右の視線移動も長くなる。
+   背景絵はviewport一杯のまま、操作面だけを中央の一冊として抑える。
+   960px未満は既存の可用幅を優先し、この制約を掛けない。 */
+@media (min-width: 960px) {
+  .screen.home-screen {
+    width: min(calc(100vw - clamp(64px, 8vw, 192px)), 1320px);
+    max-width: 1320px;
+    padding-inline: clamp(20px, 2.1vw, 32px);
+  }
+
+  .home-screen .panel {
+    padding: clamp(16px, 1.35vw, 20px) clamp(18px, 1.7vw, 24px);
+    margin-bottom: 18px;
+  }
+}
+
 /* ---- 資源ヘッダ — pillにグラデ+微光を足し「今の持ち駒」を一目で読める重さに ---- */
 .home-header {
   background: linear-gradient(180deg, rgba(201, 168, 106, 0.06), rgba(201, 168, 106, 0) 70%);
