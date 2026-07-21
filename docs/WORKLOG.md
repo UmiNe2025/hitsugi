@@ -1265,3 +1265,29 @@
 - **実装**: `home_polish_m29.css`で960px以上の`.screen.home-screen`を中央寄せ・最大1320pxに固定し、viewportに応じた左右余白を確保。背景は全幅を維持し、panel内側余白と節間だけを整えた。モバイル/state/handlerは不変。
 - **回帰検証**: `shell_width.spec.ts`へPC初期幅と1920pxの実測契約を追加。本文幅、左右余白、panelの内包、横overflowを数値で監視し、`docs/qa/baselines/20260721-m39-home-wide-pc-1920.png`へ実画面証拠を保存する。
 - **公開境界**: 2026-07-21の明示deploy依頼を受け、対象ファイルのみをcommitし、main pushによるGitHub Pages自動公開へ進める。`tmp/`は未追跡のまま除外。
+
+## 2026-07-21（M40 プレイヤー魅力向上masterplan）
+
+- **依頼**: M39までの全体改善を踏まえ、ユーザーにとってさらに魅力的にするために必要な次工程を徹底検討した。`masterplan`の内部/外部調査、プロダクト、継続動機、悪魔の代弁者の独立視点を統合した。
+- **公開版直接監査**: 新規開始→Intro skip→Home→星契りを実操作。Homeは1280×720で`scrollHeight=1257`、button 24件。初回の血脈危機より先に実日付の日参り報酬がmodal表示された。星契りは180神、button 197件。Homeからの遷移で`scrollY=396`が残り、星契り見出し`top=-376px`を再現した。
+- **構造監査**: 装備810点は初期15＋53系譜×15段。基礎敵180体は技0=106、技1=68、技2=6で、敵技使用率35%。辞世は性根voice＋死因pool中心。Chronicle/Dungeonの年数`/12`に対しEnding/共有画像が`/4`。GoatCounterはplaceholderで、初回帰還率・継承率・再訪は未計測。
+- **主判断**: 次のボトルネックは素材不足ではなく、初回30分と初代継承で`約束→行動→結果→継承`が一本に見えないこと。新規画像、地域、神、敵、装備、辞世の量産を一時凍結し、家祖の危機→星契り→誕生/命名→初遠征→帰還→初代の死→次代の一手を主経路とした。
+- **計画**: Phase 0はscroll/年数/正典同期、全戦闘オート不変条件と新規8名基準線。Phase 1はHome危機1＋主CTA1、Pact推奨3柱＋全件、唯一親/成人の事前選択。Phase 2帰還一面、Phase 3初代の約束/返歌/継承、Phase 4は家譜hubと図鑑へ810装備＝53系譜×15段bitsetの収集を接続。Phase 5は人物・戦型・次の節目・継承影響を見せる鍛錬と、全戦闘オートの3方針・任意停止・戦果説明。Phase 6は神/宿敵の再会、Phase 7でPMF判定と拡張/pivotを決める。
+- **外部根拠**: Hadesの反復と物語access、Wildermythの生成人物への信頼、Rogue Legacyの3〜5分導入とtrade-off、自己決定理論の自律性/有能感/関係性を参照し、単なる滞在時間や日次受取を成功指標にしない。
+- **North Star**: 週次命脈サイクル完了率。匿名saveが`家譜に残る約束→結果→次代への継承`を一度以上完了した割合。
+- **成果物**: `docs/CODEX_MASTERPLAN_PLAYER_APPEAL_20260721.md`、GDD_v3 §8.23、STATUSのM40項。
+- **独立評価修正**: 初見評価のblockingを受け、現行8名／mock 8名を分離した16名independent-groups test、戦闘手動率50%/30%の二段階pivot、公開版監査のURL・viewport・操作順・DOM query・コード再集計手順を計画へ追記した。
+- **forge強化**: 固定合格ラインを先に設定し、必須節、ローカル参照、人数、閾値、依存、現物件数を直接検査。旧8名表記が残ったクリティカルパス、tester役割、Phase 0工数、実装完了条件、GDD P0を16名独立比較へ同期した。初回独立評価は平均4.4/5、blocking 0でPASS。
+- **2026-07-21 全戦闘オート・収集・育成・意匠Forge**: ユーザー訂正により「既知戦闘だけの省略」案を破棄し、初遭遇、通常、elite、稀相、主、宿敵、常夜百層の全てで開始前・途中オート、設定既定、手動とのreward/drop/codex/title/material差0を固定した。810装備を53系譜、鍛錬を人物の戦型・節目・継承判断、画面を`煤墨の継承工房`へ再設計。Round 1は収集保存形式の矛盾1件でREWORK、`seriesId → 15段bitset`へ一本化後のRound 2はA/B/C/D/E=`5/5/5/5/5`、blocking 0でPASS。旧M34 Forge stateは`docs/CODEX_FORGE_STATE_M34_ARCHIVE_20260720.md`へ保全し、現行stateをM40へ更新。runtime、画像、commit、push、deployは未実施。
+- **公開境界**: 計画と正典の更新のみ。runtime、画像、save、commit、push、deployは未実施。`tmp/`は既存未追跡のまま保持する。
+
+## 2026-07-21（M40 コレクション・育成・全戦闘オート — mission実装）
+
+- **実装契約**: 全戦闘オートを既知戦闘へ縮小せず、手動との報酬差を作らない。810装備の収集、人物中心の鍛錬、戦果説明、煤墨意匠を既存save互換で実装し、独立監査、Ship Check、main push、公開確認まで行う。
+- **宝具系譜録**: `ITEM_BASES`から家祖15点と53系譜×15段のmanifestを導出。`collectionV2`を15bitの疎な発見記録として追加し、蔵＋全一族装備から旧saveを冪等移行する。家譜へ4つの収集入口、鍛冶へ54棚のmaster/detailを接続。mobileは2列棚＋Sheet、前後移動、Escape、focus復帰を持つ。
+- **鍛錬**: 選択人物の灯型/家業から戦型と理由付き推薦3件を純粋導出し、次の技の節目と次代への非保証の影響を表示。全六能力は不足/上限でも詳細を開け、確認前消費なしを維持。成功回数は`trainingMarks`として生来値と分けた。
+- **全戦闘オート**: 堅実/温存/全力の純粋な行動方針を追加。戦闘中に常時切替でき、設定へ永続化する。体力危険/初見/稀相/主の停止は全て初期OFF。終了面は方針、使用手、形見/鍛錬、新発見を最大4行で説明し、既存の単一報酬処理は変更しない。
+- **意匠**: `m40_coal_workshop.css`で煤墨、紙、鈍い真鍮、朱印、罫線へ整理。一覧画像を抑制し、選択詳細だけを原色の主役にする。新規AI画像は生成していない。
+- **ローカル検証**: Vitest **38 files / 701 tests**、oxlint、production build、data validation **0 errors / 既存rank分布warn 1**、visual closure **22 routes / 40 regions / 6 overlays / 68 entries**、manifest **9/9**、`git diff --check`に合格。重点PlaywrightはPC/mobile **21 passed / 1 intended skip**、M40専用はPC 1280/mobile 390 **8/8 passed**。実画面を`tests/visual/.shots/m40-*`で目視し、mobileの一列54棚を二列へ、PC戦闘コマンドを3列×2段へ自己修復した。
+- **独立監査とShip Check**: Round 1で帰還時収集反映、legacy初遭遇、疎bit代表画像、戦闘コマンド見切れを検出して全件修正。live通知/停止導線とradioキーボード操作も補完し、Round 2は**PASS / blocking 0**。依存脆弱性、秘密情報、100MB超ファイルは0。結論は**SHIP-with-notes**（main chunk 1.42MB、既存rank分布warn 1）。
+- **公開境界**: ユーザーが本依頼で実装とデプロイを明示承認。`tmp/`とテスト実行で更新されたM38/VC3 baseline PNGは除外し、選択的commit、main push、GitHub Actions・公開URLを確認する。

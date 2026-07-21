@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { audio } from '../core/audio'
-import { getReduceMotion, setReduceMotion, getAutoBattleDefault, setAutoBattleDefault } from '../core/settings'
+import {
+  getReduceMotion, setReduceMotion, getAutoBattleDefault, setAutoBattleDefault,
+  getAutoPolicySettings, setAutoPolicySettings, type AutoBattlePolicy,
+} from '../core/settings'
 import { Sheet } from './layout/shell'
 import './settings_vc6.css'
 
@@ -11,6 +14,31 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const [muted, setMuted] = useState(audio.muted)
   const [reduceMotion, setRM] = useState(getReduceMotion())
   const [autoDefault, setAutoDef] = useState(getAutoBattleDefault())
+  const [autoPolicy, setAutoPolicy] = useState(getAutoPolicySettings())
+  const changePolicy = (policy: AutoBattlePolicy) => {
+    const next = { ...autoPolicy, policy }
+    setAutoPolicy(next)
+    setAutoPolicySettings(next)
+  }
+  const toggleStop = (key: keyof typeof autoPolicy.stops) => {
+    const next = { ...autoPolicy, stops: { ...autoPolicy.stops, [key]: !autoPolicy.stops[key] } }
+    setAutoPolicy(next)
+    setAutoPolicySettings(next)
+  }
+  const policyKeys: AutoBattlePolicy[] = ['steady', 'economy', 'allOut']
+  const movePolicy = (event: ReactKeyboardEvent<HTMLButtonElement>, key: AutoBattlePolicy) => {
+    const current = policyKeys.indexOf(key)
+    const nextIndex = event.key === 'Home' ? 0
+      : event.key === 'End' ? policyKeys.length - 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? (current - 1 + policyKeys.length) % policyKeys.length
+          : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? (current + 1) % policyKeys.length
+            : -1
+    if (nextIndex < 0) return
+    event.preventDefault()
+    changePolicy(policyKeys[nextIndex])
+    const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    buttons?.[nextIndex]?.focus()
+  }
 
   return (
     <Sheet title="道具箱 — 設定" onClose={onClose}>
@@ -52,6 +80,49 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               <span className="toggle-state">{autoDefault ? 'オート既定' : '手動から'}</span>
             </button>
             <p className="setting-hint">次の出立から、戦闘開始時の状態に反映する。</p>
+
+            <div className="auto-policy-settings">
+              <span className="setting-label">オートの方針</span>
+              <div className="auto-policy-options" role="radiogroup" aria-label="オート戦闘の方針">
+                {([
+                  ['steady', '堅実', '回復と弱点を優先'],
+                  ['economy', '温存', '灯力と道具を使わない'],
+                  ['allOut', '全力', '技と弱点を優先'],
+                ] as const).map(([key, label, hint]) => (
+                  <button
+                    key={key}
+                    className={`btn auto-policy-option ${autoPolicy.policy === key ? 'is-on' : ''}`}
+                    role="radio"
+                    aria-checked={autoPolicy.policy === key}
+                    tabIndex={autoPolicy.policy === key ? 0 : -1}
+                    onKeyDown={(event) => movePolicy(event, key)}
+                    onClick={() => changePolicy(key)}
+                  >
+                    <b>{label}</b><small>{hint}</small>
+                  </button>
+                ))}
+              </div>
+              <span className="setting-label">任意で止める場面</span>
+              <div className="auto-stop-options">
+                {([
+                  ['hpDanger', '体力が危険'],
+                  ['newDiscovery', '初めての魔性'],
+                  ['rareEnemy', '稀相'],
+                  ['boss', 'この地の主'],
+                ] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    className={`setting-toggle compact ${autoPolicy.stops[key] ? 'on' : ''}`}
+                    aria-pressed={autoPolicy.stops[key]}
+                    onClick={() => toggleStop(key)}
+                  >
+                    <span className="setting-label">{label}</span>
+                    <span className="toggle-state">{autoPolicy.stops[key] ? '止める' : '続ける'}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="setting-hint">停止条件は任意。初期状態では、新発見や主との戦いも止めずに進む。</p>
+            </div>
           </fieldset>
         </div>
 

@@ -9,6 +9,8 @@ import { godById, GODS } from '../core/data/gods'
 import { ENEMIES } from '../core/data/enemies'
 import { REGIONS } from '../core/data/regions'
 import { REGION_LORE } from '../core/data/lore'
+import { ITEM_SERIES_MANIFEST } from '../core/data/items'
+import { collectionDiscoveredCount, popcount15 } from '../core/collection'
 import { downloadChronicleCard, copyShareText } from './shareCard'
 import { MaybeImg, Panel } from './components'
 import { faceImg } from './img'
@@ -39,12 +41,20 @@ function computeRecords(data: GameData) {
   const collTotal = baseEnemies.length + GODS.length + loreRegions.length
   const collDone = enemySeen + godSeen + loreDone
   const collPct = collTotal > 0 ? Math.round((collDone / collTotal) * 100) : 0
+  const itemSeen = collectionDiscoveredCount(data.collectionV2)
+  const itemSeriesStarted = ITEM_SERIES_MANIFEST.filter((series) => popcount15(data.collectionV2?.itemSeriesBits[series.seriesId] ?? 0) > 0).length
+  const itemSeriesComplete = ITEM_SERIES_MANIFEST.filter((series) => popcount15(data.collectionV2?.itemSeriesBits[series.seriesId] ?? 0) === 15).length
+  const itemAlmost = ITEM_SERIES_MANIFEST
+    .filter((series) => popcount15(data.collectionV2?.itemSeriesBits[series.seriesId] ?? 0) === 14)
+    .slice(0, 3)
+    .map((series) => series.name)
   return {
     gens, alive, fallenN, kills, exped, years, towerBest, fame: data.fame,
     godsPacted: knownGods.size, familiars: data.familiars?.length ?? 0,
     regionsCleared: data.regionsCleared.length, regionsTotal: REGIONS.length,
     enemySeen, enemyTotal: baseEnemies.length, godSeen, godTotal: GODS.length,
     loreDone, loreTotal: loreRegions.length, collPct,
+    itemSeen, itemTotal: 810, itemSeriesStarted, itemSeriesComplete, itemAlmost,
   }
 }
 
@@ -166,6 +176,23 @@ export function ChronicleScreen() {
             <div><span>{rec.collPct}<i>%</i></span><small>見聞の満ち</small></div>
           </div>
           <p className="chronicle-margin-note">余白には、まだ名のない次代のための一行が残されている。</p>
+          <div className="collection-portals" aria-label="収集の記録へ進む">
+            <button className="btn collection-portal" onClick={() => setScreen({ id: 'codex', tab: 'lore' })}>
+              <span>土地の記</span><b>{rec.loreDone}/{rec.loreTotal}</b><small>石碑と鎮魂を見返す</small>
+            </button>
+            <button className="btn collection-portal" onClick={() => setScreen({ id: 'codex', tab: 'enemies' })}>
+              <span>魔性の拓影</span><b>{rec.enemySeen}/{rec.enemyTotal}</b><small>遭遇した姿を見返す</small>
+            </button>
+            <button className="btn collection-portal" onClick={() => setScreen({ id: 'codex', tab: 'gods' })}>
+              <span>星神の御影</span><b>{rec.godSeen}/{rec.godTotal}</b><small>契った神を見返す</small>
+            </button>
+            <button className="btn collection-portal collection-portal-items" onClick={() => setScreen({ id: 'forge', tab: 'collection' })}>
+              <span>宝具系譜録</span><b>{rec.itemSeen}/{rec.itemTotal}</b><small>{rec.itemSeriesStarted}系譜を開始・{rec.itemSeriesComplete}棚完成</small>
+            </button>
+          </div>
+          {rec.itemAlmost.length > 0 && (
+            <p className="collection-almost"><b>あと一段で揃う棚</b>{rec.itemAlmost.join('・')}</p>
+          )}
           <div className="records-grid">
             <div className="rec-cell"><span className="rec-num">{rec.years}</span><span className="rec-lbl">歳月(年)</span></div>
             <div className="rec-cell"><span className="rec-num">{rec.fame}</span><span className="rec-lbl">武功</span></div>

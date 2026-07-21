@@ -773,7 +773,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Battle.tsx",
-        "sourceSha256": "1d5a3ac4a5d6f23535ebe8b589435c24791e6f3838d2eabb559865ee40f96ca1",
+        "sourceSha256": "5073e41e81630bdd9f89e95c9f7ed6bf0e720177744ecb72cee593acf3f40c4d",
         "runtimePath": "src/ui/battle_ar1.css",
         "runtimeSha256": "5a6e83aedf7df4c1a5a27ac3b67abe982b740d2c85771279cc7f015b596756b6",
         "rightsStatus": "pending",
@@ -826,7 +826,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Forge.tsx",
-        "sourceSha256": "800ffb2c528f2ce43c88126879713986d609a28e18539bb58ac139776121d61c",
+        "sourceSha256": "372ef219f9b48e617cd61c6bb474907420f7a4295af4b5b2bba55e3776051a39",
         "runtimePath": "src/ui/forge_vc3.css",
         "runtimeSha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613",
         "rightsStatus": "pending",
@@ -876,7 +876,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Chronicle.tsx",
-        "sourceSha256": "94b95163ef4d80a7bb1bfd5fcf20f7fdbaa0dd2d9bad8b4683ca277472fbf171",
+        "sourceSha256": "e6d863ef0b0710638c3b31af558f98827c18498d439f1c9fab7a1f3f45433a15",
         "runtimePath": "src/ui/chronicle_m18.css",
         "runtimeSha256": "b5448f39800336bc29a199a52def8967d0b7e739978bbf6ddbca852dd03bb68c",
         "rightsStatus": "pending",
@@ -926,7 +926,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Codex.tsx",
-        "sourceSha256": "5c2f79b2b90eb1ce85233ccee91f928a807c7a844d9c19d05daff2da43635482",
+        "sourceSha256": "6ea38297f22dceed2f53e3ad7bf5d19dafe94d282d410f4068ed49a8840ca467",
         "runtimePath": "src/ui/codex_m18.css",
         "runtimeSha256": "b71ff4bf512dc5243d059f2e35b93dc3cecd92cddab57759d693c4a33770c47e",
         "rightsStatus": "pending",
@@ -3217,7 +3217,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Forge.tsx",
-        "sourceSha256": "800ffb2c528f2ce43c88126879713986d609a28e18539bb58ac139776121d61c",
+        "sourceSha256": "372ef219f9b48e617cd61c6bb474907420f7a4295af4b5b2bba55e3776051a39",
         "runtimePath": "src/ui/forge_vc3.css",
         "runtimeSha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613",
         "rightsStatus": "pending",
@@ -3269,7 +3269,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Settings.tsx",
-        "sourceSha256": "a5006fb3a6619215f3179ec28b6d7e000d2755be910867285dcfb0bfc5f99eb0",
+        "sourceSha256": "1dec6ac8f34a43a2079258a32e06886eb0802fea159827231b8f71e357a2182f",
         "runtimePath": "src/ui/settings_vc6.css",
         "runtimeSha256": "5ce9e9997eb005efe37a3d02c61206a809e27e7c44f34d4dbeab75d10f9cd94c",
         "rightsStatus": "pending",
@@ -3321,7 +3321,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Settings.tsx",
-        "sourceSha256": "a5006fb3a6619215f3179ec28b6d7e000d2755be910867285dcfb0bfc5f99eb0",
+        "sourceSha256": "1dec6ac8f34a43a2079258a32e06886eb0802fea159827231b8f71e357a2182f",
         "runtimePath": "src/ui/settings_vc6.css",
         "runtimeSha256": "5ce9e9997eb005efe37a3d02c61206a809e27e7c44f34d4dbeab75d10f9cd94c",
         "rightsStatus": "pending",
@@ -3423,7 +3423,7 @@
       },
       "provenance": {
         "sourcePath": "src/App.tsx",
-        "sourceSha256": "5d4182a5728e92f6f358a2f758267e42b2fc9aacd3038328c335958b5681627d",
+        "sourceSha256": "6d569da04f996c25c8646ab1746e89c48e11ad1cc26a5fe30120b45a7131539f",
         "runtimePath": "src/index.css",
         "runtimeSha256": "75c034dca26496df68f3bcf05095a9f05ef041e3987833f7cc17ba1ff6173843",
         "rightsStatus": "pending",

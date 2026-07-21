@@ -16,7 +16,7 @@ import { REGION_LORE } from '../core/data/lore'
 import { MaybeImg, NightBackdrop } from './components'
 import { GodImgOrFallback } from './GodArtFallback'
 import { gameImg, HOME_BG, regionBgR } from './img'
-import { ScreenShell, WorkspaceTabs, EmptyGuide } from './layout/shell'
+import { ScreenShell, WorkspaceTabs, EmptyGuide, Sheet } from './layout/shell'
 import './codex_m18.css'
 
 type Tab = 'lore' | 'enemies' | 'gods' | 'nemesis'
@@ -144,11 +144,11 @@ function NemesisDetail({ n, enemy, regionName }: { n: NemesisRecord; enemy: Enem
   )
 }
 
-export function CodexScreen() {
+export function CodexScreen({ initialTab = 'lore' }: { initialTab?: Tab }) {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const markCodexItemSeen = useGame((s) => s.markCodexItemSeen)
-  const [tab, setTab] = useState<Tab>('lore')
+  const [tab, setTab] = useState<Tab>(initialTab)
   // M26 §12.1: 新着 = 発見済みだが「まだ開いていない」項目。開いた瞬間の未読集合をセッション内に固定し、
   // その項目を開いた時だけ個別に既読化する(画面mountで全件を消さない)。
   // (StrictMode二重実行でもref初期化は一度きり)
@@ -170,7 +170,13 @@ export function CodexScreen() {
   // タブごとに選択カード/表示件数を保持(§6.3: 滞在中は状態を失わない)
   const [selByTab, setSelByTab] = useState<Partial<Record<Tab, string>>>({})
   const [shownByTab, setShownByTab] = useState<Record<Tab, number>>({ lore: PAGE, enemies: PAGE, gods: PAGE, nemesis: PAGE })
-  const detailRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)')
+    const onChange = () => setIsMobile(media.matches)
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
+  }, [])
 
   const seenEnemies = new Set((data.codex?.enemies ?? []).map(baseEnemyId))
   const knownGods = new Set([
@@ -238,12 +244,29 @@ export function CodexScreen() {
   const selectedGod = tab === 'gods' && selectedId ? GODS.find((g) => g.id === selectedId) : undefined
   const selectedNemesis = tab === 'nemesis' && selectedId ? nemeses.find((n) => n.id === selectedId) : undefined
   const hasSelection = !!(selectedLore || selectedEnemy || selectedGod || selectedNemesis)
-
-  // 狭幅では一覧の下に詳細を放置しない。選択直後に同じ拓本帳の詳細面へ移す。
-  useEffect(() => {
-    if (!hasSelection || !window.matchMedia('(max-width: 768px)').matches) return
-    requestAnimationFrame(() => detailRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' }))
-  }, [hasSelection, selectedId, tab])
+  const visibleIds = tab === 'lore'
+    ? loreRegions.filter((region) => visited.has(region.id)).map((region) => region.id)
+    : tab === 'enemies'
+      ? baseEnemies.filter((enemy) => seenEnemies.has(enemy.id) && (!freshOnly || fresh.en.has(enemy.id))).map((enemy) => enemy.id)
+      : tab === 'gods'
+        ? GODS.filter((god) => knownGods.has(god.id) && (!freshOnly || fresh.gods.has(god.id))).map((god) => god.id)
+        : nemeses.map((nemesis) => nemesis.id)
+  const selectedIndex = selectedId ? visibleIds.indexOf(selectedId) : -1
+  const moveSelection = (delta: number) => {
+    if (selectedIndex < 0 || visibleIds.length === 0) return
+    select(visibleIds[(selectedIndex + delta + visibleIds.length) % visibleIds.length])
+  }
+  const clearSelection = () => setSelByTab((current) => ({ ...current, [tab]: undefined }))
+  const detailNode = hasSelection ? (
+    <div className="codex-visual-focus" data-visual-focus="primary">
+      {selectedLore && <LoreDetail r={selectedLore} frags={frags[selectedLore.id] ?? 0} cleared={cleared.has(selectedLore.id)} />}
+      {selectedEnemy && <EnemyDetail e={selectedEnemy} />}
+      {selectedGod && <GodDetail g={selectedGod} />}
+      {selectedNemesis && (
+        <NemesisDetail n={selectedNemesis} enemy={enemyOf(selectedNemesis.enemyId)} regionName={regionName(selectedNemesis.regionId)} />
+      )}
+    </div>
+  ) : null
 
   return (
     <ScreenShell
@@ -377,17 +400,24 @@ export function CodexScreen() {
           )}
         </div>
 
-        <div className="codex-detail" ref={detailRef} role="region" aria-label="選んだ記録の詳細" tabIndex={-1}>
-          {selectedLore && <LoreDetail r={selectedLore} frags={frags[selectedLore.id] ?? 0} cleared={cleared.has(selectedLore.id)} />}
-          {selectedEnemy && <EnemyDetail e={selectedEnemy} />}
-          {selectedGod && <GodDetail g={selectedGod} />}
-          {selectedNemesis && (
-            <NemesisDetail n={selectedNemesis} enemy={enemyOf(selectedNemesis.enemyId)} regionName={regionName(selectedNemesis.regionId)} />
-          )}
+        {!isMobile && <div className="codex-detail" role="region" aria-label="選んだ記録の詳細" tabIndex={-1}>
+          {detailNode}
           {!hasSelection && <div className="codex-detail-empty">カードを選ぶと、ここに詳しく綴られる。</div>}
-        </div>
+        </div>}
       </div>
       </section>
+      {isMobile && hasSelection && (
+        <Sheet title="見聞の詳細" onClose={clearSelection}>
+          <div className="codex-mobile-detail">{detailNode}</div>
+          {visibleIds.length > 1 && (
+            <div className="codex-detail-nav" aria-label="前後の記録へ移動">
+              <button className="btn btn-ghost" onClick={() => moveSelection(-1)}>← 前の記録</button>
+              <span>{selectedIndex + 1} / {visibleIds.length}</span>
+              <button className="btn btn-ghost" onClick={() => moveSelection(1)}>次の記録 →</button>
+            </div>
+          )}
+        </Sheet>
+      )}
     </ScreenShell>
   )
 }

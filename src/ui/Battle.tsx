@@ -2,7 +2,7 @@
 // 敵は左に雁行、味方は右に雁行(歩行スプライト流用)。演出はBattleLogEntryのメタデータ駆動:
 // 踏み込み→被弾フラッシュ→ダメージ数字ポップ→KO溶暗。属性別バースト、行動者の題字タグ、
 // 戦利品スロット(M12-5)、台詞チャネル(M15-1土台: kind:'voice')を備える。
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useGame } from '../core/store'
 import type { BattleLogEntry, BattleState, Combatant, Element, EnemyIntent, SkillTarget } from '../core/types'
 import { ELEMENT_LABELS, ELEMENT_ADVANTAGE } from '../core/types'
@@ -17,7 +17,11 @@ function matchup(atk: Element | undefined, def: Element): Matchup {
   return 'even'
 }
 import { audio } from '../core/audio'
-import { getAutoBattleDefault } from '../core/settings'
+import {
+  getAutoBattleDefault, getAutoPolicySettings, setAutoPolicySettings,
+  type AutoBattlePolicy,
+} from '../core/settings'
+import { chooseAutoAction } from '../core/auto_battle'
 import { skillById } from '../core/data/skills'
 import { consumableById } from '../core/data/consumables'
 import { enemyById } from '../core/data/enemies'
@@ -159,7 +163,8 @@ function actionLabel(battle: BattleState, actionName: string, targetKey?: string
 
 // M25§4.3 手順5: 灯脈の走行(既存veinDraw/actionSparkTravelのCSS時間と揃える)+55〜75msのhit-stop。
 // M32: オート中、味方のHPがこの割合を下回ったら回復薬を優先使用する(理不尽死の防止)
-const AUTO_HEAL_HP_RATIO = 0.35
+const AUTO_POLICY_LABEL: Record<AutoBattlePolicy, string> = { steady: '堅実', economy: '温存', allOut: '全力' }
+const AUTO_POLICIES = Object.keys(AUTO_POLICY_LABEL) as AutoBattlePolicy[]
 const VEIN_TRAVEL_MS = 150
 const HITSTOP_MS = 65
 const ACTION_LAYER_MS = VEIN_TRAVEL_MS + HITSTOP_MS
@@ -196,6 +201,7 @@ export function BattleScreen() {
   const dungeonRun = useGame((s) => s.dungeonRun)
   const goldenBattle = useGame((s) => s.goldenBattle)
   const rareEncounter = useGame((s) => s.rareEncounter)
+  const battleAutoContext = useGame((s) => s.battleAutoContext)
   const regionId = dungeonRun?.regionId
   const runLoot = dungeonRun?.loot
   // 遠征でオートを一度も触っていなければ、設定の「オート既定」を初期値にする
@@ -212,8 +218,35 @@ export function BattleScreen() {
   const [shakeKey, setShakeKey] = useState(0) // ヒット時のstage-shake発火用
   const shakeTimerRef = useRef<number | null>(null)
   const [auto, setAutoRaw] = useState(initialAuto)
+  const [autoSettings, setAutoSettings] = useState(getAutoPolicySettings)
+  const [autoStopReason, setAutoStopReason] = useState<string | null>(null)
+  const consumedStopsRef = useRef(new Set<string>())
+  const autoUsedRef = useRef(false)
+  const autoUseCountsRef = useRef(new Map<string, number>())
+  const autoPolicyUsedRef = useRef<AutoBattlePolicy>(autoSettings.policy)
   // オート状態は遠征越しに継続 — 変更したら遠征ランへも書き戻す
-  const setAuto = (next: boolean) => { setAutoRaw(next); setAutoBattleFlag(next) }
+  const setAuto = useCallback((next: boolean) => {
+    setAutoRaw(next)
+    setAutoBattleFlag(next)
+  }, [setAutoBattleFlag])
+  const changeAutoPolicy = (policy: AutoBattlePolicy) => {
+    const next = { ...autoSettings, policy }
+    setAutoSettings(next)
+    setAutoPolicySettings(next)
+  }
+  const moveAutoPolicy = (event: ReactKeyboardEvent<HTMLButtonElement>, policy: AutoBattlePolicy) => {
+    const current = AUTO_POLICIES.indexOf(policy)
+    const nextIndex = event.key === 'Home' ? 0
+      : event.key === 'End' ? AUTO_POLICIES.length - 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? (current - 1 + AUTO_POLICIES.length) % AUTO_POLICIES.length
+          : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? (current + 1) % AUTO_POLICIES.length
+            : -1
+    if (nextIndex < 0) return
+    event.preventDefault()
+    changeAutoPolicy(AUTO_POLICIES[nextIndex])
+    const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    buttons?.[nextIndex]?.focus()
+  }
   const [fx, setFx] = useState<Record<string, FxEvent[]>>({})
   const [bossShown, setBossShown] = useState(false)
   const [slotPhase, setSlotPhase] = useState<'spin' | 'done'>('spin')
@@ -516,42 +549,52 @@ export function BattleScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auto])
 
+  // M40: 停止条件は全てopt-in。同じ戦闘・同じ理由では一度だけ止め、再度ONにした操作を尊重する。
+  useEffect(() => {
+    if (!auto || !battle || !battleAutoContext) return
+    const candidates: [string, boolean, string][] = [
+      ['rare', autoSettings.stops.rareEnemy && battleAutoContext.rare, '稀相を前にオートを止めた'],
+      ['boss', autoSettings.stops.boss && battleAutoContext.boss, 'この地の主を前にオートを止めた'],
+      ['new', autoSettings.stops.newDiscovery && battleAutoContext.firstEncounter, '初めての魔性を前にオートを止めた'],
+      ['hp', autoSettings.stops.hpDanger && battle.allies.some((ally) => ally.hp > 0 && ally.hp / ally.maxHp < 0.25), '一族の体力が危険なためオートを止めた'],
+    ]
+    const hit = candidates.find(([key, active]) => active && !consumedStopsRef.current.has(key))
+    if (!hit) return
+    consumedStopsRef.current.add(hit[0])
+    setAuto(false)
+    setAutoStopReason(hit[2])
+  }, [auto, autoSettings.stops, battle, battleAutoContext, setAuto])
+
   // オート戦闘
   useEffect(() => {
     if (!auto || !isPlayerTurn || !battle || !actor) return
     const t = setTimeout(() => {
-      // M32修正: オートは攻撃連打専用で、味方が瀕死でも回復薬を使わず理不尽死を招いていた。
-      // 常設化で気軽にONにできる分だけ危険なので、瀕死の味方がいて回復薬を持つ場合は先に使う。
-      const consum = useGame.getState().data?.consumables ?? []
-      const wounded = battle.allies.filter((a) => a.hp > 0 && a.hp < a.maxHp * AUTO_HEAL_HP_RATIO)
-      const hpStack = wounded.length > 0
-        ? consum.find((s) => s.count > 0 && consumableById(s.id)?.effect.stat === 'hp')
-        : undefined
-      if (hpStack) {
-        const def = consumableById(hpStack.id)!
-        const worst = wounded.reduce((a, b) => (a.hp / a.maxHp <= b.hp / b.maxHp ? a : b))
-        const targetKey = def.effect.scope === 'party' ? undefined : worst.key
-        setPendingActionLabel(actionLabel(battle, def.name, targetKey))
-        battleCommand({ type: 'item', itemId: def.id, targetKey })
-        return
-      }
-      const foes = battle.enemies.filter((e) => e.hp > 0)
-      if (foes.length === 0) return
-      const target = battle.chainTarget && foes.some((f) => f.key === battle.chainTarget)
-        ? battle.chainTarget
-        : foes[0].key
-      setPendingActionLabel(actionLabel(battle, '攻撃', target))
-      battleCommand({ type: 'attack', targetKey: target })
+      const choice = chooseAutoAction({
+        battle,
+        actor,
+        policy: autoSettings.policy,
+        consumables: useGame.getState().data?.consumables ?? [],
+      })
+      const usedName = choice.action.type === 'skill' && choice.action.skillId
+        ? skillById(choice.action.skillId).name
+        : choice.action.type === 'item' && choice.action.itemId
+          ? (consumableById(choice.action.itemId)?.name ?? '道具')
+          : choice.action.type === 'guard' ? '防御' : '攻撃'
+      autoUsedRef.current = true
+      autoPolicyUsedRef.current = autoSettings.policy
+      autoUseCountsRef.current.set(usedName, (autoUseCountsRef.current.get(usedName) ?? 0) + 1)
+      setPendingActionLabel(choice.reason)
+      battleCommand(choice.action)
     }, 260)
     return () => clearTimeout(t)
-  }, [auto, isPlayerTurn, battle, actor, battleCommand])
+  }, [auto, autoSettings.policy, isPlayerTurn, battle, actor, battleCommand])
 
-  // オート中の戦果自動遷移 — 勝利/逃走で、ログを流し切ってから finishBattle
+  // 全自動の流れは維持する。戦果の見立てを読める時間だけ従来より長く置き、手動CTAなら即座に進める。
   useEffect(() => {
     if (!auto || !battle || pending.length > 0) return
     if (battle.phase !== 'won' && battle.phase !== 'fled') return
-    const t = setTimeout(() => finishBattle(), 1200)
-    return () => clearTimeout(t)
+    const timeout = window.setTimeout(() => finishBattle(), autoUsedRef.current ? 2800 : 1200)
+    return () => window.clearTimeout(timeout)
   }, [auto, battle, pending.length, finishBattle])
 
   if (!battle) return null
@@ -559,6 +602,27 @@ export function BattleScreen() {
   const over = battle.phase !== 'input' && battle.phase !== 'anim' && !revealing
 
   const charOf = (c: Combatant) => family.find((f) => f.id === c.charId)
+  const autoParty = family.filter((character) => battle.allies.some((ally) => ally.charId === character.id))
+  const autoLegacyCount = autoParty.reduce((count, character) => count + Object.values(character.equipment)
+    .filter((item) => !!item && (!!item.legacyOf || item.generation > 0)).length, 0)
+  const autoTrainingMarks = autoParty.reduce((count, character) => count + Object.values(character.trainingMarks ?? {})
+    .reduce((sum, value) => sum + (value ?? 0), 0), 0)
+  const autoReport = autoUsedRef.current ? [
+    `方針 — ${AUTO_POLICY_LABEL[autoPolicyUsedRef.current]}`,
+    autoUseCountsRef.current.size > 0
+      ? `使った手 — ${[...autoUseCountsRef.current.entries()].slice(0, 3).map(([name, count]) => `${name}${count > 1 ? `${count}回` : ''}`).join('・')}`
+      : null,
+    autoLegacyCount + autoTrainingMarks > 0
+      ? `一族の支え — ${[autoLegacyCount > 0 ? `形見${autoLegacyCount}点` : '', autoTrainingMarks > 0 ? `鍛錬${autoTrainingMarks}刻` : ''].filter(Boolean).join('・')}`
+      : null,
+    battleAutoContext?.rare
+      ? `新発見 — 稀相・${battleAutoContext.enemyNames[0] ?? '名もなき魔性'}`
+      : battleAutoContext?.firstEncounter
+        ? `新発見 — ${battleAutoContext.enemyNames.join('・')}`
+        : battleAutoContext?.boss
+          ? `対峙 — ${battleAutoContext.enemyNames[0] ?? 'この地の主'}`
+          : null,
+  ].filter((line): line is string => !!line).slice(0, 4) : []
 
   // M25§4.4: コマンド発火とラベル表示を1箇所へまとめる(味方行動処理中の空箱を防ぐ)
   const runCommand = (action: BattleAction, label: string) => {
@@ -936,6 +1000,17 @@ export function BattleScreen() {
                 {runLoot.items.length > 0 && <> ／ 遺物 <b>{runLoot.items.length}</b></>}
               </p>
             )}
+            {autoReport.length > 0 && (
+              <div className="auto-battle-report" role="status" aria-live="polite" aria-label="オート戦闘の見立て">
+                {autoReport.map((line) => <p key={line}>{line}</p>)}
+                {auto && (
+                  <div className="auto-result-continuation">
+                    <span>約3秒後、自動で先へ進む</span>
+                    <button className="btn btn-ghost" onClick={() => setAuto(false)}>ここで止める</button>
+                  </div>
+                )}
+              </div>
+            )}
             <button className="btn btn-main" onClick={finishBattle}>
               {battle.phase === 'won' ? '戦果を得る' : battle.phase === 'fled' ? '先へ' : '帰り火へ'}
             </button>
@@ -983,17 +1058,33 @@ export function BattleScreen() {
               {/* A(M28→M29+): オート切替を常設(手番・メニュー・演出に関わらず戦闘中いつでも入切可能)。
                   盤の流れ内に置くのでコマンドと重ならない。オート中は「■ 停止」で必ず止められる。 */}
               {!over && (
-                <button
-                  type="button"
-                  className={`cmd-auto-persist ${auto ? 'is-on' : ''}`}
-                  aria-pressed={auto}
-                  data-zone="battle-settings"
-                  // M32修正: 技/道具/対象選択中にオートONにすると、選択が宙に浮いて素攻撃が自動発火し
-                  // target-hintがチラつく回帰があった。切替時は必ずメニューをrootへ戻す。
-                  onClick={() => { setAuto(!auto); setMenu({ kind: 'root' }) }}
-                >
-                  {auto ? '■ オート停止(タップ／Esc)' : '▶ オート戦闘にする'}
-                </button>
+                <div className="auto-control-stack" data-zone="battle-settings">
+                  <button
+                    type="button"
+                    className={`cmd-auto-persist ${auto ? 'is-on' : ''}`}
+                    aria-pressed={auto}
+                    // M32修正: 技/道具/対象選択中にオートONにすると、選択が宙に浮いて素攻撃が自動発火し
+                    // target-hintがチラつく回帰があった。切替時は必ずメニューをrootへ戻す。
+                    onClick={() => { setAuto(!auto); setAutoStopReason(null); setMenu({ kind: 'root' }) }}
+                  >
+                    {auto ? '■ オート停止(タップ／Esc)' : '▶ オート戦闘にする'}
+                  </button>
+                  <div className="auto-policy-chips" role="radiogroup" aria-label="オートの方針">
+                    {AUTO_POLICIES.map((policy) => (
+                      <button
+                        key={policy}
+                        type="button"
+                        className={`auto-policy-chip ${autoSettings.policy === policy ? 'is-on' : ''}`}
+                        role="radio"
+                        aria-checked={autoSettings.policy === policy}
+                        tabIndex={autoSettings.policy === policy ? 0 : -1}
+                        onKeyDown={(event) => moveAutoPolicy(event, policy)}
+                        onClick={() => changeAutoPolicy(policy)}
+                      >{AUTO_POLICY_LABEL[policy]}</button>
+                    ))}
+                  </div>
+                  {autoStopReason && <p className="auto-stop-reason" role="status" aria-live="polite">{autoStopReason}</p>}
+                </div>
               )}
               {menu.kind === 'root' && (
                 <>

@@ -93,6 +93,13 @@ export interface Item {
   rareOrigin?: string // M27: 稀相遺物を残した魔性名。optionalで旧セーブ互換
 }
 
+// M40: 一度でも手にした宝具の永続発見記録。
+// 系譜は15段bitsetで保持し、最高段から途中の未発見段を推定しない。
+export interface CollectionV2 {
+  itemSeriesBits: Record<string, number>
+  foundingItemIds: string[]
+}
+
 // M28-C: 消耗品の所持スタック(回復薬など)。定義本体は data/consumables.ts。
 // 装備(Item)とは別系統 — セーブ破損を避けるため equipment/inventory には決して入れない。
 export interface ConsumableStack {
@@ -121,6 +128,7 @@ export interface Character {
   sex: 'm' | 'f'
   bornSeason: number // 絶対季節インデックス
   potential: Stats // 血潮(成長ポテンシャル 0-120)
+  trainingMarks?: Partial<Record<StatKey, number>> // M40: 血珠鍛錬の成功回数。生来値と区別する表示用履歴
   stats: Stats // 現在値
   hp: number
   maxHp: number
@@ -306,8 +314,8 @@ export type Screen =
   | { id: 'dungeon' } // 歩行ダンジョン(v2)
   | { id: 'battle' }
   | { id: 'chronicle' }
-  | { id: 'codex' } // 図鑑(v3.1 M14: 魔性/星神/土地の記)
-  | { id: 'forge' } // 鍛冶と蔵(M18 P3: 独立作業画面)
+  | { id: 'codex'; tab?: 'lore' | 'enemies' | 'gods' | 'nemesis' } // 図鑑(v3.1 M14: 魔性/星神/土地の記)
+  | { id: 'forge'; tab?: 'collection' | 'buy' | 'equip' | 'reforge' | 'train' | 'shop' } // 鍛冶と蔵(M18 P3: 独立作業画面)
   | { id: 'facilities' } // 郷普請(M18 P3: 独立作業画面)
   | { id: 'finale' } // 千年の岐路(v3.1 M15-4: 結末の選択)
   | { id: 'death'; charId: string }
@@ -388,6 +396,7 @@ export interface GameData {
   // M26 §12.1: 図鑑の個別既読(項目を開いた時だけ既読化)。旧セーブは件数マーク(flags.codexSeen*)から移行。
   // 表示専用 — ゲームロジックには影響しない。enemies は baseEnemyId 正規化後のID。
   codexSeenIds?: { enemies: string[]; gods: string[] }
+  collectionV2?: CollectionV2 // M40: optionalは旧save互換。load後は正規形へmigrationする
   loreFrags?: Record<string, number> // 地域ごとの縁起の欠片(0〜3)
   regionsVisited?: string[] // 足を踏み入れた地域
   nemeses?: NemesisRecord[] // v3.1 M16-1: 一族を殺し、名を得た魔性

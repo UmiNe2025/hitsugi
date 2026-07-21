@@ -195,9 +195,9 @@ function App() {
       case 'chronicle':
         return <ChronicleScreen />
       case 'codex':
-        return <CodexScreen />
+        return <CodexScreen initialTab={screen.tab} />
       case 'forge':
-        return <ForgeScreen />
+        return <ForgeScreen initialTab={screen.tab} />
       case 'facilities':
         return <FacilitiesScreen />
       case 'finale':

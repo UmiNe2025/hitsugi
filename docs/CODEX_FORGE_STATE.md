@@ -1,60 +1,53 @@
-# Codex Forge State — M34 物語・画像統合
+# Codex Forge State — M40 プレイヤー魅力強化
 
 ## ①対象
 
-- `docs/NARRATIVE_VISUAL_INTEGRATION_PLAN.md`
-- `docs/visuals/story-v2/README.md`と夢渡りCG候補7点
-- `docs/qa/narrative-visual-baseline-20260720.md`
-- `docs/CODEX_MASTERPLAN_DRAFT.md`、`docs/GDD_v3.md`、`docs/CODEX_HANDOFF.md`、`docs/STATUS.md`、`docs/WORKLOG.md`のM34関連記録
-- 目的: Claude Code / Fable 5が正典を壊さず、物語をプレイ全体へ統合し、固有CGを快適に実装できる計画packへ収束させる
+- `docs/CODEX_MASTERPLAN_PLAYER_APPEAL_20260721.md`
+- `docs/GDD_v3.md`、`docs/STATUS.md`、`docs/WORKLOG.md`のM40関連記録
+- 目的: 全戦闘でオートを使える現行価値を守りながら、コレクション、育成、画面意匠を実装可能な計画へ収束させる
 
 ## ②固定合格ライン
 
 客観条件:
 
-1. 既存正典と矛盾0。
-2. 主要プレイヤー動線の随所に物語を置く画面、状態、短文、分岐、testが実装可能な具体度。
-3. 7画像が実在し、各夢への対応、寸法、hash、表示方式、fallback、preload方針を追跡可能。
-4. 夢順序、scene過密、選択と家族史の接続に明示受入条件。
-5. blocking defect 0。
+1. 初遭遇、通常、elite、稀相、主、宿敵、常夜百層を含む全戦闘でオートを開始・途中切替でき、設定のオート既定を維持する。
+2. 手動とオートで報酬、drop、図鑑、称号、血珠、経験・成長に差を設けない。
+3. 810装備を53系譜として収集でき、未発見段を誤推定しない永続保存契約が一意である。
+4. 鍛錬が数値選択だけでなく、人物像、現在の役割、次の節目、継承への影響を説明する。
+5. 既存情報構造を壊さず、PC・mobileの直接操作、状態、アクセシビリティ、受入testまで実装可能である。
+6. blocking defect 0。
 
-主観条件は各4/5以上: A プレイヤー固有の家族への愛着、B 謎の牽引力と伏線回収、C 世代交代の必然性、D 随所で見せる快適性、E 画像のHITSUGI固有性と物語対応。
+主観条件は各4/5以上、平均4.4以上: A オート尊重、B 収集欲、C 育成の手応え、D 世界観一体型意匠、E 実装・検証可能性。
 
-blockingは、正典矛盾、実プレイ未接続、主要画像不足/反復、選択と結果の断絶、Claude Codeが判断できない抽象指示とする。最大5round。
+blockingは、オートの戦闘種制限・不利益、単なる物量追加、数値だけの鍛錬、既存IAとの衝突、保存契約の矛盾、主要受入条件の欠落、いずれかの軸4未満とする。最大5round。
 
 ## ③ラウンド履歴
 
 | Round | 判定 | 得点 A/B/C/D/E | Blocking | 要約 |
 |---:|---|---|---:|---|
-| 1 | REWORK | 5/3/5/4/4 | 3 | 汐里名の開示順、`cut`表示動詞と結果、縦長mobileの画像fitを限定修正する |
-| 2 | REWORK | 5/3/5/4/4 | 1 | 結末動詞とmobile fitは閉鎖。Intro/家業/神/装備/技/loreの実名露出とlegacy導出を限定修正する |
-| 3 | REWORK | 5/3/5/4/4 | 1 | 全露出面は網羅。ch4冒頭/完読条件の矛盾と新旧v4判別sentinelだけを限定修正する |
-| 4 | PASS | 5/5/5/4/4 | 0 | ch4最終頁の原子的開示、M34 sentinel、legacy一度導出、post-M34未完読reloadまで閉鎖 |
+| 1 | REWORK | 5/5/5/5/3 | 1 | 全戦闘オート、収集、育成、意匠は合格。装備発見の永続保存形式だけがPhase 4と実装契約で矛盾 |
+| 2 | PASS | 5/5/5/5/5 | 0 | 53系譜の正規保存を15段bitsetへ一本化。全戦闘オートと報酬同一性にも回帰なし |
 
 ## ④blocking台帳
 
 | ID | State | Consecutive unresolved | Closure evidence | Certifier |
 |---|---|---:|---|---|
-| `narrative/reveal-shiori-name` | closed | 0 | Round 4: 匿名早期surface、ch4最終頁/skipの原子的開示、sentinel、legacy一度導出/recap、全fixtureを確認 | independent Round 4 |
-| `finale/cut-verb-result` | closed | 0 | Round 2: §7とN3で内部`cut`/表示`送る`/夢8/選択/結果/branch testが一意 | independent Round 2 |
-| `story-visual/mobile-fit` | closed | 0 | Round 2: 360/390/768px前面16:9 contain、台詞分離、全焦点/矩形/人間採否を計画・manifestで確認 | independent Round 2 |
+| `Phase 4 / collection-state-contract-contradiction` | closed | 0 | Phase 4と§14.3が`seriesId → 15段bitset`で一致。最高段は派生表示、旧save optionalはmigration後に正規化、§14.4で冪等性を受入化 | independent Round 2 |
 
 ## ⑤settled list
 
-- `trigger-union`: non-blocking。N2着手前に固定する実装詳細で、今回roundの修正対象外。
-- `resonance-edge-cases`: non-blocking。N3着手前に固定する実装詳細で、今回roundの修正対象外。
-- `dream4-metaphor-and-descriptions`: non-blocking。asset採用前に確定するcopy詳細で、今回roundの修正対象外。
-- `dream03-textlike-mark`: non-blocking。左端石碑の文字様模様はruntime採用前の人間採否/retouch候補であり、現計画と7篇対応を阻害しない。
+- `first-encounter-explicit-test-list`: non-blocking。全戦闘の不変条件と受入条件に既に包含され、実装時のfixture名として明記する改善候補。
+- `new-generated-art`: non-blocking。今回の意匠強化は既存美術とCSS質感、印、罫線、余白で成立させ、新規画像量産を前提にしない。
 
 ## ⑥次の一手
 
-Forgeは合格。Claude Code / Fable 5へ`docs/NARRATIVE_VISUAL_INTEGRATION_PLAN.md`のPhase N0だけを渡し、N0の直接証拠が緑になるまでN1画像統合へ進まない。
+Forgeは合格。Phase 0で行動計測、全戦闘オート不変条件、collectionV2のmigration fixtureを固定し、緑になるまでPhase 1へ進まない。
 
 ## ⑦次ゴール候補
 
-- Phase N0: 夢順序/queue/完読/後回し、汐里名の開示、結末動詞、legacy/post-M34 migration fixtureを実装・検収する。
-- Phase N1: N0合格後だけ固有CG7点をruntimeへ採否し、mobile全景/性能/画像404を実機検証する。
+- Phase 0: 行動計測、全戦闘オート不変条件test、save fixtureを先に固定する。
+- Phase 1以降: 一画面一目的の再編集から着手し、コレクション・鍛錬・オート方針を順に接続する。
 
 ## ⑧terminal印
 
-合格 — 2026-07-20T18:48:06+09:00。Round 4独立評価で全客観条件PASS、5軸5/5/5/4/4、blocking 0、台帳3件closed。
+合格 — 2026-07-21T22:36:45+09:00。Round 2独立評価で全客観条件PASS、5軸5/5/5/5/5、blocking 0、台帳1件closed。

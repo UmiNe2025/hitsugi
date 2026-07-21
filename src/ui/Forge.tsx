@@ -14,15 +14,17 @@ import {
   RARITY_LABELS, SLOT_MARKS, SOURCE_LABELS, type ItemDiff, type RarityKey,
 } from '../core/item_axes'
 import { isAdult } from '../core/inheritance'
+import { buildTrainingGuidance } from '../core/training_guidance'
 import { MaybeImg, NightBackdrop, Panel, Portrait } from './components'
 import { itemIcon } from './img'
 import { ScreenShell, WorkspaceTabs, Sheet, CompareRow, EmptyGuide } from './layout/shell'
 import { emitToast } from './toast'
+import { ItemCollection } from './ItemCollection'
 import './forge_m18.css'
 import './forge_m26.css' // M26 §7.3/§7.4: master/detail・血潮鍛錬の回数ステッパー(forge_m18.cssより後 — 後勝ち)
 import './forge_vc3.css'
 
-type Tab = 'buy' | 'equip' | 'reforge' | 'train' | 'shop' // shop=見世(回復薬・M28-C)
+type Tab = 'collection' | 'buy' | 'equip' | 'reforge' | 'train' | 'shop' // shop=見世(回復薬・M28-C)
 type SlotFilter = 'all' | 'weapon' | 'armor' | 'charm'
 type StorehouseLens = 'all' | 'recent' | 'improve' | 'legacy'
 const SLOT_LABEL: Record<string, string> = { weapon: '武具', armor: '防具', charm: '御守' }
@@ -111,7 +113,7 @@ function diffGain(diff: ItemDiff): number {
     + Object.values(diff.dStats).reduce((sum, value) => sum + Math.max(0, value), 0)
 }
 
-export function ForgeScreen() {
+export function ForgeScreen({ initialTab = 'buy' }: { initialTab?: Tab }) {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const buyItem = useGame((s) => s.buyItem)
@@ -120,7 +122,7 @@ export function ForgeScreen() {
   const trainStat = useGame((s) => s.trainStat)
   const forgeUpgrade = useGame((s) => s.forgeUpgrade)
 
-  const [tab, setTab] = useState<Tab>('buy')
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [charId, setCharId] = useState<string | null>(null)
   const [slotF, setSlotF] = useState<SlotFilter>('all')
   const [invSort, setInvSort] = useState<'slot' | 'atk' | 'def' | 'gen'>('slot')
@@ -144,6 +146,10 @@ export function ForgeScreen() {
 
   const alive = data.family.filter((c) => c.alive)
   const selChar = alive.find((c) => c.id === charId) ?? alive.find((c) => c.isHead) ?? alive[0]
+  const trainingGuidance = useMemo(
+    () => selChar ? buildTrainingGuidance(selChar, data.seasonIndex) : null,
+    [selChar, data.seasonIndex],
+  )
 
   const shopTier = data.regionsCleared.length
   const stock = useMemo(() => {
@@ -236,6 +242,7 @@ export function ForgeScreen() {
   const selectedInvItem = equipSel != null ? (data.inventory.find((it) => it.id === equipSel) ?? null) : null
 
   const TABS: { key: Tab; label: string }[] = [
+    { key: 'collection', label: '宝具録' },
     { key: 'buy', label: '購う' },
     { key: 'equip', label: '装備' },
     { key: 'reforge', label: '打ち直し' },
@@ -330,6 +337,8 @@ export function ForgeScreen() {
           )}
         </div>
       )}
+
+      {tab === 'collection' && <ItemCollection data={data} isMobile={isMobile} />}
 
       {selChar && (tab === 'buy' || tab === 'equip') && (
         <section className="forge-workbench" aria-labelledby="forge-workbench-title" data-testid="forge-workbench">
@@ -644,19 +653,50 @@ export function ForgeScreen() {
       )}
 
       {tab === 'train' && selChar && (
-        <Panel title={`鍛錬 — ${selChar.name}の血潮を磨く`}>
-          <p className="forge-note">血珠5で望む血潮を+3。磨いた血潮は子へも受け継がれる。持てる血珠: {data.ketsu}</p>
+        <Panel title={`鍛錬 — ${selChar.name}の血潮を磨く`} className="forge-training">
+          {trainingGuidance && (
+            <div className="training-workbench" data-visual-focus="primary" data-testid="training-guidance">
+              <div className="training-person">
+                <Portrait char={selChar} seasonIndex={data.seasonIndex} />
+                <div>
+                  <span className="training-kicker">いま磨く一人</span>
+                  <h2>{selChar.name}</h2>
+                  <p>{trainingGuidance.role.label}</p>
+                </div>
+              </div>
+              <div className="training-reading">
+                <div><span>現在の戦型</span><b>{trainingGuidance.role.description}</b></div>
+                <div><span>次の節目</span><b>{trainingGuidance.nextMilestone
+                  ? `${trainingGuidance.nextMilestone.name} — ${trainingGuidance.nextMilestone.monthsUntil === 0 ? '今、会得できる頃' : `あと${trainingGuidance.nextMilestone.monthsUntil}月`}`
+                  : 'すべての技を会得済み'}</b></div>
+                <div><span>次代へ</span><b>{trainingGuidance.inheritanceText}</b></div>
+              </div>
+              <div className="training-recommendations" aria-label="今伸ばすなら">
+                <span className="training-reco-title">今伸ばすなら</span>
+                {trainingGuidance.recommendations.map((recommendation) => (
+                  <button
+                    key={recommendation.stat}
+                    className="btn training-recommendation"
+                    onClick={() => setTrainTarget(recommendation.stat)}
+                  >
+                    <b>{recommendation.label}</b><span>{recommendation.reason}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <p className="forge-note">薦め以外も自由に選べる。血珠5で望む血潮を+3。持てる血珠: {data.ketsu}</p>
           <div className="train-grid">
             {(Object.keys(STAT_LABELS) as StatKey[]).map((k) => (
               <button
                 key={k}
                 className="btn train-cell"
-                disabled={data.ketsu < 5 || selChar.potential[k] >= 120}
+                data-unavailable={data.ketsu < 5 || selChar.potential[k] >= 120}
                 onClick={() => setTrainTarget(k)}
               >
                 <span className="train-stat">{STAT_LABELS[k]}</span>
                 <span className="train-val">{selChar.potential[k]} → {Math.min(120, selChar.potential[k] + 3)}</span>
-                <span className="item-price">{selChar.potential[k] >= 120 ? '極み' : '珠5'}</span>
+                <span className="item-price">{selChar.potential[k] >= 120 ? '極み — 詳細を見る' : data.ketsu < 5 ? '血珠不足 — 詳細を見る' : '珠5'}</span>
               </button>
             ))}
           </div>
@@ -738,6 +778,8 @@ export function ForgeScreen() {
           char={selChar}
           statKey={trainTarget}
           data={data}
+          reason={trainingGuidance?.recommendations.find((entry) => entry.stat === trainTarget)?.reason}
+          inheritanceText={trainingGuidance?.inheritanceText}
           onClose={() => setTrainTarget(null)}
           onDo={(n) => {
             const before = selChar.potential[trainTarget]
@@ -908,35 +950,41 @@ function EquipDetail({
 
 // M26 §7.4: 血潮鍛錬の確認Sheet。回数(1〜上限)を選び総血珠を見てから一括確定する。
 // 上限 = min(買える回数 floor(血珠/5), 極みまでの回数 ceil((120-現在)/3))。
-function TrainConfirm({ char, statKey, data, onClose, onDo }: {
+function TrainConfirm({ char, statKey, data, reason, inheritanceText, onClose, onDo }: {
   char: GameData['family'][number]
   statKey: StatKey
   data: GameData
+  reason?: string
+  inheritanceText?: string
   onClose: () => void
   onDo: (n: number) => void
 }) {
   const start = char.potential[statKey]
-  const maxN = Math.max(1, Math.min(Math.floor(data.ketsu / 5), Math.ceil((120 - start) / 3)))
+  const maxN = Math.max(0, Math.min(Math.floor(data.ketsu / 5), Math.ceil((120 - start) / 3)))
   const [n, setN] = useState(1)
-  const nn = Math.max(1, Math.min(maxN, n))
+  const nn = maxN === 0 ? 0 : Math.max(1, Math.min(maxN, n))
   const end = Math.min(120, start + nn * 3)
   const cost = nn * 5
   return (
     <Sheet title={`血潮鍛錬 — ${char.name}の${STAT_LABELS[statKey]}`} onClose={onClose} closeLabel="やめる">
       <p className="confirm-lead">
-        血珠5で{STAT_LABELS[statKey]}を+3。回数を選んで一括で鍛える。磨いた血潮は子へも受け継がれる。
+        血珠5で{STAT_LABELS[statKey]}を+3。回数を選んで一括で鍛える。磨いた血潮は次代の素質へ影響し得る。
       </p>
+      {reason && <p className="training-confirm-reason"><b>見立て</b>{reason}</p>}
+      {inheritanceText && <p className="training-confirm-inheritance"><b>次代への影響</b>{inheritanceText}</p>}
       <div className="train-stepper" role="group" aria-label="鍛錬回数">
         <button className="btn btn-ghost" aria-label="回数を減らす" disabled={nn <= 1} onClick={() => setN(nn - 1)}>−</button>
         <span className="train-count"><b>{nn}</b> 回</span>
         <button className="btn btn-ghost" aria-label="回数を増やす" disabled={nn >= maxN} onClick={() => setN(nn + 1)}>＋</button>
-        <button className="btn btn-ghost" disabled={nn >= maxN} onClick={() => setN(maxN)}>最大({maxN})</button>
+        <button className="btn btn-ghost" disabled={maxN === 0 || nn >= maxN} onClick={() => setN(maxN)}>最大({maxN})</button>
       </div>
       <CompareRow label={STAT_LABELS[statKey]} before={start} after={end} />
       <CompareRow label="血珠" before={data.ketsu} after={data.ketsu - cost} />
       <div className="confirm-actions">
         <button className="btn btn-ghost" onClick={onClose}>やめる</button>
-        <button className="btn btn-main" onClick={() => onDo(nn)}>珠{cost}で鍛える</button>
+        <button className="btn btn-main" disabled={maxN === 0} onClick={() => onDo(nn)}>
+          {start >= 120 ? 'この血潮は極み' : data.ketsu < 5 ? '血珠が足りない' : `珠${cost}で鍛える`}
+        </button>
       </div>
     </Sheet>
   )

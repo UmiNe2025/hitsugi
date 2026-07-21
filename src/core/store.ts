@@ -33,6 +33,7 @@ import {
 import { ITEM_BASES } from './data/items'
 import { generateEpitaph, deathCauseLabel, birthLine } from './epitaph'
 import { saveGame, loadGame } from './save'
+import { discoverItems, migrateCollectionV2 } from './collection'
 import type { DungeonRun } from '../dungeon/types'
 import { captureRegionVisualVersion } from './feature_flags'
 import { captureRegionStageSession } from './data/region_stage_contracts'
@@ -67,6 +68,7 @@ interface GameStore {
   pendingEvent: { eventId: string; nodeId: string } | null
   dungeonRun: DungeonRun | null
   battleSource: 'node' | 'dungeon' | 'dungeonBoss'
+  battleAutoContext: { firstEncounter: boolean; rare: boolean; boss: boolean; enemyNames: string[] } | null
   rng: Rng
 
   // メタ
@@ -172,7 +174,8 @@ export const useGame = create<GameStore>((set, get) => {
   const mutate = (fn: (d: GameData) => GameData): GameData => {
     const d = get().data
     if (!d) throw new Error('no game data')
-    const nd = fn(d)
+    const changed = fn(d)
+    const nd: GameData = { ...changed, collectionV2: migrateCollectionV2(changed) }
     set({ data: nd })
     return nd
   }
@@ -639,6 +642,7 @@ export const useGame = create<GameStore>((set, get) => {
     pendingEvent: null,
     dungeonRun: null,
     battleSource: 'node',
+    battleAutoContext: null,
     goldenBattle: false,
     rareEncounter: null,
     nemesisBattleId: null,
@@ -694,6 +698,7 @@ export const useGame = create<GameStore>((set, get) => {
         seed: rng.state(),
       }
       d = withNarrative(d)
+      d = { ...d, collectionV2: migrateCollectionV2(d) }
       d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季(十五月)。`)
       set({
         data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null,
@@ -717,6 +722,7 @@ export const useGame = create<GameStore>((set, get) => {
       mutate((d) => {
         let nd: GameData = {
           ...d,
+          collectionV2: prev?.collectionV2 ?? d.collectionV2,
           inventory: heirloom ? [...d.inventory, { ...heirloom }] : d.inventory,
           // 千年紀を重ねた血は最初から濃い
           family: d.family.map((c) => {
@@ -1314,6 +1320,7 @@ export const useGame = create<GameStore>((set, get) => {
           nd = { ...nd, inventory: [...nd.inventory, item] }
           log = [...log, `「${item.name}」を手に入れた。`]
         }
+        nd = { ...nd, collectionV2: migrateCollectionV2(nd) }
         set({ data: nd, dungeonRun: { ...run, light, log }, pendingEvent: null })
         if (effect.battle) get().dungeonEncounter(false)
         return
@@ -1359,12 +1366,23 @@ export const useGame = create<GameStore>((set, get) => {
 
       const nodes = { ...exp.nodes, [pendingEvent.nodeId]: { ...node, cleared: true } }
       nd = { ...nd, expedition: { ...exp, light, log, nodes } }
+      nd = { ...nd, collectionV2: migrateCollectionV2(nd) }
       set({ data: nd, pendingEvent: null })
 
       if (effect.battle) {
         const enemyIds = pickEnemies(region, 'battle', node.depth, rng)
         const nodes2 = { ...nodes, [pendingEvent.nodeId]: { ...node, cleared: false, enemyIds } }
-        set({ data: { ...nd, expedition: { ...nd.expedition!, nodes: nodes2 } } })
+        const known = new Set((nd.codex?.enemies ?? []).map((id) => id.replace(/_[wo]$/, '')))
+        const firstEncounter = enemyIds.some((id) => !known.has(id.replace(/_[wo]$/, '')))
+        nd = {
+          ...nd,
+          expedition: { ...nd.expedition!, nodes: nodes2 },
+          codex: {
+            enemies: [...new Set([...(nd.codex?.enemies ?? []), ...enemyIds])],
+            gods: nd.codex?.gods ?? [],
+          },
+        }
+        set({ data: nd })
         const party = enrichAllies(
           nd.family
             .filter((c) => exp.partyIds.includes(c.id) && c.alive && c.hp > 0)
@@ -1381,7 +1399,18 @@ export const useGame = create<GameStore>((set, get) => {
           )
         })
         const battle = startBattle(party, enemies)
-        set({ battle, battleNodeId: pendingEvent.nodeId, screen: { id: 'battle' }, battleLogQueue: [...battle.log] })
+        set({
+          battle,
+          battleNodeId: pendingEvent.nodeId,
+          battleAutoContext: {
+            firstEncounter,
+            rare: false,
+            boss: false,
+            enemyNames: enemyIds.map((id) => enemyById(id).name),
+          },
+          screen: { id: 'battle' },
+          battleLogQueue: [...battle.log],
+        })
         return
       }
 
@@ -1399,7 +1428,11 @@ export const useGame = create<GameStore>((set, get) => {
           ketsu: d.ketsu - 5,
           family: d.family.map((x) =>
             x.id === charId
-              ? recalcStats({ ...x, potential: { ...x.potential, [key]: Math.min(120, x.potential[key] + 3) } }, d.seasonIndex)
+              ? recalcStats({
+                  ...x,
+                  potential: { ...x.potential, [key]: Math.min(120, x.potential[key] + 3) },
+                  trainingMarks: { ...x.trainingMarks, [key]: (x.trainingMarks?.[key] ?? 0) + 1 },
+                }, d.seasonIndex)
               : x,
           ),
         }
@@ -1509,11 +1542,28 @@ export const useGame = create<GameStore>((set, get) => {
           battle.log.unshift({ text: defs[0].desc, kind: 'info' })
         }
         if (dark) battle.log.push({ text: '灯は尽きた。常夜の重圧が魔性を狂わせている……!', kind: 'info' })
+        const known = new Set((d.codex?.enemies ?? []).map((id) => id.replace(/_[wo]$/, '')))
+        const firstEncounter = defs.some((def) => !known.has(def.id.replace(/_[wo]$/, '')))
         mutate((dd) => ({
           ...dd,
           expedition: { ...exp, currentNodeId: nodeId, light, log, nodes: { ...exp.nodes } },
+          codex: {
+            enemies: [...new Set([...(dd.codex?.enemies ?? []), ...defs.map((def) => def.id)])],
+            gods: dd.codex?.gods ?? [],
+          },
         }))
-        set({ battle, battleNodeId: nodeId, screen: { id: 'battle' }, battleLogQueue: [...battle.log] })
+        set({
+          battle,
+          battleNodeId: nodeId,
+          battleAutoContext: {
+            firstEncounter,
+            rare: false,
+            boss: node.type === 'boss',
+            enemyNames: defs.map((def) => def.name),
+          },
+          screen: { id: 'battle' },
+          battleLogQueue: [...battle.log],
+        })
         return
       }
 
@@ -1615,6 +1665,7 @@ export const useGame = create<GameStore>((set, get) => {
         },
       }
       if (injuredIds.length > 0) nd = addResonance(nd, 'save')
+      nd = { ...nd, collectionV2: migrateCollectionV2(nd) }
       set({ data: nd })
       advanceSeason()
     },
@@ -1754,6 +1805,12 @@ export const useGame = create<GameStore>((set, get) => {
         set({
           battle,
           battleSource: 'dungeon',
+          battleAutoContext: {
+            firstEncounter: !(d.codex?.enemies ?? []).some((id) => id.replace(/_[wo]$/, '') === nem.enemyId.replace(/_[wo]$/, '')),
+            rare: false,
+            boss: false,
+            enemyNames: [nem.name],
+          },
           battleNodeId: null,
           goldenBattle: false,
           rareEncounter: null,
@@ -1836,6 +1893,12 @@ export const useGame = create<GameStore>((set, get) => {
       set({
         battle,
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
+        battleAutoContext: {
+          firstEncounter: enemyIds.some((enemyId) => !(d.codex?.enemies ?? []).some((id) => id.replace(/_[wo]$/, '') === enemyId.replace(/_[wo]$/, ''))),
+          rare: !!rareRoll,
+          boss,
+          enemyNames: enemies.map((enemy) => enemy.name),
+        },
         battleNodeId: null,
         goldenBattle: specialBattle,
         rareEncounter: rareRoll?.encounter ?? null,
@@ -2022,6 +2085,7 @@ export const useGame = create<GameStore>((set, get) => {
         }
       }
       nd = tryUnlockGossip(nd)
+      nd = { ...nd, collectionV2: migrateCollectionV2(nd) }
       set({ data: nd, dungeonRun: null, pendingScenes: [...get().pendingScenes, ...debutScenes] })
       advanceSeason()
     },
@@ -2184,6 +2248,7 @@ export const useGame = create<GameStore>((set, get) => {
                 `初の稀相討伐 — ${rare.enemyName}を鎮め、遺物「${rare.drop.name}」を得た。`,
               )
             }
+            nd = { ...nd, collectionV2: discoverItems(nd.collectionV2, [rare.drop]) }
           }
           // 眷属(式神) v3.1 M16-5: 討った雑兵が稀に懐く(主・宿敵は対象外)。既知の種は増えない
           if (!isBoss && !get().nemesisBattleId && !rare) {
@@ -2240,6 +2305,7 @@ export const useGame = create<GameStore>((set, get) => {
             }
           }
           if (earnedCutResonance) nd = addResonance(nd, 'cut')
+          nd = { ...nd, collectionV2: migrateCollectionV2(nd) }
           set({
             data: nd,
             battle: null,

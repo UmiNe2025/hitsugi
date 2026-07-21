@@ -1,5 +1,6 @@
 import type { GameData, ChronicleEntry, NarrativeScene } from './types'
 import { recoverNarrativeOnLoad } from './narrative'
+import { migrateCollectionV2 } from './collection'
 
 const KEY_V1 = 'hitsugi_save_v1' // 季節単位(1ターン=1季)時代のセーブ
 const KEY_V3 = 'hitsugi_save_v3' // 月単位(1ターン=1月)
@@ -176,6 +177,12 @@ export function isValidSave(d: unknown): d is GameData & { saveSeq?: number } {
   // M34: optionalでも、存在する物語queueはload直後に展開/反復される。壊れた手動importを
   // 保存して本体とBAKの両方を読めなくしないよう、入れ子のscene/配列/時刻まで境界で弾く。
   if (g.narrative !== undefined && !isValidNarrative(g.narrative)) return false
+  if (g.collectionV2 !== undefined) {
+    if (!isRecord(g.collectionV2) || !isRecord(g.collectionV2.itemSeriesBits) || !isStringArray(g.collectionV2.foundingItemIds)) return false
+    if (Object.values(g.collectionV2.itemSeriesBits).some((bits) => (
+      typeof bits !== 'number' || !Number.isInteger(bits) || bits < 0 || bits > 0x7fff
+    ))) return false
+  }
   return true
 }
 
@@ -195,6 +202,7 @@ function readRaw(key: string): { raw: string; data: Persisted } | null {
 
 export function saveGame(data: GameData): void {
   if (saveReadOnly) return // M33: 別タブの保存を検知した後は保存を止め、相手の新しい進行を上書きしない
+  const normalizedData: GameData = { ...data, collectionV2: migrateCollectionV2(data) }
   // 直前の正常セーブ(saveSeq取得+BAK候補)
   const prev = readRaw(KEY)
   // M32修正: seqは本体だけでなくBAKの最大も上回らせる。本体破損時にseqが1へ再起動すると、
@@ -203,7 +211,7 @@ export function saveGame(data: GameData): void {
   const seq = Math.max(prev?.data.saveSeq ?? 0, prevBak?.data.saveSeq ?? 0) + 1
 
   const serialize = (chronMax: number) =>
-    JSON.stringify({ ...data, chronicle: boundChronicle(data.chronicle, chronMax), lastPlayedAt: Date.now(), saveSeq: seq })
+    JSON.stringify({ ...normalizedData, chronicle: boundChronicle(normalizedData.chronicle, chronMax), lastPlayedAt: Date.now(), saveSeq: seq })
 
   // 1世代BAK — 合算が予算超ならBAKを捨てる(救う機構がquotaの引き金にならないように)
   if (prev) {
@@ -286,7 +294,8 @@ function migrateCodexSeen(d: GameData): GameData {
 }
 
 function finalizeLoaded(d: GameData, forcePersist = false): GameData {
-  const migrated = recoverNarrativeOnLoad(migrateCodexSeen(d))
+  const seenMigrated = migrateCodexSeen(d)
+  const migrated = recoverNarrativeOnLoad({ ...seenMigrated, collectionV2: migrateCollectionV2(seenMigrated) })
   // 旧saveのsentinel付与、または表示中sceneの灯の余白への回収は一度で永続化する。
   // JSON比較はload時だけで、schemaが小さく明瞭なことを優先する。
   if (forcePersist || JSON.stringify(migrated) !== JSON.stringify(d)) saveGame(migrated)

@@ -1,0 +1,143 @@
+import { useMemo, useState } from 'react'
+import type { GameData, Item } from '../core/types'
+import { FOUNDING_ITEM_BASES, ITEM_SERIES_MANIFEST, type ItemBase } from '../core/data/items'
+import { isItemDiscovered, popcount15 } from '../core/collection'
+import { MaybeImg } from './components'
+import { itemIcon } from './img'
+import { Sheet } from './layout/shell'
+
+type Shelf = {
+  id: string
+  label: string
+  items: readonly ItemBase[]
+  bits: number
+  discovered: number
+  founding?: boolean
+}
+
+const SLOT_LABEL = { weapon: '武具', armor: '防具', charm: '御守' } as const
+
+function allExistingItems(data: GameData): Item[] {
+  return [
+    ...data.inventory,
+    ...data.family.flatMap((character) => Object.values(character.equipment).filter((item): item is Item => !!item)),
+  ]
+}
+
+function ShelfDetail({ shelf, data }: { shelf: Shelf; data: GameData }) {
+  const existing = allExistingItems(data)
+  const owned = new Map<string, Item[]>()
+  for (const item of existing) owned.set(item.baseId, [...(owned.get(item.baseId) ?? []), item])
+  const highest = [...shelf.items].map((item, index) => ({ item, index }))
+    .filter(({ item }) => isItemDiscovered(data.collectionV2, item.baseId)).at(-1)
+  const next = shelf.items.find((item) => !isItemDiscovered(data.collectionV2, item.baseId))
+
+  return (
+    <div className="collection-detail" data-visual-focus="primary">
+      <header className="collection-detail-head">
+        <MaybeImg src={itemIcon((highest?.item ?? shelf.items[0]).baseId)} className="collection-detail-icon" />
+        <div>
+          <span>{shelf.founding ? '家祖から始まった十五の品' : `${SLOT_LABEL[shelf.items[0].slot]}の系譜`}</span>
+          <h2>{shelf.label}</h2>
+          <p>{shelf.discovered}/{shelf.items.length}段を発見{highest ? ` ・ 最高到達 第${highest.index + 1}段` : ''}</p>
+        </div>
+      </header>
+      <div className="collection-next-hint">
+        <span>次の手掛かり</span>
+        <b>{next ? `第${shelf.items.indexOf(next) + 1}段 — 剛${next.shopTier}前後の地や見世を探す` : 'この棚の全てを家譜へ刻んだ'}</b>
+      </div>
+      <ol className="collection-ranks" aria-label={`${shelf.label}の発見段階`}>
+        {shelf.items.map((item, index) => {
+          const discovered = isItemDiscovered(data.collectionV2, item.baseId)
+          const instances = owned.get(item.baseId) ?? []
+          const legacy = instances.filter((instance) => !!instance.legacyOf || instance.generation > 0)
+          return (
+            <li key={item.baseId} className={discovered ? 'is-found' : 'is-unknown'}>
+              <span className="collection-rank-mark">{discovered ? '●' : '○'}</span>
+              <span className="collection-rank-number">第{index + 1}段</span>
+              <b>{discovered ? item.name : '未見の銘'}</b>
+              {discovered && <small>{SLOT_LABEL[item.slot]}{instances.length > 0 ? ` ・ 現存${instances.length}` : ' ・ 記録のみ'}{legacy.length > 0 ? ` ・ 形見${legacy.length}` : ''}</small>}
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}
+
+export function ItemCollection({ data, isMobile }: { data: GameData; isMobile: boolean }) {
+  const shelves = useMemo<Shelf[]>(() => {
+    const foundingBits = FOUNDING_ITEM_BASES.reduce((bits, item, index) => (
+      isItemDiscovered(data.collectionV2, item.baseId) ? bits | (1 << index) : bits
+    ), 0)
+    return [
+      {
+        id: 'founding', label: '家祖の棚', items: FOUNDING_ITEM_BASES,
+        bits: foundingBits, discovered: popcount15(foundingBits), founding: true,
+      },
+      ...ITEM_SERIES_MANIFEST.map((series) => {
+        const bits = data.collectionV2?.itemSeriesBits[series.seriesId] ?? 0
+        return { id: series.seriesId, label: series.name, items: series.items, bits, discovered: popcount15(bits) }
+      }),
+    ]
+  }, [data.collectionV2])
+  const firstStarted = shelves.find((shelf) => shelf.discovered > 0)?.id ?? shelves[0].id
+  const [selectedId, setSelectedId] = useState<string | null>(isMobile ? null : firstStarted)
+  const selected = shelves.find((shelf) => shelf.id === selectedId)
+  const selectedIndex = selected ? shelves.indexOf(selected) : -1
+  const move = (delta: number) => {
+    if (selectedIndex < 0) return
+    setSelectedId(shelves[(selectedIndex + delta + shelves.length) % shelves.length].id)
+  }
+  const foundTotal = shelves.reduce((sum, shelf) => sum + shelf.discovered, 0)
+  const completed = shelves.filter((shelf) => shelf.discovered === shelf.items.length).length
+
+  return (
+    <section className="item-collection" aria-labelledby="item-collection-title">
+      <header className="collection-ledger-head">
+        <div>
+          <span>燈守家・宝具系譜録</span>
+          <h2 id="item-collection-title">拾った物を、誰かが残した痕として綴る</h2>
+        </div>
+        <div className="collection-ledger-count" aria-label={`宝具発見 ${foundTotal} / 810`}>
+          <b>{foundTotal}</b><span>/ 810</span><small>完成棚 {completed}/54</small>
+        </div>
+      </header>
+      <div className={`collection-master-detail ${selected ? 'has-selection' : ''}`}>
+        <div className="collection-shelves" aria-label="宝具の棚">
+          {shelves.map((shelf) => {
+            const representative = [...shelf.items].reverse()
+              .find((item) => isItemDiscovered(data.collectionV2, item.baseId)) ?? shelf.items[0]
+            return (
+              <button
+                key={shelf.id}
+                className={`btn collection-shelf ${selectedId === shelf.id ? 'is-sel' : ''} ${shelf.discovered === 0 ? 'is-empty' : ''}`}
+                aria-pressed={selectedId === shelf.id}
+                onClick={() => setSelectedId(shelf.id)}
+              >
+                <MaybeImg src={itemIcon(representative.baseId)} className="collection-shelf-icon" />
+                <span><b>{shelf.label}</b><small>{shelf.discovered}/{shelf.items.length}段</small></span>
+                <i aria-hidden>{shelf.discovered === shelf.items.length ? '完' : shelf.discovered > 0 ? '継' : '未'}</i>
+              </button>
+            )
+          })}
+        </div>
+        {!isMobile && (
+          <div className="collection-detail-pane">
+            {selected ? <ShelfDetail shelf={selected} data={data} /> : <p>棚を選ぶと、十五段の記録を開く。</p>}
+          </div>
+        )}
+      </div>
+      {isMobile && selected && (
+        <Sheet title={selected.label} onClose={() => setSelectedId(null)}>
+          <ShelfDetail shelf={selected} data={data} />
+          <div className="collection-detail-nav" aria-label="前後の棚へ移動">
+            <button className="btn btn-ghost" onClick={() => move(-1)}>← 前の棚</button>
+            <span>{selectedIndex + 1} / {shelves.length}</span>
+            <button className="btn btn-ghost" onClick={() => move(1)}>次の棚 →</button>
+          </div>
+        </Sheet>
+      )}
+    </section>
+  )
+}

@@ -1,7 +1,7 @@
 import type { Item, ItemSlot, ItemSource, Stats } from '../types'
 import { uid } from '../rng'
 
-interface ItemBase {
+export interface ItemBase {
   baseId: string
   name: string
   slot: ItemSlot
@@ -13,7 +13,7 @@ interface ItemBase {
 }
 
 // 初期15点 — baseIdはセーブ内の形見が参照するため改名禁止(GDD_v3 §5)
-const FOUNDING_ITEMS: ItemBase[] = [
+export const FOUNDING_ITEM_BASES: readonly ItemBase[] = [
   // 武器
   { baseId: 'w_kodachi', name: '小太刀', slot: 'weapon', atk: 8, price: 40, shopTier: 0 },
   { baseId: 'w_katana', name: '打刀', slot: 'weapon', atk: 16, price: 130, shopTier: 0 },
@@ -288,7 +288,38 @@ function seriesItems(s: ItemSeries): ItemBase[] {
   })
 }
 
-export const ITEM_BASES: ItemBase[] = [...FOUNDING_ITEMS, ...SERIES.flatMap(seriesItems)]
+/**
+ * 宝具系譜棚・発見記録が参照する安定manifest。
+ * 銘やbaseIdを別ファイルへ複製せず、装備定義そのものから導出する。
+ */
+export interface ItemSeriesManifest {
+  seriesId: string
+  prefix: string
+  name: string
+  slot: ItemSlot
+  baseIds: readonly string[]
+  items: readonly ItemBase[]
+}
+
+const EXPANDED_SERIES = SERIES.map((series) => ({ series, items: seriesItems(series) }))
+
+export const ITEM_SERIES_MANIFEST: readonly ItemSeriesManifest[] = EXPANDED_SERIES.map(({ series, items }) => ({
+  seriesId: series.prefix,
+  prefix: series.prefix,
+  // 一覧で使える代表銘。段階名そのものはitemsへ保持する。
+  name: series.names[series.names.length - 1],
+  slot: series.slot,
+  baseIds: items.map((item) => item.baseId),
+  items,
+}))
+
+export const ITEM_COLLECTION_MANIFEST = {
+  foundingItems: FOUNDING_ITEM_BASES,
+  foundingBaseIds: FOUNDING_ITEM_BASES.map((item) => item.baseId),
+  series: ITEM_SERIES_MANIFEST,
+} as const
+
+export const ITEM_BASES: ItemBase[] = [...FOUNDING_ITEM_BASES, ...EXPANDED_SERIES.flatMap(({ items }) => items)]
 
 export function itemBaseById(baseId: string): ItemBase {
   const b = ITEM_BASES.find((x) => x.baseId === baseId)
