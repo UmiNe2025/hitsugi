@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { GameData, Item } from '../core/types'
 import { FOUNDING_ITEM_BASES, ITEM_SERIES_MANIFEST, type ItemBase } from '../core/data/items'
 import { isItemDiscovered, popcount15 } from '../core/collection'
@@ -65,7 +65,14 @@ function ShelfDetail({ shelf, data }: { shelf: Shelf; data: GameData }) {
   )
 }
 
-export function ItemCollection({ data, isMobile }: { data: GameData; isMobile: boolean }) {
+export function ItemCollection({
+  data, isMobile, query = '', onQueryChange,
+}: {
+  data: GameData
+  isMobile: boolean
+  query?: string
+  onQueryChange?: (query: string) => void
+}) {
   const shelves = useMemo<Shelf[]>(() => {
     const foundingBits = FOUNDING_ITEM_BASES.reduce((bits, item, index) => (
       isItemDiscovered(data.collectionV2, item.baseId) ? bits | (1 << index) : bits
@@ -81,13 +88,28 @@ export function ItemCollection({ data, isMobile }: { data: GameData; isMobile: b
       }),
     ]
   }, [data.collectionV2])
-  const firstStarted = shelves.find((shelf) => shelf.discovered > 0)?.id ?? shelves[0].id
+  const normalizedQuery = query.trim().toLocaleLowerCase('ja')
+  const visibleShelves = useMemo(() => {
+    if (!normalizedQuery) return shelves
+    return shelves.filter((shelf) => {
+      if (shelf.label.toLocaleLowerCase('ja').includes(normalizedQuery)) return true
+      return shelf.items.some((item) => (
+        isItemDiscovered(data.collectionV2, item.baseId)
+        && item.name.toLocaleLowerCase('ja').includes(normalizedQuery)
+      ))
+    })
+  }, [data.collectionV2, normalizedQuery, shelves])
+  const firstStarted = visibleShelves.find((shelf) => shelf.discovered > 0)?.id ?? visibleShelves[0]?.id ?? null
   const [selectedId, setSelectedId] = useState<string | null>(isMobile ? null : firstStarted)
-  const selected = shelves.find((shelf) => shelf.id === selectedId)
-  const selectedIndex = selected ? shelves.indexOf(selected) : -1
+  const selected = visibleShelves.find((shelf) => shelf.id === selectedId)
+  const selectedIndex = selected ? visibleShelves.indexOf(selected) : -1
+  useEffect(() => {
+    if (visibleShelves.some((shelf) => shelf.id === selectedId)) return
+    setSelectedId(isMobile ? null : firstStarted)
+  }, [firstStarted, isMobile, selectedId, visibleShelves])
   const move = (delta: number) => {
     if (selectedIndex < 0) return
-    setSelectedId(shelves[(selectedIndex + delta + shelves.length) % shelves.length].id)
+    setSelectedId(visibleShelves[(selectedIndex + delta + visibleShelves.length) % visibleShelves.length].id)
   }
   const foundTotal = shelves.reduce((sum, shelf) => sum + shelf.discovered, 0)
   const completed = shelves.filter((shelf) => shelf.discovered === shelf.items.length).length
@@ -103,9 +125,26 @@ export function ItemCollection({ data, isMobile }: { data: GameData; isMobile: b
           <b>{foundTotal}</b><span>/ 810</span><small>完成棚 {completed}/54</small>
         </div>
       </header>
+      <div className="collection-search-row">
+        <input
+          type="search"
+          className="forge-search collection-search"
+          aria-label="宝具録を棚名または発見済みの銘で捜す"
+          placeholder="棚名・銘・系譜で捜す"
+          value={query}
+          onChange={(event) => onQueryChange?.(event.target.value)}
+        />
+        <span aria-live="polite">{normalizedQuery ? `${visibleShelves.length}棚` : '全54棚'}</span>
+      </div>
+      {visibleShelves.length === 0 && (
+        <div className="collection-zero" role="status">
+          <p>「{query}」に合う、発見済みの宝具や棚はない。</p>
+          <button type="button" className="btn btn-ghost" onClick={() => onQueryChange?.('')}>検索を解除して54棚へ戻る</button>
+        </div>
+      )}
       <div className={`collection-master-detail ${selected ? 'has-selection' : ''}`}>
         <div className="collection-shelves" aria-label="宝具の棚">
-          {shelves.map((shelf) => {
+          {visibleShelves.map((shelf) => {
             const representative = [...shelf.items].reverse()
               .find((item) => isItemDiscovered(data.collectionV2, item.baseId)) ?? shelf.items[0]
             return (
@@ -133,7 +172,7 @@ export function ItemCollection({ data, isMobile }: { data: GameData; isMobile: b
           <ShelfDetail shelf={selected} data={data} />
           <div className="collection-detail-nav" aria-label="前後の棚へ移動">
             <button className="btn btn-ghost" onClick={() => move(-1)}>← 前の棚</button>
-            <span>{selectedIndex + 1} / {shelves.length}</span>
+            <span>{selectedIndex + 1} / {visibleShelves.length}</span>
             <button className="btn btn-ghost" onClick={() => move(1)}>次の棚 →</button>
           </div>
         </Sheet>

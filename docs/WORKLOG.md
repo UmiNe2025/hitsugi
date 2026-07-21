@@ -1301,3 +1301,26 @@
 - **ステージング現況**: GitHub APIとrepo workflowを照合し、Environmentは`github-pages`のみ、branchは`main`のみ、Pages sourceもmain workflowのみ。共有URLを持つstagingは未構築で、`npm run dev`のローカル検証だけがある。
 - **公開境界**: ユーザーが修正とデプロイを明示承認。テストで更新された既存baseline PNG 9点と`tmp/`は除外し、対象だけをmainへ公開する。
 - **公開完了**: commit `ac903fae162233ea85adc8fe8c888da378983fd7`をmainへpush。GitHub Actions run `29862456965`のbuild/deployが成功。公開HTML、`assets/index-CxttKBp1.css`、`assets/index-B0HgjgmB.js`はHTTP 200でローカルbuild名と一致し、公開CSS内に286px幅、`word-break:keep-all`、scroll-snapを確認した。
+
+## 2026-07-22（M42 多角的プロダクト改善監査）
+
+- **契約**: 公開版とHEAD `001dfda`を、初回体験、戦闘、探索、継承、収集、UI/UX、accessibility、保存、性能、テスト、運用、計測から監査する。runtime実装、画像生成、commit、push、deployは対象外。
+- **公開版実測**: PC1280×720のHomeは`scrollHeight=1257`、button 24、星契りCTA 3。mobile390×844は`scrollHeight=2298`。星契りはbutton 197、神row 180、親/神の初期選択0。日参りが血脈危機より先にmountする状態を確認した。
+- **runtime再集計**: 神180、敵579（通常基礎180、0技106/1技68/2技6）、装備810・53系譜、事件282、地域40。`public/`は画像2825点・241.68MB。buildはmain JS 1,424.08kB / gzip 430.89kB、CSS 206.46kB。
+- **主判断**: 次のP0を`初回30分縮約 / 約束から次代までの継承統合 / 序盤12敵の対処文法 / local milestone＋campaign sim`へ固定。全戦闘オート、手動同報酬、自由選択は維持し、追加物量を止める。
+- **品質と運用**: recoverable saveのexport不整合、Dungeon非checkpoint、Home助言矛盾、宝具録検索no-op、mobile出立1960px入れ子地図、郷pointer-only操作、main直結公開、PR browser smoke不在、低性能実機gate未完をP1へ統合した。
+- **検証**: oxlint、production build、visual closure 22 routes/40 regions/6 overlays/68 entries、manifest 9/9は緑。Vitestは全体初回で`narrative_journey_m34`のbeforeAllが10秒timeoutとなったが、単独30秒gateで3/3成功。時間依存flakeとして記録した。
+- **成果物**: `docs/PRODUCT_IMPROVEMENT_AUDIT_M42_20260722.md`、GDD_v3 §8.25、STATUS更新。実ユーザーと物理低性能端末は外部gateのため未完。commit/push/deployなし。
+
+## 2026-07-22（M43 初回体験・継承因果・戦闘文法・星籤 — mission実装）
+
+- **契約**: M42のP0 1〜4、即時修正候補、ガチャ要素を既存save互換で実装する。ガチャは現金なし、確率常時表示、天井、重複救済、期間限定/FOMOなし、限定必須戦力なしとした。全戦闘オート、手動同報酬、自由選択、追加物量凍結を維持し、commit/push/deployは対象外。
+- **初回導線/即時修正**: 新画面をscroll先頭＋`h1`focus、Home助言1件、日参り初帰還後、星契り推奨3柱＋全180柱、唯一成人の親/隊員仮選択、mobile出立5地点横絵巻へ変更。宝具録検索/0件解除/scroll整理、郷D-padと見渡すのkeyboard操作、recoverable save export、1年12月、package version＋build SHAも接続した。
+- **継承**: 後継指名と3つの今代の約束を郷の帳から選べる。無指定/無効指名は最年長へfallback。先代の約束、実在事実2件、次代の返歌、形見/血潮、今代の問い、次の一手を`cg2_succession.jpg`の一sceneへ統合。100 caseで事実2件と矛盾語0を検査した。
+- **戦闘**: 序盤12基礎種を止/受/崩へ各4種、若/通常/老で共有する2〜3手周期へ変更。次の手・対象・危険度・対処を二段兆しで表示し、防御、強手前撃破、弱点技による35%崩しに意味を持たせた。対象外AIの行動と乱数消費は固定し、全3オート方針も同じ兆しだけで対処する。
+- **星籤**: 初帰還1籤＋武功50ごと1籤、武功非消費。下60/中28/上10/極2、10回未所持、20回上以上、50回極、重複は縁+1、requestId冪等、履歴50件。郷から独立画面へ入り、確認後だけ1籤を消費する。既存180神像を星札へ使い、新規画像は生成していない。
+- **計測/sim**: save-local one-shotの9 milestoneとPII/自由文/端末IDなしのQA exportを追加。初版100 seedが`bossDown`と戦利品を直接代入し16月で止まる欠陥、修復初版が3地点だけを解禁無視で飛び越す欠陥を独立監査で検出。双方を廃止し、全seedで実storeの`departDungeon → dungeonEncounter → battleCommand → finishBattle → dungeonReturn`を使って序盤雑兵から全39主を`unlockFame`順に実戦闘する。各出立で武功条件、最終地で第四章/汐里名開示をassertし、最終戦は正規解禁後の敗北→回復→再挑戦も通す。寿命死・初継承、初主/終盤、全主踏破、断絶、世代、奉燈/血珠p10・p50・p90、敗北復帰月、同一seed完全一致を集計するharnessへ自己修復した。
+- **検証**: 自己修復後もVitest **43 files / 721 tests**、oxlint、production build、visual closure **23 routes / 40 regions / 6 overlays / 69 entries**、`git diff --check`に合格。PlaywrightはM43初回導線/後継/星籤をPC1280＋mobile390で14/14、戦闘兆し2/2。独立監査の初回はcampaign sim 1件をblocking判定し、限定修正後の再監査をmission terminal前に行う。
+- **campaign最終監査**: Round 2は3地点だけの解禁無視をblockingとした。Round 3では宵の森の主代役を含む非塔39地域を武功順に実戦闘し、各`unlockFame`、第四章、汐里名開示を強制検査。最終一人probeの敗北→回復→全隊再挑戦、全主踏破率、平均進捗、通貨分位、seed 37完全一致を確認し、独立focused 2/2、diff-check合格、**PASS / blocking 0**。100 seedはQA policyの基準線であり、実ユーザー/低性能実機の代替ではない。
+- **最終回帰**: 最新差分でVitest **43 files / 721 tests**、oxlint、production buildを再合格。重い100 seedと並列になった既知M34 dynamic-import hookの10秒timeoutを30秒へ現実化し、その後のfull suiteを単独再実行して全緑を確認した。
+- **公開境界**: ローカル実装のみ。外部初見8名、一世代5名、物理低性能端末、analytics providerは別gate。既存baseline PNG 9点と`tmp/`は保護し、commit/push/deployなし。

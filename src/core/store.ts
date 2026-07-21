@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type {
-  BattleLogEntry, BattleState, Character, Combatant, Element, GameData, Item, MottoId, NarrativeScene, Screen,
+  BattleLogEntry, BattleState, Character, Combatant, Element, GameData, GenerationVowId, Item, MottoId,
+  NarrativeScene, Screen, StarLotteryHistoryEntry,
 } from './types'
 import type { BattleAction } from './battle'
 import { consumableById } from './data/consumables'
@@ -20,7 +21,7 @@ import {
 } from './data/facilities'
 import { FAME_SEAL_THRESHOLD } from './constants'
 import {
-  conceiveChild, makeFounder, recalcStats, ageOf, pactCost,
+  buildSuccessionScene, chooseSuccessor, conceiveChild, makeFounder, recalcStats, ageOf, pactCost,
 } from './inheritance'
 import {
   combatantFromChar, combatantFromEnemy, startBattle, performAction, enemyAction, currentActor,
@@ -54,6 +55,8 @@ import {
   classifySpecialEncounter, createRareEncounter, rareVictoryFlag, rareVictoryLog,
   specialShadeUsedKey, type RareEncounter,
 } from './rare_encounters'
+import { markJourneyMilestone, migrateJourneyMetrics } from './journey_metrics'
+import { drawStarLottery, migrateStarLottery } from './star_lottery'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene = NarrativeScene
@@ -113,6 +116,9 @@ interface GameStore {
   buildFacility: (id: string) => void // v3.1 M16-6: 郷普請 — 施設を建てる/普請を進める
   setActiveFamiliar: (enemyId: string) => void // v3.1 M16-5: 随行させる眷属を選ぶ
   setLastWords: (charId: string, words: string) => void
+  designateHeir: (charId: string | null) => void
+  setGenerationVow: (vowId: GenerationVowId) => void
+  drawStarLottery: (requestId: string) => StarLotteryHistoryEntry | null
   resolveFinale: (choiceIndex: number) => void
 
   // 店・装備・修練(季を消費しない)
@@ -175,7 +181,8 @@ export const useGame = create<GameStore>((set, get) => {
     const d = get().data
     if (!d) throw new Error('no game data')
     const changed = fn(d)
-    const nd: GameData = { ...changed, collectionV2: migrateCollectionV2(changed) }
+    const withJourney = { ...changed, collectionV2: migrateCollectionV2(changed), journeyMetrics: migrateJourneyMetrics(changed) }
+    const nd: GameData = { ...withJourney, starLottery: migrateStarLottery(withJourney) }
     set({ data: nd })
     return nd
   }
@@ -384,6 +391,7 @@ export const useGame = create<GameStore>((set, get) => {
     const scenes: PendingScene[] = [...get().pendingScenes]
     let d = withNarrative(get().data!)
     d = { ...d, seasonIndex: d.seasonIndex + 1 }
+    d = markJourneyMilestone(d, 'next_month')
 
     // 誕生 — v3.1 M12: 縁の加護(下振れ緩和)/隔世遺伝/稀に双子
     const due = d.pendingBirths.filter((b) => b.dueSeason <= d.seasonIndex)
@@ -413,6 +421,7 @@ export const useGame = create<GameStore>((set, get) => {
           child = { ...withStats, hp: withStats.maxHp, mp: withStats.maxMp }
         }
         d = { ...d, family: [...d.family, child] }
+        d = markJourneyMilestone(d, 'birth')
         d = chronicle(d, 'birth', birthLine(child.name, god.name, rng), child.id)
         if (child.deeds.some((x) => x.includes('隔世遺伝'))) {
           d = chronicle(d, 'event', `${child.name}に、祖の血が強く顕れている。`, child.id)
@@ -439,6 +448,9 @@ export const useGame = create<GameStore>((set, get) => {
         d = {
           ...d,
           inventory: [...d.inventory, ...keepsakes],
+          successionPending: c.isHead
+            ? { predecessorId: c.id, heirloomIds: keepsakes.map((item) => item.id) }
+            : d.successionPending,
           family: d.family.map((x) =>
             x.id === c.id
               ? { ...x, alive: false, deathSeason: d.seasonIndex, deathCause: deathCauseLabel('lifespan'), epitaph, equipment: {}, isHead: false }
@@ -446,6 +458,7 @@ export const useGame = create<GameStore>((set, get) => {
           ),
         }
         d = chronicle(d, 'death', `${c.name}、${deathCauseLabel('lifespan')}。享年八季。「${epitaph}」`, c.id)
+        d = markJourneyMilestone(d, 'first_death')
         d = tryUnlockGossip(d)
         scenes.push({ kind: 'death', charId: c.id })
       }
@@ -453,11 +466,14 @@ export const useGame = create<GameStore>((set, get) => {
 
     // 当主継承
     if (!d.family.some((c) => c.alive && c.isHead)) {
-      const successor = [...d.family]
-        .filter((c) => c.alive)
-        .sort((a, b) => a.bornSeason - b.bornSeason)[0]
+      const successor = chooseSuccessor(d)
       if (successor) {
         const question = generationQuestion(d)
+        const predecessor = d.family.find((char) => char.id === d.successionPending?.predecessorId)
+          ?? [...d.family].filter((char) => !char.alive).sort((a, b) => (b.deathSeason ?? -1) - (a.deathSeason ?? -1))[0]
+        const keepsakes = (d.successionPending?.heirloomIds ?? [])
+          .map((id) => d.inventory.find((item) => item.id === id))
+          .filter((item): item is Item => !!item)
         d = {
           ...d,
           family: d.family.map((x) => (x.id === successor.id ? { ...x, isHead: true, deeds: [...x.deeds, '当主を継いだ'] } : x)),
@@ -467,15 +483,21 @@ export const useGame = create<GameStore>((set, get) => {
         d = chronicle(d, 'era', `${successor.name}、第${successor.gen}代当主を継ぐ。`)
         d = chronicle(d, 'era', `今代の問い — ${question}`)
         d = tryUnlockGossip(d)
-        // M17: 継承を一場面として見せる(cg2_succession — 未生成なら文字だけで成立)
-        scenes.push({
-          kind: 'life', bg: 'cg2_succession.png', title: '当主継承',
-          lines: [
-            { speaker: '綴', text: `「先代の灯が、汝の掌へ落ちた。${successor.name} — 第${successor.gen}代当主である」` },
-            { speaker: successor.name, text: '……重い。でも、温かい。' },
-            { speaker: '綴', text: '「その重さが家というものだ。継いだ火を、絶やすでないぞ」' },
-          ],
-        })
+        if (predecessor) {
+          const succession = buildSuccessionScene(d, predecessor, successor, keepsakes, question)
+          d = { ...d, lastSuccession: succession.record, successionPending: undefined, designatedHeirId: undefined, generationVow: undefined }
+          scenes.push(succession.scene)
+        } else {
+          d = { ...d, successionPending: undefined, designatedHeirId: undefined, generationVow: undefined }
+          scenes.push({
+            kind: 'life', bg: 'cg2_succession.jpg', title: '当主継承',
+            lines: [
+              { speaker: '綴', text: `「先代の灯が、汝の掌へ落ちた。${successor.name} — 第${successor.gen}代当主である」` },
+              { speaker: successor.name, text: '形のない灯まで、私が受け取る。' },
+            ],
+          })
+        }
+        d = markJourneyMilestone(d, 'first_inherit')
       }
     }
 
@@ -699,6 +721,8 @@ export const useGame = create<GameStore>((set, get) => {
       }
       d = withNarrative(d)
       d = { ...d, collectionV2: migrateCollectionV2(d) }
+      d = markJourneyMilestone(d, 'new_game')
+      d = { ...d, starLottery: migrateStarLottery(d) }
       d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季(十五月)。`)
       set({
         data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null,
@@ -1058,6 +1082,7 @@ export const useGame = create<GameStore>((set, get) => {
         }
         const parent = d.family.find((c) => c.id === parentId)
         nd = chronicle(nd, 'pact', `${parent?.name}、${god.name}と星契りを結ぶ。`)
+        nd = markJourneyMilestone(nd, 'pact')
         // 御籤 — 星契りの折、稀に神託の籤が下る。独立ガチャにはせず、契りの副産物に留める(A案)。
         const rng = get().rng
         if (rng.chance(0.18)) {
@@ -1257,6 +1282,37 @@ export const useGame = create<GameStore>((set, get) => {
         return nd
       })
       saveGame(get().data!) // M33: 遺言(故人・一度きり)を即保存
+    },
+
+    designateHeir: (charId) => {
+      mutate((d) => {
+        if (charId === null) return { ...d, designatedHeirId: undefined }
+        const candidate = d.family.find((char) => char.id === charId && char.alive && !char.isHead)
+        return candidate ? { ...d, designatedHeirId: candidate.id } : d
+      })
+      saveGame(get().data!)
+    },
+
+    setGenerationVow: (vowId) => {
+      mutate((d) => {
+        const head = d.family.find((char) => char.alive && char.isHead)
+        if (!head) return d
+        return {
+          ...d,
+          generationVow: { id: vowId, madeById: head.id, generation: head.gen, setSeason: d.seasonIndex },
+        }
+      })
+      saveGame(get().data!)
+    },
+
+    drawStarLottery: (requestId) => {
+      const data = get().data
+      if (!data) return null
+      const outcome = drawStarLottery(data, requestId, get().rng)
+      if (!outcome.result) return null
+      set({ data: outcome.data })
+      saveGame(outcome.data)
+      return outcome.result
     },
 
     // v3.1 M9(M16-2): 誕生時の命名。家譜の産声の行も新しい名で書き直す
@@ -1484,13 +1540,13 @@ export const useGame = create<GameStore>((set, get) => {
     depart: (regionId, partyIds) => {
       const { rng } = get()
       const region = regionById(regionId)
-      mutate((d) => ({
-        ...d,
-        expedition: generateExpedition(region, partyIds, rng),
-        family: d.family.map((c) =>
-          partyIds.includes(c.id) ? { ...c, expeditions: c.expeditions + 1 } : c,
-        ),
-      }))
+      mutate((d) => markJourneyMilestone({
+          ...d,
+          expedition: generateExpedition(region, partyIds, rng),
+          family: d.family.map((c) =>
+            partyIds.includes(c.id) ? { ...c, expeditions: c.expeditions + 1 } : c,
+          ),
+        }, 'first_depart'))
       set({ screen: { id: 'expedition' } })
     },
 
@@ -1665,6 +1721,7 @@ export const useGame = create<GameStore>((set, get) => {
         },
       }
       if (injuredIds.length > 0) nd = addResonance(nd, 'save')
+      nd = markJourneyMilestone(markJourneyMilestone(nd, 'first_return'), 'safe_exit')
       nd = { ...nd, collectionV2: migrateCollectionV2(nd) }
       set({ data: nd })
       advanceSeason()
@@ -1697,13 +1754,13 @@ export const useGame = create<GameStore>((set, get) => {
         used: [],
         bossDown: false,
       }
-      mutate((d) => ({
-        ...d,
-        family: d.family.map((c) =>
-          partyIds.includes(c.id) ? { ...c, expeditions: c.expeditions + 1 } : c,
-        ),
-        regionsVisited: [...new Set([...(d.regionsVisited ?? []), regionId])],
-      }))
+      mutate((d) => markJourneyMilestone({
+          ...d,
+          family: d.family.map((c) =>
+            partyIds.includes(c.id) ? { ...c, expeditions: c.expeditions + 1 } : c,
+          ),
+          regionsVisited: [...new Set([...(d.regionsVisited ?? []), regionId])],
+        }, 'first_depart'))
       // v3.1 M16-4: 出立の加護 — 三択を提示
       const draft = draftBoons([], () => get().rng.next()).map((b) => b.id)
       set({ dungeonRun: run, screen: { id: 'dungeon' }, boonDraft: draft.length > 0 ? draft : null })
@@ -2071,6 +2128,7 @@ export const useGame = create<GameStore>((set, get) => {
         },
       }
       if (injuredIds.length > 0) nd = addResonance(nd, 'save')
+      nd = markJourneyMilestone(markJourneyMilestone(nd, 'first_return'), 'safe_exit')
 
       // 初陣 — 初めての夜藪から帰った子の夜
       const head = nd.family.find((c) => c.alive && c.isHead) ?? null
@@ -2367,15 +2425,22 @@ export const useGame = create<GameStore>((set, get) => {
         const survivor = [...partyAlive].sort((a, b) => b.potential.luk - a.potential.luk)[0]
         const lostNames: string[] = []
         const keepsakes: Item[] = [] // M29修正: 全滅で斃れた者の得物も形見として蔵へ(寿命死と対称化)
+        let lostHeadId: string | undefined
+        const headHeirloomIds: string[] = []
         const bereaved = nd.family.map((c) => {
           if (!run.partyIds.includes(c.id) || !c.alive) return c
           if (survivor && c.id === survivor.id) {
             return { ...c, hp: 1, mp: 0, fatigue: Math.min(100, c.fatigue + 40), deeds: [...c.deeds, '全滅の夜藪から独り生還した'] }
           }
           lostNames.push(c.name)
+          if (c.isHead) lostHeadId = c.id
           for (const slot of ['weapon', 'armor', 'charm'] as const) {
             const it = c.equipment[slot]
-            if (it) keepsakes.push(inheritItem(it, c.name, c.kills))
+            if (it) {
+              const inherited = inheritItem(it, c.name, c.kills)
+              keepsakes.push(inherited)
+              if (c.isHead) headHeirloomIds.push(inherited.id)
+            }
           }
           return {
             ...c, alive: false, hp: 0,
@@ -2392,7 +2457,9 @@ export const useGame = create<GameStore>((set, get) => {
           inventory: [...nd.inventory, ...keepsakes],
           hoto: nd.hoto + Math.round(run.loot.hoto / 2),
           ketsu: nd.ketsu + Math.round(run.loot.ketsu / 2),
+          successionPending: lostHeadId ? { predecessorId: lostHeadId, heirloomIds: headHeirloomIds } : nd.successionPending,
         }
+        if (lostNames.length > 0) nd = markJourneyMilestone(nd, 'first_death')
         nd = chronicle(nd, 'death',
           lostNames.length > 0
             ? `${regionById(run.regionId).name}にて隊は壊滅。${lostNames.join('、')}、行方知れず。${survivor ? `${survivor.name}だけが、綴の灯に導かれて生還した。` : ''}`
@@ -2540,6 +2607,8 @@ export const useGame = create<GameStore>((set, get) => {
       const survivor = [...partyAlive].sort((a, b) => b.potential.luk - a.potential.luk)[0]
       const lostNames: string[] = []
       const keepsakes: Item[] = [] // M29修正: 全滅で斃れた者の得物も形見として蔵へ(寿命死と対称化)
+      let lostHeadId: string | undefined
+      const headHeirloomIds: string[] = []
       const bereaved = nd.family.map((c) => {
         if (!exp.partyIds.includes(c.id) || !c.alive) return c
         if (survivor && c.id === survivor.id) {
@@ -2550,9 +2619,14 @@ export const useGame = create<GameStore>((set, get) => {
           }
         }
         lostNames.push(c.name)
+        if (c.isHead) lostHeadId = c.id
         for (const slot of ['weapon', 'armor', 'charm'] as const) {
           const it = c.equipment[slot]
-          if (it) keepsakes.push(inheritItem(it, c.name, c.kills))
+          if (it) {
+            const inherited = inheritItem(it, c.name, c.kills)
+            keepsakes.push(inherited)
+            if (c.isHead) headHeirloomIds.push(inherited.id)
+          }
         }
         const epitaph = generateEpitaph(c, 'lost', rng)
         return {
@@ -2571,7 +2645,9 @@ export const useGame = create<GameStore>((set, get) => {
         hoto: nd.hoto + Math.round(exp.loot.hoto / 2),
         ketsu: nd.ketsu + Math.round(exp.loot.ketsu / 2),
         expedition: undefined,
+        successionPending: lostHeadId ? { predecessorId: lostHeadId, heirloomIds: headHeirloomIds } : nd.successionPending,
       }
+      if (lostNames.length > 0) nd = markJourneyMilestone(nd, 'first_death')
       const wipeText = lostNames.length > 0
         ? `${regionById(exp.regionId).name}にて隊は壊滅。${lostNames.join('、')}、行方知れず。${survivor ? `${survivor.name}だけが、綴の灯に導かれて生還した。` : ''}`
         : `${regionById(exp.regionId).name}より${survivor?.name ?? '当主'}、満身創痍で生還。`

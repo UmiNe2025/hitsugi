@@ -42,10 +42,10 @@ function validateMutation(mutate: (ledger: Ledger) => void) {
 }
 
 describe('visual closure ledger validator', () => {
-  it('derives and closes the current 22 routes, 40 regions, and route-external overlays', () => {
+  it('derives and closes the current 23 routes, 40 regions, and route-external overlays', () => {
     const result = validateVisualClosure({ root, ledgerPath: canonicalLedgerPath, typesPath, regionsPath })
     expect(result.errors).toEqual([])
-    expect(result.counts).toEqual({ routes: 22, regions: 40, overlays: 6, entries: 68 })
+    expect(result.counts).toEqual({ routes: 23, regions: 40, overlays: 6, entries: 69 })
   })
 
   it('rejects missing and extra route IDs, missing regions, and missing overlays', () => {

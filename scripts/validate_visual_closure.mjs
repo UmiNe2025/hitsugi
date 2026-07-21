@@ -19,6 +19,7 @@ export const ROUTE_REQUIRED_STATES = {
   home: ['normal', 'bloodline-crisis', 'fresh-return', 'empty', 'disabled'],
   village: ['normal', 'bloodline-crisis', 'fresh-return', 'empty', 'disabled'],
   pact: ['eligible', 'ineligible', 'missing-image-fallback'],
+  starLottery: ['locked', 'available', 'confirm', 'new-card', 'duplicate', 'no-draw', 'reduced-motion'],
   birth: ['pending', 'completed', 'skip', 'replay', 'missing-image-fallback'],
   ceremony: ['pending', 'completed', 'skip', 'replay', 'missing-image-fallback'],
   jobrite: ['pending', 'completed', 'skip', 'replay', 'missing-image-fallback'],

@@ -19,7 +19,7 @@ beforeAll(async () => {
   ;({ bossVictoryRequiem } = await import('../src/ui/Battle'))
   ;({ dungeonEntryEcho } = await import('../src/ui/Dungeon'))
   ;({ latestVillageGossip, markVillageGossipValue, villageGossipWasHeard } = await import('../src/ui/Village'))
-})
+}, 30_000)
 
 describe('M34 N2 主要旅程の残響', () => {
   const regionId = 'yoi_forest'

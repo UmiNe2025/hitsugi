@@ -286,8 +286,11 @@ export const MONTH_NAMES = [
 ] as const
 export const SEASON_NAMES = ['春', '夏', '秋', '冬'] as const
 export const LIFESPAN_MONTHS = 24 // 廿四月の命(旧: 八季)
+export function yearOfMonth(abs: number): number {
+  return Math.floor(Math.max(0, abs) / 12) + 1
+}
 export function seasonLabel(abs: number): string {
-  const year = Math.floor(abs / 12) + 1
+  const year = yearOfMonth(abs)
   return `${year}年目・${MONTH_NAMES[abs % 12]}`
 }
 export function seasonOfMonth(abs: number): (typeof SEASON_NAMES)[number] {
@@ -304,6 +307,7 @@ export type Screen =
   | { id: 'intro' }
   | { id: 'home' }
   | { id: 'pact' }
+  | { id: 'starLottery' }
   | { id: 'birth'; charId: string }
   | { id: 'ceremony'; charId: string } // 成人の儀 — 灯型を授ける(月齢6)
   | { id: 'jobrite'; charId: string } // 生業の儀 — 家業を選ぶ(月齢12)
@@ -373,6 +377,62 @@ export interface NarrativeProgress {
   }
 }
 
+// M43: 世代をまたぐ意思と、その結果を「当主継承」の一場面へ束ねる。
+// optionalで保存し、旧saveはload時に正規化する。
+export type GenerationVowId = 'guard_line' | 'break_night' | 'keep_names'
+
+export interface GenerationVow {
+  id: GenerationVowId
+  madeById: string
+  generation: number
+  setSeason: number
+}
+
+export interface SuccessionRecord {
+  predecessorId: string
+  successorId: string
+  season: number
+  vowId?: GenerationVowId
+  truthLabels: [string, string]
+  reply: string
+  heirloomName?: string
+  bloodLegacy: string
+}
+
+// M43: 外部へ一切送らない、save-localの一度きり到達記録。
+export type JourneyMilestoneId =
+  | 'new_game' | 'pact' | 'birth' | 'first_depart' | 'first_return'
+  | 'safe_exit' | 'first_death' | 'first_inherit' | 'next_month'
+
+export interface JourneyMilestone {
+  id: JourneyMilestoneId
+  atSeason: number
+  elapsedMs: number
+}
+
+export interface JourneyMetrics {
+  startedAtMs: number
+  milestones: Partial<Record<JourneyMilestoneId, JourneyMilestone>>
+}
+
+export interface StarLotteryHistoryEntry {
+  requestId: string
+  drawNumber: number
+  godIds: string[]
+  newGodIds: string[]
+  duplicateGodIds: string[]
+  affinityGained: number
+  rankFloor?: GodRank
+  atSeason: number
+}
+
+export interface StarLotteryState {
+  cards: string[]
+  drawsUsed: number
+  history: StarLotteryHistoryEntry[]
+  lastRequestId?: string
+}
+
 // ---- ゲーム全体状態 ----
 export interface GameData {
   seasonIndex: number
@@ -406,6 +466,12 @@ export interface GameData {
   familiars?: { enemyId: string; name: string; element: string }[] // v3.1 M16-5: 懐いた眷属(式神)の一覧
   activeFamiliar?: string // v3.1 M16-5: 随行させている眷属のenemyId
   narrative?: NarrativeProgress // M34: 物語順序・後で読む・家の響き(optional=旧セーブ互換)
+  designatedHeirId?: string // M43: 次代指名。死亡・不適格時は安全な最年長へfallback
+  generationVow?: GenerationVow // M43: 現当主が次代へ遺す三択の約束
+  lastSuccession?: SuccessionRecord // M43: 直近の継承因果。再読・QA用
+  successionPending?: { predecessorId: string; heirloomIds: string[] } // M43: 戦死後も次の月送りで因果を失わない
+  journeyMetrics?: JourneyMetrics // M43: 端末内だけのone-shot到達記録
+  starLottery?: StarLotteryState // M43: 無課金収集「星籤」
 }
 
 // 宿敵(名持ち) — 一族の誰かを殺した魔性が名を得て成長・再来する

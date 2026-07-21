@@ -229,6 +229,48 @@
 .home-anchors {
   display: none;
 }
+
+/* M43: 次代の選択は一覧画面へ増やさず、家族に近い小さな決定面へ収める。 */
+.succession-plan-section {
+  margin: 18px 0;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+}
+
+.succession-plan-section h3 {
+  margin: 0 0 10px;
+  color: var(--gold-light);
+  font-size: 15px;
+  letter-spacing: .12em;
+}
+
+.succession-plan-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.succession-plan-options .btn {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  text-align: left;
+}
+
+.succession-plan-options .btn.selected {
+  border-color: var(--flame);
+  background: color-mix(in srgb, var(--flame) 13%, var(--panel));
+  box-shadow: inset 3px 0 0 var(--flame);
+}
+
+.succession-plan-options small,
+.succession-vow span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
 @media (max-width: 560px) {
   .home-anchors {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../core/store'
+import { APP_BUILD_LABEL } from '../core/version'
 import { inspectSaveSlot, downloadSave, importSaveString, clearSave } from '../core/save'
 import { SceneBg } from './components'
 import { emitToast } from './toast'
@@ -120,7 +121,7 @@ export function TitleScreen() {
           </button>
         </div>
       )}
-      <p className="title-ver">ver 0.1 — 燈ノ郷にて</p>
+      <p className="title-ver">ver {APP_BUILD_LABEL} — 燈ノ郷にて</p>
     </div>
   )
 }

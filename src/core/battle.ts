@@ -7,6 +7,7 @@ import { personalityById } from './data/personalities'
 import { voiceFor } from './data/voices'
 import { tomoshigataById } from './data/toza'
 import { jobById } from './data/jobs'
+import { enemyBehaviorStep, upcomingEnemyBehaviorCue } from './enemy_behaviors'
 
 // ---- コンバータント生成 ----
 export function combatantFromChar(c: Character, row: 'front' | 'back'): Combatant {
@@ -298,6 +299,22 @@ export function performAction(st0: BattleState, actorKey: string, action: Battle
           'dmg',
           { actorKey: actor.key, targetKey: t.key, amount: final, element: el, crit, weak: em > 1 },
         )
+        // M43「崩す」: 危険な構えへ弱点属性の技を当てた時だけ、次の二巡の敵火力を落とす。
+        // Combatantへ永続項目を増やさず、既存のturn付き攻撃補正を負値で再利用する。
+        // 通常攻撃では発動しないため、兆しを読んで技を選ぶ意味が残る。
+        const breakCue = !t.isAlly ? upcomingEnemyBehaviorCue(st, t) : undefined
+        if (skill && em > 1 && breakCue?.counter === 'break' && breakCue.step.danger === 'danger') {
+          const liveTarget = findCombatant(st, t.key)
+          if (liveTarget && liveTarget.hp > 0) {
+            updateCombatant(t.key, (c) => ({
+              ...c,
+              buffs: { ...c.buffs, atkUp: 2, atkMag: Math.min(c.buffs.atkMag ?? 0, -0.35) },
+            }))
+            push(`${t.name}の構えを崩した! 次の強手が鈍る。`, 'chain', {
+              actorKey: actor.key, targetKey: t.key, element: el, weak: true,
+            })
+          }
+        }
         const after = findCombatant(st, t.key)
         // 被弾側のひと声: 危機(3割を初めて割る)は必ず、通常被弾は稀に — M15-1
         if (after && after.isAlly && after.hp > 0) {
@@ -446,13 +463,21 @@ function endOfAction(st0: BattleState, entries: BattleLogEntry[], rng?: Rng): Ac
   return { state: { ...st, orderIndex: idx, turn, order }, entries }
 }
 
-// 敵AI: スキルか通常攻撃、前列を優先的に狙う
+// 敵AI: 序盤12種は読める2〜3手の文法、それ以外は従来の確率AI。
 export function enemyAction(st: BattleState, actor: Combatant, rng: Rng): BattleAction {
   // 長なき群れは戦意が続かない(M12-4)
   if (st.morale && rng.chance(0.22)) return { type: 'flee' }
   const alive = st.allies.filter((c) => c.hp > 0)
   if (alive.length === 0) return { type: 'guard' }
   const front = alive.filter((c) => c.row === 'front')
+  const behaviorStep = enemyBehaviorStep(actor.enemyId, st.turn)
+  if (behaviorStep) {
+    const behaviorTargets = behaviorStep.target === '前列ひとり' && front.length > 0 ? front : alive
+    const target = rng.pick(behaviorTargets)
+    return behaviorStep.action === 'skill'
+      ? { type: 'skill', skillId: behaviorStep.skillId, targetKey: target.key }
+      : { type: 'attack', targetKey: target.key }
+  }
   const pool = front.length > 0 && rng.chance(0.7) ? front : alive
   const target = rng.pick(pool)
   if (actor.skills.length > 0 && rng.chance(0.35)) {
@@ -462,9 +487,7 @@ export function enemyAction(st: BattleState, actor: Combatant, rng: Rng): Battle
 }
 
 // ---- M25 §5: 敵の兆し ----
-// enemyAction は一切変更しない(上の関数はバイト同一)。兆しは「いつ呼ぶか」だけを足す:
-// 実rngをクローンして先読みし、実戦闘の乱数消費・対象選択・威力を一切変えない。
-// → ゴールデンテスト(固定RngでenemyActionの返り値が前後一致)が成立する。
+// 実rngをクローンして先読みし、実戦闘の乱数消費・対象選択・威力を変えない。
 
 /** BattleAction を兆しカテゴリへ写像。guard/flee は兆しを出さない(null)。 */
 export function intentOf(action: BattleAction): EnemyIntent | null {
@@ -481,7 +504,8 @@ export function computeIntents(st: BattleState, rng: Rng): Record<string, EnemyI
   const out: Record<string, EnemyIntent> = {}
   for (const e of st.enemies) {
     if (e.hp <= 0) continue
-    const cat = intentOf(enemyAction(st, e, new Rng(rng.state())))
+    const cat = upcomingEnemyBehaviorCue(st, e)?.step.intent
+      ?? intentOf(enemyAction(st, e, new Rng(rng.state())))
     if (cat) out[e.key] = cat
   }
   return out

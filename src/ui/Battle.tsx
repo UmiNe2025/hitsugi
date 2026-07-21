@@ -7,6 +7,7 @@ import { useGame } from '../core/store'
 import type { BattleLogEntry, BattleState, Combatant, Element, EnemyIntent, SkillTarget } from '../core/types'
 import { ELEMENT_LABELS, ELEMENT_ADVANTAGE } from '../core/types'
 import { currentActor, type BattleAction } from '../core/battle'
+import { upcomingEnemyBehaviorCue, type EnemyBehaviorCue } from '../core/enemy_behaviors'
 
 // 相性: 攻がADVANTAGEで防を突けば有利、逆なら不利
 type Matchup = 'adv' | 'dis' | 'even'
@@ -36,6 +37,7 @@ import './m17_battle.css'
 import './battle_m24.css'
 import './battle_m25.css'
 import './battle_ar1.css'
+import './battle_m43.css'
 
 function Ar1BattleStage({ contract }: { contract: RegionStageContract }) {
   const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
@@ -907,6 +909,7 @@ export function BattleScreen() {
                     targetNumber={targetableEnemies.indexOf(e) + 1}
                     elementBadge={{ el: e.element, adv: isPlayerTurn && actor?.isAlly ? matchup(previewElement, e.element) : 'even' }}
                     intent={isPlayerTurn ? battle.intents?.[e.key] : undefined}
+                    behaviorCue={isPlayerTurn ? upcomingEnemyBehaviorCue(battle, e) : undefined}
                     onClick={() => onEnemyClick(e)}
                     onBodyRef={registerBodyRef}
                     onCombatantRef={registerCombatantRef}
@@ -1336,9 +1339,16 @@ const INTENT_LABEL: Record<EnemyIntent, string> = { atk: '攻', tech: '術', aoe
 const INTENT_TITLE: Record<EnemyIntent, string> = {
   atk: '次は単体攻撃の構え', tech: '次は術(状態・属性)の構え', aoe: '次は全体・複数攻撃の構え',
 }
+const COUNTER_LABEL: Record<EnemyBehaviorCue['counter'], string> = { stop: '止', receive: '受', break: '崩' }
+const COUNTER_SHORT: Record<EnemyBehaviorCue['counter'], string> = {
+  stop: '強手前に狙う', receive: '身を固める', break: '弱点技を当てる',
+}
+const TARGET_SHORT: Record<EnemyBehaviorCue['step']['target'], string> = {
+  '前列ひとり': '前一', '一族ひとり': '単体', '一族全体': '全体',
+}
 
 function CombatantNode({
-  c, role, fx, targetable, clickable, selected, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, onClick, onBodyRef, onCombatantRef, children,
+  c, role, fx, targetable, clickable, selected, acting, chainBadge, leader, isBoss, cardTier, spriteKey, dimmed, targetNumber, elementBadge, intent, behaviorCue, onClick, onBodyRef, onCombatantRef, children,
 }: {
   c: Combatant
   // M25§4.2: 前列/後列の役割だけを渡す。列数・行そのものはCSS(.slot-preset-*)側の責務にし、
@@ -1358,6 +1368,7 @@ function CombatantNode({
   targetNumber?: number // 対象選択中の1始まり番号(0以下=非表示)
   elementBadge?: { el: Element; adv: Matchup }
   intent?: EnemyIntent // M25 §5: 敵の次行動カテゴリ(生存敵・入力番のみ)
+  behaviorCue?: EnemyBehaviorCue // M43: 固有予告と短い対処。戦闘計算と同じturnから導出
   onClick: () => void
   onBodyRef?: (key: string, el: HTMLDivElement | null) => void
   onCombatantRef?: (key: string, el: HTMLDivElement | null) => void
@@ -1401,9 +1412,25 @@ function CombatantNode({
       {!!targetNumber && targetNumber > 0 && <span className="target-num-badge" aria-hidden>{targetNumber}</span>}
       {/* M25 §5: 敵の兆し — 名札の上に2字+印。色だけに頼らず文字で示す。 */}
       {intent && c.hp > 0 && (
-        <span className={`enemy-intent intent-${intent}`} title={INTENT_TITLE[intent]}>
+        <span
+          className={`enemy-intent intent-${intent}${behaviorCue ? ' has-behavior' : ''}`}
+          title={behaviorCue
+            ? `${behaviorCue.step.tell}。${behaviorCue.step.target}。${behaviorCue.hint}`
+            : INTENT_TITLE[intent]}
+          aria-label={behaviorCue
+            ? `次の手、${behaviorCue.step.tell}。危険度${behaviorCue.step.danger === 'danger' ? '高い' : '警戒'}。対象${behaviorCue.step.target}。対処、${behaviorCue.hint}`
+            : INTENT_TITLE[intent]}
+        >
           <span className="intent-dot" aria-hidden />
-          {INTENT_LABEL[intent]}
+          {behaviorCue ? (
+            <>
+              <span className="intent-tell"><b>{INTENT_LABEL[intent]}</b> {behaviorCue.step.tell}</span>
+              <small className="intent-response">
+                {behaviorCue.step.danger === 'danger' ? '危' : '警'}・{TARGET_SHORT[behaviorCue.step.target]}
+                <i>{COUNTER_LABEL[behaviorCue.counter]}</i>{COUNTER_SHORT[behaviorCue.counter]}
+              </small>
+            </>
+          ) : INTENT_LABEL[intent]}
         </span>
       )}
       {voice && <div className="voice-bubble">{voice.voice}</div>}

@@ -32,7 +32,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Title.tsx",
-        "sourceSha256": "cba9d7a90584744f389254af5584e67ef8c4d1971b0288226d38400adccc816a",
+        "sourceSha256": "aee1be492426c1fd2729276466937c14e81a03402eb7309727ca20fbeddbaf1b",
         "runtimePath": "src/ui/vc2_entry.css",
         "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
         "rightsStatus": "pending",
@@ -80,7 +80,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Title.tsx",
-        "sourceSha256": "cba9d7a90584744f389254af5584e67ef8c4d1971b0288226d38400adccc816a",
+        "sourceSha256": "aee1be492426c1fd2729276466937c14e81a03402eb7309727ca20fbeddbaf1b",
         "runtimePath": "src/ui/vc2_entry.css",
         "runtimeSha256": "19f9f1aee01f2c86dd7c1b5cd3efb6b16a45a3d27b5ec0767de33e04a2cd567f",
         "rightsStatus": "pending",
@@ -126,13 +126,13 @@
       "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
       "runtimeBundle": {
         "path": "src/ui/m17_home.css",
-        "sha256": "3316b6fad8f7d55fff42993c9cb058617408fae0933b50bcda21975857492f5a"
+        "sha256": "56381cb1b07aca85a3d7934e11fed0dcdba334da610fd673d91cff115c010e0b"
       },
       "provenance": {
         "sourcePath": "src/ui/Home.tsx",
-        "sourceSha256": "b4327176defa164b4db938a9ef5c56db5ab9503f294f27dd0c351dfce372b03c",
+        "sourceSha256": "87990db1a003ed6546bbfa37b33296f6b870b1a447784d4191e49358d1ad3e85",
         "runtimePath": "src/ui/m17_home.css",
-        "runtimeSha256": "3316b6fad8f7d55fff42993c9cb058617408fae0933b50bcda21975857492f5a",
+        "runtimeSha256": "56381cb1b07aca85a3d7934e11fed0dcdba334da610fd673d91cff115c010e0b",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -180,7 +180,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Village.tsx",
-        "sourceSha256": "9fb1341e57bebcac80ccaebd78e24a96f5439d957e804225db3c98dd9a63d91f",
+        "sourceSha256": "fdad5d12fbbc261c14a11ca198ea4c7f27cb626dc13692de6552fc676db06fce",
         "runtimePath": "src/ui/village.css",
         "runtimeSha256": "a86b362063f3c3fb9bfd7d9f8476e8416b3c8dd7db9c0cc36d74ffbc407ca35b",
         "rightsStatus": "pending",
@@ -228,7 +228,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Pact.tsx",
-        "sourceSha256": "1b95359443675d4d15d3696e53c399306e13d6b84a6562d35382f41c9570ab58",
+        "sourceSha256": "bf670cab4d4673e083c88bd58018c5aac1c57dc157ef768e6dffd4f464b4baf9",
         "runtimePath": "src/ui/pact_m35.css",
         "runtimeSha256": "06ee4f018c57ab3d1f6882d818047be3a1f6726565f0c19cd1d9a2528059ec17",
         "rightsStatus": "pending",
@@ -278,7 +278,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -328,7 +328,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -378,7 +378,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -428,7 +428,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -478,7 +478,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -528,7 +528,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -578,7 +578,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -627,7 +627,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Expedition.tsx",
-        "sourceSha256": "990e4a2c53acedd5a861b44cc80012684a879b512855b8e6dd57968751de2dde",
+        "sourceSha256": "a4509c561f605c2879f7a055a8932ee184433ae59521c0dde773c4800041f6dc",
         "runtimePath": "src/ui/depart_m18.css",
         "runtimeSha256": "a766d981dc72097725db1b7e2c9868b81db014977c5fa54ffad8b7612871fef8",
         "rightsStatus": "pending",
@@ -676,7 +676,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Expedition.tsx",
-        "sourceSha256": "990e4a2c53acedd5a861b44cc80012684a879b512855b8e6dd57968751de2dde",
+        "sourceSha256": "a4509c561f605c2879f7a055a8932ee184433ae59521c0dde773c4800041f6dc",
         "runtimePath": "src/ui/expedition_vc3.css",
         "runtimeSha256": "d2748f54fbdc1a4b62215a1fafc3769e8b3d325ee681e239b1f6a4a39510dd7d",
         "rightsStatus": "pending",
@@ -773,7 +773,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Battle.tsx",
-        "sourceSha256": "5073e41e81630bdd9f89e95c9f7ed6bf0e720177744ecb72cee593acf3f40c4d",
+        "sourceSha256": "edd283e1e3ce993554578bec4b7b063f2ebb67a74f5688779b78223b58d50b0a",
         "runtimePath": "src/ui/battle_ar1.css",
         "runtimeSha256": "5a6e83aedf7df4c1a5a27ac3b67abe982b740d2c85771279cc7f015b596756b6",
         "rightsStatus": "pending",
@@ -826,7 +826,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Forge.tsx",
-        "sourceSha256": "372ef219f9b48e617cd61c6bb474907420f7a4295af4b5b2bba55e3776051a39",
+        "sourceSha256": "074d302bf6a4b772fddb5fb16123ba6ec13041b8c2f5b0c2d3d457d6716917f8",
         "runtimePath": "src/ui/forge_vc3.css",
         "runtimeSha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613",
         "rightsStatus": "pending",
@@ -1025,7 +1025,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -1075,7 +1075,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Scenes.tsx",
-        "sourceSha256": "0b66c71a1b543057f5fa4c9db5b982d6cfc74f19e6adbd8d294c8c1abe2fd8f2",
+        "sourceSha256": "6fc7b0c4e288bb7a1c6433452d9df3e2d96f1c5b03b3c4b98f20125c85ea65bc",
         "runtimePath": "src/ui/scenes_vc3b.css",
         "runtimeSha256": "f4273069c4b804a1d4904a37486e6661d3c8c6cf544f735498d5c6d9797abcd5",
         "rightsStatus": "pending",
@@ -3217,7 +3217,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Forge.tsx",
-        "sourceSha256": "372ef219f9b48e617cd61c6bb474907420f7a4295af4b5b2bba55e3776051a39",
+        "sourceSha256": "074d302bf6a4b772fddb5fb16123ba6ec13041b8c2f5b0c2d3d457d6716917f8",
         "runtimePath": "src/ui/forge_vc3.css",
         "runtimeSha256": "1321f6a630c950ad120bf64bb177eb4608f2a48aa9ce4d64d93993b5e9a39613",
         "rightsStatus": "pending",
@@ -3419,13 +3419,13 @@
       "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
       "runtimeBundle": {
         "path": "src/index.css",
-        "sha256": "75c034dca26496df68f3bcf05095a9f05ef041e3987833f7cc17ba1ff6173843"
+        "sha256": "d1d520d1c3152b2448379357cd7508762d686869fa69dcbfab995c3957e77496"
       },
       "provenance": {
         "sourcePath": "src/App.tsx",
-        "sourceSha256": "6d569da04f996c25c8646ab1746e89c48e11ad1cc26a5fe30120b45a7131539f",
+        "sourceSha256": "3fad62f7a68fd76c4ed41501c99a4fa2e09d2f60d3d70dd0c2a58028c985bbb8",
         "runtimePath": "src/index.css",
-        "runtimeSha256": "75c034dca26496df68f3bcf05095a9f05ef041e3987833f7cc17ba1ff6173843",
+        "runtimeSha256": "d1d520d1c3152b2448379357cd7508762d686869fa69dcbfab995c3957e77496",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },
@@ -3444,10 +3444,62 @@
         "stateCoverage": "pending-per-state-capture",
         "performance": "headless-and-telemetry-only"
       }
+    },
+    {
+      "kind": "route",
+      "sceneId": "starLottery",
+      "parentSurface": "home",
+      "stateId": [
+        "locked",
+        "available",
+        "confirm",
+        "new-card",
+        "duplicate",
+        "no-draw",
+        "reduced-motion"
+      ],
+      "viewport": [
+        "1280x720",
+        "390x844"
+      ],
+      "hero": "One revealed deity portrait and the permanently visible odds make each free star lot legible without monetized urgency.",
+      "support": "Supporting frames use the shared indigo, soot, vermilion, warm-gold, and paper-material family without competing with the hero.",
+      "groundContact": "Characters, facilities, combatants, or document planes use explicit borders, feet, shadows, or contact mattes appropriate to this surface.",
+      "depth": "Background atmosphere, the decision-bearing middle layer, and a restrained foreground are separated without covering controls.",
+      "people": "When people are present, identity, direction, state, scale, and grounding are kept together; otherwise the authored object or document remains the scale anchor.",
+      "ui": "The primary next action is visually dominant, persistent information is grouped, 360-1600px layouts remain operable, and close/back targets meet the interaction contract.",
+      "motionSound": "Ambient motion stays subordinate to decisions, respects reduced motion, and uses the existing world/audio hooks without adding per-button sound.",
+      "runtimeBundle": {
+        "path": "src/ui/star_lottery.css",
+        "sha256": "66925c5c8b71aad98541f1b65a664f032581885490c7e9c087e86975e4dc68d4"
+      },
+      "provenance": {
+        "sourcePath": "src/ui/StarLottery.tsx",
+        "sourceSha256": "5192d1da95d075cc310e938b84bc6245b46f4c18dd241ec9538e997bf19d9dce",
+        "runtimePath": "src/ui/star_lottery.css",
+        "runtimeSha256": "66925c5c8b71aad98541f1b65a664f032581885490c7e9c087e86975e4dc68d4",
+        "rightsStatus": "pending",
+        "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
+      },
+      "status": "code-integrated",
+      "owner": "visual-recovery/starLottery",
+      "evidence": [
+        "src/ui/StarLottery.tsx",
+        "src/ui/star_lottery.css",
+        "tests/m43_star_lottery.test.ts"
+      ],
+      "nAReason": null,
+      "verification": {
+        "rights": "pending",
+        "humanReview": "pending",
+        "independentReview": "pending",
+        "stateCoverage": "pending-per-state-capture",
+        "performance": "headless-and-telemetry-only"
+      }
     }
   ],
   "promotion": {
-    "date": "2026-07-21",
+    "date": "2026-07-22",
     "target": "code-integrated",
     "note": "Local source/runtime integration only. No row becomes scene-integrated until every required state, all five canonical viewports, and mechanical checks have repository evidence."
   }

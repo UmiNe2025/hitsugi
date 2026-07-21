@@ -1,5 +1,5 @@
 import type { GameData, Character } from '../core/types'
-import { seasonLabel } from '../core/types'
+import { seasonLabel, yearOfMonth } from '../core/types'
 import { godById } from '../core/data/gods'
 
 // 家譜を1枚の画像(1200x630)に描いて保存する — 「うちの一族を見てくれ」の共有装置
@@ -60,7 +60,7 @@ export async function downloadChronicleCard(data: GameData): Promise<void> {
   // 統計
   const gens = Math.max(...data.family.map((c) => c.gen))
   const fallen = data.family.filter((c) => !c.alive)
-  const years = Math.floor(data.seasonIndex / 4) + 1
+  const years = yearOfMonth(data.seasonIndex)
   ctx.fillStyle = '#c9a86a'
   ctx.font = mincho(24, 600)
   ctx.fillText(

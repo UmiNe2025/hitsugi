@@ -1,5 +1,5 @@
-import type { Character, God, Stats, StatKey } from './types'
-import { LIFESPAN_MONTHS } from './types'
+import type { Character, GameData, GenerationVowId, God, Item, NarrativeScene, Stats, StatKey, SuccessionRecord } from './types'
+import { LIFESPAN_MONTHS, STAT_LABELS } from './types'
 import { Rng, uid } from './rng'
 import { MALE_NAMES, FEMALE_NAMES } from './data/names'
 import { PERSONALITIES } from './data/personalities'
@@ -16,6 +16,12 @@ export const AGE_CURVE = [
 ]
 
 export const ADULT_MONTHS = 6 // 成人(初陣が許される月齢)
+
+export const GENERATION_VOWS: Readonly<Record<GenerationVowId, { name: string; promise: string; nextStep: string }>> = {
+  guard_line: { name: '血脈を守る', promise: '誰も独りで夜へ置いていかない', nextStep: 'まず家族の傷と後継の備えを確かめる' },
+  break_night: { name: '常夜を破る', promise: '恐れを抱いたままでも、夜の奥へ進む', nextStep: '先代が届かなかった地へ出立する' },
+  keep_names: { name: '名を忘れない', promise: '生きた証を、勝敗より長く家譜へ残す', nextStep: '家譜を開き、先代の名と事績を読む' },
+}
 
 export function ageOf(c: Character, seasonIndex: number): number {
   return seasonIndex - c.bornSeason
@@ -189,4 +195,77 @@ export function makeFounder(bornSeason: number, rng: Rng): Character {
   void rng
   const withStats = recalcStats(founder, bornSeason)
   return { ...withStats, hp: withStats.maxHp, mp: withStats.maxMp }
+}
+
+/** 指名者が存命なら優先し、無効時は従来どおり最年長の存命者へ安全に戻す。 */
+export function chooseSuccessor(data: Pick<GameData, 'family' | 'designatedHeirId'>): Character | undefined {
+  const living = data.family.filter((char) => char.alive)
+  const designated = data.designatedHeirId
+    ? living.find((char) => char.id === data.designatedHeirId)
+    : undefined
+  return designated ?? [...living].sort((a, b) => a.bornSeason - b.bornSeason || a.id.localeCompare(b.id))[0]
+}
+
+interface SuccessionTruth {
+  label: string
+  line: string
+}
+
+function successionTruths(data: GameData, predecessor: Character, keepsakes: readonly Item[]): [SuccessionTruth, SuccessionTruth] {
+  const children = data.family.filter((char) => char.humanParentId === predecessor.id)
+  const candidates: SuccessionTruth[] = [
+    predecessor.kills > 0 ? { label: `魔性${predecessor.kills}体を討った`, line: `討った魔性は、確かに${predecessor.kills}体。` } : null,
+    predecessor.expeditions > 0 ? { label: `${predecessor.expeditions}度出立した`, line: `夜藪へ出立したのは、確かに${predecessor.expeditions}度。` } : null,
+    children.length > 0 ? { label: `${children.length}人の子を残した`, line: `残した子は${children.length}人 — ${children.map((child) => child.name).join('、')}。` } : null,
+    keepsakes.length > 0 ? { label: `形見「${keepsakes[0].name}」を残した`, line: `蔵へ戻った形見は「${keepsakes[0].name}」。` } : null,
+    predecessor.deeds[0] ? { label: `「${predecessor.deeds[0]}」を成した`, line: `家譜には「${predecessor.deeds[0]}」とある。` } : null,
+  ].filter((truth): truth is SuccessionTruth => truth !== null)
+  if (candidates.length < 2) {
+    candidates.push(
+      { label: `魔性${predecessor.kills}体を討った`, line: `討った魔性は${predecessor.kills}体。その零も偽らず記す。` },
+      { label: `${predecessor.expeditions}度出立した`, line: `夜藪への出立は${predecessor.expeditions}度。その零も生涯の真実だ。` },
+    )
+  }
+  const unique = candidates.filter((truth, index, all) => all.findIndex((other) => other.label === truth.label) === index)
+  return [unique[0], unique[1] ?? candidates[candidates.length - 1]]
+}
+
+/** 先代の約束→実在する二つの事実→返歌→形見/血潮→次の一手を一場面へまとめる。 */
+export function buildSuccessionScene(
+  data: GameData,
+  predecessor: Character,
+  successor: Character,
+  keepsakes: readonly Item[],
+  question: string,
+): { scene: NarrativeScene; record: SuccessionRecord } {
+  const [first, second] = successionTruths(data, predecessor, keepsakes)
+  const vow = data.generationVow?.madeById === predecessor.id ? GENERATION_VOWS[data.generationVow.id] : undefined
+  const strongest = (Object.entries(successor.potential) as [StatKey, number][]).sort((a, b) => b[1] - a[1])[0]
+  const bloodLegacy = `${STAT_LABELS[strongest[0]]}${strongest[1]}の血潮`
+  const reply = `あなたが${first.label}ことも、${second.label}ことも、私は忘れない。その続きを私の生で返す。`
+  const heirloomName = keepsakes[0]?.name
+  const nextStep = vow?.nextStep ?? '家族の顔を見て、次のひと月に何を残すか決める'
+  const record: SuccessionRecord = {
+    predecessorId: predecessor.id,
+    successorId: successor.id,
+    season: data.seasonIndex,
+    vowId: data.generationVow?.madeById === predecessor.id ? data.generationVow.id : undefined,
+    truthLabels: [first.label, second.label],
+    reply,
+    heirloomName,
+    bloodLegacy,
+  }
+  const lines = [
+    { speaker: predecessor.name, text: vow ? `「${vow.promise}」— これが私の約束だった。` : '約束は言葉にしきれなかった。それでも、歩いた跡は残る。' },
+    { speaker: '家譜', text: first.line },
+    { speaker: '家譜', text: second.line },
+    { speaker: successor.name, text: reply },
+    { speaker: '綴', text: heirloomName ? `「形見『${heirloomName}』と、${bloodLegacy}が汝へ継がれた」` : `「形ある品はなくとも、${bloodLegacy}は汝へ継がれた」` },
+    { speaker: '綴', text: `「今代の問い — ${question}」` },
+    { speaker: successor.name, text: `次の一手 — ${nextStep}。` },
+  ]
+  return {
+    record,
+    scene: { kind: 'life', narrativeId: `inherit:${data.seasonIndex}:${predecessor.id}:${successor.id}`, bg: 'cg2_succession.jpg', title: '当主継承 — 灯の返歌', lines },
+  }
 }

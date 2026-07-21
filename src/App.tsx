@@ -11,6 +11,7 @@ import { ChronicleScreen } from './ui/Chronicle'
 import { CodexScreen } from './ui/Codex'
 import { ForgeScreen } from './ui/Forge'
 import { FacilitiesScreen } from './ui/Facilities'
+import { StarLotteryScreen } from './ui/StarLottery'
 import { BirthScene, CeremonyScene, DeathScene, DreamScene, DreamEpScene, EndingScene, FinaleScene, JobRiteScene, LifeScene } from './ui/Scenes'
 import { SettingsModal } from './ui/Settings'
 import { setToastSink, emitToast, type ToastKind } from './ui/toast'
@@ -123,6 +124,19 @@ function App() {
 
   useCollectionToasts(data)
 
+  // M43: SPAの画面遷移でも、文書を開き直した時と同じ読み始めを保証する。
+  // 前画面の深いscroll位置やbutton focusを新画面へ持ち越さない。
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    const frame = window.requestAnimationFrame(() => {
+      const heading = document.querySelector<HTMLElement>('h1')
+      if (!heading) return
+      if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1
+      heading.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [screen.id])
+
   // ボタン操作音(委譲リスナー1本)
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -144,6 +158,7 @@ function App() {
         case 'home':
         case 'village': // M23: 郷歩行マップは郷の音を継ぐ
         case 'pact':
+        case 'starLottery':
         case 'depart':
         case 'chronicle':
         case 'forge': // M18: 新Screen idは必ずtrack mapへ追加(defaultは'none'=無音事故)
@@ -182,6 +197,8 @@ function App() {
         return <HomeScreen />
       case 'pact':
         return <PactScreen />
+      case 'starLottery':
+        return <StarLotteryScreen />
       case 'village':
         return <VillageScreen />
       case 'depart':

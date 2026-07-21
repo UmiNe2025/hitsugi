@@ -46,6 +46,12 @@ function AscentMap({
   onSelect: (id: string) => void
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
+  const frontierIndex = regions.reduce((bestIndex, region, index) => (
+    fame >= region.unlockFame && (bestIndex < 0 || region.unlockFame >= regions[bestIndex].unlockFame) ? index : bestIndex
+  ), -1)
+  const selectedIndex = selected ? regions.findIndex((region) => region.id === selected) : frontierIndex
+  const compactStart = Math.max(0, Math.min(regions.length - 5, selectedIndex - 2))
+  const compactRegions = regions.slice(compactStart, compactStart + 5)
 
   // 初回表示: 選択中の地(なければ最前線)を視界の中央へ
   useEffect(() => {
@@ -64,6 +70,29 @@ function AscentMap({
   }, [fame, regions, selected])
 
   return (
+    <>
+    <div className="ascent-mobile-strip" role="list" aria-label="現在地周辺の横絵巻">
+      {compactRegions.map((region) => {
+        const unlocked = fame >= region.unlockFame
+        const isCleared = cleared.includes(region.id)
+        return (
+          <button
+            type="button"
+            role="listitem"
+            key={`compact-${region.id}`}
+            className={`ascent-mobile-place ${selected === region.id ? 'is-sel' : ''}`}
+            style={{ backgroundImage: `linear-gradient(180deg, rgba(5,7,12,.12), rgba(5,7,12,.92)), url(${regionBgR(region.id)})` }}
+            disabled={!unlocked}
+            aria-pressed={selected === region.id}
+            onClick={() => onSelect(region.id)}
+          >
+            <span>{isCleared ? '鎮' : unlocked ? '灯' : '封'}</span>
+            <b>{region.name}</b>
+            <small>{unlocked ? `深さ${region.depth}・${'★'.repeat(region.tier)}` : `武功${region.unlockFame}`}</small>
+          </button>
+        )
+      })}
+    </div>
     <div className="ascent-wrap" ref={wrapRef} role="list" aria-label="行き先の絵地図">
       <div className="ascent-map-canvas">
         <img className="ascent-map-art" src={EXPEDITION_EMAKIMONO} alt="" aria-hidden loading="lazy" decoding="async" />
@@ -118,6 +147,7 @@ function AscentMap({
         </div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -225,8 +255,9 @@ export function DepartScreen() {
   const setScreen = useGame((s) => s.setScreen)
   const depart = useGame((s) => s.depart)
   const departDungeon = useGame((s) => s.departDungeon)
+  const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const [regionId, setRegionId] = useState<string | null>(() => initialRegionId(data.fame))
-  const [party, setParty] = useState<string[]>([])
+  const [party, setParty] = useState<string[]>(() => adults.length === 1 ? [adults[0].id] : [])
   const [view, setView] = useState<'map' | 'list'>('map')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const selectRegion = (id: string) => {
@@ -238,7 +269,6 @@ export function DepartScreen() {
     }
   }
 
-  const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const toggle = (id: string) =>
     setParty((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length < PARTY_SIZE ? [...p, id] : p))
 

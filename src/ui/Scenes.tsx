@@ -35,7 +35,7 @@ function useSceneAdvance(canAdvance: boolean, doAdvance: () => void) {
   const onBgClick = (e: ReactMouseEvent) => { if (e.target === e.currentTarget) advance() }
   return { advance, onBgClick }
 }
-import { STAT_LABELS } from '../core/types'
+import { STAT_LABELS, yearOfMonth } from '../core/types'
 import type { StatKey } from '../core/types'
 import { godById, MOURNING } from '../core/data/gods'
 import { personalityById } from '../core/data/personalities'
@@ -826,7 +826,7 @@ export function EndingScene() {
 
   const gens = Math.max(...data.family.map((c) => c.gen))
   const fallenCount = data.family.filter((c) => !c.alive).length
-  const years = Math.floor(data.seasonIndex / 4) + 1
+  const years = yearOfMonth(data.seasonIndex)
 
   return (
     <div className="scene-screen screen vc3b-scene vc3b-finale-scene" data-scene-surface="flame-crossroads" data-scene-route="ending" onClick={() => { if (!done) { audio.se('page'); setBeat(beat + 1) } }}>

@@ -1977,11 +1977,30 @@ input:focus-visible {
 .asc-dot-lock { background: #2a3252; border-color: #4a5378; }
 @media (max-width: 640px) {
   .depart-cols { grid-template-columns: 1fr; }
-  .ascent-wrap { max-height: 54vh; }
-  .ascent-map-canvas { height: 1960px; min-height: 1960px; }
+  .ascent-wrap { display: none; }
   .asc-place { width: clamp(132px, 42vw, 154px); }
   .ascent-tier { left: 5px; width: 68px; padding-left: 6px; padding-right: 5px; }
   .depart-side { position: static; }
+}
+
+/* M43: mobileは40地点の1960px縦巻物を、現在地周辺5地点の横絵巻へ畳む。 */
+.ascent-mobile-strip { display: none; }
+@media (max-width: 640px) {
+  .ascent-mobile-strip {
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(148px, 74vw);
+    gap: 8px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: inline mandatory;
+    padding: 3px 3px 10px; scrollbar-width: thin;
+  }
+  .ascent-mobile-place {
+    min-height: 148px; display: grid; grid-template-rows: 1fr auto auto; align-items: end;
+    scroll-snap-align: center; padding: 10px; border: 1px solid rgba(201,168,106,.38);
+    border-radius: 6px; background-position: center; background-size: cover; color: var(--text); text-align: left;
+  }
+  .ascent-mobile-place > span { justify-self: start; align-self: start; border: 1px solid var(--gold); border-radius: 50%; padding: 5px; font-size: 11px; }
+  .ascent-mobile-place > b { color: var(--gold); font-size: 15px; }
+  .ascent-mobile-place > small { color: var(--text); font-size: 12px; }
+  .ascent-mobile-place.is-sel { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(232,163,61,.24); }
+  .depart-route-shortlist { margin-bottom: 8px; }
 }
 
 /* ============================================================
@@ -2082,6 +2101,34 @@ input:focus-visible {
 .callout-text { font-size: 12.5px; color: var(--text); line-height: 1.55; }
 .callout-action { flex-shrink: 0; }
 .callout-action .btn { margin: 0; padding: 6px 14px; font-size: 13px; }
+
+/* M43 初回導線: 家族と今月の判断を同じ視界へ置き、長い縦列を避ける。 */
+.home-core-grid { display: grid; gap: 12px; }
+@media (min-width: 960px) {
+  .home-core-grid { grid-template-columns: minmax(0, 1.18fr) minmax(390px, .82fr); align-items: start; }
+  .home-core-grid .panel { margin-bottom: 0; }
+  .home-core-actions .action-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .home-core-actions .action-card { min-height: 66px; padding: 8px 10px; }
+  .home-core-actions .action-card-icon { width: 34px; height: 34px; }
+  .home-core-actions .action-card-title { font-size: 13px; }
+  .home-core-actions .action-card-desc { font-size: 10.5px; line-height: 1.35; }
+}
+
+/* M43 星契り: 初見は理由付き三柱だけ。全180柱は明示展開後の二次面。 */
+.pact-curation-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  margin-bottom: 10px; padding: 9px 11px; border-left: 2px solid var(--amber); background: rgba(232,163,61,.07);
+}
+.pact-curation-head > div { display: grid; gap: 2px; }
+.pact-curation-head b { color: var(--amber); letter-spacing: .08em; }
+.pact-curation-head span { color: var(--text-dim); font-size: 11.5px; }
+.god-row-why { color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+.god-row[aria-disabled='true'] { cursor: not-allowed; opacity: .55; }
+@media (max-width: 640px) {
+  .pact-curation-head { align-items: stretch; flex-direction: column; }
+  .god-row { flex-wrap: wrap; }
+  .god-row-why { width: 100%; padding-left: 42px; }
+}
 
 /* LiveBadge — 新着/達成。0なら描画自体しない(shell.tsx) */
 .live-badge {

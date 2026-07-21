@@ -338,7 +338,14 @@ export function ForgeScreen({ initialTab = 'buy' }: { initialTab?: Tab }) {
         </div>
       )}
 
-      {tab === 'collection' && <ItemCollection data={data} isMobile={isMobile} />}
+      {tab === 'collection' && (
+        <ItemCollection
+          data={data}
+          isMobile={isMobile}
+          query={search}
+          onQueryChange={setSearch}
+        />
+      )}
 
       {selChar && (tab === 'buy' || tab === 'equip') && (
         <section className="forge-workbench" aria-labelledby="forge-workbench-title" data-testid="forge-workbench">
@@ -416,7 +423,7 @@ export function ForgeScreen({ initialTab = 'buy' }: { initialTab?: Tab }) {
       )}
 
       {/* 絞り込み(購う/装備/打ち直し): 検索+部位+希少度+買える物のみ(M22 §2.2)。見世(shop)は絞り込み不要 */}
-      {tab !== 'train' && tab !== 'shop' && (tab !== 'buy' || buyCatalogueOpen) && (tab !== 'equip' || storehouseOpen) && (
+      {tab !== 'collection' && tab !== 'train' && tab !== 'shop' && (tab !== 'buy' || buyCatalogueOpen) && (tab !== 'equip' || storehouseOpen) && (
         <div className="forge-filter-row">
           <input
             className="forge-search"

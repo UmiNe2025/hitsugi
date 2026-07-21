@@ -122,6 +122,9 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
   const engineRef = useRef<VillageEngine | null>(null)
   const [focus, setFocus] = useState<VillageFocus | null>(null)
   const [talk, setTalk] = useState<Talk | null>(null)
+  const [pressedDirection, setPressedDirection] = useState<'up' | 'down' | 'left' | 'right' | null>(null)
+  const [surveying, setSurveying] = useState(false)
+  const surveyingRef = useRef(false)
   const resolvedVisualV2 = visualV2 ?? isRegionVisualV2Enabled()
   const villageVisualState = useMemo(() => resolveVillageVisualState(data), [data])
 
@@ -175,7 +178,7 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
       { onFocus: setFocus },
     )
     engineRef.current = engine
-    void engine.init()
+    void engine.init().then(() => engine.setSurvey(surveyingRef.current))
     return () => {
       engine.destroy()
       engineRef.current = null
@@ -271,19 +274,46 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
   useEffect(() => {
     if (!talk) return
     for (const dir of ['up', 'down', 'left', 'right'] as const) engineRef.current?.pressDir(dir, false)
+    setPressedDirection(null)
   }, [talk])
 
   const go = (s: Screen) => setScreen(s)
+  const setDirection = (dir: 'up' | 'down' | 'left' | 'right', pressed: boolean) => {
+    engineRef.current?.pressDir(dir, pressed)
+    setPressedDirection((current) => pressed ? dir : current === dir ? null : current)
+  }
+  const setSurvey = (pressed: boolean) => {
+    surveyingRef.current = pressed
+    engineRef.current?.setSurvey(pressed)
+    setSurveying(pressed)
+  }
   const dpad = (dir: 'up' | 'down' | 'left' | 'right', label: string) => (
     <button
       className="dpad-btn"
       aria-label={{ up: '上へ', down: '下へ', left: '左へ', right: '右へ' }[dir]}
+      aria-pressed={pressedDirection === dir}
       onPointerDown={(e) => {
         e.preventDefault()
-        engineRef.current?.pressDir(dir, true)
+        setDirection(dir, true)
       }}
-      onPointerUp={() => engineRef.current?.pressDir(dir, false)}
-      onPointerLeave={() => engineRef.current?.pressDir(dir, false)}
+      onPointerUp={() => setDirection(dir, false)}
+      onPointerLeave={() => setDirection(dir, false)}
+      onPointerCancel={() => setDirection(dir, false)}
+      onKeyDown={(event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
+          event.preventDefault()
+          event.stopPropagation()
+          setDirection(dir, true)
+        }
+      }}
+      onKeyUp={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          event.stopPropagation()
+          setDirection(dir, false)
+        }
+      }}
+      onBlur={() => setDirection(dir, false)}
     >
       {label}
     </button>
@@ -361,10 +391,26 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
         <button
           className="village-survey"
           aria-label="郷を見渡す(押している間)"
-          onPointerDown={(e) => { e.preventDefault(); engineRef.current?.setSurvey(true) }}
-          onPointerUp={() => engineRef.current?.setSurvey(false)}
-          onPointerLeave={() => engineRef.current?.setSurvey(false)}
-          onPointerCancel={() => engineRef.current?.setSurvey(false)}
+          aria-pressed={surveying}
+          onPointerDown={(e) => { e.preventDefault(); setSurvey(true) }}
+          onPointerUp={() => setSurvey(false)}
+          onPointerLeave={() => setSurvey(false)}
+          onPointerCancel={() => setSurvey(false)}
+          onKeyDown={(event) => {
+            if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
+              event.preventDefault()
+              event.stopPropagation()
+              setSurvey(true)
+            }
+          }}
+          onKeyUp={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              event.stopPropagation()
+              setSurvey(false)
+            }
+          }}
+          onBlur={() => setSurvey(false)}
         >
           見渡す
         </button>

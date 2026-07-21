@@ -68,8 +68,11 @@ export function PactScreen() {
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const doPact = useGame((s) => s.doPact)
-  const [parentId, setParentId] = useState<string | null>(null)
+  const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
+  const [parentId, setParentId] = useState<string | null>(() => adults.length === 1 ? adults[0].id : null)
   const [godId, setGodId] = useState<string | null>(null)
+  const [showAllGods, setShowAllGods] = useState(false)
+  const [activeGodIndex, setActiveGodIndex] = useState(0)
   const [rankTab, setRankTab] = useState<GodRank | 0>(0) // 0=全て
   const [elemChip, setElemChip] = useState<Element | null>(null)
   const [onlyAffordable, setOnlyAffordable] = useState(false) // 絞り込み: 費用内(M18)
@@ -78,7 +81,6 @@ export function PactScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false) // M26 §9.5: 契りの最終確認Sheet
   const pactFiredRef = useRef(false) // 二重実行防止 — 確認Sheetの実行CTA以外からdoPactを呼ばせない呼び出し済みフラグ
 
-  const adults = data.family.filter((c) => c.alive && isAdult(c, data.seasonIndex))
   const parent = adults.find((c) => c.id === parentId) ?? null
   const god = GODS.find((g) => g.id === godId) ?? null
   const contractedGodIds = data.codex?.gods ?? []
@@ -86,13 +88,27 @@ export function PactScreen() {
   const recommendStat = parent ? strongestPotential(parent.potential) : null
 
   // 奉納点(cost)昇順 — 俺屍の神名リスト様式。費用内/未契約は表示の絞り込みのみ(選択可否には無関係)
-  const shownGods = GODS.filter((g) => {
+  const filteredGods = GODS.filter((g) => {
     if (rankTab !== 0 && g.rank !== rankTab) return false
     if (elemChip !== null && g.element !== elemChip) return false
     if (onlyAffordable && data.hoto < pactCost(g, data.godAffinity[g.id] ?? 0)) return false
     if (onlyUncontracted && contractedGodIds.includes(g.id)) return false
     return true
   }).sort((a, b) => a.cost - b.cost)
+  const recommendedGods = [...GODS]
+    .filter((candidate) => godUnlocked(candidate, data))
+    .sort((a, b) => {
+      const score = (candidate: God) => {
+        const effectiveCost = pactCost(candidate, data.godAffinity[candidate.id] ?? 0)
+        const statMatch = recommendStat != null && topBias(candidate.statBias)[0]?.[0] === recommendStat ? 500 : 0
+        const affordable = effectiveCost <= data.hoto ? 250 : 0
+        const newBond = contractedGodIds.includes(candidate.id) ? 0 : 30
+        return statMatch + affordable + newBond - effectiveCost
+      }
+      return score(b) - score(a) || a.cost - b.cost
+    })
+    .slice(0, 3)
+  const shownGods = showAllGods ? filteredGods : recommendedGods
 
   const prediction = useMemo(
     () => (parent && god ? predictChild(parent, god) : null),
@@ -161,7 +177,21 @@ export function PactScreen() {
       </Panel>
 
       <Panel title={`星神を選ぶ — 奉燈 ${data.hoto}`}>
-        <div className="god-filter">
+        <div className="pact-curation-head">
+          <div>
+            <b>{showAllGods ? '全ての星' : '今夜、血に合う三柱'}</b>
+            <span>{showAllGods ? '位階・属性・費用から自由に探せる。' : parent ? `${parent.name}の強み・奉燈・未契約を読んだ薦め。どの星を選んでもよい。` : '先に親を選ぶと、血潮に合う理由を示す。'}</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            aria-expanded={showAllGods}
+            onClick={() => { setShowAllGods((shown) => !shown); setActiveGodIndex(0) }}
+          >
+            {showAllGods ? '薦め三柱へ戻る' : '全ての星を見る'}
+          </button>
+        </div>
+        {showAllGods && <div className="god-filter">
           <div className="god-filter-row">
             {([0, 1, 2, 3, 4] as const).map((r) => (
               <button
@@ -202,7 +232,7 @@ export function PactScreen() {
               未契約
             </button>
           </div>
-        </div>
+        </div>}
 
         <div className="pact-main">
           {/* 左: 神名リスト(奉納点昇順) */}
@@ -213,20 +243,32 @@ export function PactScreen() {
             {shownGods.length === 0 && (
               <p className="god-list-empty">その条件の星は、今夜は見えない。</p>
             )}
-            {shownGods.map((g) => {
+            {shownGods.map((g, index) => {
               const sealed = !godUnlocked(g, data)
               const affinity = Math.floor(data.godAffinity[g.id] ?? 0)
               const eff = pactCost(g, data.godAffinity[g.id] ?? 0) // 縁の割引(M12-2)
               const availability = pactAvailability(!sealed, data.hoto, eff)
+              const canInspect = Boolean(parent && availability.inspectable)
               const recommended = !sealed && recommendStat != null && topBias(g.statBias)[0]?.[0] === recommendStat
               return (
                 <button
                   key={g.id}
+                  data-god-index={index}
                   className={`god-row ${godId === g.id ? 'selected' : ''} ${sealed ? 'locked' : ''} ${!availability.contractable && availability.inspectable ? 'unaffordable' : ''} ${recommended ? 'recommended' : ''}`}
                   aria-pressed={godId === g.id}
-                  aria-disabled={!availability.inspectable}
-                  title={availability.reason ?? ''}
-                  onClick={() => availability.inspectable && setGodId(g.id)}
+                  aria-disabled={!canInspect}
+                  tabIndex={canInspect && index === Math.min(activeGodIndex, shownGods.length - 1) ? 0 : -1}
+                  title={!parent ? '先に契る親を選ぶ' : availability.reason ?? ''}
+                  onClick={() => { if (canInspect) { setGodId(g.id); setActiveGodIndex(index) } }}
+                  onKeyDown={(event) => {
+                    if (!canInspect || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+                    event.preventDefault()
+                    const next = event.key === 'Home' ? 0
+                      : event.key === 'End' ? shownGods.length - 1
+                        : (index + (event.key === 'ArrowDown' ? 1 : -1) + shownGods.length) % shownGods.length
+                    setActiveGodIndex(next)
+                    event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-god-index="${next}"]`)?.focus()
+                  }}
                 >
                   <span className={`element-badge el-${g.element} god-row-el`}>{ELEMENT_LABELS[g.element]}</span>
                   <span className="god-row-name">
@@ -247,6 +289,11 @@ export function PactScreen() {
                     {!sealed && eff < g.cost && <span className="god-row-base">{g.cost}</span>}
                     {!availability.contractable && availability.inspectable && <span className="god-row-short">不足</span>}
                   </span>
+                  {!showAllGods && (
+                    <span className="god-row-why" data-testid="pact-recommendation-reason">
+                      {recommended ? '親の強みを伸ばす' : eff <= data.hoto ? '今の奉燈で契れる' : '次に目指す星'}
+                    </span>
+                  )}
                 </button>
               )
             })}

@@ -15,6 +15,7 @@ const routeBundles = {
   home: ['src/ui/Home.tsx', 'src/ui/m17_home.css', 'tests/visual/ar0_home_pact.spec.ts', 'The family card and bloodline diagnosis form the monthly-life focal pair.'],
   village: ['src/ui/Village.tsx', 'src/ui/village.css', 'tests/visual/village.spec.ts', 'Five grounded facilities, nearby residents, and crisis variants turn the village into a readable place.'],
   pact: ['src/ui/Pact.tsx', 'src/ui/pact_m35.css', 'tests/visual/pact.spec.ts', 'The selected deity remains the sole visual hero; unreviewed MAX art cannot replace its identity.'],
+  starLottery: ['src/ui/StarLottery.tsx', 'src/ui/star_lottery.css', 'tests/m43_star_lottery.test.ts', 'One revealed deity portrait and the permanently visible odds make each free star lot legible without monetized urgency.'],
   birth: ['src/ui/Scenes.tsx', 'src/ui/scenes_vc3b.css', 'tests/visual/scenes_vc3b.spec.ts', 'Birth is staged as a page in the family chronicle with character identity held in the foreground.'],
   ceremony: ['src/ui/Scenes.tsx', 'src/ui/scenes_vc3b.css', 'tests/visual/scenes_vc3b.spec.ts', 'The coming-of-age rite uses the chronicle frame and a single ceremonial decision.'],
   jobrite: ['src/ui/Scenes.tsx', 'src/ui/scenes_vc3b.css', 'tests/visual/scenes_vc3b.spec.ts', 'The vocation rite keeps the heir and the life-changing selection in one visual field.'],
@@ -77,6 +78,28 @@ function integrate(entry, sourcePath, runtimePath, evidence, owner) {
 }
 
 const ledger = JSON.parse(fs.readFileSync(ledgerPath, 'utf8'))
+if (!ledger.entries.some((entry) => entry.kind === 'route' && entry.sceneId === 'starLottery')) {
+  ledger.entries.push({
+    kind: 'route',
+    sceneId: 'starLottery',
+    parentSurface: 'home',
+    stateId: ['locked', 'available', 'confirm', 'new-card', 'duplicate', 'no-draw', 'reduced-motion'],
+    viewport: ['1280x720', '390x844'],
+    hero: 'pending integration',
+    support: 'pending integration',
+    groundContact: 'pending integration',
+    depth: 'pending integration',
+    people: 'pending integration',
+    ui: 'pending integration',
+    motionSound: 'pending integration',
+    runtimeBundle: 'N/A',
+    provenance: 'N/A',
+    status: 'planned',
+    owner: 'visual-recovery/starLottery',
+    evidence: ['src/ui/StarLottery.tsx'],
+    nAReason: 'Added before integration metadata is derived.',
+  })
+}
 for (const entry of ledger.entries) {
   if (entry.kind === 'route') {
     const bundle = routeBundles[entry.sceneId]
@@ -120,7 +143,7 @@ for (const entry of ledger.entries) {
 }
 
 ledger.promotion = {
-  date: '2026-07-21',
+  date: '2026-07-22',
   target: 'code-integrated',
   note: 'Local source/runtime integration only. No row becomes scene-integrated until every required state, all five canonical viewports, and mechanical checks have repository evidence.',
 }

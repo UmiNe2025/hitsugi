@@ -1,0 +1,70 @@
+/* M43: 序盤12種の固有兆し。敵札の上で「次の手 / 対象 / 対処」を二行だけ見せる。 */
+.enemy-intent.has-behavior {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr);
+  grid-template-areas: 'dot tell' 'dot response';
+  width: clamp(92px, 8.7vw, 132px);
+  max-width: 100%;
+  gap: 0 5px;
+  padding: 3px 6px 4px;
+  border-radius: 6px;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.enemy-intent.has-behavior .intent-dot {
+  grid-area: dot;
+  align-self: center;
+}
+
+.enemy-intent.has-behavior .intent-tell {
+  grid-area: tell;
+  min-width: 0;
+  overflow: hidden;
+  color: #f4ead6;
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemy-intent.has-behavior .intent-tell b {
+  color: currentColor;
+  font-size: 11px;
+}
+
+.enemy-intent.has-behavior .intent-response {
+  grid-area: response;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(244, 234, 214, 0.78);
+  font-size: 8.5px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemy-intent.has-behavior .intent-response i {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin: 0 3px 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: #ffc56f;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@media (max-width: 767px) {
+  .enemy-intent.has-behavior {
+    width: clamp(82px, 24vw, 106px);
+    padding-inline: 4px;
+  }
+
+  .enemy-intent.has-behavior .intent-tell { font-size: 9px; }
+  .enemy-intent.has-behavior .intent-response { font-size: 8px; }
+}

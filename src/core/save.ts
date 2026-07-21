@@ -1,6 +1,8 @@
 import type { GameData, ChronicleEntry, NarrativeScene } from './types'
 import { recoverNarrativeOnLoad } from './narrative'
 import { migrateCollectionV2 } from './collection'
+import { migrateJourneyMetrics } from './journey_metrics'
+import { migrateStarLottery } from './star_lottery'
 
 const KEY_V1 = 'hitsugi_save_v1' // 季節単位(1ターン=1季)時代のセーブ
 const KEY_V3 = 'hitsugi_save_v3' // 月単位(1ターン=1月)
@@ -183,6 +185,42 @@ export function isValidSave(d: unknown): d is GameData & { saveSeq?: number } {
       typeof bits !== 'number' || !Number.isInteger(bits) || bits < 0 || bits > 0x7fff
     ))) return false
   }
+  if (g.designatedHeirId !== undefined && typeof g.designatedHeirId !== 'string') return false
+  if (g.successionPending !== undefined && (!isRecord(g.successionPending) ||
+    typeof g.successionPending.predecessorId !== 'string' || !isStringArray(g.successionPending.heirloomIds))) return false
+  if (g.generationVow !== undefined) {
+    const vow = g.generationVow
+    if (!isRecord(vow) || !['guard_line', 'break_night', 'keep_names'].includes(String(vow.id)) ||
+      typeof vow.madeById !== 'string' || typeof vow.generation !== 'number' || !Number.isFinite(vow.generation) ||
+      typeof vow.setSeason !== 'number' || !Number.isFinite(vow.setSeason)) return false
+  }
+  if (g.lastSuccession !== undefined) {
+    const record = g.lastSuccession
+    if (!isRecord(record) || typeof record.predecessorId !== 'string' || typeof record.successorId !== 'string' ||
+      typeof record.season !== 'number' || !Number.isFinite(record.season) || !isStringArray(record.truthLabels) ||
+      record.truthLabels.length !== 2 || typeof record.reply !== 'string' || typeof record.bloodLegacy !== 'string') return false
+  }
+  if (g.journeyMetrics !== undefined) {
+    const journey = g.journeyMetrics
+    if (!isRecord(journey) || typeof journey.startedAtMs !== 'number' || !Number.isFinite(journey.startedAtMs) || journey.startedAtMs < 0 || !isRecord(journey.milestones)) return false
+    const ids = new Set(['new_game', 'pact', 'birth', 'first_depart', 'first_return', 'safe_exit', 'first_death', 'first_inherit', 'next_month'])
+    for (const [id, milestone] of Object.entries(journey.milestones)) {
+      if (!ids.has(id) || !isRecord(milestone) || milestone.id !== id ||
+        typeof milestone.atSeason !== 'number' || !Number.isFinite(milestone.atSeason) || milestone.atSeason < 0 ||
+        typeof milestone.elapsedMs !== 'number' || !Number.isFinite(milestone.elapsedMs) || milestone.elapsedMs < 0) return false
+    }
+  }
+  if (g.starLottery !== undefined) {
+    const lottery = g.starLottery
+    if (!isRecord(lottery) || !isStringArray(lottery.cards) || !Array.isArray(lottery.history) ||
+      typeof lottery.drawsUsed !== 'number' || !Number.isFinite(lottery.drawsUsed) || lottery.drawsUsed < 0 ||
+      (lottery.lastRequestId !== undefined && typeof lottery.lastRequestId !== 'string')) return false
+    for (const entry of lottery.history) {
+      if (!isRecord(entry) || typeof entry.requestId !== 'string' || typeof entry.drawNumber !== 'number' ||
+        !isStringArray(entry.godIds) || !isStringArray(entry.newGodIds) || !isStringArray(entry.duplicateGodIds) ||
+        typeof entry.affinityGained !== 'number' || typeof entry.atSeason !== 'number') return false
+    }
+  }
   return true
 }
 
@@ -202,7 +240,11 @@ function readRaw(key: string): { raw: string; data: Persisted } | null {
 
 export function saveGame(data: GameData): void {
   if (saveReadOnly) return // M33: 別タブの保存を検知した後は保存を止め、相手の新しい進行を上書きしない
-  const normalizedData: GameData = { ...data, collectionV2: migrateCollectionV2(data) }
+  // load専用のrecoverNarrativeOnLoadはここで呼ばない。表示中sceneを保存のたびに
+  // 灯の余白へ退避してしまうため、保存時は追加schemaの正規化だけに留める。
+  const withCollection = { ...data, collectionV2: migrateCollectionV2(data) }
+  const withJourney = { ...withCollection, journeyMetrics: migrateJourneyMetrics(withCollection) }
+  const normalizedData: GameData = { ...withJourney, starLottery: migrateStarLottery(withJourney) }
   // 直前の正常セーブ(saveSeq取得+BAK候補)
   const prev = readRaw(KEY)
   // M32修正: seqは本体だけでなくBAKの最大も上回らせる。本体破損時にseqが1へ再起動すると、
@@ -293,9 +335,15 @@ function migrateCodexSeen(d: GameData): GameData {
   }
 }
 
-function finalizeLoaded(d: GameData, forcePersist = false): GameData {
+export function normalizeLoadedData(d: GameData, now = Date.now()): GameData {
   const seenMigrated = migrateCodexSeen(d)
-  const migrated = recoverNarrativeOnLoad({ ...seenMigrated, collectionV2: migrateCollectionV2(seenMigrated) })
+  const withNarrative = recoverNarrativeOnLoad({ ...seenMigrated, collectionV2: migrateCollectionV2(seenMigrated) })
+  const withJourney = { ...withNarrative, journeyMetrics: migrateJourneyMetrics(withNarrative, now) }
+  return { ...withJourney, starLottery: migrateStarLottery(withJourney) }
+}
+
+function finalizeLoaded(d: GameData, forcePersist = false): GameData {
+  const migrated = normalizeLoadedData(d)
   // 旧saveのsentinel付与、または表示中sceneの灯の余白への回収は一度で永続化する。
   // JSON比較はload時だけで、schemaが小さく明瞭なことを優先する。
   if (forcePersist || JSON.stringify(migrated) !== JSON.stringify(d)) saveGame(migrated)
@@ -394,6 +442,40 @@ export function inspectSaveSlot(): SaveSlotStatus {
   return 'damaged'
 }
 
+/** download専用。書換えずに、main/BAK/旧版から検証・migration済みの最新候補を得る。 */
+export function exportableSaveData(): GameData | null {
+  try {
+    const main = readRaw(KEY)
+    const bak = readRaw(KEY_BAK)
+    const current = [main?.data, bak?.data]
+      .filter((candidate): candidate is Persisted => !!candidate)
+      .sort((a, b) => (b.saveSeq ?? 0) - (a.saveSeq ?? 0))
+    for (const candidate of current) {
+      try {
+        return normalizeLoadedData(candidate, candidate.lastPlayedAt ?? 0)
+      } catch {
+        // 次の検証済み候補(通常はBAK)へ
+      }
+    }
+
+    const migrateLegacy = (raw: string | null, kind: 'v3' | 'v1'): GameData | null => {
+      if (!raw) return null
+      const parsed: unknown = JSON.parse(raw)
+      if (!isValidSave(parsed)) return null
+      const migrated = kind === 'v1' ? migrateV3(migrateV1(parsed)) : migrateV3(parsed)
+      return normalizeLoadedData(migrated, migrated.lastPlayedAt ?? 0)
+    }
+    return migrateLegacy(localStorage.getItem(KEY_V3), 'v3') ?? migrateLegacy(localStorage.getItem(KEY_V1), 'v1')
+  } catch {
+    return null
+  }
+}
+
+export function exportSaveString(): string | null {
+  const candidate = exportableSaveData()
+  return candidate ? JSON.stringify(candidate) : null
+}
+
 export function clearSave(): void {
   localStorage.removeItem(KEY)
   localStorage.removeItem(KEY_BAK)
@@ -405,7 +487,7 @@ export function clearSave(): void {
 
 // 現行セーブをJSONファイルとしてダウンロード。セーブが無ければfalse。
 export function downloadSave(): boolean {
-  const raw = localStorage.getItem(KEY)
+  const raw = exportSaveString()
   if (!raw) return false
   try {
     const stamp = new Date().toISOString().slice(0, 10)

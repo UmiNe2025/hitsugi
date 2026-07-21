@@ -4,6 +4,7 @@ import type { BattleAction } from './battle'
 import { consumableById } from './data/consumables'
 import { skillById } from './data/skills'
 import type { AutoBattlePolicy } from './settings'
+import { priorityBehaviorEnemy } from './enemy_behaviors'
 
 export type AutoActionCategory =
   | 'critical-heal-skill'
@@ -13,6 +14,9 @@ export type AutoActionCategory =
   | 'power-skill'
   | 'attack'
   | 'guard'
+  | 'telegraph-guard'
+  | 'telegraph-stop'
+  | 'telegraph-break'
 
 export interface AutoActionChoice {
   action: BattleAction
@@ -54,19 +58,19 @@ function singleTargetFor(battle: BattleState, foes: Combatant[], skill?: Skill):
   return chained ?? [...foes].sort((a, b) => a.hp - b.hp)[0]
 }
 
-function skillAction(battle: BattleState, foes: Combatant[], skill: Skill): BattleAction {
+function skillAction(battle: BattleState, foes: Combatant[], skill: Skill, preferred?: Combatant): BattleAction {
   return {
     type: 'skill',
     skillId: skill.id,
-    targetKey: skill.target === 'enemy' ? singleTargetFor(battle, foes, skill).key : undefined,
+    targetKey: skill.target === 'enemy' ? (preferred ?? singleTargetFor(battle, foes, skill)).key : undefined,
   }
 }
 
-function regularAttack(battle: BattleState, foes: Combatant[]): AutoActionChoice {
+function regularAttack(battle: BattleState, foes: Combatant[], preferred?: Combatant): AutoActionChoice {
   if (foes.length === 0) {
     return { action: { type: 'guard' }, reason: '攻める相手がいないため身を固める', category: 'guard' }
   }
-  const target = singleTargetFor(battle, foes)
+  const target = preferred ?? singleTargetFor(battle, foes)
   return {
     action: { type: 'attack', targetKey: target.key },
     reason: battle.chainTarget === target.key ? '継足を保って通常攻撃する' : '灯力と道具を使わず攻撃する',
@@ -136,6 +140,60 @@ export function chooseAutoAction(context: AutoBattleContext): AutoActionChoice {
   const { battle, actor, policy } = context
   const foes = battle.enemies.filter((enemy) => enemy.hp > 0)
   if (foes.length === 0 || actor.hp <= 0) return regularAttack(battle, foes)
+
+  // M43: 初見を含む全戦闘のオートで、画面に出ている兆しと同じ情報だけを使う。
+  // 停止設定や報酬には触れず、三方針の資源規律も維持する。
+  const receiveThreat = priorityBehaviorEnemy(battle, 'receive')
+  if (receiveThreat) {
+    return {
+      action: { type: 'guard' },
+      reason: `${receiveThreat.name}の強手を読み、身を固める`,
+      category: 'telegraph-guard',
+    }
+  }
+
+  const stopThreat = priorityBehaviorEnemy(battle, 'stop')
+  if (stopThreat) {
+    if (policy === 'economy') {
+      const choice = regularAttack(battle, foes, stopThreat)
+      return { ...choice, reason: `${stopThreat.name}の強手を止めるため狙いを集める`, category: 'telegraph-stop' }
+    }
+    const attackSkill = actor.skills
+      .map(safeSkill)
+      .filter((skill): skill is Skill => !!skill && skill.type === 'attack' && actualMpCost(actor, skill) <= actor.mp)
+      .sort((a, b) => {
+        const weakA = isWeak(a.element, stopThreat) ? 1 : 0
+        const weakB = isWeak(b.element, stopThreat) ? 1 : 0
+        return weakB - weakA || b.power - a.power || actualMpCost(actor, a) - actualMpCost(actor, b)
+      })[0]
+    if (attackSkill) {
+      return {
+        action: skillAction(battle, foes, attackSkill, stopThreat),
+        reason: `${stopThreat.name}の強手より先に${attackSkill.name}で止める`,
+        category: 'telegraph-stop',
+      }
+    }
+    const choice = regularAttack(battle, foes, stopThreat)
+    return { ...choice, reason: `${stopThreat.name}の強手を止めるため狙いを集める`, category: 'telegraph-stop' }
+  }
+
+  const breakThreat = priorityBehaviorEnemy(battle, 'break')
+  if (breakThreat && policy !== 'economy') {
+    const breakingSkill = actor.skills
+      .map(safeSkill)
+      .filter((skill): skill is Skill => !!skill
+        && skill.type === 'attack'
+        && isWeak(skill.element, breakThreat)
+        && actualMpCost(actor, skill) <= actor.mp)
+      .sort((a, b) => b.power - a.power || actualMpCost(actor, a) - actualMpCost(actor, b))[0]
+    if (breakingSkill) {
+      return {
+        action: skillAction(battle, foes, breakingSkill, breakThreat),
+        reason: `${breakingSkill.name}で${breakThreat.name}の構えを崩す`,
+        category: 'telegraph-break',
+      }
+    }
+  }
 
   if (policy === 'economy') return regularAttack(battle, foes)
 

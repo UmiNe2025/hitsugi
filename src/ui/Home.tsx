@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../core/store'
 import { seasonLabel, isFestivalMonth, MOTTOS } from '../core/types'
-import type { MottoId, Element } from '../core/types'
-import { isAdult, seasonsLeft } from '../core/inheritance'
+import type { MottoId, Element, GenerationVowId } from '../core/types'
+import { GENERATION_VOWS, isAdult, seasonsLeft } from '../core/inheritance'
+import { isStarLotteryUnlocked, remainingStarLotteryDraws } from '../core/star_lottery'
 import { GODS } from '../core/data/gods'
 import { ENEMIES } from '../core/data/enemies'
 import { REGIONS } from '../core/data/regions'
@@ -14,7 +15,7 @@ import type { NarrativeScene } from '../core/types'
 import { generationQuestion, narrativeSceneId, returnTraces } from '../core/narrative'
 import { census, recommendAction, nextMonthNotes, ledgerStats, type ActionKind } from './homeInsight'
 import { Sheet, StatusCallout, LiveBadge, LifeThread } from './layout/shell'
-import { CharCard, Ico, NightBackdrop, Panel, TsuzuriLine } from './components'
+import { CharCard, Ico, NightBackdrop, Panel } from './components'
 import { gameImg, HOME_BG, HOME_BG_SEASONS } from './img'
 import { FamilyTree } from './FamilyTree'
 import './m17_home.css'
@@ -52,6 +53,8 @@ export function HomeScreen() {
   const consumeDeferredReminder = useGame((s) => s.consumeDeferredReminder)
   const openDeferredScene = useGame((s) => s.openDeferredScene)
   const replayNarrativeScene = useGame((s) => s.replayNarrativeScene)
+  const designateHeir = useGame((s) => s.designateHeir)
+  const setGenerationVow = useGame((s) => s.setGenerationVow)
   const [visitGift, setVisitGift] = useState<{ text: string; hoto: number; ketsu: number } | null>(null)
   const [legacyRecap, setLegacyRecap] = useState<string | null>(null)
   const [deferredReminder, setDeferredReminder] = useState<NarrativeScene | null>(null)
@@ -63,43 +66,45 @@ export function HomeScreen() {
   const [showObjectives, setShowObjectives] = useState(false)
   const [showStoryMargin, setShowStoryMargin] = useState(false)
   const [showAllArchive, setShowAllArchive] = useState(false)
+  const [showSuccessionPlan, setShowSuccessionPlan] = useState(false)
 
   const alive = data.family.filter((c) => c.alive)
   const adults = alive.filter((c) => isAdult(c, data.seasonIndex))
   const cheapestPact = Math.min(...GODS.map((g) => g.cost))
   const canPact = adults.length > 0 && data.hoto >= cheapestPact
-  const hint = useMemo(() => tsuzuriHint(data, adults.length), [data, adults.length])
-
   // M18 P2: 血脈診断・状況別推奨・月送り確認・郷の帳
   const cen = useMemo(() => census(data), [data])
   const rec = useMemo(() => recommendAction(data), [data])
+  // M43: 複数の助言器を競合させず、身体危機を血脈拡張より優先する。
+  const priorityRec = cen.dying.length > 0
+    ? { action: 'rest' as const, reason: `瀕死の${cen.dying.map((c) => c.name).join('・')}を先に癒す。命を立て直してから次代と夜藪を考える。` }
+    : rec
+  const nextCandidate = priorityRec.action === 'rest'
+    ? (!cen.hasHeir && canPact ? '傷が癒えたら星契り' : '傷が癒えたら出立')
+    : priorityRec.action === 'pact' ? '子を授けたら出立' : !cen.hasHeir && canPact ? '実りを得たら星契り' : '帰還後に一族を見直す'
   const [confirm, setConfirm] = useState<'festival' | 'rest' | null>(null)
   const famRef = useRef<HTMLDivElement>(null)
   const actRef = useRef<HTMLDivElement>(null)
   const ledRef = useRef<HTMLDivElement>(null)
-  const head = cen.alive.find((c) => c.isHead) ?? cen.alive[0]
-  const headDying = !!head && head.hp / head.maxHp < 0.3
-  const crisis = (cen.alive.length <= 1 && !cen.hasHeir) || headDying
+  const crisis = !cen.hasHeir || cen.dying.length > 0
   const crisisTitle = [
     cen.alive.length <= 1 && !cen.hasHeir ? '後継なし' : '',
-    headDying ? '当主 瀕死' : '',
+    cen.dying.length > 0 ? `${cen.dying.map((c) => c.name).join('・')} 瀕死` : '',
   ].filter(Boolean).join(' / ')
-  const goAction = (a: ActionKind) => {
-    if (a === 'depart') setScreen({ id: 'depart' })
-    else if (a === 'pact') setScreen({ id: 'pact' })
-    else setConfirm(a)
-  }
-
   // 日参り — 郷に戻った初回(実日付が変わっていれば)綴が控えめに迎える。streakなし・煽らない。
   // StrictModeの二重effectで2回目がnullを返しバナーを打ち消すのを、ref一度きりガードで防ぐ。
   const visitCheckedRef = useRef(false)
   const legacyCheckedRef = useRef(false)
   const reminderCheckedRef = useRef(false)
+  const hasReturned = Boolean(data.narrative?.lastReturn)
+    || data.family.some((character) => character.expeditions > 0)
+    || data.regionsCleared.length > 0
   useEffect(() => {
-    if (visitCheckedRef.current) return
+    // 新しい家の第一声を報酬にしない。最初の帰還を果たした家だけ日参りを受け取る。
+    if (visitCheckedRef.current || !hasReturned) return
     visitCheckedRef.current = true
     setVisitGift(dailyVisit())
-  }, [dailyVisit])
+  }, [dailyVisit, hasReturned])
   useEffect(() => {
     if (legacyCheckedRef.current) return
     legacyCheckedRef.current = true
@@ -165,24 +170,13 @@ export function HomeScreen() {
         </div>
       )}
 
-      {crisis && (
-        <StatusCallout
-          kind="crisis"
-          title={`血脈危機 — ${crisisTitle}`}
-          action={<button className="btn" onClick={() => goAction(rec.action)}>{ACTION_LABEL[rec.action]}へ</button>}
-        >
-          {rec.reason}
-        </StatusCallout>
-      )}
-
-      <div className="tsuzuri-row">
-        <TsuzuriLine text={hint.text} />
-        {hint.go && (
-          <button className="btn tsuzuri-go" onClick={() => setScreen({ id: hint.go!.id })}>
-            → {hint.go.label}
-          </button>
-        )}
-      </div>
+      <StatusCallout
+        kind={crisis ? 'crisis' : 'info'}
+        title={crisis ? `今月の最優先 — ${crisisTitle}` : `今月の最優先 — ${ACTION_LABEL[priorityRec.action]}`}
+        action={<button className="btn" onClick={() => actRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>決断を見る</button>}
+      >
+        {priorityRec.reason}　次月候補: {nextCandidate}
+      </StatusCallout>
 
       <section className="narrative-now" aria-labelledby="narrative-now-title">
         <div>
@@ -195,18 +189,19 @@ export function HomeScreen() {
         </button>
       </section>
 
-      <div ref={famRef}>
+      <div className="home-core-grid">
+      <div ref={famRef} className="home-core-family">
         <Panel title="燈守家の一族">
-          <FamilyBoard data={data} onGo={goAction} />
+          <FamilyBoard data={data} />
         </Panel>
       </div>
 
-      <div ref={actRef}>
+      <div ref={actRef} className="home-core-actions">
       <Panel title="今月の決断 — 一つ選べば月が替わる">
-        <p className="rec-reason"><span className="rec-mark">薦</span>綴の見立て — {rec.reason}</p>
+        <p className="rec-reason"><span className="rec-mark">薦</span>綴の見立て — {priorityRec.reason}</p>
         <div className="action-cards">
           <ActionCard
-            primary={rec.action === 'depart'} rec={rec.action === 'depart'}
+            primary={priorityRec.action === 'depart'} rec={priorityRec.action === 'depart'}
             iconName="ic_expedition" iconFb="出" title="出立 — 夜藪へ"
             desc="夜藪へ潜り、奉燈と血珠を得る。深いほど実り多い。"
             disabled={adults.length === 0}
@@ -214,7 +209,7 @@ export function HomeScreen() {
             onClick={() => setScreen({ id: 'depart' })}
           />
           <ActionCard
-            rec={rec.action === 'pact'}
+            rec={priorityRec.action === 'pact'}
             iconName="ic_pact" iconFb="契" title="星契り — 次代を授かる"
             desc="星神と契り、翌月に子を授かる。血を絶やすな。"
             disabled={!canPact}
@@ -226,7 +221,7 @@ export function HomeScreen() {
             onClick={() => setScreen({ id: 'pact' })}
           />
           <ActionCard
-            rec={rec.action === 'festival'}
+            rec={priorityRec.action === 'festival'}
             iconName={`fes_${['haru', 'natsu', 'aki', 'fuyu'][Math.floor((data.seasonIndex % 12) / 3)]}`} iconFb="祭" title="祭 — 郷を潤す"
             desc={isFestivalMonth(data.seasonIndex)
               ? '奉燈30を捧げ、一族の傷と心労を癒す。星との縁も深まる。'
@@ -240,7 +235,7 @@ export function HomeScreen() {
             onClick={() => setConfirm('festival')}
           />
           <ActionCard
-            rec={rec.action === 'rest'}
+            rec={priorityRec.action === 'rest'}
             iconName="ic_rest" iconFb="憩" title="静養 — 傷を癒す"
             desc="隊の傷と心労を癒す。何もない月も、月は替わる。"
             onClick={() => setConfirm('rest')}
@@ -248,6 +243,7 @@ export function HomeScreen() {
         </div>
         <p className="action-note">月が替わるたび、一族は歳を取る。八季(廿四月)で灯は尽きる — 時を無駄にするな。</p>
       </Panel>
+      </div>
       </div>
 
       {confirm && (
@@ -321,6 +317,8 @@ export function HomeScreen() {
               else if (key === 'tree') setShowTree(true)
               else if (key === 'gossip') { markGossipSeen(); setShowGossip(true) }
               else if (key === 'objectives') setShowObjectives(true)
+              else if (key === 'succession') setShowSuccessionPlan(true)
+              else if (key === 'starLottery') setScreen({ id: 'starLottery' })
               else if (key === 'motto') setShowMotto(true)
               else if (key === 'help') setShowHelp(true)
               else if (key === 'tower') {
@@ -345,6 +343,14 @@ export function HomeScreen() {
       {showGossip && <GossipModal onClose={() => setShowGossip(false)} />}
       {showFamiliars && <FamiliarsModal onClose={() => setShowFamiliars(false)} />}
       {showObjectives && <ObjectivesModal onClose={() => setShowObjectives(false)} />}
+      {showSuccessionPlan && (
+        <SuccessionPlanSheet
+          data={data}
+          onDesignate={designateHeir}
+          onSetVow={setGenerationVow}
+          onClose={() => setShowSuccessionPlan(false)}
+        />
+      )}
     </div>
   )
 }
@@ -383,7 +389,7 @@ function ActionCard({
 }
 
 // ---- M18 P2: 一族欄の二面化 — 大札(選択人物)+小札+血脈診断 ----
-function FamilyBoard({ data, onGo }: { data: GameData; onGo: (a: ActionKind) => void }) {
+function FamilyBoard({ data }: { data: GameData }) {
   const [selId, setSelId] = useState<string | null>(null)
   const c = census(data)
   if (c.alive.length === 0) {
@@ -413,15 +419,14 @@ function FamilyBoard({ data, onGo }: { data: GameData; onGo: (a: ActionKind) => 
           </div>
         )}
       </div>
-      <BloodlineDiagnosis data={data} onGo={onGo} />
+      <BloodlineDiagnosis data={data} />
     </div>
   )
 }
 
 // 血脈診断 — 1人でも空疎に見えない「状態を説明できる空白」(設計 §3.3/§4.2)
-function BloodlineDiagnosis({ data, onGo }: { data: GameData; onGo: (a: ActionKind) => void }) {
+function BloodlineDiagnosis({ data }: { data: GameData }) {
   const c = census(data)
-  const rec = recommendAction(data)
   const lifeCrisis = c.minLife && c.minLife.months <= 3
   return (
     <div className="blood-diag">
@@ -457,7 +462,7 @@ function BloodlineDiagnosis({ data, onGo }: { data: GameData; onGo: (a: ActionKi
       </ul>
       <div className="blood-diag-next">
         <span className="blood-diag-next-label">次の一手</span>
-        <button className="btn" onClick={() => onGo(rec.action)}>{ACTION_LABEL[rec.action]}へ</button>
+        <span>今月の決断に一つだけ示す</span>
       </div>
     </div>
   )
@@ -469,6 +474,18 @@ function HomeLedger({ data, onOpen }: { data: GameData; onOpen: (key: string) =>
   const odaiKey = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
   const odaiClaimable = data.flags.odaiClaimedDay !== odaiKey && todaysOdai(odaiKey).check(data)
   const { work, record, mind } = ledgerStats(data, odaiClaimable)
+  const living = data.family.filter((character) => character.alive)
+  const designated = living.find((character) => character.id === data.designatedHeirId)
+  const currentVow = data.generationVow ? GENERATION_VOWS[data.generationVow.id] : undefined
+  mind.unshift({
+    key: 'succession',
+    label: '次代の約束',
+    value: designated ? `後継 ${designated.name}` : currentVow?.name ?? 'まだ定めない',
+  })
+  if (isStarLotteryUnlocked(data)) {
+    const remaining = remainingStarLotteryDraws(data)
+    record.push({ key: 'starLottery', label: '星籤', value: remaining > 0 ? `引ける籤 ${remaining}` : `星札 ${data.starLottery?.cards.length ?? 0}`, badge: remaining })
+  }
   if (data.flags.cleared) work.push({ key: 'tower', label: '常夜百層', value: `深さ${typeof data.flags.towerBest === 'number' ? data.flags.towerBest : 0}` })
   const books: [string, typeof work][] = [['営み', work], ['記録', record], ['心得', mind]]
   return (
@@ -485,6 +502,61 @@ function HomeLedger({ data, onOpen }: { data: GameData; onOpen: (key: string) =>
         </div>
       ))}
     </div>
+  )
+}
+
+const VOW_IDS = Object.keys(GENERATION_VOWS) as GenerationVowId[]
+
+function SuccessionPlanSheet({ data, onDesignate, onSetVow, onClose }: {
+  data: GameData
+  onDesignate: (charId: string | null) => void
+  onSetVow: (vowId: GenerationVowId) => void
+  onClose: () => void
+}) {
+  const head = data.family.find((character) => character.alive && character.isHead)
+  const candidates = data.family.filter((character) => character.alive && !character.isHead)
+  const generationVow = data.generationVow
+  const selectedVow = generationVow && generationVow.madeById === head?.id ? generationVow.id : undefined
+  return (
+    <Sheet title="次代の約束" onClose={onClose} closeLabel="郷へ戻る">
+      <p className="confirm-lead">戦力を増やす仕組みではない。誰へ灯を渡し、何を残すかを、生きているうちに定める。</p>
+      <section className="succession-plan-section" aria-labelledby="heir-plan-title">
+        <h3 id="heir-plan-title">後継を指名する</h3>
+        {candidates.length > 0 ? (
+          <div className="succession-plan-options">
+            <button type="button" className={`btn ${!data.designatedHeirId ? 'selected' : ''}`} aria-pressed={!data.designatedHeirId} onClick={() => onDesignate(null)}>
+              定めない <small>その時の最年長へ</small>
+            </button>
+            {candidates.map((candidate) => (
+              <button
+                type="button"
+                key={candidate.id}
+                className={`btn ${data.designatedHeirId === candidate.id ? 'selected' : ''}`}
+                aria-pressed={data.designatedHeirId === candidate.id}
+                onClick={() => onDesignate(candidate.id)}
+              >
+                {candidate.name} <small>第{candidate.gen}代・残り{seasonsLeft(candidate, data.seasonIndex)}月</small>
+              </button>
+            ))}
+          </div>
+        ) : <p className="confirm-list-empty">いまは候補がいない。無指定でも家は止まらず、存命者が増えればここで選べる。</p>}
+      </section>
+      <section className="succession-plan-section" aria-labelledby="vow-plan-title">
+        <h3 id="vow-plan-title">今代に残す約束</h3>
+        <div className="succession-plan-options">
+          {VOW_IDS.map((id) => {
+            const vow = GENERATION_VOWS[id]
+            const selected = selectedVow === id
+            return (
+              <button type="button" key={id} className={`btn succession-vow ${selected ? 'selected' : ''}`} aria-pressed={selected} onClick={() => onSetVow(id)}>
+                <strong>{vow.name}</strong><span>{vow.promise}</span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+      <p className="confirm-age">指名も約束も月を消費せず、次の継承場面で先代の生涯の事実とともに返される。</p>
+    </Sheet>
   )
 }
 
@@ -696,29 +768,6 @@ function ObjectivesModal({ onClose }: { onClose: () => void }) {
         ))}
     </Sheet>
   )
-}
-
-type HintGo = { id: 'pact' | 'depart'; label: string }
-function tsuzuriHint(data: ReturnType<typeof useGame.getState>['data'] & object, adultCount: number): { text: string; go?: HintGo } {
-  const alive = data.family.filter((c) => c.alive)
-  const head = alive.find((c) => c.isHead)
-  if (alive.length === 0) return { text: '……一族は今、腹の中の子ひとりに懸かっとる。祈って待て。' }
-  if (head && seasonsLeft(head, data.seasonIndex) <= 3) {
-    return { text: `${head.name}の灯は、もってあとひと季。……契りを済ませたか? 家譜に次の名を書かせてくれよ。`, go: { id: 'pact', label: '星契りへ' } }
-  }
-  if (adultCount > 0 && data.pendingBirths.length === 0 && alive.length <= 2 && data.hoto >= 80) {
-    return { text: '血が細い。星契りを急げ。一族が絶えれば、郷の大燈籠も消える。', go: { id: 'pact', label: '星契りへ' } }
-  }
-  if (data.fame >= 60 && data.regionsCleared.length === 0) {
-    return { text: '武功が上がったな。提灯坂への道が開けとるぞ。あそこの主は……まあ、行けば分かる。', go: { id: 'depart', label: '出立へ' } }
-  }
-  const lines = [
-    '書くことがないのは良い日だ、と千年書いてきて思う。……さ、今月はどう動く?',
-    '夜藪は深いほど実り多い。だが灯が尽きた闇で死ぬなよ。「行方知れず」と書くのは、儂とて辛い。',
-    '奉燈は使ってこそ。蔵で錆びさせるな、契りに、装備に、祭に回せ。',
-    '同じ的を家族で続けて狙え。「継足」の連撃は、血の繋がりの技よ。',
-  ]
-  return { text: lines[data.seasonIndex % lines.length] }
 }
 
 // 家訓(v3.1 M12-8) — 当主が家風を定める。一族全体への小さな加護
