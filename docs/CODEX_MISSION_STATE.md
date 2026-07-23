@@ -1,70 +1,66 @@
-# CODEX MISSION STATE — M43 core appeal implementation
+# CODEX MISSION STATE — M45 engagement additions audit
 
 ## ①契約
 
-- Definition of done: M42 P0の1〜4、即時修正6件、非課金の世界観統合ガチャを既存save互換で実装し、PC1280/mobile390の直接操作、unit/E2E/build、独立監査でblocking 0にする。
-- Out of scope: 新規画像量産、現金課金・決済、外部ユーザー募集、commit、push、deploy。
-- Constraints: 全戦闘オート、手動同報酬、自由選択、追加物量凍結を維持。既存baseline PNG 9点と`tmp/`、M42 docs差分を保護する。
-- Gacha boundary: 既存ゲーム内進行だけで解放し、確率明示、天井、重複救済、期間限定/FOMOなし、ガチャ限定の必須戦闘性能なし。
-- Permission boundary: ローカル実装と検証のみ。公開・外部送信・課金・既存dirty上書きは未承認。
-- Escalation: 実ユーザー8名、物理低性能端末、analytics provider、課金判断は外部gateとして分離する。
-- Audit class: independent audit。save、継承、ランダム報酬、主要旅程を変更するため。
-- Subjective acceptance: 初回30分、継承因果、序盤敵の対処差、ガチャの納得感をPC1280/mobile390の実画面と明示rubricで判定する。
+- Definition of done: 現行公開版の不足を実装証拠から特定し、没入・判断・世代継承・収集育成・再訪動機に効く追加内容を、優先順位・最小実装単位・測定指標・見送り条件付きの正本資料へまとめる。
+- Out of scope: ゲーム実装、新規画像量産、外部ユーザー募集、課金、commit、push、deploy。
+- Constraints: GDD v3と現行runtimeを正とし、M43との重複を除く。既存baseline PNG 9点、`tmp/`、未追跡M40/M42文書を上書きしない。
+- Permission boundary: ローカルの読み取り・文書作成・機械検証のみ。公開、外部送信、費用発生は別承認とする。
+- Escalation: 外部初見8名、一世代5名、物理低性能端末、analytics providerは外部gateへ分離する。
+- Audit class: independent audit。魅力・没入という主観品質と優先順位判断を含むため。
+- Subjective acceptance: 初回30分、戦闘判断、継承因果、収集育成、再訪動機の5軸で、既存機能との重複0・各案の検証可能性を判定する。
 
 ## ②作業分解
 
 | Item | Dependency | Execution path | Acceptance check | Status |
 |---|---|---|---|---|
-| A. 契約・状態・差分固定 | 正典/git | main | state/Goal/plan一致、dirty保護 | completed |
-| B. 即時修正＋初回30分UI | A | UI lane | 検索、scroll/focus、keyboard、推薦、事前選択 | completed |
-| C. 序盤12敵＋戦闘判断 | A | battle lane | 3行動型、兆し、sim | completed |
-| D. 継承因果＋milestone＋ガチャ | A | state lane | migration、天井、救済、継承scene | completed |
-| E. save export＋年数/version | D | state lane/main | recovery fixture、全表示一致 | completed |
-| F. 統合回帰 | B-E | main | unit/lint/build/E2E green | completed |
-| G. PC/mobile直接旅程 | F | main/browser | 初回・戦闘・継承・ガチャ証拠 | completed |
-| H. 正典同期 | F-G | main | GDD/STATUS/WORKLOG更新 | completed |
-| I. 独立最終監査 | H | fresh reviewer | PASS、blocking 0 | completed |
+| A. 契約・dirty境界固定 | git/GDD | main | state/Goal/plan一致、既存差分保護 | completed |
+| B. 現状証拠収集 | A | main＋read-only audit | GDD/M42/runtime/testの照合 | completed |
+| C. 5軸gap分析 | B | main | M43重複除外、候補の根拠あり | completed |
+| D. M45正本資料 | C | main | 優先度、実装単位、指標、見送り条件 | completed |
+| E. 独立最終監査 | D | fresh reviewer | blocking 0または修正 | completed |
+| F. 正典同期・終了 | E | main | GDD/STATUS/WORKLOG/state整合 | completed |
 
 ## ③完了済み
 
-- 2026-07-22: M42 terminal stateを`docs/CODEX_MISSION_STATE_M42_ARCHIVE_20260722.md`へ保全。
-- HEAD `001dfda`。M42 docs差分、baseline PNG 9点、`tmp/`を保護対象として固定。
-- ガチャは現金購入なし、確率明示、天井、重複救済、期間限定なしの安全境界を採用。
-- UI、battle、stateの3 laneへ排他ownershipを割り当て、docs/baseline/tmp非接触を明示して並行開始。
-- 初回導線、即時修正6件、後継指名/約束/継承返歌、序盤12敵、local metrics、星籤を統合。星籤をHomeと23番目のrouteへ接続。
-- Vitest 43 files / 721 tests、oxlint、production build、visual closure 23/40/6/69、manifest 9/9、diff-checkに合格。
-- PlaywrightはM43旅程をPC1280/mobile390で14/14、戦闘兆しを2/2合格。
-- 初回独立監査で、100 seed harnessが`bossDown`/戦利品を代入し、16月で止まり、通貨分位・敗北復帰月・seed再現性を持たないblocking 1件を検出。
-- 疑似結果代入を撤去した修復初版は、3地点だけを武功解禁なしで飛び越したためRound 2もblocking。再修復で100 seed全てを序盤雑兵→全39主の`unlockFame`順へ変更し、各出立前の武功、最終地の第四章/汐里名開示、正規解禁後の敗北→回復→再挑戦を強制検査。全主踏破率/部分進捗、寿命死・初継承、通貨p10/p50/p90、敗北復帰月、同一seed完全一致を実結果から集計する。
-- 最新差分でVitest 43 files / 721 tests、oxlint、production build、visual closure 23/40/6/69、manifest 9/9、diff-checkに合格。M34の動的import hookは重いcampaignとの並列時にも耐えるよう既知10秒を30秒へ現実化した。
-- 独立Round 3はfocused 2/2とdiff-checkを再実行しPASS / blocking 0。M43全契約を完了した。
-- GDD_v3 §8.26、STATUS、WORKLOGへ設計・検証・公開境界を同期。
+- 2026-07-23: HEAD `b8d78ae`、公開M43/M44、既存dirty PNG 9点、`tmp/`、未追跡M40/M42文書を確認し、非接触境界を固定した。
+- M43で初回30分、継承場面、序盤12敵、local journey metrics、星籤が実装済みであることをGDD v3 §8.26とruntimeから確認した。
+- gameplay、onboarding/retentionの独立read-only監査から、M43後に残る候補を収集し、既存実装との重複を除いた。
+- `docs/PRODUCT_ENGAGEMENT_ADDITIONS_M45_20260723.md`へ8候補、優先度、最小実装、分子/分母付き測定表、見送り条件、Phase 0→A1→A2→A3の逐次gateを記録した。
+- 独立Round 1のblocking 3件を受け、家族は既存scene置換、地域は既存見切り経路、計測はlocal event、順序は現行baseline・Dungeon安全性先行へ限定修正した。
+- 独立Round 2はPASS / blocking 0。GDD v3 §8.27、STATUS、WORKLOGへ正本と公開境界を同期した。
 
 ## ④保留リスト
 
-- 外部初見8名・一世代5名・物理低性能端末は、ローカル合格後の外部gate。
-- commit/push/deployはユーザーの明示依頼待ち。ローカル完成とは分離する。
-- 現金課金は本mission外。将来検討時は法務、platform、年齢配慮、返金、確率開示を別設計する。
+- 実ユーザー行動・魅力評価・低性能実機は、この文書監査では代替しない。
+- 実装、commit、push、deployは本mission外。
+- 次missionのPhase 0は、外部初見8名・一世代5名の協力と、実装着手のユーザー指示を必要とする。
 
 ## ⑤質問キュー
 
-- なし。ガチャは上記安全境界で実装し、課金判断を推測しない。
+- なし。候補を先に絞り、実装順の選択は成果物提示後とする。
 
 ## ⑥マイルストーン履歴
 
-- M43-0: 契約、Goal、9項目planを固定。独立実装laneを開始。
+- M45-0: 契約、Goal、5項目plan、独立read-only auditを開始。
+- M45-1: 5軸gap分析を統合し、M45正本資料を作成。
+- M45-2: 独立Round 1 FAIL / blocking 3。重複、測定不能、一括投入順序を検出。
+- M45-3: 限定修正後、独立Round 2 PASS / blocking 0。正典同期完了。
 
 ## ⑦次の一手
 
-- commit/push/deployは別の明示依頼で行う。外部初見8名、一世代5名、物理低性能端末を次gateとする。
+- ユーザーが実装を指示した場合、`docs/PRODUCT_ENGAGEMENT_ADDITIONS_M45_20260723.md` Phase 0から開始し、contentの一括投入を行わない。
 
 ## ⑧最終監査表
 
-- Round 1: FAIL / blocking 1。campaign simの疑似結果代入、終盤未到達、分位/復帰月/再現性不足。
-- Round 2: FAIL / blocking 1。疑似代入は解消したが、3地点だけを地域解禁なしで飛び越し、全主完遂率が構造上0。
-- Self-repair 2: 全39主を武功解禁順に実戦闘し、物語前提と最終敗北→回復→再挑戦を通すcampaignへ変更。
-- Round 3: **PASS / blocking 0**。100 seed全ての合法進行、結果直接代入0、全主踏破/部分進捗、通貨分位、復帰月、継承、seed 37完全一致を独立確認。実ユーザー/低性能実機は代替しないnon-blocking noteとして外部gateへ残す。
+- **監査種別**: independent audit。
+- ✅ 既存機能との重複0: 家族sceneは置換、地域は`loreFrags → traceIntel → bossMikiri`の拡張。
+- ✅ 魅力5軸: 初回、戦闘判断、継承、収集育成、再訪の候補と測定を記録。
+- ✅ 実装可能性: 各候補へ最小実装、event key、分子/分母、baseline、cohort、合格/見送り値を付与。
+- ✅ 安全境界: scene/deferred純増0、全戦闘オート同報酬、FOMO/新通貨/限定必須戦力なし。
+- ✅ 順序: 現行baseline、local計測、Dungeon安全性をPhase 0へ置き、A1〜A3を単独検証。
+- ✅ 独立Round 2: PASS / blocking 0。実ユーザー/実機は外部gateとして代替しない。
 
 ## ⑨terminal印
 
-公開完了 — 2026-07-22T07:52:00+09:00。実装`dbe2968`、closure hash修正`6ef7d4a`、Actions run `29875134003`成功。公開JS/CSSを直接確認済み。
+達成 — 2026-07-24T00:03:27+09:00。M45正本資料、GDD/STATUS/WORKLOG同期、独立再監査PASS / blocking 0。runtime/save/素材/公開版は変更していない。
