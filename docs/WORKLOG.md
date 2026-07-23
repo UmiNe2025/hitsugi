@@ -1349,3 +1349,11 @@
 - **成果物**: `docs/PRODUCT_ENGAGEMENT_ORIGINAL_M45A_20260724.md` — 共通基盤O-00反響チャネル(vow別格+他source合算月1の予算をコード一元強制)+独自施策6件: O-01星送りの灯(郷に逝去者の献灯、addProp/glowAt無改修+VillageVisualState出力1フィールド)/O-02辞世の反響(場所・命日一致の非modal再掲、新規文0)/O-03星還りの空(タイトルに逝去者の星、NG+跨ぎflags持ち越し、48超は天の川霞)/O-04野辺の墓標(死没地capture=現在store.ts:2465で破棄中のデータ保全を先行、表示は後段)/O-05血脈の音(家祖idシードの平調子3音モチーフ、写像式確定)/O-06代替わりの一枚(継承絵巻カード、既存shareCardレシピ4枚目)+附録A家訓の決算(M42 P1-10回収、P0-01同居)。全件にfile:line接地・6列測定表・重複検査4表(対M45/対M42/対却下済み/追補内部)・Phase織り込み(Phase 0-4新設+環境トラックV+推奨着手序列)。
 - **プロセス**: 探索3並列(状態フック/表現面/履歴・却下・Codex状態)→devil契約攻撃blocking8(争点3件は指揮側がコードで裁定: se union21種/run取得store.ts:2220/exp=d.expedition store.ts:2495)→ドラフト→独立2レンズ(devil再攻撃+UX)blocking計10→全反映→両レンズ閉鎖検証**PASS**(devilはコード再照合の上で6/6解消、UXは4/4解消)。
 - **git**: 新規2ファイル(追補+MISSION_STATE)のみcommit。Codex未コミット成果物(M45本文/GDD/STATUS差分ほか)には不干渉。push無し(公開ゲートは別途)。外部gate(初見8名等)は全て未実施(M45と同じ)。
+
+## 2026-07-24(Codex未コミット一式の整理+ガバナンス変更)
+
+- **依頼**: Codexが残していた未コミット一式(GDD/STATUS/CODEX_MISSION_STATE差分、M45/M42正本、M40アーカイブ)の内容整理と要否判断。
+- **整理方針**: 2コミットに分割。①Codex監査一式(GDD §8.27・STATUS・M45本文・M42本文・CODEX_MISSION_STATE・M40アーカイブ)、②WORKLOG(CodexのM45記録+私のM45A記録が同一ファイルに同居のため1コミット)。baseline PNG 9点はplaywright再レンダリングの副産物と判明(186KB→270KB等の実バイト差)しcheckoutで復元、`tmp/`(devpostキャプチャ、ゲームと無関係)は.gitignoreへ追加。
+- **ガバナンス変更**: `_fable5/CLAUDE.md`の「他ツール(Codex等)経由の編集は月次メンテで反映する」規約をユーザー指示により撤廃。以後Codex成果物も随時commit。
+- **commit**: hitsugi=`e2e30da`(Codex監査一式)/`0ad216c`(WORKLOG)/`32be976`(tmp/ gitignore)。_fable5=`d421fd3`(ルール撤廃)。
+- **デプロイ実行**(ユーザー承認「デプロイしてください」): build緑→上記3コミット(27a37b2含め計4)をpush。GitHub Actions run 30052013998 success(build 1m3s+deploy 15s)、https://hitsugi-game.github.io/hitsugi/ 公開反映済み。
