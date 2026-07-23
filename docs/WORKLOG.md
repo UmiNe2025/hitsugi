@@ -1334,3 +1334,18 @@
 - **回帰**: Title E2Eへ見出しがfocusedかつcomputed `outline-style: none`を追加。PC1440/mobile360のTitle/Intro **4/4**、oxlint、production build、visual closure **23 routes / 40 regions / 6 overlays / 69 entries**、validator 8/8、diff-checkに合格。
 - **公開境界**: ローカル修正のみ。push=本番のため、commit/push/deployは別の明示依頼を待つ。
 - **公開完了**: ユーザーの明示依頼を受け、対象5ファイルだけをcommit `7ff1997`としてmainへpush。Actions run `29876069814`はLinux上のlint、データ検証、Vitest、production build、Pages deployまで成功した。公開URLはHTTP 200で、配信CSS `assets/index-DXXd6C6Z.css`に`.title-main .game-title:focus{outline:none}`が含まれることをキャッシュ回避取得で確認。既存baseline PNG 9点、`tmp/`、未追跡M40/M42文書は引き続き対象外として保護した。
+
+## 2026-07-23（M45 没入・継続コンテンツ追加監査）
+
+- **契約**: 実装・画像・公開を行わず、M43公開後にユーザーを引き込む追加内容を、初回30分、戦闘判断、継承因果、収集育成、再訪動機の5軸で監査した。既存baseline PNG 9点、`tmp/`、未追跡M40/M42文書を保護した。
+- **結論**: 新規物量ではなく`選択 → 記憶 → 再会 → 次代で回収`を次の価値経路とした。8候補のうち、最優先contentは今代の約束の途中反響と継承決算。家族は一組、神は12柱、地域は4 macro biome各1地域、家宝は3品へ上限を置いた。
+- **自己修復**: 独立Round 1で、既存家族scene/地域見切りとの二重化、現行journeyMetricsで測れない指標、外部baselineとDungeon checkpointを後置する順序のblocking 3件を検出。新規scene/地域進行値を撤去し、local event辞書と分子/分母付き測定表、Phase 0→A1→A2→A3の逐次gateへ修正した。
+- **監査**: 独立Round 2は、scene/deferred純増0、既存`loreFrags → traceIntel → bossMikiri`の単一情報源、固定4地域、n=8/5で統計主張しない測定契約、逐次gateを直接確認しPASS / blocking 0。正本は`docs/PRODUCT_ENGAGEMENT_ADDITIONS_M45_20260723.md`。runtime/save/素材/公開版の変更、commit/push/deployは行っていない。
+
+## 2026-07-24（M45A 独自エンゲージメント追補 — /mission、Claude）
+
+- **依頼**: M45監査(Codex作成)を確認し、独自の強化施策を追加する。解釈=M45と同じ意思決定層への追補文書(M45自身が「runtime実装対象外」の優先順位決定文書のため)。実装昇格は別途ユーザー判断。
+- **診断**: M45の8施策は妥当だが**全てテキスト/scene/UIパネル次元**に偏る。空白=空間(郷/ダンジョン)・象徴(タイトル)・聴覚・既存資産「辞世」1370首の再利用・反響の配送機構。
+- **成果物**: `docs/PRODUCT_ENGAGEMENT_ORIGINAL_M45A_20260724.md` — 共通基盤O-00反響チャネル(vow別格+他source合算月1の予算をコード一元強制)+独自施策6件: O-01星送りの灯(郷に逝去者の献灯、addProp/glowAt無改修+VillageVisualState出力1フィールド)/O-02辞世の反響(場所・命日一致の非modal再掲、新規文0)/O-03星還りの空(タイトルに逝去者の星、NG+跨ぎflags持ち越し、48超は天の川霞)/O-04野辺の墓標(死没地capture=現在store.ts:2465で破棄中のデータ保全を先行、表示は後段)/O-05血脈の音(家祖idシードの平調子3音モチーフ、写像式確定)/O-06代替わりの一枚(継承絵巻カード、既存shareCardレシピ4枚目)+附録A家訓の決算(M42 P1-10回収、P0-01同居)。全件にfile:line接地・6列測定表・重複検査4表(対M45/対M42/対却下済み/追補内部)・Phase織り込み(Phase 0-4新設+環境トラックV+推奨着手序列)。
+- **プロセス**: 探索3並列(状態フック/表現面/履歴・却下・Codex状態)→devil契約攻撃blocking8(争点3件は指揮側がコードで裁定: se union21種/run取得store.ts:2220/exp=d.expedition store.ts:2495)→ドラフト→独立2レンズ(devil再攻撃+UX)blocking計10→全反映→両レンズ閉鎖検証**PASS**(devilはコード再照合の上で6/6解消、UXは4/4解消)。
+- **git**: 新規2ファイル(追補+MISSION_STATE)のみcommit。Codex未コミット成果物(M45本文/GDD/STATUS差分ほか)には不干渉。push無し(公開ゲートは別途)。外部gate(初見8名等)は全て未実施(M45と同じ)。
