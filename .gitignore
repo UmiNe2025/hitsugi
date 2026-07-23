@@ -35,3 +35,6 @@ public/img/*.png
 /playwright-report/
 /test-results/
 /tests/visual/.shots/
+
+# 一時作業物(ゲームと無関係・git外)
+tmp/
