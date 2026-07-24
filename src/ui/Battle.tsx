@@ -30,7 +30,7 @@ import { regionById } from '../core/data/regions'
 import { resolveRegionStageContract, type RegionStageContract } from '../core/data/region_stage_contracts'
 import { loreFor } from '../core/data/lore'
 import { bossEmotion } from '../core/narrative'
-import { Bar, MaybeImg } from './components'
+import { Bar, MaybeImg, Portrait } from './components'
 import { gameImg, spriteImg, poseImg, skillIcon, cutinImg, regionBgR, bossBgImg } from './img'
 import { BattleArtFrame, type CardTier } from './battle/BattleArtFrame'
 import './m17_battle.css'
@@ -39,6 +39,7 @@ import './battle_m25.css'
 import './battle_ar1.css'
 import './battle_m43.css'
 import './battle_m46.css'
+import './battle_m47.css'
 
 function Ar1BattleStage({ contract }: { contract: RegionStageContract }) {
   const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
@@ -214,6 +215,7 @@ export function BattleScreen() {
   const initialAuto = useGame((s) => s.dungeonRun?.autoBattle ?? getAutoBattleDefault())
   const setAutoBattleFlag = useGame((s) => s.setAutoBattle)
   const family = useGame((s) => s.data?.family) ?? []
+  const seasonIndex = useGame((s) => s.data?.seasonIndex) ?? 0
   const loreFrags = useGame((s) => s.data?.loreFrags)
   const consumables = useGame((s) => s.data?.consumables) // M28-C: 所持している回復薬など
 
@@ -1040,16 +1042,20 @@ export function BattleScreen() {
             {/* 左: 現在手番の名/HP/MP/状態。隊全体の灯力(MP)は誰の番でも常時1行維持(§3.4/§3.5) */}
             <div className="turnpanel-actor">
               {actor?.isAlly ? (
-                <>
-                  <div className="turnpanel-actor-name">
-                    {actor.name}
-                    {actor.guard && <span className="status-chip" title="防御中">防</span>}
-                    {!!actor.buffs.atkUp && <span className="status-chip" title="攻撃上昇中">攻↑</span>}
-                    {!!actor.buffs.defUp && <span className="status-chip" title="防御上昇中">守↑</span>}
+                <div className="turnpanel-actor-main">
+                  {charOf(actor) && <Portrait char={charOf(actor)!} seasonIndex={seasonIndex} size="sm" />}
+                  <div className="turnpanel-actor-vitals">
+                    <span className="turnpanel-kicker">いまの手番</span>
+                    <div className="turnpanel-actor-name">
+                      {actor.name}
+                      {actor.guard && <span className="status-chip" title="防御中">防</span>}
+                      {!!actor.buffs.atkUp && <span className="status-chip" title="攻撃上昇中">攻↑</span>}
+                      {!!actor.buffs.defUp && <span className="status-chip" title="防御上昇中">守↑</span>}
+                    </div>
+                    <Bar value={actor.hp} max={actor.maxHp} kind="hp" />
+                    <Bar value={actor.mp} max={actor.maxMp} kind="mp" />
                   </div>
-                  <Bar value={actor.hp} max={actor.maxHp} kind="hp" />
-                  <Bar value={actor.mp} max={actor.maxMp} kind="mp" />
-                </>
+                </div>
               ) : actor ? (
                 // M25§9.2: 敵の手番でも名前を出し、390×844で誰の番かを500ms以内に特定できるようにする
                 <div className="turnpanel-actor-name">
@@ -1075,6 +1081,12 @@ export function BattleScreen() {
             {/* 中央: 主要4コマンド(2×2+オート)/技一覧/対象選択ヒント(§3.5)。
                 M25§4.4: 入力不能時もcmd-gridは常設し、disabled表示+状態ラベルで領域を空箱にしない。 */}
             <div className="turnpanel-center">
+              {menu.kind === 'root' && (
+                <div className="command-board-heading">
+                  <span>戦支度</span>
+                  <b>{isPlayerTurn ? `${actor?.name ?? ''}の一手を選ぶ` : centerStatusLabel}</b>
+                </div>
+              )}
               {/* A(M28→M29+): オート切替を常設(手番・メニュー・演出に関わらず戦闘中いつでも入切可能)。
                   盤の流れ内に置くのでコマンドと重ならない。オート中は「■ 停止」で必ず止められる。 */}
               {!over && (
@@ -1116,7 +1128,10 @@ export function BattleScreen() {
                       disabled={!isPlayerTurn}
                       data-zone="command"
                       onClick={beginAttack}
-                    >攻撃</button>
+                    >
+                      <span className="cmd-mark" aria-hidden>斬</span>
+                      <span className="cmd-copy"><b>攻撃</b><small>継足を重ねる</small></span>
+                    </button>
                     <button
                       ref={skillButtonRef}
                       className="cmd-btn"
@@ -1128,10 +1143,17 @@ export function BattleScreen() {
                         setPreviewSkillId(actor?.skills[0] ?? null)
                       }}
                     >
-                      技
+                      <span className="cmd-mark" aria-hidden>技</span>
+                      <span className="cmd-copy"><b>技</b><small>灯力を費やす</small></span>
                     </button>
-                    <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'guard' }, '防御')}>防御</button>
-                    <button className="cmd-btn" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'flee' }, '逃げる')}>逃げる</button>
+                    <button className="cmd-btn cmd-guard" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'guard' }, '防御')}>
+                      <span className="cmd-mark" aria-hidden>守</span>
+                      <span className="cmd-copy"><b>防御</b><small>次の傷を抑える</small></span>
+                    </button>
+                    <button className="cmd-btn cmd-flee" disabled={!isPlayerTurn} data-zone="command" onClick={() => runCommand({ type: 'flee' }, '逃げる')}>
+                      <span className="cmd-mark" aria-hidden>退</span>
+                      <span className="cmd-copy"><b>逃げる</b><small>戦果を捨て退く</small></span>
+                    </button>
                     {/* M28-C: 道具(回復薬)。所持が無ければ無効表示で領域は保つ。 */}
                     <button
                       ref={itemButtonRef}
@@ -1140,7 +1162,9 @@ export function BattleScreen() {
                       data-zone="command"
                       onClick={() => { menuOriginRef.current = 'item'; setMenu({ kind: 'item' }) }}
                     >
-                      道具{availItems.length > 0 && <span className="sk-info">{availItems.reduce((n, x) => n + x.count, 0)}</span>}
+                      <span className="cmd-mark" aria-hidden>薬</span>
+                      <span className="cmd-copy"><b>道具</b><small>{availItems.length > 0 ? '傷と灯を補う' : '郷で補充できる'}</small></span>
+                      {availItems.length > 0 && <span className="sk-info">{availItems.reduce((n, x) => n + x.count, 0)}</span>}
                     </button>
                   </div>
                 </>
@@ -1235,7 +1259,9 @@ export function BattleScreen() {
 
             {/* 右: 選択中の技の威力/属性/消費/対象範囲(§3.5)。対象相性は戦場上の相性バッジ側で示す */}
             <div className="turnpanel-detail">
-              <SkillDetailPanel skillId={activeTargetMenu?.skillId ?? (menu.kind === 'skill' ? previewSkillId : null)} />
+              {activeTargetMenu?.skillId || menu.kind === 'skill'
+                ? <SkillDetailPanel skillId={activeTargetMenu?.skillId ?? previewSkillId} />
+                : <BattleTacticalBrief battle={battle} itemCount={availItems.reduce((sum, item) => sum + item.count, 0)} />}
             </div>
           </>
         )}
@@ -1355,6 +1381,31 @@ function SkillDetailPanel({ skillId }: { skillId: string | null | undefined }) {
 const INTENT_LABEL: Record<EnemyIntent, string> = { atk: '攻', tech: '術', aoe: '群' }
 const INTENT_TITLE: Record<EnemyIntent, string> = {
   atk: '次は単体攻撃の構え', tech: '次は術(状態・属性)の構え', aoe: '次は全体・複数攻撃の構え',
+}
+
+function BattleTacticalBrief({ battle, itemCount }: { battle: BattleState; itemCount: number }) {
+  const livingEnemies = battle.enemies.filter((enemy) => enemy.hp > 0)
+  const wideThreats = livingEnemies.filter((enemy) => battle.intents?.[enemy.key] === 'aoe').length
+  const chainName = battle.chainTarget
+    ? livingEnemies.find((enemy) => enemy.key === battle.chainTarget)?.name
+    : undefined
+  return (
+    <div className="battle-tactical-brief" aria-label="戦況の見立て">
+      <p className="battle-tactical-kicker">戦況の見立て</p>
+      <dl>
+        <div><dt>敵勢</dt><dd>{livingEnemies.length}体</dd></div>
+        <div><dt>広域の兆し</dt><dd>{wideThreats > 0 ? `${wideThreats}体` : 'なし'}</dd></div>
+        <div><dt>携行薬</dt><dd>{itemCount}個</dd></div>
+      </dl>
+      <p className="battle-tactical-note">
+        {chainName
+          ? `${chainName}へ火脈が通っている。同じ敵を狙えば次撃が伸びる。`
+          : itemCount === 0
+            ? '薬が尽きている。帰還後、郷の薬種見世で補充できる。'
+            : '敵札の「攻・術・群」を見て、攻めるか守るかを選べ。'}
+      </p>
+    </div>
+  )
 }
 const COUNTER_LABEL: Record<EnemyBehaviorCue['counter'], string> = { stop: '止', receive: '受', break: '崩' }
 const COUNTER_SHORT: Record<EnemyBehaviorCue['counter'], string> = {

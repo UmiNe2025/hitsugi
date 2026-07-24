@@ -9,6 +9,7 @@ import { isRegionVisualV2Enabled } from '../core/feature_flags'
 import { VILLAGERS, villagerBandOf, villagerLine, villagerLineKey } from '../core/data/villagers'
 import { GOSSIP, type GossipEntry } from '../core/data/gossip'
 import { personalityById } from '../core/data/personalities'
+import { CONSUMABLES } from '../core/data/consumables'
 import { ageOf, seasonsLeft } from '../core/inheritance'
 import { getReduceMotion } from '../core/settings'
 import { VillageEngine, type VillageFocus, type VillageNpc } from '../village/engine'
@@ -16,9 +17,12 @@ import { defaultVillageFacadeAssets, type VillageFacadeAssetSet } from '../villa
 import { defaultVillageEnvironmentAsset } from '../village/render/environment'
 import { charSprite, spriteUrl, stageOf, villagerImg, walkBasePath } from './img'
 import { MaybeImg } from './components'
+import { Sheet } from './layout/shell'
+import { emitToast } from './toast'
 import './village.css'
 import './village_m26.css' // M26 §6: 追従カメラUI(village.cssより後 — 後勝ち)
 import './village_polish_m29.css' // M29+: 郷歩行画面の視覚改善。village-stageの寸法には触れない(後勝ち)
+import './village_m47.css'
 
 // NPCの立ち位置(engine側MAPの歩行可タイルに合わせる)
 const NPC_SPOTS: Record<string, [number, number]> = {
@@ -106,6 +110,7 @@ interface Talk {
   role?: string
   text: string
   imgUrl?: string
+  action?: 'medicine'
 }
 
 export interface VillageScreenProps {
@@ -118,12 +123,14 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
   const data = useGame((s) => s.data)!
   const setScreen = useGame((s) => s.setScreen)
   const markVillagerTalked = useGame((s) => s.markVillagerTalked)
+  const buyConsumable = useGame((s) => s.buyConsumable)
   const hostRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<VillageEngine | null>(null)
   const [focus, setFocus] = useState<VillageFocus | null>(null)
   const [talk, setTalk] = useState<Talk | null>(null)
   const [pressedDirection, setPressedDirection] = useState<'up' | 'down' | 'left' | 'right' | null>(null)
   const [surveying, setSurveying] = useState(false)
+  const [medicineShopOpen, setMedicineShopOpen] = useState(false)
   const surveyingRef = useRef(false)
   const resolvedVisualV2 = visualV2 ?? isRegionVisualV2Enabled()
   const villageVisualState = useMemo(() => resolveVillageVisualState(data), [data])
@@ -200,7 +207,13 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
       })
       markVillagerTalked(id, markVillageGossipValue(flag, lineKey, latestGossip.ordinal))
     } else {
-      setTalk({ name: line.name, role: v?.role, text: line.text, imgUrl: villagerImg(id, band) })
+      setTalk({
+        name: line.name,
+        role: v?.role,
+        text: line.text,
+        imgUrl: villagerImg(id, band),
+        action: id === 'tane' ? 'medicine' : undefined,
+      })
       markVillagerTalked(id, markNormalTalkValue(flag, lineKey))
     }
     engineRef.current?.markNewsCleared(id) // 頭上の「話」印もその場で消す
@@ -249,6 +262,14 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (medicineShopOpen) {
+          setMedicineShopOpen(false)
+          return
+        }
+        if (talk) {
+          setTalk(null)
+          return
+        }
         setScreen({ id: 'home' })
         return
       }
@@ -268,7 +289,7 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [talk, data])
+  }, [talk, data, medicineShopOpen])
 
   // 会話中は移動操作を見せず、押下中だったD-pad入力も必ず解放する。
   useEffect(() => {
@@ -278,6 +299,9 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
   }, [talk])
 
   const go = (s: Screen) => setScreen(s)
+  const medicineCount = (data.consumables ?? [])
+    .filter((stack) => CONSUMABLES.some((item) => item.id === stack.id && item.effect.stat === 'hp'))
+    .reduce((sum, stack) => sum + stack.count, 0)
   const setDirection = (dir: 'up' | 'down' | 'left' | 'right', pressed: boolean) => {
     engineRef.current?.pressDir(dir, pressed)
     setPressedDirection((current) => pressed ? dir : current === dir ? null : current)
@@ -338,6 +362,13 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
         <span className="village-quicklabel">すぐ行く</span>
         <button className="btn btn-ghost filter-tab" onClick={() => go({ id: 'pact' })}>星契りの祠</button>
         <button className="btn btn-ghost filter-tab" onClick={() => go({ id: 'forge' })}>鍛冶と蔵</button>
+        <button
+          className="btn btn-ghost filter-tab village-medicine-entry"
+          data-testid="village-medicine-entry"
+          onClick={() => setMedicineShopOpen(true)}
+        >
+          薬種見世 <span aria-label={`回復薬の所持数${medicineCount}`}>所持 {medicineCount}</span>
+        </button>
         <button className="btn btn-ghost filter-tab" onClick={() => openTalk('tane')}>豆腐屋</button>
         <button className="btn btn-ghost filter-tab" onClick={() => go({ id: 'depart' })}>出立門</button>
         <button className="btn btn-ghost filter-tab" onClick={() => go({ id: 'facilities' })}>郷普請</button>
@@ -384,6 +415,12 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
               <p className="village-talk-text">{talk.text}</p>
             </div>
             <button className="btn btn-ghost" onClick={() => setTalk(null)}>閉じる</button>
+            {talk.action === 'medicine' && (
+              <button
+                className="btn btn-main village-talk-action"
+                onClick={() => { setTalk(null); setMedicineShopOpen(true) }}
+              >薬種を見る</button>
+            )}
           </div>
         )}
 
@@ -431,6 +468,52 @@ export function VillageScreen({ visualV2, facadeAssets, environmentAsset }: Vill
       </div>
 
       <p className="village-hint">移動: WASD/矢印/タップ ・ 話す/入る: Enterか近接ボタン ・ 戻る: Esc</p>
+
+      {medicineShopOpen && (
+        <Sheet title="薬種見世" onClose={() => setMedicineShopOpen(false)}>
+          <div className="village-medicine-shop" data-testid="village-medicine-shop">
+            <div className="village-medicine-ledger">
+              <div>
+                <span>持てる奉燈</span>
+                <strong>{data.hoto}</strong>
+              </div>
+              <p>郷にいる間は月を使わず補充できる。買った薬は戦の「道具」に入り、使うと一つ減る。</p>
+            </div>
+            <div className="village-medicine-grid">
+              {CONSUMABLES.map((item) => {
+                const owned = (data.consumables ?? []).find((stack) => stack.id === item.id)?.count ?? 0
+                const locked = item.unlockFame !== undefined && data.fame < item.unlockFame
+                const affordable = data.hoto >= item.price
+                const effect = `${item.effect.scope === 'party' ? '一族全員の' : '一人の'}${item.effect.stat === 'hp' ? '傷' : '灯力'}を${item.effect.amount}回復`
+                return (
+                  <article key={item.id} className={`village-medicine-card ${locked ? 'is-locked' : ''}`}>
+                    <span className="village-medicine-icon" aria-hidden>{item.icon}</span>
+                    <div className="village-medicine-copy">
+                      <div className="village-medicine-name">
+                        <strong>{item.name}</strong>
+                        <span>所持 {owned}</span>
+                      </div>
+                      <p className="village-medicine-effect">{effect}</p>
+                      <p className="village-medicine-desc">{item.desc}</p>
+                    </div>
+                    <button
+                      className="btn btn-main village-medicine-buy"
+                      disabled={locked || !affordable}
+                      onClick={() => {
+                        buyConsumable(item.id)
+                        emitToast(`${item.name}を購うた — 所持${owned + 1}`, 'info')
+                      }}
+                    >
+                      {locked ? `武功${item.unlockFame}で解禁` : !affordable ? `奉燈が${item.price - data.hoto}不足` : `${item.price} 奉燈で購う`}
+                    </button>
+                  </article>
+                )
+              })}
+            </div>
+            <p className="village-medicine-footnote">探索中は買い足せない。出立前に傷薬と灯明油の数を確かめよ。</p>
+          </div>
+        </Sheet>
+      )}
     </div>
   )
 }

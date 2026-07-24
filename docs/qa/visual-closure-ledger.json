@@ -180,7 +180,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Village.tsx",
-        "sourceSha256": "fdad5d12fbbc261c14a11ca198ea4c7f27cb626dc13692de6552fc676db06fce",
+        "sourceSha256": "4cc6718ba15bc764701b12b903c4477e09284fb5d0e3f44559e9c9a68081cf28",
         "runtimePath": "src/ui/village.css",
         "runtimeSha256": "a86b362063f3c3fb9bfd7d9f8476e8416b3c8dd7db9c0cc36d74ffbc407ca35b",
         "rightsStatus": "pending",
@@ -773,7 +773,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Battle.tsx",
-        "sourceSha256": "4db20347b6bc6fbcf34823631999d8a0620bd6590b6fbb77e545d9bb04f2842c",
+        "sourceSha256": "147b61e795568424de87853847b4c0e69987aaaf71f6bf7a154a77291b1e7560",
         "runtimePath": "src/ui/battle_ar1.css",
         "runtimeSha256": "5a6e83aedf7df4c1a5a27ac3b67abe982b740d2c85771279cc7f015b596756b6",
         "rightsStatus": "pending",

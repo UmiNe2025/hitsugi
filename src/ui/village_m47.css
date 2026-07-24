@@ -1,0 +1,100 @@
+/* M47: 郷の薬種見世。既存の消耗品スタックを直接扱い、別在庫は作らない。 */
+.village-medicine-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-color: rgba(164, 181, 121, 0.5);
+  background: linear-gradient(180deg, rgba(63, 72, 42, 0.3), rgba(18, 24, 18, 0.58));
+}
+.village-medicine-entry span {
+  padding: 2px 6px;
+  border: 1px solid rgba(190, 204, 142, 0.24);
+  border-radius: 999px;
+  color: #d8dfb3;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.village-talk-action { margin: 0; flex: 0 0 auto; }
+
+.sheet:has(.village-medicine-shop) {
+  width: min(860px, calc(100vw - 40px));
+  max-height: 86vh;
+}
+.sheet-body:has(.village-medicine-shop) { overflow-x: hidden; }
+.village-medicine-shop { display: grid; gap: 12px; width: 100%; min-width: 0; }
+.village-medicine-ledger {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  border-left: 3px solid #9cac68;
+  background:
+    linear-gradient(90deg, rgba(117, 135, 76, 0.12), transparent 62%),
+    rgba(7, 12, 12, 0.55);
+}
+.village-medicine-ledger > div { display: flex; align-items: baseline; gap: 9px; }
+.village-medicine-ledger span { color: var(--text-dim); font-size: 11px; }
+.village-medicine-ledger strong { color: var(--amber); font-size: 22px; font-variant-numeric: tabular-nums; }
+.village-medicine-ledger p { margin: 0; color: #c9c5b8; font-size: 12.5px; line-height: 1.65; }
+
+.village-medicine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: min(58vh, 560px);
+  overflow-y: auto;
+  padding-right: 3px;
+}
+.village-medicine-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-areas: 'icon copy' 'buy buy';
+  gap: 8px 10px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgba(201, 168, 106, 0.28);
+  border-radius: 4px;
+  background:
+    linear-gradient(145deg, rgba(124, 137, 77, 0.08), transparent 45%),
+    rgba(10, 13, 17, 0.72);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+}
+.village-medicine-card.is-locked { opacity: 0.63; filter: saturate(0.55); }
+.village-medicine-icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(173, 188, 119, 0.3);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(125, 146, 77, 0.2), rgba(6, 10, 10, 0.8));
+  font-size: 21px;
+}
+.village-medicine-copy { grid-area: copy; min-width: 0; }
+.village-medicine-name { display: flex; justify-content: space-between; gap: 8px; }
+.village-medicine-name strong { color: #ece4cf; font-size: 14px; letter-spacing: 0.05em; }
+.village-medicine-name span { color: #b7bd96; font-size: 11px; white-space: nowrap; }
+.village-medicine-effect { margin: 3px 0; color: #d7bc7b; font-size: 11.5px; }
+.village-medicine-desc { margin: 0; color: var(--text-dim); font-size: 11px; line-height: 1.45; }
+.village-medicine-buy { grid-area: buy; min-height: 40px; margin: 0; }
+.village-medicine-footnote { margin: 0; color: #9e9687; font-size: 11.5px; text-align: right; }
+
+@media (max-width: 700px) {
+  .sheet:has(.village-medicine-shop) { width: min(520px, calc(100vw - 24px)); }
+  .village-medicine-ledger { grid-template-columns: 1fr; gap: 4px; }
+  .village-medicine-grid { grid-template-columns: 1fr; max-height: 60vh; }
+}
+
+@media (max-width: 520px) {
+  .sheet:has(.village-medicine-shop) { width: 100vw; max-height: 82vh; }
+  .village-quickbar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; }
+  .village-quickbar .filter-tab { flex: 0 0 auto; min-height: 44px; }
+  .village-talk { flex-wrap: wrap; }
+  .village-talk-action { margin-left: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .village-medicine-card, .village-medicine-entry { transition: none; }
+}

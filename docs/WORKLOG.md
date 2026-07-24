@@ -1376,3 +1376,12 @@
 - **検証**: lint、data、visual closure 23/40/6/69、manifest 9/9、Vitest 47 files/746 tests、build、39地域100-seedを合格。PlaywrightはM46 PC1280/mobile390 4/4、既存戦闘上端/稀相 PC/mobile 4/4。横overflow 0、主札全幅化0、plan=result、Esc/focus returnを実DOMで確認。
 - **独立監査とShip Check**: UIの武功/形見/土地の記/候補名、level up上位3能力、旧expedition汐里のgeneric報酬混入、XP/RNG二重settle、両最終経路、level分布を差戻し、全件を限定修正。再監査はPASS / blocking 0。秘密pattern 0、依存脆弱性0。結論は**SHIP-with-notes**（既存rank分布warn、main chunk 1.46MB、旧expeditionの累計携行表示差）。
 - **公開**: 実装commit `d9f9ac8`をmainへpush。GitHub Actions run `30058466579`はlint/data/Vitest/build/deployを完走。公開HTML HTTP 200、`assets/index-CEUkgKbm.js`で`戦果見立て`／`戦果を携えて進む`を確認し、CSS `assets/index-ol5Y_SGg.css`はローカルbuildとSHA-256一致。
+
+## 2026-07-24（M47 郷の薬種見世・戦支度盤）
+
+- **依頼**: 回復薬の入手方法を郷へ追加し、横幅いっぱいで簡素に見える戦闘コマンド欄を読みやすく魅力的にする。解釈は「既存薬の購入先を郷で明示し、その場で買えるようにする」。
+- **薬種見世**: `Village.tsx`へ既存`CONSUMABLES / buyConsumable`を接続。「すぐ行く」と豆腐屋会話から共通`Sheet`を開き、所持数、回復対象、傷/灯力、回復量、価格、武功解禁、不足額を表示する。新在庫・新通貨・save変更は行わない。
+- **直接修復**: PC初回実画面で共通Sheet 440pxに2列内容が入り横scrollとなる欠陥を検出。薬種見世だけ最大860pxへ広げ、PC2列/mobile1列、`overflow-x:hidden`へ限定修正した。PC1280実測は内容幅829px=scrollWidth829px。洗い草購入で奉燈389→367、所持0→1を実DOM確認した。
+- **戦支度盤**: PC下部を最大1180px・中央寄せとし、1280pxで左右50pxを確保。手番者portrait、各手の意味、戦況の見立て（敵勢/広域兆し/携行薬）、薬切れ時の郷案内を追加。全戦闘オート、コマンド、対象確認、戦闘計算、報酬は不変。
+- **実画面**: PC1280×720で戦闘盤幅1180px、高さ184px、左右50px、内部横overflow 0を確認。mobile390×844は戦闘下部clientWidth/scrollWidthとも390。戦場装飾`.stage-ground`の既存外接幅はfixed rootの`overflow:hidden`内で、今回の操作盤には波及しない。
+- **公開境界**: ローカル実装のみ。push=Pages公開のため、commit/push/deployはユーザーの別途明示依頼を待つ。
