@@ -2,7 +2,9 @@ import { useState, type ReactNode } from 'react'
 import { useGame } from '../core/store'
 import type { Character } from '../core/types'
 import { STAT_LABELS, ELEMENT_LABELS, LIFESPAN_MONTHS } from '../core/types'
-import { ageOf } from '../core/inheritance'
+import { AGE_CURVE, ageOf } from '../core/inheritance'
+import { growthBonus, growthCapacity, levelCap, xpToNext } from '../core/character_progression'
+import type { StatKey } from '../core/types'
 import { personalityById } from '../core/data/personalities'
 import { godById } from '../core/data/gods'
 import { tozaOf } from '../core/data/toza'
@@ -112,13 +114,14 @@ export function MaybeImg({ src, className, alt = '' }: { src: string | null; cla
 }
 
 export function CharCard({
-  char, seasonIndex, selected, onClick, compact, children,
+  char, seasonIndex, selected, onClick, compact, progressionMode, children,
 }: {
   char: Character
   seasonIndex: number
   selected?: boolean
   onClick?: () => void
   compact?: boolean
+  progressionMode?: 'summary' | 'detail'
   children?: ReactNode
 }) {
   const p = personalityById(char.personalityId)
@@ -148,6 +151,13 @@ export function CharCard({
           </div>
           <LifeFlames char={char} seasonIndex={seasonIndex} />
           {age < 6 && <div className="child-note">幼子(あと{6 - age}月で成人)</div>}
+          {progressionMode && (
+            <CharacterProgression
+              char={char}
+              seasonIndex={seasonIndex}
+              detail={progressionMode === 'detail'}
+            />
+          )}
           {!compact && (
             <>
               <div className="char-meta">
@@ -177,6 +187,76 @@ export function CharCard({
     )
   }
   return <div className={className}>{content}</div>
+}
+
+const M46_STAT_KEYS: readonly StatKey[] = ['str', 'vit', 'dex', 'agi', 'mnd', 'luk']
+
+function aptitudeLabel(value: number): string {
+  if (value >= 90) return '極'
+  if (value >= 70) return '秀'
+  if (value >= 55) return '得意'
+  if (value >= 40) return '並'
+  return '苦手'
+}
+
+function CharacterProgression({
+  char, seasonIndex, detail,
+}: {
+  char: Character
+  seasonIndex: number
+  detail: boolean
+}) {
+  const level = Number.isFinite(char.level) ? Math.max(1, Math.floor(char.level)) : 1
+  const exp = Number.isFinite(char.exp) ? Math.max(0, Math.floor(char.exp)) : 0
+  const cap = levelCap(char)
+  const required = level < cap ? xpToNext(level) : 0
+  const expPct = required > 0 ? Math.min(100, (exp / required) * 100) : 100
+  const top = [...M46_STAT_KEYS]
+    .sort((a, b) => char.potential[b] - char.potential[a] || a.localeCompare(b))
+    .slice(0, 2)
+  const age = Math.min(23, Math.max(0, ageOf(char, seasonIndex)))
+
+  return (
+    <div className="m46-progression-summary">
+      <div className="m46-level-line">
+        <span className="m46-level-value">Lv {level} / {cap}</span>
+        <span className={`m46-level-state${level >= cap ? ' is-open' : ''}`}>
+          {level >= cap ? '資質開花' : `経験 ${exp} / ${required}`}
+        </span>
+      </div>
+      <div
+        className="m46-exp-track"
+        role="progressbar"
+        aria-label={level >= cap ? '資質開花' : `次のレベルまでの経験 ${exp} / ${required}`}
+        aria-valuemin={0}
+        aria-valuemax={required || 1}
+        aria-valuenow={level >= cap ? 1 : exp}
+      >
+        <span className="m46-exp-fill" style={{ width: `${expPct}%` }} />
+      </div>
+      <div className="m46-aptitude-tags" aria-label="高い資質">
+        {top.map((key) => (
+          <span className="m46-aptitude-tag" key={key}>{STAT_LABELS[key]} {aptitudeLabel(char.potential[key])}</span>
+        ))}
+      </div>
+      {detail && (
+        <div className="m46-progression-detail" aria-label="資質と熟達の詳細">
+          {M46_STAT_KEYS.map((key) => {
+            const bonus = growthBonus(char, key)
+            const levelLimitValue = Math.max(1, Math.round((char.potential[key] + growthCapacity(char, key)) * AGE_CURVE[age]))
+            const marks = char.trainingMarks?.[key] ?? 0
+            return (
+              <div className="m46-stat-growth" key={key}>
+                <span className="m46-stat-growth-head"><span>{STAT_LABELS[key]}</span><b>{char.stats[key]}</b></span>
+                <span className="m46-stat-growth-meta">資質{char.potential[key]}・鍛錬{marks}回</span>
+                <span className="m46-stat-growth-meta">熟達+{bonus}・Lv上限時{levelLimitValue}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // 綴(ナビゲーター)の一言

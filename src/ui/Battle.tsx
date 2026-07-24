@@ -3,9 +3,9 @@
 // 踏み込み→被弾フラッシュ→ダメージ数字ポップ→KO溶暗。属性別バースト、行動者の題字タグ、
 // 戦利品スロット(M12-5)、台詞チャネル(M15-1土台: kind:'voice')を備える。
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { useGame } from '../core/store'
-import type { BattleLogEntry, BattleState, Combatant, Element, EnemyIntent, SkillTarget } from '../core/types'
-import { ELEMENT_LABELS, ELEMENT_ADVANTAGE } from '../core/types'
+import { useGame, type BattleRewardSettlement } from '../core/store'
+import type { BattleLogEntry, BattleState, Character, Combatant, Element, EnemyIntent, Item, SkillTarget } from '../core/types'
+import { ELEMENT_LABELS, ELEMENT_ADVANTAGE, STAT_LABELS } from '../core/types'
 import { currentActor, type BattleAction } from '../core/battle'
 import { upcomingEnemyBehaviorCue, type EnemyBehaviorCue } from '../core/enemy_behaviors'
 
@@ -38,6 +38,7 @@ import './battle_m24.css'
 import './battle_m25.css'
 import './battle_ar1.css'
 import './battle_m43.css'
+import './battle_m46.css'
 
 function Ar1BattleStage({ contract }: { contract: RegionStageContract }) {
   const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
@@ -200,6 +201,9 @@ export function BattleScreen() {
   const battleCommand = useGame((s) => s.battleCommand)
   const refreshBattleIntents = useGame((s) => s.refreshBattleIntents)
   const finishBattle = useGame((s) => s.finishBattle)
+  const rewardSettlement = useGame((s) => s.battleRewardSettlement)
+  const settleBattleVictory = useGame((s) => s.settleBattleVictory)
+  const continueAfterBattle = useGame((s) => s.continueAfterBattle)
   const dungeonRun = useGame((s) => s.dungeonRun)
   const goldenBattle = useGame((s) => s.goldenBattle)
   const rareEncounter = useGame((s) => s.rareEncounter)
@@ -251,7 +255,6 @@ export function BattleScreen() {
   }
   const [fx, setFx] = useState<Record<string, FxEvent[]>>({})
   const [bossShown, setBossShown] = useState(false)
-  const [slotPhase, setSlotPhase] = useState<'spin' | 'done'>('spin')
   const [bossCutinUrl, setBossCutinUrl] = useState<string | null>(null)
   const [ougiCutinUrl, setOugiCutinUrl] = useState<string | null>(null)
   const logRef = useRef<HTMLDivElement>(null)
@@ -452,11 +455,6 @@ export function BattleScreen() {
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBossBattle])
-  useEffect(() => {
-    const t = setTimeout(() => setSlotPhase('done'), 1500)
-    return () => clearTimeout(t)
-  }, [])
-
   // AR0: 数字/Enter/Space/タップは対象の「選択」まで。戦闘コマンドの実行は確認盤の
   // 明示ボタンだけに限定する。Escは 確認→対象選択→起点コマンド の二段戻り。
   useEffect(() => {
@@ -591,13 +589,23 @@ export function BattleScreen() {
     return () => clearTimeout(t)
   }, [auto, autoSettings.policy, isPlayerTurn, battle, actor, battleCommand])
 
-  // 全自動の流れは維持する。戦果の見立てを読める時間だけ従来より長く置き、手動CTAなら即座に進める。
+  // 勝利報酬は表示と同じplanを一度だけ確定する。結果を描画してから手動/自動の継続へ進む。
+  useEffect(() => {
+    if (!battle || battle.phase !== 'won' || pending.length > 0) return
+    if (rewardSettlement?.status === 'planned') settleBattleVictory()
+  }, [battle, pending.length, rewardSettlement?.status, settleBattleVictory])
+
+  // 全戦闘でオートを維持する。確定した戦果を読める時間を置き、手動CTAなら即座に進める。
   useEffect(() => {
     if (!auto || !battle || pending.length > 0) return
     if (battle.phase !== 'won' && battle.phase !== 'fled') return
-    const timeout = window.setTimeout(() => finishBattle(), autoUsedRef.current ? 2800 : 1200)
+    if (battle.phase === 'won' && rewardSettlement?.status !== 'settled') return
+    const timeout = window.setTimeout(
+      () => battle.phase === 'won' ? continueAfterBattle() : finishBattle(),
+      autoUsedRef.current ? 2800 : 1200,
+    )
     return () => window.clearTimeout(timeout)
-  }, [auto, battle, pending.length, finishBattle])
+  }, [auto, battle, pending.length, rewardSettlement?.status, continueAfterBattle, finishBattle])
 
   if (!battle) return null
 
@@ -810,7 +818,7 @@ export function BattleScreen() {
           position層へ混ぜないため、敵兆し/敵札が上端UIへ侵入しない。 */}
       <div className="battle-top-rail" data-zone="battle-top">
         <TurnOrderBar battle={battle} />
-        {slotPhase === 'spin' && <LootSlot />}
+        {rewardSettlement && <BattleRewardForecast settlement={rewardSettlement} />}
       </div>
 
       <div
@@ -997,14 +1005,15 @@ export function BattleScreen() {
                   ? '一族は闇に紛れて退いた'
                   : '一族の灯が、闇に呑まれた……'}
             </p>
-            {battle.phase === 'won' && runLoot && (runLoot.hoto > 0 || runLoot.ketsu > 0 || runLoot.items.length > 0) && (
-              <p className="victory-loot">
-                この夜の実り — 奉燈 <b>{runLoot.hoto}</b> ／ 血珠 <b>{runLoot.ketsu}</b>
-                {runLoot.items.length > 0 && <> ／ 遺物 <b>{runLoot.items.length}</b></>}
-              </p>
+            {battle.phase === 'won' && rewardSettlement?.result && (
+              <BattleRewardResultView
+                settlement={rewardSettlement}
+                carriedTotal={runLoot}
+                family={family}
+              />
             )}
             {autoReport.length > 0 && (
-              <div className="auto-battle-report" role="status" aria-live="polite" aria-label="オート戦闘の見立て">
+              <div className="auto-battle-report" aria-label="オート戦闘の見立て">
                 {autoReport.map((line) => <p key={line}>{line}</p>)}
                 {auto && (
                   <div className="auto-result-continuation">
@@ -1014,8 +1023,16 @@ export function BattleScreen() {
                 )}
               </div>
             )}
-            <button className="btn btn-main" onClick={finishBattle}>
-              {battle.phase === 'won' ? '戦果を得る' : battle.phase === 'fled' ? '先へ' : '帰り火へ'}
+            <button
+              className="btn btn-main"
+              disabled={battle.phase === 'won' && rewardSettlement?.status !== 'settled'}
+              onClick={battle.phase === 'won' ? continueAfterBattle : finishBattle}
+            >
+              {battle.phase === 'won'
+                ? rewardSettlement?.plan.nextPhase === 'shiori_duel' ? '連戦へ'
+                  : rewardSettlement?.plan.nextPhase === 'finale' ? '結末へ'
+                    : rewardSettlement?.status === 'settled' ? '戦果を携えて進む' : '戦果を確かめている…'
+                : battle.phase === 'fled' ? '先へ' : '帰り火へ'}
             </button>
           </div>
         ) : (
@@ -1543,23 +1560,121 @@ function EnemyVisual2({ e }: { e: Combatant }) {
   )
 }
 
-// 報酬予告スロット(俺屍PSP準拠の開幕演出 — 表示は雰囲気、実報酬は勝利時に確定。
-// §3.4: 戦況判断を遮らないよう右上へ小さく置く(位置/縮小はbattle_m24.css側)
-const SLOT_POOL = ['奉燈', '血珠', '武具', '霊薬', '宝珠', '古銭', '巻物', '香木']
+function BattleRewardForecast({ settlement }: { settlement: BattleRewardSettlement }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const plan = settlement.plan
+  const candidateCount = plan.familiarCandidates.length
+  const anyFamiliarChance = candidateCount > 0 ? (1 - 0.96 ** candidateCount) * 100 : 0
+  const special = [
+    plan.carried.rareDrop ? '稀相遺物' : '',
+    plan.immediate.memorialKind ? '形見確定' : '',
+    plan.immediate.loreCompletionHoto ? '土地の記' : '',
+    plan.nextPhase ? '連戦' : '',
+    candidateCount > 0 ? '縁あり' : '',
+  ].filter(Boolean).join('・')
 
-function LootSlot() {
+  useEffect(() => {
+    if (!open) return
+    const close = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const escape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setOpen(false)
+      triggerRef.current?.focus()
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [open])
+
   return (
-    <div className="loot-slot" data-zone="reward">
-      <span className="slot-label">報酬予告</span>
-      {[0, 1, 2].map((i) => (
-        <span key={i} className="slot-reel" style={{ animationDelay: `${i * 0.12}s` }}>
-          <span className="slot-strip">
-            {[...SLOT_POOL, ...SLOT_POOL].map((s, j) => (
-              <span key={j} className="slot-item">{s}</span>
-            ))}
-          </span>
+    <div className="battle-reward-forecast" data-zone="reward" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="battle-reward-chip"
+        aria-expanded={open}
+        aria-controls="battle-reward-details"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="battle-reward-label">戦果見立て</span>
+        <span className="battle-reward-values">
+          {plan.nextPhase ? '報酬なし・物語が続く' : `奉燈 ${plan.carried.hoto} ／ 血珠 ${plan.carried.ketsu} ／ 経験 ${plan.immediate.partyXp}`}
         </span>
-      ))}
+        {special && <span className="battle-reward-special">{special}</span>}
+      </button>
+      {open && (
+        <div id="battle-reward-details" className="battle-reward-popover" role="dialog" aria-label="戦果見立ての詳細">
+          <h3>この戦いの戦果見立て</h3>
+          {plan.nextPhase ? (
+            <p className="battle-reward-popover-note">この勝利は物語の連戦へ続くため、通常の戦果は発生しません。</p>
+          ) : (
+            <>
+              <ul>
+                <li>持ち帰る：奉燈 {plan.carried.hoto}、血珠 {plan.carried.ketsu}</li>
+                <li>その場で得る：出陣した存命者全員 経験 {plan.immediate.partyXp}</li>
+                {plan.immediate.fame !== undefined && <li>武功：{plan.immediate.fame}</li>}
+                {plan.carried.rareDrop && <li>稀相遺物：{plan.carried.rareDrop.name}（確定）</li>}
+                {plan.immediate.memorialKind === 'nemesis_weapon' && <li>宿敵の形見武具（確定・討伐後に銘を表示）</li>}
+                {plan.immediate.loreCompletionHoto !== undefined && <li>土地の記：奉燈 {plan.immediate.loreCompletionHoto}（即時）</li>}
+              </ul>
+              {plan.modifiers.length > 0 && <><h4>上乗せ</h4><ul>{plan.modifiers.map((modifier) => <li key={modifier.id}>{modifier.label}{modifier.multiplier ? ` ×${modifier.multiplier}` : ''}</li>)}</ul></>}
+              {candidateCount > 0 && <><h4>眷属の縁</h4><ul>{plan.familiarCandidates.map((candidate) => <li key={candidate.enemyId}>{candidate.enemyName}：4%</li>)}</ul><p className="battle-reward-popover-note">いずれかが懐く見込み 約{anyFamiliarChance.toFixed(1)}%。候補ごとに一度ずつ縁を結びます。</p></>}
+            </>
+          )}
+          <button type="button" className="btn btn-ghost" onClick={() => { setOpen(false); triggerRef.current?.focus() }}>閉じる</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BattleRewardResultView({ settlement, carriedTotal, family }: {
+  settlement: BattleRewardSettlement
+  carriedTotal?: { hoto: number; ketsu: number; items: readonly Item[] }
+  family: Character[]
+}) {
+  const result = settlement.result
+  if (!result) return null
+  const leveled = result.growth.filter((growth) => growth.afterLevel > growth.beforeLevel)
+  return (
+    <div className="victory-result-block" role="status" aria-live="polite" aria-label="確定した戦果">
+      <section className="victory-result-section">
+        <h3>この戦いで得たもの</h3>
+        <p className="victory-result-values">奉燈 <b>{result.carried.hoto}</b> ／ 血珠 <b>{result.carried.ketsu}</b> ／ 出陣した存命者全員 経験 <b>{result.immediate.partyXp}</b>{result.carried.items.length > 0 && <> ／ 稀相遺物 <b>{result.carried.items.map((item) => item.name).join('・')}</b></>}</p>
+        {carriedTotal && <p className="victory-carry-note">夜行で持ち帰る合計：奉燈 {carriedTotal.hoto} ／ 血珠 {carriedTotal.ketsu} ／ 品 {carriedTotal.items.length}</p>}
+      </section>
+      {(result.immediate.fame > 0 || result.immediate.memorials.length > 0 || result.immediate.familiars.length > 0 || result.immediate.loreHoto > 0) && (
+        <section className="victory-result-section">
+          <h3>その場で結ばれたもの</h3>
+          <p className="victory-result-values">
+            {[result.immediate.fame > 0 ? `武功 ${result.immediate.fame}` : '', result.immediate.loreHoto > 0 ? `土地の記 奉燈 ${result.immediate.loreHoto}` : '', ...result.immediate.memorials.map((item) => `形見 ${item.name}`), ...result.immediate.familiars.map((familiar) => `眷属 ${familiar.name}`)].filter(Boolean).join(' ／ ')}
+          </p>
+        </section>
+      )}
+      {leveled.length > 0 && (
+        <section className="victory-result-section">
+          <h3>灯の成長</h3>
+          <div className="victory-growth-grid">
+            {leveled.map((growth) => {
+              const character = family.find((entry) => entry.id === growth.charId)
+              const stats = Object.entries(growth.statDelta)
+                .filter((entry): entry is [keyof typeof STAT_LABELS, number] => typeof entry[1] === 'number' && entry[1] > 0)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 3)
+                .map(([key, value]) => `${STAT_LABELS[key]} +${value}`)
+                .join('・')
+              return <article className="victory-growth-card" key={growth.charId}><strong>{character?.name ?? '一族'}</strong><span className="victory-growth-level">Lv {growth.beforeLevel} → {growth.afterLevel}</span><p className="victory-growth-delta">{[stats, growth.maxHpDelta > 0 ? `体力 +${growth.maxHpDelta}` : '', growth.maxMpDelta > 0 ? `灯力 +${growth.maxMpDelta}` : ''].filter(Boolean).join(' ／ ') || '新たな段階へ至った'}</p></article>
+            })}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

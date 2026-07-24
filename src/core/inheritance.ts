@@ -4,6 +4,7 @@ import { Rng, uid } from './rng'
 import { MALE_NAMES, FEMALE_NAMES } from './data/names'
 import { PERSONALITIES } from './data/personalities'
 import { skillById } from './data/skills'
+import { effectivePotential } from './character_progression'
 
 const STAT_KEYS: StatKey[] = ['str', 'vit', 'dex', 'agi', 'mnd', 'luk']
 
@@ -39,20 +40,21 @@ export function seasonsLeft(c: Character, seasonIndex: number): number {
 export function recalcStats(c: Character, seasonIndex: number): Character {
   const age = Math.min(Math.max(ageOf(c, seasonIndex), 0), LIFESPAN_MONTHS - 1)
   const mult = AGE_CURVE[age]
+  const potentialWithMastery = effectivePotential(c)
   const stats = Object.fromEntries(
-    STAT_KEYS.map((k) => [k, Math.max(1, Math.round(c.potential[k] * mult))]),
+    STAT_KEYS.map((k) => [k, Math.max(1, Math.round(potentialWithMastery[k] * mult))]),
   ) as unknown as Stats
   const maxHp = Math.round(stats.vit * 2.6 + 30)
   const maxMp = Math.round(stats.mnd * 1.3 + 12)
-  const hpRatio = c.maxHp > 0 ? c.hp / c.maxHp : 1
-  const mpRatio = c.maxMp > 0 ? c.mp / c.maxMp : 1
+  const hpRatio = Math.min(1, Math.max(0, c.maxHp > 0 ? c.hp / c.maxHp : 1))
+  const mpRatio = Math.min(1, Math.max(0, c.maxMp > 0 ? c.mp / c.maxMp : 1))
   return {
     ...c,
     stats,
     maxHp,
     maxMp,
-    hp: Math.max(1, Math.round(maxHp * hpRatio)),
-    mp: Math.round(maxMp * mpRatio),
+    hp: !c.alive && c.hp === 0 ? 0 : Math.max(c.alive ? 1 : 0, Math.round(maxHp * hpRatio)),
+    mp: Math.min(maxMp, Math.max(0, Math.round(maxMp * mpRatio))),
   }
 }
 
@@ -141,6 +143,8 @@ export function conceiveChild(
     sex,
     bornSeason,
     potential,
+    level: 1,
+    exp: 0,
     stats: { ...potential },
     hp: 1, maxHp: 1, mp: 1, maxMp: 1,
     element,
@@ -178,6 +182,8 @@ export function makeFounder(bornSeason: number, rng: Rng): Character {
     sex: 'm',
     bornSeason: bornSeason - 9, // 既に9ヶ月生きている(残り15ヶ月)
     potential,
+    level: 1,
+    exp: 0,
     stats: { ...potential },
     hp: 1, maxHp: 1, mp: 1, maxMp: 1,
     element: 'fire',

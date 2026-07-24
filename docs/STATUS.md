@@ -1,10 +1,14 @@
-# 開発ステータス(2026-07-22 更新)
+# 開発ステータス(2026-07-24 更新)
 
 **2026-07-22 runtime実測**: 神180柱・敵579体（通常基礎180＋若/老変異＋主39）・装備810・辞世1370・事件282・地域40・配信画像2825点。**次の制約は物量でなく、初回30分・戦闘の対処差・初代継承・実利用計測・公開前検証**。M42監査の正本は`docs/PRODUCT_IMPROVEMENT_AUDIT_M42_20260722.md`。
 
 ## 直近の公開修正
 
 - **M44 タイトル見出しの異形focus枠**: 画面進入時の読み上げ用`h1` focusにブラウザ標準outlineが付き、`灯継ぎ`の複数spanを段差状に囲んでいた。読み上げfocusは維持し、Tab対象でない`.game-title`だけoutlineを無効化。PC1440/mobile360のTitle/Intro 4/4、lint、build、closure 23/40/6/69に合格。実装commit `7ff1997`、Actions run `29876069814`でPages公開成功。公開CSS `assets/index-DXXd6C6Z.css`への反映とHTTP 200を確認済み。
+
+## 実装済み・公開待ち
+
+- **M46 資質連動level・戦果見立て**: Lv1現行互換の加算熟達、資質score上限8〜12、旧save冪等移行、全戦闘オート同報酬をruntime/save/UIへ実装。架空slotを同じreward plan由来の確定戦果・候補敵種ごと4%・携行/即時表示へ置換し、`planned → settled → continued`で二重付与を防止。lint/data/closure/manifest/Vitest 746/build、100-seed、PC/mobile M46 4/4＋既存戦闘/稀相4/4に合格。XP tier係数は3→5の単一調整後、開幕/生涯level分布も合格。独立監査PASS / blocking 0、Pages反映待ち。
 
 ## ローカル計画・未実装
 

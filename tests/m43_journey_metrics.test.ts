@@ -7,6 +7,7 @@ import { exportJourneyMetrics, journeyQaSummary, markJourneyMilestone, summarize
 import { Rng } from '../src/core/rng'
 import { useGame } from '../src/core/store'
 import type { BattleAction, BattleState, Character } from '../src/core/types'
+import { levelCap } from '../src/core/character_progression'
 
 class MemStorage {
   data = new Map<string, string>()
@@ -155,6 +156,7 @@ function simulateCampaign(seed: number) {
     settleNarrative()
     restUntilReady(2)
   }
+  const founderAfterOpeningLevel = useGame.getState().data!.family.find((character) => character.id === founder.id)?.level ?? 1
 
   // 宵の森は専用bossIdを持たないが、実storeでは首無し行灯を主代わりとして強化する。
   // 常夜百層を除く39地域すべてをcampaign対象にする。
@@ -222,6 +224,9 @@ function simulateCampaign(seed: number) {
     assignAvailableRites()
   }
   const end = useGame.getState().data!
+  const experienced = end.family.filter((character) => character.kills > 0 || character.expeditions > 0)
+  const activeExperienced = experienced.filter((character) => character.alive)
+  const deadExperienced = experienced.filter((character) => !character.alive)
   const clearedBosses = campaignRegions.filter((region) => end.regionsCleared.includes(region.id)).length
   return {
     seed,
@@ -238,6 +243,13 @@ function simulateCampaign(seed: number) {
     seasons: end.seasonIndex,
     inherited: !!end.journeyMetrics?.milestones.first_inherit,
     clearedBosses,
+    founderAfterOpeningLevel,
+    experiencedCount: experienced.length,
+    capReachedCount: experienced.filter((character) => character.level >= levelCap(character)).length,
+    activeExperiencedCount: activeExperienced.length,
+    activeCapReachedCount: activeExperienced.filter((character) => character.level >= levelCap(character)).length,
+    deadExperiencedCount: deadExperienced.length,
+    deadExperiencedLowLevelCount: deadExperienced.filter((character) => character.level <= 2).length,
   }
 }
 
@@ -277,7 +289,37 @@ describe('M43 save-local journey metrics', () => {
     expect(results.every((run) => run.inherited)).toBe(true)
     expect(results.some((run) => run.clearedBosses > 0)).toBe(true)
 
+    // M46 balance gate: opening pace and lifetime distribution are measured on the same
+    // real-store campaign rather than inferred from the XP formula alone.
+    const openingLevels = results.map((run) => run.founderAfterOpeningLevel)
+    const experiencedCount = results.reduce((sum, run) => sum + run.experiencedCount, 0)
+    const capReachedRate = results.reduce((sum, run) => sum + run.capReachedCount, 0) / experiencedCount
+    const activeExperiencedCount = results.reduce((sum, run) => sum + run.activeExperiencedCount, 0)
+    const activeCapRate = results.reduce((sum, run) => sum + run.activeCapReachedCount, 0) / activeExperiencedCount
+    const deadExperiencedCount = results.reduce((sum, run) => sum + run.deadExperiencedCount, 0)
+    const deadExperiencedLowLevelRate = results.reduce((sum, run) => sum + run.deadExperiencedLowLevelCount, 0) / deadExperiencedCount
+    const levelBalance = {
+      openingMin: Math.min(...openingLevels),
+      openingMax: Math.max(...openingLevels),
+      openingCounts: Object.fromEntries([...new Set(openingLevels)].sort((a, b) => a - b).map((level) => [level, openingLevels.filter((value) => value === level).length])),
+      experiencedCount,
+      capReachedRate,
+      activeExperiencedCount,
+      activeCapRate,
+      deadExperiencedCount,
+      deadExperiencedLowLevelRate,
+    }
+    expect(
+      levelBalance.openingMin >= 2 && levelBalance.openingMax <= 3
+      && capReachedRate >= 0.1 && capReachedRate <= 0.3
+      && activeCapRate < 0.5
+      && deadExperiencedLowLevelRate < 0.5,
+      JSON.stringify(levelBalance),
+    ).toBe(true)
+
     // 同じseedは勝敗・世代・通貨・復帰月まで完全一致する。
     expect(simulateCampaign(37)).toEqual(results[36])
-  }, 60_000)
+  // Windows CI/desktopでは39地域×100 seedの実store戦闘が90秒前後まで伸びる。
+  // 内容を縮めず基準線を守るため、実測余裕を持たせる。
+  }, 120_000)
 })

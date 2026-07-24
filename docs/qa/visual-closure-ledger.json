@@ -130,7 +130,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Home.tsx",
-        "sourceSha256": "87990db1a003ed6546bbfa37b33296f6b870b1a447784d4191e49358d1ad3e85",
+        "sourceSha256": "6647d9e9224cb391b91c8779dd6d45e5ba223959238200c6011e0fe5cba2f3e4",
         "runtimePath": "src/ui/m17_home.css",
         "runtimeSha256": "56381cb1b07aca85a3d7934e11fed0dcdba334da610fd673d91cff115c010e0b",
         "rightsStatus": "pending",
@@ -773,7 +773,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Battle.tsx",
-        "sourceSha256": "edd283e1e3ce993554578bec4b7b063f2ebb67a74f5688779b78223b58d50b0a",
+        "sourceSha256": "4db20347b6bc6fbcf34823631999d8a0620bd6590b6fbb77e545d9bb04f2842c",
         "runtimePath": "src/ui/battle_ar1.css",
         "runtimeSha256": "5a6e83aedf7df4c1a5a27ac3b67abe982b740d2c85771279cc7f015b596756b6",
         "rightsStatus": "pending",

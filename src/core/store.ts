@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type {
   BattleLogEntry, BattleState, Character, Combatant, Element, GameData, GenerationVowId, Item, MottoId,
-  NarrativeScene, Screen, StarLotteryHistoryEntry,
+  NarrativeScene, Screen, StarLotteryHistoryEntry, Stats,
 } from './types'
 import type { BattleAction } from './battle'
 import { consumableById } from './data/consumables'
@@ -57,14 +57,53 @@ import {
 } from './rare_encounters'
 import { markJourneyMilestone, migrateJourneyMetrics } from './journey_metrics'
 import { drawStarLottery, migrateStarLottery } from './star_lottery'
+import { grantBattleXp } from './character_progression'
+import {
+  createBattleRewardPlan,
+  type BattleRewardContext,
+  type BattleRewardEnemy,
+  type BattleRewardPlan,
+} from './battle_rewards'
 
 // UIへ流す演出イベント(誕生・死亡は順に画面表示)
 type PendingScene = NarrativeScene
+
+export interface BattleRewardGrowth {
+  charId: string
+  beforeLevel: number
+  afterLevel: number
+  beforeExp: number
+  afterExp: number
+  statDelta: Partial<Stats>
+  maxHpDelta: number
+  maxMpDelta: number
+}
+
+export interface BattleRewardResult {
+  settlementId: string
+  carried: { hoto: number; ketsu: number; items: Item[] }
+  immediate: {
+    partyXp: number
+    fame: number
+    memorials: Item[]
+    loreHoto: number
+    familiars: Array<{ enemyId: string; name: string }>
+  }
+  growth: BattleRewardGrowth[]
+}
+
+export interface BattleRewardSettlement {
+  status: 'planned' | 'settled' | 'continued'
+  plan: BattleRewardPlan
+  result?: BattleRewardResult
+}
 
 interface GameStore {
   screen: Screen
   data: GameData | null
   battle: BattleState | null
+  battleSequence: number
+  battleRewardSettlement: BattleRewardSettlement | null
   battleNodeId: string | null
   battleLogQueue: BattleLogEntry[]
   pendingScenes: PendingScene[]
@@ -154,6 +193,8 @@ interface GameStore {
   battleCommand: (action: BattleAction) => void
   drainBattleLog: () => BattleLogEntry[]
   finishBattle: () => void
+  settleBattleVictory: () => void
+  continueAfterBattle: () => void
   refreshBattleIntents: () => void // M25 §5: 敵の兆しを先読み設定(表示専用)
 }
 
@@ -384,6 +425,23 @@ export const useGame = create<GameStore>((set, get) => {
   // v3.1 M16-5: 随行中の眷属の属性を引く(未捕獲/未設定ならundefined)
   const activeFamiliarElement = (d: GameData): Element | undefined =>
     d.familiars?.find((f) => f.enemyId === d.activeFamiliar)?.element as Element | undefined
+
+  const planBattleRewards = (
+    encounterId: string,
+    enemies: readonly BattleRewardEnemy[],
+    context: Omit<BattleRewardContext, 'settlementId' | 'enemies' | 'ownedFamiliarEnemyIds'> = {},
+  ): { battleSequence: number; battleRewardSettlement: BattleRewardSettlement } => {
+    const current = get()
+    const battleSequence = current.battleSequence + 1
+    const settlementId = `${encounterId}:${battleSequence}`
+    const plan = createBattleRewardPlan({
+      settlementId,
+      enemies,
+      ownedFamiliarEnemyIds: current.data?.familiars?.map((f) => f.enemyId) ?? [],
+      ...context,
+    })
+    return { battleSequence, battleRewardSettlement: { status: 'planned', plan } }
+  }
 
   // 季節を進める — 誕生と死(寿命)をここで処理
   const advanceSeason = (): void => {
@@ -654,10 +712,17 @@ export const useGame = create<GameStore>((set, get) => {
     get().processNextScene()
   }
 
+  // finishBattle remains the simulator/test compatibility entry point. This flag lets the
+  // settlement actions reuse its established route-specific transition code without
+  // re-entering the public settle -> continue wrapper.
+  let internalFinishBattle = false
+
   return {
     screen: { id: 'title' },
     data: null,
     battle: null,
+    battleSequence: 0,
+    battleRewardSettlement: null,
     battleNodeId: null,
     battleLogQueue: [],
     pendingScenes: [],
@@ -726,6 +791,7 @@ export const useGame = create<GameStore>((set, get) => {
       d = chronicle(d, 'era', `${seasonLabel(0)}。燈守家最後の血脈・燈吾、大燈籠の前に立つ。残る命、五季(十五月)。`)
       set({
         data: d, rng, screen: { id: 'intro' }, pendingScenes: [], battle: null, battleNodeId: null,
+        battleSequence: 0, battleRewardSettlement: null,
         pendingEvent: null, battleLogQueue: [], dungeonRun: null, battleSource: 'node',
         goldenBattle: false, rareEncounter: null, nemesisBattleId: null, boonDraft: null,
       })
@@ -789,6 +855,7 @@ export const useGame = create<GameStore>((set, get) => {
         rng: new Rng(d.seed ^ (Date.now() >>> 0)),
         screen: { id: 'home' },
         pendingScenes: [], battle: null, battleNodeId: null, pendingEvent: null, battleLogQueue: [],
+        battleSequence: 0, battleRewardSettlement: null,
         dungeonRun: null, battleSource: 'node', goldenBattle: false, rareEncounter: null,
         nemesisBattleId: null, boonDraft: null,
       })
@@ -1455,8 +1522,13 @@ export const useGame = create<GameStore>((set, get) => {
           )
         })
         const battle = startBattle(party, enemies)
+        const reward = planBattleRewards(
+          `event:${pendingEvent.eventId}:${pendingEvent.nodeId}`,
+          enemyIds.map((id) => enemyById(id)),
+        )
         set({
           battle,
+          ...reward,
           battleNodeId: pendingEvent.nodeId,
           battleAutoContext: {
             firstEncounter,
@@ -1600,6 +1672,16 @@ export const useGame = create<GameStore>((set, get) => {
         if (dark) battle.log.push({ text: '灯は尽きた。常夜の重圧が魔性を狂わせている……!', kind: 'info' })
         const known = new Set((d.codex?.enemies ?? []).map((id) => id.replace(/_[wo]$/, '')))
         const firstEncounter = defs.some((def) => !known.has(def.id.replace(/_[wo]$/, '')))
+        const nextPhase = defs.some((def) => def.id === 'boss_gentou') && !d.flags.shioriPhase
+          ? 'shiori_duel' as const
+          : defs.some((def) => def.id === 'boss_shiori')
+            ? 'finale' as const
+            : undefined
+        const reward = planBattleRewards(`node:${exp.regionId}:${nodeId}`, defs, {
+          boss: node.type === 'boss',
+          fame: node.type === 'boss' && !!region.bossId ? 60 : undefined,
+          nextPhase,
+        })
         mutate((dd) => ({
           ...dd,
           expedition: { ...exp, currentNodeId: nodeId, light, log, nodes: { ...exp.nodes } },
@@ -1610,6 +1692,7 @@ export const useGame = create<GameStore>((set, get) => {
         }))
         set({
           battle,
+          ...reward,
           battleNodeId: nodeId,
           battleAutoContext: {
             firstEncounter,
@@ -1859,8 +1942,13 @@ export const useGame = create<GameStore>((set, get) => {
           ...dd,
           codex: { enemies: [...new Set([...(dd.codex?.enemies ?? []), nem.enemyId])], gods: dd.codex?.gods ?? [] },
         }))
+        const reward = planBattleRewards(`nemesis:${nem.id}`, [nemDef], {
+          nemesis: true,
+          fame: 25 + nem.level * 10,
+        })
         set({
           battle,
+          ...reward,
           battleSource: 'dungeon',
           battleAutoContext: {
             firstEncounter: !(d.codex?.enemies ?? []).some((id) => id.replace(/_[wo]$/, '') === nem.enemyId.replace(/_[wo]$/, '')),
@@ -1947,8 +2035,28 @@ export const useGame = create<GameStore>((set, get) => {
       } else if (specialBattle) {
         battle.log.push({ text: '金色の敵影だ! 逃がすな — 実りは並の比ではない!', kind: 'chain' })
       }
+      const rewardEnemies = enemyIds.map((id) => rareRoll?.enemy.id === id ? rareRoll.enemy : enemyById(id))
+      const nextPhase = rewardEnemies.some((def) => def.id === 'boss_gentou') && !d.flags.shioriPhase
+        ? 'shiori_duel' as const
+        : rewardEnemies.some((def) => def.id === 'boss_shiori')
+          ? 'finale' as const
+          : undefined
+      const reward = planBattleRewards(`dungeon:${run.regionId}:${run.floor}:${boss ? 'boss' : 'battle'}`, rewardEnemies, {
+        boss,
+        rare: !!rareRoll,
+        nemesis: false,
+        golden: specialBattle,
+        frantic: (run.frantic ?? 0) > 0,
+        motto: d.motto,
+        boons: run.boons,
+        activeFamiliarElement: activeFamiliarElement(d),
+        rareDrop: rareRoll?.encounter.drop,
+        loreCompletionHoto: boss && (d.loreFrags?.[run.regionId] ?? 0) >= 3 ? 40 : undefined,
+        nextPhase,
+      })
       set({
         battle,
+        ...reward,
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
         battleAutoContext: {
           firstEncounter: enemyIds.some((enemyId) => !(d.codex?.enemies ?? []).some((id) => id.replace(/_[wo]$/, '') === enemyId.replace(/_[wo]$/, ''))),
@@ -2211,7 +2319,194 @@ export const useGame = create<GameStore>((set, get) => {
       return q
     },
 
+    settleBattleVictory: () => {
+      const original = get()
+      const battle = original.battle
+      const settlement = original.battleRewardSettlement
+      if (!battle || battle.phase !== 'won' || !settlement || settlement.status !== 'planned' || !original.data) return
+
+      let claimed = false
+      set((state) => {
+        const current = state.battleRewardSettlement
+        if (state.battle?.phase !== 'won' || !current || current.status !== 'planned') return state
+        claimed = true
+        return {
+          battleRewardSettlement: {
+            ...current,
+            status: 'settled',
+            result: {
+              settlementId: current.plan.settlementId,
+              carried: {
+                hoto: current.plan.carried.hoto,
+                ketsu: current.plan.carried.ketsu,
+                items: current.plan.carried.rareDrop ? [current.plan.carried.rareDrop] : [],
+              },
+              immediate: {
+                partyXp: current.plan.immediate.partyXp,
+                fame: current.plan.immediate.fame ?? 0,
+                memorials: [],
+                loreHoto: current.plan.immediate.loreCompletionHoto ?? 0,
+                familiars: [],
+              },
+              growth: [],
+            },
+          },
+        }
+      })
+      if (!claimed) return
+
+      const plan = settlement.plan
+      // Normal victories use the existing path-specific economy/bookkeeping once, then
+      // restore the battle screen. Phase transitions carry no normal reward and are
+      // deliberately deferred until continueAfterBattle().
+      if (!plan.nextPhase) {
+        internalFinishBattle = true
+        try {
+          get().finishBattle()
+        } finally {
+          internalFinishBattle = false
+        }
+        set({
+          battle,
+          screen: original.screen,
+          battleNodeId: original.battleNodeId,
+          battleSource: original.battleSource,
+          battleAutoContext: original.battleAutoContext,
+          goldenBattle: original.goldenBattle,
+          rareEncounter: original.rareEncounter,
+          nemesisBattleId: original.nemesisBattleId,
+        })
+      }
+
+      set((state) => {
+        const current = state.battleRewardSettlement
+        const data = state.data
+        if (!current || current.status !== 'settled' || current.plan.settlementId !== plan.settlementId || !data) return state
+
+        const participantIds = new Set(battle.allies.flatMap((ally) => ally.charId ? [ally.charId] : []))
+        const growth: BattleRewardGrowth[] = []
+        let family = data.family.map((character) => {
+          const combatant = battle.allies.find((ally) => ally.charId === character.id)
+          let updated = combatant
+            ? { ...character, hp: Math.max(1, combatant.hp), mp: combatant.mp }
+            : character
+          if (!participantIds.has(character.id) || !character.alive || plan.immediate.partyXp <= 0) return updated
+          const before = updated
+          updated = recalcStats(grantBattleXp(updated, plan.immediate.partyXp), data.seasonIndex)
+          const statDelta = Object.fromEntries(
+            (Object.keys(before.stats) as Array<keyof Stats>)
+              .map((key) => [key, updated.stats[key] - before.stats[key]])
+              .filter(([, delta]) => delta !== 0),
+          ) as Partial<Stats>
+          growth.push({
+            charId: character.id,
+            beforeLevel: before.level,
+            afterLevel: updated.level,
+            beforeExp: before.exp,
+            afterExp: updated.exp,
+            statDelta,
+            maxHpDelta: updated.maxHp - before.maxHp,
+            maxMpDelta: updated.maxMp - before.maxMp,
+          })
+          return updated
+        })
+
+        let nd: GameData = { ...data, family }
+        const recruited: Array<{ enemyId: string; name: string }> = []
+        const owned = new Set((nd.familiars ?? []).map((familiar) => familiar.enemyId))
+        for (const candidate of plan.familiarCandidates) {
+          // One draw per planned candidate, in enemy-definition order. Multiple successes
+          // are retained; owned/boss/nemesis/rare exclusions already live in the plan.
+          if (!state.rng.chance(candidate.probability) || owned.has(candidate.enemyId)) continue
+          const enemy = enemyById(candidate.enemyId)
+          const name = `${candidate.enemyName}の眷属`
+          nd = {
+            ...nd,
+            familiars: [...(nd.familiars ?? []), { enemyId: candidate.enemyId, name, element: enemy.element }],
+            activeFamiliar: nd.activeFamiliar ?? candidate.enemyId,
+          }
+          nd = chronicle(nd, 'event', `${candidate.enemyName}が懐いた — 眷属となった。`)
+          owned.add(candidate.enemyId)
+          recruited.push({ enemyId: candidate.enemyId, name })
+        }
+
+        const beforeInventoryIds = new Set(original.data!.inventory.map((item) => item.id))
+        const memorials = nd.inventory.filter((item) => !beforeInventoryIds.has(item.id) && item.source === 'boss')
+        return {
+          data: nd,
+          battleRewardSettlement: {
+            ...current,
+            result: {
+              settlementId: plan.settlementId,
+              carried: {
+                hoto: plan.carried.hoto,
+                ketsu: plan.carried.ketsu,
+                items: plan.carried.rareDrop ? [plan.carried.rareDrop] : [],
+              },
+              immediate: {
+                partyXp: plan.immediate.partyXp,
+                fame: plan.immediate.fame ?? 0,
+                memorials,
+                loreHoto: plan.immediate.loreCompletionHoto ?? 0,
+                familiars: recruited,
+              },
+              growth,
+            },
+          },
+        }
+      })
+    },
+
+    continueAfterBattle: () => {
+      let claimed: BattleRewardSettlement | null = null
+      set((state) => {
+        const current = state.battleRewardSettlement
+        if (!current || current.status !== 'settled') return state
+        claimed = current
+        return { battleRewardSettlement: { ...current, status: 'continued' } }
+      })
+      if (!claimed) return
+
+      const plan = (claimed as BattleRewardSettlement).plan
+      if (plan.nextPhase) {
+        internalFinishBattle = true
+        try {
+          get().finishBattle()
+        } finally {
+          internalFinishBattle = false
+        }
+        return
+      }
+
+      if (get().battleSource === 'dungeon' || get().battleSource === 'dungeonBoss') {
+        set({
+          battle: null,
+          battleNodeId: null,
+          battleSource: 'node',
+          battleAutoContext: null,
+          goldenBattle: false,
+          rareEncounter: null,
+          nemesisBattleId: null,
+          screen: { id: 'dungeon' },
+        })
+      } else {
+        set({ battle: null, battleNodeId: null, battleAutoContext: null, screen: { id: 'expedition' } })
+      }
+    },
+
     finishBattle: () => {
+      if (!internalFinishBattle) {
+        const current = get()
+        if (current.battle?.phase === 'won') {
+          if (current.battleRewardSettlement?.status === 'planned') get().settleBattleVictory()
+          if (get().battleRewardSettlement?.status === 'settled') get().continueAfterBattle()
+          return
+        }
+        if ((current.battle?.phase === 'fled' || current.battle?.phase === 'lost')
+          && current.battleRewardSettlement?.status === 'planned') {
+          set({ battleRewardSettlement: { ...current.battleRewardSettlement, status: 'continued' } })
+        }
+      }
       const { battle, battleNodeId, rng, battleSource } = get()
       const d = get().data!
 
@@ -2246,9 +2541,11 @@ export const useGame = create<GameStore>((set, get) => {
               { text: '「……ああ、来てくれたのね。私の、遠い遠い子どもたち」', kind: 'info' },
               { text: '汐里は楽を構えた。千年の最後の演目——看取ってやれ!', kind: 'info' },
             ]
+            const reward = planBattleRewards('dungeon:boss_shiori', [shioriDef], { boss: true, nextPhase: 'finale' })
             set({
               data: { ...d, family, flags: { ...d.flags, shioriPhase: true } },
               battle: battle2,
+              ...reward,
               battleLogQueue: [...battle2.log],
             })
             return
@@ -2286,8 +2583,9 @@ export const useGame = create<GameStore>((set, get) => {
             (get().goldenBattle ? 2.5 : 1) *
             ((run.boons ?? []).includes('fukuun') ? 1.3 : 1) *
             (activeFamiliarElement(d) === 'star' ? 1.1 : 1)
-          const hoto = Math.round(defs.reduce((s, e) => s + e.hoto, 0) * lootK)
-          const ketsu = Math.round(defs.reduce((s, e) => s + e.ketsu, 0) * lootK)
+          const activePlan = get().battleRewardSettlement?.plan
+          const hoto = activePlan?.carried.hoto ?? Math.round(defs.reduce((s, e) => s + e.hoto, 0) * lootK)
+          const ketsu = activePlan?.carried.ketsu ?? Math.round(defs.reduce((s, e) => s + e.ketsu, 0) * lootK)
           family = family.map((c) =>
             run.partyIds.includes(c.id) && c.alive ? { ...c, kills: c.kills + defs.length } : c,
           )
@@ -2307,23 +2605,6 @@ export const useGame = create<GameStore>((set, get) => {
               )
             }
             nd = { ...nd, collectionV2: discoverItems(nd.collectionV2, [rare.drop]) }
-          }
-          // 眷属(式神) v3.1 M16-5: 討った雑兵が稀に懐く(主・宿敵は対象外)。既知の種は増えない
-          if (!isBoss && !get().nemesisBattleId && !rare) {
-            const owned = new Set((nd.familiars ?? []).map((f) => f.enemyId))
-            const candidates = defs.filter((e) => e.tier < 5 && !owned.has(e.id))
-            const uniqueCandidates = [...new Map(candidates.map((e) => [e.id, e])).values()]
-            for (const foe of uniqueCandidates) {
-              if (!rng.chance(0.04)) continue
-              const famName = `${foe.name}の眷属`
-              nd = {
-                ...nd,
-                familiars: [...(nd.familiars ?? []), { enemyId: foe.id, name: famName, element: foe.element }],
-                activeFamiliar: nd.activeFamiliar ?? foe.id,
-              }
-              nd = chronicle(nd, 'event', `${foe.name}が懐いた — 眷属となった。`)
-              owned.add(foe.id) // 同じ戦闘で同種が複数いても二重に捕らえない
-            }
           }
           // 仇討ち成就(v3.1 M16-1): 宿敵を討てば、犠牲者の銘を刻んだ得物が残る
           const nemId = get().nemesisBattleId
@@ -2356,8 +2637,9 @@ export const useGame = create<GameStore>((set, get) => {
             if (lore) {
               nd = chronicle(nd, 'event', `【鎮魂】${lore.requiem[0]}`)
               if ((nd.loreFrags?.[run.regionId] ?? 0) >= 3) {
-                nd = { ...nd, hoto: nd.hoto + 40 }
-                nd = chronicle(nd, 'era', `${regionById(run.regionId).name}の「土地の記」、家譜に綴られる。(奉燈40)`)
+                const loreHoto = activePlan?.immediate.loreCompletionHoto ?? 40
+                nd = { ...nd, hoto: nd.hoto + loreHoto }
+                nd = chronicle(nd, 'era', `${regionById(run.regionId).name}の「土地の記」、家譜に綴られる。(奉燈${loreHoto})`)
                 earnedCutResonance = true
               }
             }
@@ -2528,16 +2810,40 @@ export const useGame = create<GameStore>((set, get) => {
             { text: '汐里は楽を構えた。千年の最後の演目——看取ってやれ!', kind: 'info' },
           ]
           const nodes = { ...exp.nodes, [battleNodeId]: { ...node, enemyIds: ['boss_shiori'] } }
+          const reward = planBattleRewards('node:boss_shiori', [shioriDef], { boss: true, nextPhase: 'finale' })
           set({
             data: { ...d, family, flags: { ...d.flags, shioriPhase: true }, expedition: { ...exp, nodes } },
             battle: battle2,
+            ...reward,
             battleLogQueue: [...battle2.log],
           })
           return
         }
+        // 汐里を看取った勝利は通常の主討伐精算へ流さない。玄冬との二段戦は
+        // planどおり携行報酬・経験・武功・討伐数・事績を増やさず結末へ直結する。
+        if (node.enemyIds?.includes('boss_shiori')) {
+          let nd: GameData = {
+            ...d,
+            family,
+            expedition: undefined,
+            regionsCleared: [...new Set([...d.regionsCleared, region.id])],
+            flags: { ...d.flags, cleared: true },
+          }
+          nd = chronicle(nd, 'era', '灯ノ御山の頂にて、家祖・汐里と相まみえる。千年の答えを、選ぶ時。')
+          set({
+            data: nd,
+            battle: null,
+            battleNodeId: null,
+            pendingScenes: [],
+            screen: { id: 'finale' },
+          })
+          saveGame(nd)
+          return
+        }
         const defs = (node.enemyIds ?? []).map((id) => enemyById(id))
-        const hoto = defs.reduce((s, e) => s + e.hoto, 0)
-        const ketsu = defs.reduce((s, e) => s + e.ketsu, 0)
+        const activePlan = get().battleRewardSettlement?.plan
+        const hoto = activePlan?.carried.hoto ?? defs.reduce((s, e) => s + e.hoto, 0)
+        const ketsu = activePlan?.carried.ketsu ?? defs.reduce((s, e) => s + e.ketsu, 0)
         const kills = defs.length
         family = family.map((c) =>
           exp.partyIds.includes(c.id) && c.alive ? { ...c, kills: c.kills + kills } : c,

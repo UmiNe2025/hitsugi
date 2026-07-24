@@ -1,0 +1,113 @@
+/* M46 — 架空のslotではなく、同じreward planを読む戦果見立て。 */
+.battle-reward-forecast { position: relative; flex: 0 0 auto; min-width: 0; }
+.battle-reward-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  max-width: min(390px, 42vw);
+  padding: 5px 9px;
+  border: 1px solid rgba(232, 163, 61, 0.64);
+  border-radius: 5px;
+  background: rgba(7, 11, 25, 0.94);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  animation: m46RewardReveal 0.7s ease-out both;
+}
+.battle-reward-chip:hover,
+.battle-reward-chip:focus-visible { border-color: var(--flame); box-shadow: 0 0 0 2px rgba(232, 163, 61, 0.18); }
+.battle-reward-label { color: var(--gold); white-space: nowrap; }
+.battle-reward-values { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.battle-reward-special { color: var(--amber); white-space: nowrap; }
+
+.battle-reward-popover {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(360px, calc(100vw - 20px));
+  padding: 12px;
+  border: 1px solid rgba(232, 163, 61, 0.64);
+  border-radius: 6px;
+  background: rgba(7, 11, 25, 0.98);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color: var(--text);
+}
+.battle-reward-popover h3 { margin: 0 0 7px; color: var(--gold); font-size: 14px; }
+.battle-reward-popover h4 { margin: 9px 0 4px; color: var(--text-dim); font-size: 11px; letter-spacing: 0.08em; }
+.battle-reward-popover ul { margin: 0; padding-left: 1.2em; font-size: 11px; line-height: 1.65; }
+.battle-reward-popover-note { margin: 9px 0 0; color: var(--text-dim); font-size: 10.5px; line-height: 1.5; }
+.battle-reward-popover .btn { margin-top: 9px; min-height: 34px; }
+
+.victory-result-block {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  width: min(100%, 1120px);
+  margin: 5px auto 0;
+}
+
+/* 旧巻物は一行+CTA前提の横flexだった。M46の内訳を潰さず、上から自然に読める結果面へ更新する。 */
+.battle-bottom > .victory-scroll {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  overflow-y: auto;
+}
+.victory-scroll > .victory-line { flex: 0 0 auto; margin: 0; text-align: center; }
+.victory-scroll > .auto-battle-report { flex: 0 0 auto; }
+.victory-scroll > .btn-main { position: relative; z-index: 2; align-self: flex-end; min-width: 180px; }
+.victory-result-section {
+  padding: 8px 10px;
+  border: 1px solid rgba(201, 168, 106, 0.25);
+  background: rgba(5, 9, 21, 0.55);
+}
+.victory-result-section h3 { margin: 0 0 5px; color: var(--gold); font-size: 11px; letter-spacing: 0.12em; }
+.victory-result-values { margin: 0; color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; }
+.victory-result-values b { color: var(--el-star); }
+.victory-carry-note { margin: 4px 0 0; color: var(--text-dim); font-size: 10px; }
+
+.victory-growth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+  justify-content: center;
+  gap: 7px;
+}
+.victory-growth-card {
+  width: 100%;
+  max-width: 280px;
+  padding: 8px 10px;
+  border: 1px solid rgba(232, 163, 61, 0.48);
+  background: linear-gradient(135deg, rgba(35, 24, 20, 0.88), rgba(8, 13, 27, 0.9));
+  text-align: left;
+}
+.victory-growth-card strong { color: var(--text); }
+.victory-growth-level { margin-left: 8px; color: var(--amber); font-variant-numeric: tabular-nums; }
+.victory-growth-delta { margin: 5px 0 0; color: var(--text-dim); font-size: 10.5px; line-height: 1.5; }
+
+@keyframes m46RewardReveal {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 560px) {
+  .battle-reward-chip { max-width: 186px; gap: 4px; padding-inline: 6px; font-size: 9.5px; }
+  .battle-reward-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .battle-reward-special { font-size: 0; }
+  .battle-reward-special::after { content: '印'; font-size: 9.5px; }
+  .battle-reward-popover { position: fixed; top: 62px; right: 8px; }
+  .victory-result-block { padding-right: 2px; }
+  .victory-growth-grid { grid-template-columns: minmax(0, 280px); justify-content: start; }
+  .battle-bottom > .victory-scroll { padding: 10px; }
+  .victory-scroll > .victory-line { font-size: 12px; line-height: 1.55; }
+  .victory-scroll > .btn-main { align-self: stretch; min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-reward-chip { animation: none; }
+}

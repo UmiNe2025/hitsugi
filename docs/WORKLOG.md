@@ -1357,3 +1357,21 @@
 - **ガバナンス変更**: `_fable5/CLAUDE.md`の「他ツール(Codex等)経由の編集は月次メンテで反映する」規約をユーザー指示により撤廃。以後Codex成果物も随時commit。
 - **commit**: hitsugi=`e2e30da`(Codex監査一式)/`0ad216c`(WORKLOG)/`32be976`(tmp/ gitignore)。_fable5=`d421fd3`(ルール撤廃)。
 - **デプロイ実行**(ユーザー承認「デプロイしてください」): build緑→上記3コミット(27a37b2含め計4)をpush。GitHub Actions run 30052013998 success(build 1m3s+deploy 15s)、https://hitsugi-game.github.io/hitsugi/ 公開反映済み。
+
+## 2026-07-24（M46 資質成長・戦果見立て Forge設計）
+
+- **依頼と境界**: `$instruct`で作成した一族level・報酬ルーレット改善案を`$forge`で強化。対象は実装指示設計であり、runtime、save、画像、commit、push、deployは未実施。
+- **成長の自己修復**: 先案の`potential × AGE_CURVE × level倍率`は新規人物を弱体化するため破棄。Lv1を現行値と完全一致させ、資質別`growthRate`の加算熟達へ変更した。さらにlevelCapを分母にした式は鍛錬で上限が増えた瞬間に既得能力が落ち得るため、絶対level式へ修正。founder上限9、Lv1 parity、level/資質/鍛錬の単調性をproperty checkで確認した。
+- **saveと育成判断**: level/expだけを保存し、熟達量は純粋導出。旧saveはkills×3＋expeditions×4から冪等移行し、弱体化0を契約化。毎levelのmodal割振りは置かず、出陣者、血珠鍛錬、星契り、継承、装備で誰を育てるか判断させる。
+- **戦果UI**: 実報酬と無関係なslotを`戦果見立て`へ置換。確定する奉燈/血珠/XP/稀相遺物、即時/携行の行き先、未所持一意敵種ごと4%の眷属候補を分離。各候補4%、`1-0.96^N`の合成表示、安定候補順、一候補一RNG、複数成功を現行と一致させた。
+- **Forge Round 1**: 独立評価は5/4/3/3/3。`REWARD_SETTLEMENT_LIFECYCLE`と`FAMILIAR_ROLL_CARDINALITY`の2 blockingを検出。
+- **Forge Round 2**: `BattleRewardPlan/Result/Settlement`、`planned → settled → continued`、付与/退出二action、settlementId同期guard、候補数別抽選/testへ限定修正。別の独立閉鎖者が2 IDをclosed、軽量回帰2 files/11 testsと確率propertyを確認し、5/4/5/5/5、blocking 0でPASS。正本は`docs/CHARACTER_GROWTH_REWARD_FORGE_20260724.md`、状態は`docs/CODEX_FORGE_STATE.md`。
+
+## 2026-07-24（M46 資質成長・戦果見立て実装）
+
+- **成長/save**: `character_progression.ts`を単一情報源に、資質score、level上限8〜12、Lv1互換の加算熟達、必要XP、複数level上昇を実装。`level/exp`だけを保存し、旧saveは戦歴から両値を冪等再構築。不正値拒否、overcap/threshold正規化、死亡hp0とHP/MP比率を保全。
+- **戦果の一回精算**: 全戦闘開始経路へ純粋`BattleRewardPlan`を接続し、`settleBattleVictory`と`continueAfterBattle`を分離。通貨、XP、稀相、宿敵形見、土地の記、眷属候補ごと4%を一つのplanから処理し、double callを無効化。玄冬→汐里、汐里→結末は通常報酬/XP 0。既存`finishBattle`はsimulator/自動互換wrapperとして維持。
+- **UI/UX**: Home主札は六資質の現在値・資質・熟達・年齢上限、小札はLv/上限・経験・得意2資質に限定。戦闘の架空slotを常設`戦果見立て`へ置換し、確定値、上乗せ、稀相、眷属の各4%/合成見込み、携行/即時、level upだけを段階表示。Popoverは外側click/Esc/フォーカス復帰対応。全戦闘オートは確定結果を表示後に同じcontinueへ進む。
+- **100-seed自己修復**: 初期tier XP係数3は開幕3戦後Lv1が56%、生涯上限到達3.04%で正本gate未達。敵能力、寿命、AGE_CURVE、通貨を固定し、指定された最初の調整軸だけ3→5へ変更。開幕全seed Lv2〜3、上限到達10〜30%、現役cap 50%未満、死亡経験者Lv2以下50%未満と既存campaign指標・同seed決定性を同時に再合格した。
+- **検証**: lint、data、visual closure 23/40/6/69、manifest 9/9、Vitest 47 files/746 tests、build、39地域100-seedを合格。PlaywrightはM46 PC1280/mobile390 4/4、既存戦闘上端/稀相 PC/mobile 4/4。横overflow 0、主札全幅化0、plan=result、Esc/focus returnを実DOMで確認。
+- **独立監査とShip Check**: UIの武功/形見/土地の記/候補名、level up上位3能力、旧expedition汐里のgeneric報酬混入、XP/RNG二重settle、両最終経路、level分布を差戻し、全件を限定修正。再監査はPASS / blocking 0。秘密pattern 0、依存脆弱性0。結論は**SHIP-with-notes**（既存rank分布warn、main chunk 1.46MB、旧expeditionの累計携行表示差）。

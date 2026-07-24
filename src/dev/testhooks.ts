@@ -15,10 +15,24 @@ import { ENEMIES } from '../core/data/enemies'
 import type { Character } from '../core/types'
 import { createRareEncounter } from '../core/rare_encounters'
 import { Rng } from '../core/rng'
+import { createBattleRewardPlan } from '../core/battle_rewards'
 
 const isBoss = (id: string) => id.startsWith('boss_')
 const NORMAL_ENEMIES = () => ENEMIES.filter((e) => !isBoss(e.id))
 const BOSSES = () => ENEMIES.filter((e) => isBoss(e.id))
+
+function plannedRewards(encounterId: string, defs: typeof ENEMIES, options: { boss?: boolean; rareDrop?: ReturnType<typeof createRareEncounter>['encounter']['drop'] } = {}) {
+  const battleSequence = useGame.getState().battleSequence + 1
+  const plan = createBattleRewardPlan({
+    settlementId: `${encounterId}:${battleSequence}`,
+    enemies: defs.map(({ id, name, tier, hoto, ketsu }) => ({ id, name, tier, hoto, ketsu })),
+    ownedFamiliarEnemyIds: useGame.getState().data?.familiars?.map((entry) => entry.enemyId) ?? [],
+    boss: options.boss,
+    rare: options.rareDrop !== undefined,
+    rareDrop: options.rareDrop,
+  })
+  return { battleSequence, battleRewardSettlement: { status: 'planned' as const, plan } }
+}
 
 /** 新規ゲーム + 演出キューを空にする(場面送り/加護の三択が測定を邪魔しないように) */
 function reset(narrative = false): void {
@@ -92,6 +106,7 @@ export function installTestHooks(): void {
       useGame.setState({
         battle: startBattle(party, foes),
         battleSource: boss ? 'dungeonBoss' : 'dungeon',
+        ...plannedRewards(`dev:${boss ? 'boss' : 'battle'}`, defs, { boss }),
         screen: { id: 'battle' },
       })
     },
@@ -105,6 +120,7 @@ export function installTestHooks(): void {
       battle.log.push({ text: `討ち果たせば、稀相遺物「${rolled.encounter.drop.name}」が残る。`, kind: 'info' })
       useGame.setState({
         battle,
+        ...plannedRewards('dev:rare', [rolled.enemy], { rareDrop: rolled.encounter.drop }),
         battleLogQueue: [...battle.log],
         battleSource: 'dungeon',
         goldenBattle: true,

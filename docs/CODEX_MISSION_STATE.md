@@ -1,66 +1,67 @@
-# CODEX MISSION STATE — M45 engagement additions audit
+# CODEX MISSION STATE — M46 資質成長・戦果見立て実装公開
 
 ## ①契約
 
-- Definition of done: 現行公開版の不足を実装証拠から特定し、没入・判断・世代継承・収集育成・再訪動機に効く追加内容を、優先順位・最小実装単位・測定指標・見送り条件付きの正本資料へまとめる。
-- Out of scope: ゲーム実装、新規画像量産、外部ユーザー募集、課金、commit、push、deploy。
-- Constraints: GDD v3と現行runtimeを正とし、M43との重複を除く。既存baseline PNG 9点、`tmp/`、未追跡M40/M42文書を上書きしない。
-- Permission boundary: ローカルの読み取り・文書作成・機械検証のみ。公開、外部送信、費用発生は別承認とする。
-- Escalation: 外部初見8名、一世代5名、物理低性能端末、analytics providerは外部gateへ分離する。
-- Audit class: independent audit。魅力・没入という主観品質と優先順位判断を含むため。
-- Subjective acceptance: 初回30分、戦闘判断、継承因果、収集育成、再訪動機の5軸で、既存機能との重複0・各案の検証可能性を判定する。
+- Definition of done: `docs/CHARACTER_GROWTH_REWARD_FORGE_20260724.md`を既存save互換・全戦闘オート同値で実装し、全品質gate、独立監査、shipcheck、main push、GitHub Pages公開反映まで完了する。
+- Out of scope: 新規画像・通貨・ガチャ、敵能力・寿命・AGE_CURVEでの帳尻合わせ、M45/M45Aの別施策実装、無関係なリファクタ。
+- Constraints: Lv1現行能力互換、旧人物弱体化0、level熟達非遺伝、全戦闘オート維持、手動/オート全副作用一致、既存正本差分保全。
+- Permission boundary: ユーザーが本依頼で対象変更の実装・commit・main push・GitHub Pages deployを明示承認。破壊操作、費用、他repo、scope拡張は不可。
+- Escalation: 認証不能、秘密情報、既存save破損、正本変更が必要なblockingだけを即時確認する。
+- Audit class: independent audit。公開、save migration、経済報酬、RNGを含むため。
+- Subjective acceptance: PC1280/mobile390の実画面で戦果の確定/可能性/携行を説明でき、成長札が全幅化せず、戦闘操作とオートを阻害しない。
 
 ## ②作業分解
 
 | Item | Dependency | Execution path | Acceptance check | Status |
 |---|---|---|---|---|
-| A. 契約・dirty境界固定 | git/GDD | main | state/Goal/plan一致、既存差分保護 | completed |
-| B. 現状証拠収集 | A | main＋read-only audit | GDD/M42/runtime/testの照合 | completed |
-| C. 5軸gap分析 | B | main | M43重複除外、候補の根拠あり | completed |
-| D. M45正本資料 | C | main | 優先度、実装単位、指標、見送り条件 | completed |
-| E. 独立最終監査 | D | fresh reviewer | blocking 0または修正 | completed |
-| F. 正典同期・終了 | E | main | GDD/STATUS/WORKLOG/state整合 | completed |
+| A. 契約・dirty・state固定 | git/GDD/正本 | main | Goal/plan/state一致、既存差分保全 | completed |
+| B. progression/save | A | main | formula、migration、validation、unit green | completed |
+| C. reward settlement | B | main | plan=result、exactly once、二経路、auto同値 | completed |
+| D. UI | C | main | PC/mobile、a11y、全幅札0、戦果理解 | completed |
+| E. 統合検証 | D | main | lint/data/Vitest/build/Playwright/100-seed | completed |
+| F. 独立監査/shipcheck | E | fresh reviewer＋main | blocking 0、SHIP系判定 | completed |
+| G. 正典/commit/deploy | F | main | 対象限定commit、Actions success、公開実測 | in_progress |
 
 ## ③完了済み
 
-- 2026-07-23: HEAD `b8d78ae`、公開M43/M44、既存dirty PNG 9点、`tmp/`、未追跡M40/M42文書を確認し、非接触境界を固定した。
-- M43で初回30分、継承場面、序盤12敵、local journey metrics、星籤が実装済みであることをGDD v3 §8.26とruntimeから確認した。
-- gameplay、onboarding/retentionの独立read-only監査から、M43後に残る候補を収集し、既存実装との重複を除いた。
-- `docs/PRODUCT_ENGAGEMENT_ADDITIONS_M45_20260723.md`へ8候補、優先度、最小実装、分子/分母付き測定表、見送り条件、Phase 0→A1→A2→A3の逐次gateを記録した。
-- 独立Round 1のblocking 3件を受け、家族は既存scene置換、地域は既存見切り経路、計測はlocal event、順序は現行baseline・Dungeon安全性先行へ限定修正した。
-- 独立Round 2はPASS / blocking 0。GDD v3 §8.27、STATUS、WORKLOGへ正本と公開境界を同期した。
+- 2026-07-24T09:00+09:00: ユーザーがM46正本の実装とdeployを明示承認。
+- Forge正本はRound 2独立評価5/4/5/5/5、blocking 0。設計、GDD、STATUS、WORKLOG、Forge stateの未commit差分を本mission対象として保全。
+- 資質score、上限8〜12、Lv1加算熟達、XP、複数level上昇、旧save冪等移行、死亡hp0をruntimeと保存境界へ実装。
+- 全戦闘開始経路へ同一`BattleRewardPlan`を接続し、`planned → settled → continued`、一回精算、候補ごと4%眷属、稀相・宿敵・土地の記、玄冬/汐里報酬0を統合。
+- Homeの主札/小札へ成長情報を密度別表示し、架空slotを確定値・可能性・行き先が読める戦果見立てへ置換。全戦闘オートは維持。
+- lint、data、closure 23/40/6/69、manifest 9/9、Vitest 47 files/746 tests、build、M46 PC/mobile 4/4、既存戦闘/稀相 PC/mobile 4/4に合格。
+- 独立監査でUI説明不足、旧expedition汐里のgeneric副作用、経路test不足、100-seed level分布未達を検出。すべて限定修正し、tier XP係数だけ3→5へ調整。独立再監査はPASS / blocking 0。
+- Ship Checkは**SHIP-with-notes**。秘密pattern 0、依存脆弱性0、必須gate green。既存rank分布warn、1.46MB main chunk、旧expeditionの累計携行表示差を非阻害noteとして保持。
 
 ## ④保留リスト
 
-- 実ユーザー行動・魅力評価・低性能実機は、この文書監査では代替しない。
-- 実装、commit、push、deployは本mission外。
-- 次missionのPhase 0は、外部初見8名・一世代5名の協力と、実装着手のユーザー指示を必要とする。
+- なし。
 
 ## ⑤質問キュー
 
-- なし。候補を先に絞り、実装順の選択は成果物提示後とする。
+- なし。正本と公開承認が明確なため自律進行する。
 
 ## ⑥マイルストーン履歴
 
-- M45-0: 契約、Goal、5項目plan、独立read-only auditを開始。
-- M45-1: 5軸gap分析を統合し、M45正本資料を作成。
-- M45-2: 独立Round 1 FAIL / blocking 3。重複、測定不能、一括投入順序を検出。
-- M45-3: 限定修正後、独立Round 2 PASS / blocking 0。正典同期完了。
+- M46-0: Mission契約、Goal、7段階plan、既存dirty境界を固定。
+- M46-1: progression/save、reward plan/settlement、Home/Battle UIを統合。
+- M46-2: 全機械gateとPC1280/mobile390実ブラウザ受入を完了。
 
 ## ⑦次の一手
 
-- ユーザーが実装を指示した場合、`docs/PRODUCT_ENGAGEMENT_ADDITIONS_M45_20260723.md` Phase 0から開始し、contentの一括投入を行わない。
+- fresh reviewerの独立監査とShip Checkを閉じ、対象限定commitをmainへpushしてPages反映を実測する。
 
 ## ⑧最終監査表
 
-- **監査種別**: independent audit。
-- ✅ 既存機能との重複0: 家族sceneは置換、地域は`loreFrags → traceIntel → bossMikiri`の拡張。
-- ✅ 魅力5軸: 初回、戦闘判断、継承、収集育成、再訪の候補と測定を記録。
-- ✅ 実装可能性: 各候補へ最小実装、event key、分子/分母、baseline、cohort、合格/見送り値を付与。
-- ✅ 安全境界: scene/deferred純増0、全戦闘オート同報酬、FOMO/新通貨/限定必須戦力なし。
-- ✅ 順序: 現行baseline、local計測、Dungeon安全性をPhase 0へ置き、A1〜A3を単独検証。
-- ✅ 独立Round 2: PASS / blocking 0。実ユーザー/実機は外部gateとして代替しない。
+- **監査種別**: independent audit。最終PASS / blocking 0。
+- ✅ runtime実装: progression/save/reward/UIを正本通り接続。
+- ✅ save互換: legacy/invalid/overcap/threshold/死亡hp0を集中testで固定。
+- ✅ reward exactly-once/auto同値: settle/continue/finish互換とdouble callを統合testで固定。
+- ✅ PC/mobile UX: M46 4/4、既存戦闘/稀相4/4。横overflow 0、Esc/focus return、全幅札0。
+- ✅ 全機械gate: lint/data/closure/manifest/Vitest 746/build、100-seedを合格。
+- ✅ Ship Check: SHIP-with-notes。秘密0、脆弱性0、blocking 0。
+- ⚠️ commit/push/Pages: 未実行。
 
 ## ⑨terminal印
 
-達成 — 2026-07-24T00:03:27+09:00。M45正本資料、GDD/STATUS/WORKLOG同期、独立再監査PASS / blocking 0。runtime/save/素材/公開版は変更していない。
+稼働中

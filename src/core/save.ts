@@ -1,8 +1,10 @@
-import type { GameData, ChronicleEntry, NarrativeScene } from './types'
+import type { GameData, ChronicleEntry, NarrativeScene, Character, StatKey } from './types'
 import { recoverNarrativeOnLoad } from './narrative'
 import { migrateCollectionV2 } from './collection'
 import { migrateJourneyMetrics } from './journey_metrics'
 import { migrateStarLottery } from './star_lottery'
+import { migrateCharacterProgression } from './character_progression'
+import { recalcStats } from './inheritance'
 
 const KEY_V1 = 'hitsugi_save_v1' // 季節単位(1ターン=1季)時代のセーブ
 const KEY_V3 = 'hitsugi_save_v3' // 月単位(1ターン=1月)
@@ -161,10 +163,17 @@ export function isValidSave(d: unknown): d is GameData & { saveSeq?: number } {
   // store.tsの c.equipment[...] や hp 参照で例外/NaN化する crash-on-continue を防ぐ(devil C2)。
   for (const c of g.family) {
     if (!c || typeof c !== 'object') return false
-    const cc = c as { id?: unknown; hp?: unknown; equipment?: unknown }
+    const cc = c as { id?: unknown; hp?: unknown; equipment?: unknown; level?: unknown; exp?: unknown }
     if (typeof cc.id !== 'string' || typeof cc.hp !== 'number' || !Number.isFinite(cc.hp)) return false
     // M32修正: equipment欠落の族員は advanceSeason(寿命死判定 c.equipment[slot])で即例外化する。
     if (typeof cc.equipment !== 'object' || cc.equipment === null) return false
+    // progression欠落は旧saveとして許容する。存在する値だけは、正規化可能な有限整数に限定する。
+    if (cc.level !== undefined && (
+      typeof cc.level !== 'number' || !Number.isFinite(cc.level) || !Number.isInteger(cc.level) || cc.level < 1
+    )) return false
+    if (cc.exp !== undefined && (
+      typeof cc.exp !== 'number' || !Number.isFinite(cc.exp) || !Number.isInteger(cc.exp) || cc.exp < 0
+    )) return false
   }
   if (typeof g.seasonIndex !== 'number' || !Number.isFinite(g.seasonIndex) || g.seasonIndex < 0) return false
   // M32修正: 配列必須/optional配列の型を検証。非配列の inventory/consumables が通過すると
@@ -242,7 +251,8 @@ export function saveGame(data: GameData): void {
   if (saveReadOnly) return // M33: 別タブの保存を検知した後は保存を止め、相手の新しい進行を上書きしない
   // load専用のrecoverNarrativeOnLoadはここで呼ばない。表示中sceneを保存のたびに
   // 灯の余白へ退避してしまうため、保存時は追加schemaの正規化だけに留める。
-  const withCollection = { ...data, collectionV2: migrateCollectionV2(data) }
+  const withProgression = normalizeCharacterProgression(data)
+  const withCollection = { ...withProgression, collectionV2: migrateCollectionV2(withProgression) }
   const withJourney = { ...withCollection, journeyMetrics: migrateJourneyMetrics(withCollection) }
   const normalizedData: GameData = { ...withJourney, starLottery: migrateStarLottery(withJourney) }
   // 直前の正常セーブ(saveSeq取得+BAK候補)
@@ -335,8 +345,37 @@ function migrateCodexSeen(d: GameData): GameData {
   }
 }
 
+const PROGRESSION_STAT_KEYS: readonly StatKey[] = ['str', 'vit', 'dex', 'agi', 'mnd', 'luk']
+
+function canRecalculateCharacter(c: Character): boolean {
+  return typeof c.bornSeason === 'number' && Number.isFinite(c.bornSeason)
+    && typeof c.alive === 'boolean'
+    && typeof c.maxHp === 'number' && Number.isFinite(c.maxHp)
+    && typeof c.maxMp === 'number' && Number.isFinite(c.maxMp)
+    && !!c.potential && PROGRESSION_STAT_KEYS.every((key) => (
+      typeof c.potential[key] === 'number' && Number.isFinite(c.potential[key])
+    ))
+}
+
+/** save/load/importで共有するprogression正規化。既存の最小fixtureは能力再計算を要求しない。 */
+function normalizeCharacterProgression(d: GameData): GameData {
+  return {
+    ...d,
+    family: d.family.map((character) => {
+      const beforeLevel = character.level
+      const beforeExp = character.exp
+      const migrated = migrateCharacterProgression(character)
+      const changed = migrated.level !== beforeLevel || migrated.exp !== beforeExp
+      return changed && canRecalculateCharacter(migrated)
+        ? recalcStats(migrated, d.seasonIndex)
+        : migrated
+    }),
+  }
+}
+
 export function normalizeLoadedData(d: GameData, now = Date.now()): GameData {
-  const seenMigrated = migrateCodexSeen(d)
+  const progressionMigrated = normalizeCharacterProgression(d)
+  const seenMigrated = migrateCodexSeen(progressionMigrated)
   const withNarrative = recoverNarrativeOnLoad({ ...seenMigrated, collectionV2: migrateCollectionV2(seenMigrated) })
   const withJourney = { ...withNarrative, journeyMetrics: migrateJourneyMetrics(withNarrative, now) }
   return { ...withJourney, starLottery: migrateStarLottery(withJourney) }

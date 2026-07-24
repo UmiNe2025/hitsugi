@@ -128,6 +128,8 @@ export interface Character {
   sex: 'm' | 'f'
   bornSeason: number // 絶対季節インデックス
   potential: Stats // 血潮(成長ポテンシャル 0-120)
+  level: number // 熟達level。1..資質から導くlevelCap
+  exp: number // 現level内の経験値。levelCap到達時は0
   trainingMarks?: Partial<Record<StatKey, number>> // M40: 血珠鍛錬の成功回数。生来値と区別する表示用履歴
   stats: Stats // 現在値
   hp: number

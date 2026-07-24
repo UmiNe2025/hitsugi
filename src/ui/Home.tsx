@@ -21,6 +21,7 @@ import { FamilyTree } from './FamilyTree'
 import './m17_home.css'
 import './home_m26.css'
 import './home_polish_m29.css' // M29+: 郷ホームの視覚改善(情報階層・カードの奥行き。後勝ち)
+import './m46_progression.css'
 
 function sceneLabel(scene: NarrativeScene): string {
   switch (scene.kind) {
@@ -403,7 +404,7 @@ function FamilyBoard({ data }: { data: GameData }) {
   return (
     <div className="family-board">
       <div className="family-main">
-        <CharCard char={sel} seasonIndex={data.seasonIndex} />
+        <CharCard char={sel} seasonIndex={data.seasonIndex} progressionMode="detail" />
         {smalls.length > 1 && (
           <div className="family-smalls">
             {smalls.map((ch) => (
@@ -412,6 +413,7 @@ function FamilyBoard({ data }: { data: GameData }) {
                 char={ch}
                 seasonIndex={data.seasonIndex}
                 compact
+                progressionMode="summary"
                 selected={sel.id === ch.id}
                 onClick={() => setSelId(ch.id)}
               />

@@ -1,0 +1,82 @@
+/* M46 — 資質を読み解く熟達表示。既存の家譜札幅を変えず、判断に必要な情報だけを足す。 */
+.m46-progression-summary {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(201, 168, 106, 0.2);
+}
+
+.m46-level-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.m46-level-value {
+  color: var(--el-star);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.m46-level-state { color: var(--text-dim); }
+.m46-level-state.is-open { color: var(--amber); }
+
+.m46-exp-track {
+  position: relative;
+  height: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 168, 106, 0.24);
+  border-radius: 999px;
+  background: rgba(4, 8, 19, 0.72);
+}
+
+.m46-exp-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a96a1f, #e8a33d, #f3d18d);
+}
+
+.m46-aptitude-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.m46-aptitude-tag {
+  padding: 2px 6px;
+  border: 1px solid rgba(201, 168, 106, 0.25);
+  border-radius: 999px;
+  color: var(--text-dim);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.m46-progression-detail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.m46-stat-growth {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid rgba(201, 168, 106, 0.17);
+  background: rgba(5, 9, 21, 0.42);
+}
+
+.m46-stat-growth-head { display: flex; justify-content: space-between; gap: 5px; font-size: 11px; }
+.m46-stat-growth-head b { color: var(--text); font-variant-numeric: tabular-nums; }
+.m46-stat-growth-meta { color: var(--text-dim); font-size: 9.5px; line-height: 1.35; }
+
+.family-smalls .m46-progression-summary { margin-top: 4px; padding-top: 5px; }
+.family-smalls .m46-level-line { font-size: 11px; }
+.family-smalls .m46-exp-track { height: 4px; }
+
+@media (max-width: 640px) {
+  .m46-progression-detail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
