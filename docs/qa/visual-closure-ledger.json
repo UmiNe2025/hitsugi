@@ -130,7 +130,7 @@
       },
       "provenance": {
         "sourcePath": "src/ui/Home.tsx",
-        "sourceSha256": "6647d9e9224cb391b91c8779dd6d45e5ba223959238200c6011e0fe5cba2f3e4",
+        "sourceSha256": "f8e1ce4b3ba109dff7bb6fa6bd65217c6b607dd06bfea6be6c2b24e901434902",
         "runtimePath": "src/ui/m17_home.css",
         "runtimeSha256": "56381cb1b07aca85a3d7934e11fed0dcdba334da610fd673d91cff115c010e0b",
         "rightsStatus": "pending",
@@ -3419,13 +3419,13 @@
       "motionSound": "Entry motion is restrained and removed under reduced-motion; global button sound remains centrally attached.",
       "runtimeBundle": {
         "path": "src/index.css",
-        "sha256": "d1d520d1c3152b2448379357cd7508762d686869fa69dcbfab995c3957e77496"
+        "sha256": "485c897e183174b07672dabff6c20e3daac7e6adaac17e2405ba3aeeccad0216"
       },
       "provenance": {
         "sourcePath": "src/App.tsx",
         "sourceSha256": "3fad62f7a68fd76c4ed41501c99a4fa2e09d2f60d3d70dd0c2a58028c985bbb8",
         "runtimePath": "src/index.css",
-        "runtimeSha256": "d1d520d1c3152b2448379357cd7508762d686869fa69dcbfab995c3957e77496",
+        "runtimeSha256": "485c897e183174b07672dabff6c20e3daac7e6adaac17e2405ba3aeeccad0216",
         "rightsStatus": "pending",
         "reviewer": "Codex local integration; human art direction and rights clearance remain external gates."
       },

@@ -2104,6 +2104,7 @@ input:focus-visible {
 
 /* M43 初回導線: 家族と今月の判断を同じ視界へ置き、長い縦列を避ける。 */
 .home-core-grid { display: grid; gap: 12px; }
+.home-core-actions { scroll-margin-top: 96px; }
 @media (min-width: 960px) {
   .home-core-grid { grid-template-columns: minmax(0, 1.18fr) minmax(390px, .82fr); align-items: start; }
   .home-core-grid .panel { margin-bottom: 0; }

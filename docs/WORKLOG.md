@@ -1392,3 +1392,9 @@
 - **実装**: `Battle.tsx`の勝敗面を左`victory-log-panel`（直近8行）／右`victory-result-main`（結果本文＋固定`victory-continue`）へ分離。既存`displayed`を表示専用に再利用し、ログ生成、報酬精算、全戦闘オート、遷移処理は変更しない。勝利文の句読点も戦闘ログと統一した。
 - **レイアウト**: `battle_m47.css`へM48の2列、モバイル縦積み、結果本文のみoverflow、勝敗時の高さ予算、CTA常時表示を追加。長い報酬・成長内訳でも下段CTAを押せる構造にした。
 - **検証予定**: M47既存テスト＋M48 contract、lint/data/build/visual closure/manifest、全Vitest、実ブラウザPC1280/mobile390でログ可視性・CTA可視性・横overflow 0を確認してからコミットする。
+
+## 2026-07-24（M49 今月の決断ジャンプ）
+
+- **報告**: Home上部の「決断を見る」が反応しないように見えるとの指摘。ローカルDOMではクリックとscrollIntoView自体は動作していたが、移動後の選択カードへ視覚的なフォーカスが渡らないことが主因と判断した。
+- **修正**: `Home.tsx`へ`jumpToDecisions`を追加し、`monthly-decisions`へスクロール後、最初の有効な`.action-cards`ボタンへ`focus({ preventScroll: true })`を移す。`aria-controls`、`data-testid`、`scroll-margin-top:96px`を追加した。決断カードの処理は変更していない。
+- **受入**: M49 contract test 2件、lint、build、実ブラウザHomeで`scrollY:0→約47px`、`#monthly-decisions`の表示、最初の有効カード「出立 — 夜藪へ」へのfocus移動を確認した。公開は別途明示依頼後。

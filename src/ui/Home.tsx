@@ -87,6 +87,14 @@ export function HomeScreen() {
   const famRef = useRef<HTMLDivElement>(null)
   const actRef = useRef<HTMLDivElement>(null)
   const ledRef = useRef<HTMLDivElement>(null)
+  const jumpToDecisions = () => {
+    const target = actRef.current
+    if (!target) return
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    window.setTimeout(() => {
+      target.querySelector<HTMLButtonElement>('.action-cards button:not(:disabled)')?.focus({ preventScroll: true })
+    }, 260)
+  }
   const crisis = !cen.hasHeir || cen.dying.length > 0
   const crisisTitle = [
     cen.alive.length <= 1 && !cen.hasHeir ? '後継なし' : '',
@@ -174,7 +182,7 @@ export function HomeScreen() {
       <StatusCallout
         kind={crisis ? 'crisis' : 'info'}
         title={crisis ? `今月の最優先 — ${crisisTitle}` : `今月の最優先 — ${ACTION_LABEL[priorityRec.action]}`}
-        action={<button className="btn" onClick={() => actRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>決断を見る</button>}
+        action={<button type="button" className="btn" data-testid="decision-jump" aria-controls="monthly-decisions" onClick={jumpToDecisions}>決断を見る</button>}
       >
         {priorityRec.reason}　次月候補: {nextCandidate}
       </StatusCallout>
@@ -197,7 +205,7 @@ export function HomeScreen() {
         </Panel>
       </div>
 
-      <div ref={actRef} className="home-core-actions">
+      <div ref={actRef} id="monthly-decisions" className="home-core-actions">
       <Panel title="今月の決断 — 一つ選べば月が替わる">
         <p className="rec-reason"><span className="rec-mark">薦</span>綴の見立て — {priorityRec.reason}</p>
         <div className="action-cards">
