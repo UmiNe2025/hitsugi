@@ -998,44 +998,62 @@ export function BattleScreen() {
       <div className="battle-bottom">
         {over ? (
           <div className="victory-scroll">
-            <p className="victory-line">
-              {battle.phase === 'won'
-                ? bossRequiem
-                  ? `鎮魂 — ${bossRequiem}`
-                  : '勝鬨を上げよ — 夜藪に僅かな静けさが戻った'
-                : battle.phase === 'fled'
-                  ? '一族は闇に紛れて退いた'
-                  : '一族の灯が、闇に呑まれた……'}
-            </p>
-            {battle.phase === 'won' && rewardSettlement?.result && (
-              <BattleRewardResultView
-                settlement={rewardSettlement}
-                carriedTotal={runLoot}
-                family={family}
-              />
-            )}
-            {autoReport.length > 0 && (
-              <div className="auto-battle-report" aria-label="オート戦闘の見立て">
-                {autoReport.map((line) => <p key={line}>{line}</p>)}
-                {auto && (
-                  <div className="auto-result-continuation">
-                    <span>約3秒後、自動で先へ進む</span>
-                    <button className="btn btn-ghost" onClick={() => setAuto(false)}>ここで止める</button>
+            <aside className="victory-log-panel" aria-label="戦闘ログ">
+              <div className="victory-log-heading">
+                <span>戦況の記</span>
+                <small>{displayed.length}行</small>
+              </div>
+              <div className="victory-log-list">
+                {displayed.slice(-8).map((l, i) => (
+                  <p key={`${displayed.length}-${i}`} className={`log-${l.kind}`}>{l.text}</p>
+                ))}
+              </div>
+              {displayed.length > 8 && <p className="victory-log-note">直近8行を表示 — 「記」で全履歴</p>}
+            </aside>
+            <div className="victory-result-main">
+              <div className="victory-result-body">
+                <p className="victory-line">
+                  {battle.phase === 'won'
+                    ? bossRequiem
+                      ? `鎮魂 — ${bossRequiem}`
+                      : '勝鬨を上げよ — 夜藪に、僅かな静けさが戻った。'
+                    : battle.phase === 'fled'
+                      ? '一族は闇に紛れて退いた'
+                      : '一族の灯が、闇に呑まれた……'}
+                </p>
+                {battle.phase === 'won' && rewardSettlement?.result && (
+                  <BattleRewardResultView
+                    settlement={rewardSettlement}
+                    carriedTotal={runLoot}
+                    family={family}
+                  />
+                )}
+                {autoReport.length > 0 && (
+                  <div className="auto-battle-report" aria-label="オート戦闘の見立て">
+                    {autoReport.map((line) => <p key={line}>{line}</p>)}
+                    {auto && (
+                      <div className="auto-result-continuation">
+                        <span>約3秒後、自動で先へ進む</span>
+                        <button className="btn btn-ghost" onClick={() => setAuto(false)}>ここで止める</button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-            <button
-              className="btn btn-main"
-              disabled={battle.phase === 'won' && rewardSettlement?.status !== 'settled'}
-              onClick={battle.phase === 'won' ? continueAfterBattle : finishBattle}
-            >
-              {battle.phase === 'won'
-                ? rewardSettlement?.plan.nextPhase === 'shiori_duel' ? '連戦へ'
-                  : rewardSettlement?.plan.nextPhase === 'finale' ? '結末へ'
-                    : rewardSettlement?.status === 'settled' ? '戦果を携えて進む' : '戦果を確かめている…'
-                : battle.phase === 'fled' ? '先へ' : '帰り火へ'}
-            </button>
+              <div className="victory-continue">
+                <button
+                  className="btn btn-main"
+                  disabled={battle.phase === 'won' && rewardSettlement?.status !== 'settled'}
+                  onClick={battle.phase === 'won' ? continueAfterBattle : finishBattle}
+                >
+                  {battle.phase === 'won'
+                    ? rewardSettlement?.plan.nextPhase === 'shiori_duel' ? '連戦へ'
+                      : rewardSettlement?.plan.nextPhase === 'finale' ? '結末へ'
+                        : rewardSettlement?.status === 'settled' ? '戦果を携えて進む' : '戦果を確かめている…'
+                    : battle.phase === 'fled' ? '先へ' : '帰り火へ'}
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <>

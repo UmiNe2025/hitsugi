@@ -1,6 +1,7 @@
 /* M47: PC戦闘コマンドを読みやすい定幅の「戦支度盤」へ。戦闘ロジックと操作順は不変。 */
 @media (min-width: 561px) {
   .battle-screen { grid-template-rows: 52px minmax(0, 1fr) clamp(184px, 22vh, 218px); }
+  .battle-screen:has(.victory-scroll) { grid-template-rows: 52px minmax(0, 1fr) clamp(236px, 34vh, 360px); }
   .battle-bottom {
     width: min(1180px, calc(100% - 32px));
     max-width: 1180px;
@@ -17,6 +18,48 @@
     box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.32), inset 0 1px rgba(255, 255, 255, 0.025);
   }
 }
+
+/* M48: 勝利後も左に戦況の記を残し、右側の結果本文だけをスクロールさせる。
+   継続CTAは独立行に固定し、戦果の長さに関係なく常に押せる状態を保つ。 */
+.victory-scroll {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.34fr) minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.victory-log-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(201, 168, 106, 0.28);
+  border-radius: 5px;
+  background: linear-gradient(160deg, rgba(15, 18, 24, 0.96), rgba(8, 11, 17, 0.92));
+}
+.victory-log-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(201, 168, 106, 0.24);
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.victory-log-heading small { color: var(--text-dim); font-size: 10px; letter-spacing: 0; }
+.victory-log-list { min-height: 0; overflow-y: auto; padding: 5px 2px 0 0; scrollbar-width: thin; }
+.victory-log-list p { margin: 0; padding: 5px 0; border-bottom: 1px dashed rgba(201, 168, 106, 0.14); color: var(--text-dim); font-size: 10.5px; line-height: 1.45; }
+.victory-log-list p:last-child { color: var(--text); }
+.victory-log-note { flex: 0 0 auto; margin: 6px 0 0; color: var(--text-dim); font-size: 9.5px; }
+.victory-result-main { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 7px; min-width: 0; min-height: 0; overflow: hidden; }
+.victory-result-body { display: grid; align-content: start; gap: 8px; min-height: 0; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+.victory-continue { padding-top: 1px; border-top: 1px solid rgba(201, 168, 106, 0.22); }
+.victory-continue .btn-main { width: 100%; min-height: 46px; }
 
 .turnpanel-actor, .turnpanel-center, .turnpanel-detail {
   border-color: rgba(201, 168, 106, 0.48);
@@ -98,6 +141,7 @@
 }
 
 @media (max-width: 560px) {
+  .battle-screen:has(.victory-scroll) { grid-template-rows: 44px minmax(0, 1fr) clamp(286px, 52vh, 460px); }
   .battle-bottom { width: 100%; max-width: none; margin: 0; }
   .command-board-heading { min-height: 20px; }
   .turnpanel-actor-main { grid-template-columns: 42px minmax(0, 1fr); }
@@ -106,6 +150,13 @@
   .cmd-grid .cmd-mark { width: 25px; height: 25px; font-size: 12px; }
   .cmd-grid .cmd-copy small { display: none; }
   .battle-tactical-brief { display: none; }
+  .victory-scroll { grid-template-columns: 1fr; grid-template-rows: minmax(82px, 0.48fr) minmax(0, 1fr); gap: 6px; }
+  .victory-log-panel { padding: 7px 8px; }
+  .victory-log-list { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding-top: 4px; }
+  .victory-log-list p { flex: 0 0 min(230px, 72vw); padding: 4px 7px; border: 1px solid rgba(201, 168, 106, 0.14); border-radius: 3px; }
+  .victory-log-note { display: none; }
+  .victory-result-main { gap: 5px; }
+  .victory-continue .btn-main { min-height: 48px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

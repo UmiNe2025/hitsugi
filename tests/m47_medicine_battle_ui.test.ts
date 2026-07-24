@@ -38,4 +38,14 @@ describe('M47 郷の薬種見世と戦支度盤', () => {
     expect(battleCss).toContain('width: 100%')
     expect(battleCss).toContain('min-height: 48px')
   })
+
+  it('勝利後は左に戦闘ログを残し、戦果CTAをスクロール領域の外へ固定する', () => {
+    expect(battle).toContain('className="victory-log-panel"')
+    expect(battle).toContain('displayed.slice(-8)')
+    expect(battle).toContain('className="victory-continue"')
+    expect(battle).toContain('夜藪に、僅かな静けさが戻った。')
+    expect(battleCss).toContain('.victory-result-main { display: grid; grid-template-rows: minmax(0, 1fr) auto;')
+    expect(battleCss).toContain('.victory-result-body { display: grid;')
+    expect(battleCss).toContain('.victory-continue .btn-main { width: 100%;')
+  })
 })

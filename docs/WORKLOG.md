@@ -1385,3 +1385,10 @@
 - **戦支度盤**: PC下部を最大1180px・中央寄せとし、1280pxで左右50pxを確保。手番者portrait、各手の意味、戦況の見立て（敵勢/広域兆し/携行薬）、薬切れ時の郷案内を追加。全戦闘オート、コマンド、対象確認、戦闘計算、報酬は不変。
 - **実画面**: PC1280×720で戦闘盤幅1180px、高さ184px、左右50px、内部横overflow 0を確認。mobile390×844は戦闘下部clientWidth/scrollWidthとも390。戦場装飾`.stage-ground`の既存外接幅はfixed rootの`overflow:hidden`内で、今回の操作盤には波及しない。
 - **公開境界**: ローカル実装のみ。push=Pages公開のため、commit/push/deployはユーザーの別途明示依頼を待つ。
+
+## 2026-07-24（M48 戦果後の戦況ログと固定継続CTA）
+
+- **依頼**: 勝敗画面の左側へ「夜藪に、僅かな静けさが戻った。」などの戦闘ログを残し、戦果を携えて進むCTAをスクロールなしで押せるようにする。実装後のデプロイまで行う。
+- **実装**: `Battle.tsx`の勝敗面を左`victory-log-panel`（直近8行）／右`victory-result-main`（結果本文＋固定`victory-continue`）へ分離。既存`displayed`を表示専用に再利用し、ログ生成、報酬精算、全戦闘オート、遷移処理は変更しない。勝利文の句読点も戦闘ログと統一した。
+- **レイアウト**: `battle_m47.css`へM48の2列、モバイル縦積み、結果本文のみoverflow、勝敗時の高さ予算、CTA常時表示を追加。長い報酬・成長内訳でも下段CTAを押せる構造にした。
+- **検証予定**: M47既存テスト＋M48 contract、lint/data/build/visual closure/manifest、全Vitest、実ブラウザPC1280/mobile390でログ可視性・CTA可視性・横overflow 0を確認してからコミットする。

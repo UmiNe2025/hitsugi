@@ -5,6 +5,7 @@
 ## 直近の公開修正
 
 - **M47 郷の薬種見世・戦支度盤（ローカル実装・未公開）**: 郷の「すぐ行く」と豆腐屋から、既存回復薬を月消費なしで直接購入できる薬種見世を追加。所持・効果・価格・武功解禁・不足を一画面に集約し、共通Sheetの外側click/Escape/focus復帰を維持。PC戦闘盤は最大1180pxで中央寄せし、手番者の顔、各行動の目的、敵勢/広域兆し/携行薬、薬切れ補充案内を追加した。戦闘計算・全戦闘オート・報酬・save schemaは不変。lint/data/build/visual closure/manifest/Vitest全750件と、実ブラウザPC1280/mobile390の購入・幅・overflow確認に合格。commit/push/deployなし。
+- **M48 戦果後の戦況ログと固定継続CTA（ローカル実装・未公開）**: 勝敗画面の左側に既存戦闘ログの直近8行を残し、右側を結果本文のスクロール領域と独立CTAへ分離。`夜藪に、僅かな静けさが戻った。`を含む戦況の記憶を結果確認中も保持し、`戦果を携えて進む`は本文をスクロールせず押せる構造にした。M47の戦闘計算・報酬精算・全戦闘オートは不変。lint/data/build/visual closure/manifest/Vitestと実ブラウザPC/mobile確認後にpush/deploy予定。
 
 - **M46 資質連動level・戦果見立て（公開済み）**: Lv1現行互換の加算熟達、資質score上限8〜12、旧save冪等移行、全戦闘オート同報酬をruntime/save/UIへ実装。架空slotを同じreward plan由来の確定戦果・候補敵種ごと4%・携行/即時表示へ置換し、`planned → settled → continued`で二重付与を防止。XP tier係数は3→5の単一調整後、開幕/生涯level分布も合格。Vitest 746、PC/mobile M46 4/4＋既存戦闘/稀相4/4、独立監査PASS / blocking 0。実装`d9f9ac8`、Actions run `30058466579`でPages公開成功。公開bundle `index-CEUkgKbm.js`のM46 markerとHTTP 200を確認。
 
