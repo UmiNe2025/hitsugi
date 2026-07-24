@@ -4,11 +4,9 @@
 
 ## 直近の公開修正
 
+- **M46 資質連動level・戦果見立て（公開済み）**: Lv1現行互換の加算熟達、資質score上限8〜12、旧save冪等移行、全戦闘オート同報酬をruntime/save/UIへ実装。架空slotを同じreward plan由来の確定戦果・候補敵種ごと4%・携行/即時表示へ置換し、`planned → settled → continued`で二重付与を防止。XP tier係数は3→5の単一調整後、開幕/生涯level分布も合格。Vitest 746、PC/mobile M46 4/4＋既存戦闘/稀相4/4、独立監査PASS / blocking 0。実装`d9f9ac8`、Actions run `30058466579`でPages公開成功。公開bundle `index-CEUkgKbm.js`のM46 markerとHTTP 200を確認。
+
 - **M44 タイトル見出しの異形focus枠**: 画面進入時の読み上げ用`h1` focusにブラウザ標準outlineが付き、`灯継ぎ`の複数spanを段差状に囲んでいた。読み上げfocusは維持し、Tab対象でない`.game-title`だけoutlineを無効化。PC1440/mobile360のTitle/Intro 4/4、lint、build、closure 23/40/6/69に合格。実装commit `7ff1997`、Actions run `29876069814`でPages公開成功。公開CSS `assets/index-DXXd6C6Z.css`への反映とHTTP 200を確認済み。
-
-## 実装済み・公開待ち
-
-- **M46 資質連動level・戦果見立て**: Lv1現行互換の加算熟達、資質score上限8〜12、旧save冪等移行、全戦闘オート同報酬をruntime/save/UIへ実装。架空slotを同じreward plan由来の確定戦果・候補敵種ごと4%・携行/即時表示へ置換し、`planned → settled → continued`で二重付与を防止。lint/data/closure/manifest/Vitest 746/build、100-seed、PC/mobile M46 4/4＋既存戦闘/稀相4/4に合格。XP tier係数は3→5の単一調整後、開幕/生涯level分布も合格。独立監査PASS / blocking 0、Pages反映待ち。
 
 ## ローカル計画・未実装
 

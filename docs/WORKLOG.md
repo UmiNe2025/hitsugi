@@ -1375,3 +1375,4 @@
 - **100-seed自己修復**: 初期tier XP係数3は開幕3戦後Lv1が56%、生涯上限到達3.04%で正本gate未達。敵能力、寿命、AGE_CURVE、通貨を固定し、指定された最初の調整軸だけ3→5へ変更。開幕全seed Lv2〜3、上限到達10〜30%、現役cap 50%未満、死亡経験者Lv2以下50%未満と既存campaign指標・同seed決定性を同時に再合格した。
 - **検証**: lint、data、visual closure 23/40/6/69、manifest 9/9、Vitest 47 files/746 tests、build、39地域100-seedを合格。PlaywrightはM46 PC1280/mobile390 4/4、既存戦闘上端/稀相 PC/mobile 4/4。横overflow 0、主札全幅化0、plan=result、Esc/focus returnを実DOMで確認。
 - **独立監査とShip Check**: UIの武功/形見/土地の記/候補名、level up上位3能力、旧expedition汐里のgeneric報酬混入、XP/RNG二重settle、両最終経路、level分布を差戻し、全件を限定修正。再監査はPASS / blocking 0。秘密pattern 0、依存脆弱性0。結論は**SHIP-with-notes**（既存rank分布warn、main chunk 1.46MB、旧expeditionの累計携行表示差）。
+- **公開**: 実装commit `d9f9ac8`をmainへpush。GitHub Actions run `30058466579`はlint/data/Vitest/build/deployを完走。公開HTML HTTP 200、`assets/index-CEUkgKbm.js`で`戦果見立て`／`戦果を携えて進む`を確認し、CSS `assets/index-ol5Y_SGg.css`はローカルbuildとSHA-256一致。

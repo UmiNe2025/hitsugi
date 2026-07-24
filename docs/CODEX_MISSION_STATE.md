@@ -20,7 +20,7 @@
 | D. UI | C | main | PC/mobile、a11y、全幅札0、戦果理解 | completed |
 | E. 統合検証 | D | main | lint/data/Vitest/build/Playwright/100-seed | completed |
 | F. 独立監査/shipcheck | E | fresh reviewer＋main | blocking 0、SHIP系判定 | completed |
-| G. 正典/commit/deploy | F | main | 対象限定commit、Actions success、公開実測 | in_progress |
+| G. 正典/commit/deploy | F | main | 対象限定commit、Actions success、公開実測 | completed |
 
 ## ③完了済み
 
@@ -32,6 +32,7 @@
 - lint、data、closure 23/40/6/69、manifest 9/9、Vitest 47 files/746 tests、build、M46 PC/mobile 4/4、既存戦闘/稀相 PC/mobile 4/4に合格。
 - 独立監査でUI説明不足、旧expedition汐里のgeneric副作用、経路test不足、100-seed level分布未達を検出。すべて限定修正し、tier XP係数だけ3→5へ調整。独立再監査はPASS / blocking 0。
 - Ship Checkは**SHIP-with-notes**。秘密pattern 0、依存脆弱性0、必須gate green。既存rank分布warn、1.46MB main chunk、旧expeditionの累計携行表示差を非阻害noteとして保持。
+- 実装commit `d9f9ac8`をmainへpush。GitHub Actions run `30058466579`はbuild/deploy成功。公開HTML HTTP 200、新bundle `assets/index-CEUkgKbm.js`に`戦果見立て`と確定CTAを確認。
 
 ## ④保留リスト
 
@@ -49,7 +50,7 @@
 
 ## ⑦次の一手
 
-- fresh reviewerの独立監査とShip Checkを閉じ、対象限定commitをmainへpushしてPages反映を実測する。
+- 公開版の初見導線と実利用指標を次の改善判断へ使う。M46の実装・公開作業は完了。
 
 ## ⑧最終監査表
 
@@ -60,8 +61,8 @@
 - ✅ PC/mobile UX: M46 4/4、既存戦闘/稀相4/4。横overflow 0、Esc/focus return、全幅札0。
 - ✅ 全機械gate: lint/data/closure/manifest/Vitest 746/build、100-seedを合格。
 - ✅ Ship Check: SHIP-with-notes。秘密0、脆弱性0、blocking 0。
-- ⚠️ commit/push/Pages: 未実行。
+- ✅ commit/push/Pages: `d9f9ac8`、Actions `30058466579`成功、公開HTTP 200・M46 bundle marker確認。
 
 ## ⑨terminal印
 
-稼働中
+達成 — 2026-07-24T10:17+09:00。M46正本実装、save互換、一回精算、全戦闘オート、PC/mobile、100-seed level分布、独立監査PASS、Ship Check、main push、Pages公開反映を完了。
